@@ -141,6 +141,8 @@ def test_interrupted_gitee_clone_leaves_no_half_model_behind(monkeypatch, tmp_pa
     )
 
     def clone_then_die(cmd, **kwargs):
+        if list(cmd[:3]) == ["git", "lfs", "version"]:
+            return subprocess.CompletedProcess(cmd, 0)
         staged = Path(cmd[-1])
         staged.mkdir(parents=True)
         (staged / "config.json").write_text("{}", encoding="utf-8")
@@ -151,6 +153,51 @@ def test_interrupted_gitee_clone_leaves_no_half_model_behind(monkeypatch, tmp_pa
         embed.resolve_model("BAAI/bge-m3")
 
     assert not (tmp_path / "models" / "bge-m3").exists()
+
+
+def test_git_lfs_is_checked_before_the_clone_starts(monkeypatch, tmp_path):
+    """没装 git-lfs 时 clone 照样"成功"，只是权重变成几百字节的指针文本 ——
+    报错要推迟到 AutoModel 加载才出现，且内容与 LFS 无关。
+
+    检查必须在 clone **之前**：否则先白拉几百 MB 再失败。
+    """
+    import subprocess
+
+    from biomed_ontology import config, embed
+
+    monkeypatch.setattr(
+        config, "settings", config.Settings(model_hub="gitee", model_cache_dir=tmp_path)
+    )
+    seen: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        seen.append(list(cmd[:3]))
+        if list(cmd[:3]) == ["git", "lfs", "version"]:
+            raise subprocess.CalledProcessError(1, cmd)
+        raise AssertionError("git-lfs 缺失时不该开始 clone")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    with pytest.raises(RuntimeError, match="git-lfs"):
+        embed.resolve_model("BAAI/bge-m3")
+
+    assert seen == [["git", "lfs", "version"]]
+
+
+def test_device_is_one_of_the_three_backends():
+    from biomed_ontology.embed import best_device
+
+    assert best_device() in {"cuda", "mps", "cpu"}
+
+
+def test_device_detection_does_not_require_torch(monkeypatch):
+    """CI 走 FakeEmbedder，不装 torch。仅仅问一句"用什么设备"
+    不该把可选依赖变成必需依赖。"""
+    import sys
+
+    from biomed_ontology.embed import best_device
+
+    monkeypatch.setitem(sys.modules, "torch", None)
+    assert best_device() == "cpu"
 
 
 def test_every_real_embedder_default_is_registered():

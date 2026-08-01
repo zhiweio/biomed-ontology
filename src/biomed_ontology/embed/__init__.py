@@ -26,6 +26,7 @@ __all__ = [
     "EmbeddingBundle",
     "FakeEmbedder",
     "GeneralEmbedder",
+    "best_device",
     "get_embedder",
 ]
 
@@ -57,6 +58,23 @@ def _local_dir(model_id: str) -> Path:
     return settings.model_cache_dir / "models" / model_id.rsplit("/", 1)[-1]
 
 
+def best_device() -> str:
+    """CUDA > MPS（Apple Silicon）> CPU。
+
+    torch 缺失时返回 `cpu`：`FakeEmbedder` 不需要 torch，而 CI 走的正是它 ——
+    仅仅问一句"用什么设备"不该把可选依赖变成必需依赖。
+    """
+    try:
+        import torch
+    except ImportError:
+        return "cpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def _mirror_repo(model_id: str, site: str) -> str:
     try:
         repo = _MIRRORS[model_id][site]
@@ -67,13 +85,32 @@ def _mirror_repo(model_id: str, site: str) -> str:
     return repo
 
 
+def _require_git_lfs() -> None:
+    """没装 git-lfs 时 clone 照样"成功"，但权重文件是几百字节的指针文本。
+
+    失败会推迟到 `AutoModel.from_pretrained` 那一刻，报错内容与 LFS 毫无关系，
+    而且此时目录已经落盘、看起来像一份正常的本地模型。所以必须前置拦。
+    """
+    import subprocess
+
+    try:
+        subprocess.run(["git", "lfs", "version"], check=True, capture_output=True)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError(
+            "Gitee 镜像的权重走 Git LFS，但本机没有可用的 git-lfs。"
+            "请先安装（macOS: brew install git-lfs；Debian/Ubuntu: apt install git-lfs），"
+            "再重试。"
+        ) from exc
+
+
 def _from_gitee(model_id: str) -> str:
-    """clone Gitee 的 hf-models 镜像。权重走 LFS，本机须装 git-lfs。"""
+    """clone Gitee 的 hf-models 镜像。权重走 LFS。"""
     import subprocess
     import tempfile
 
     target = _local_dir(model_id)
     url = f"{_GITEE_ORG}/{_mirror_repo(model_id, 'gitee')}"
+    _require_git_lfs()
     target.parent.mkdir(parents=True, exist_ok=True)
 
     # 先 clone 到临时目录再原子改名。clone 中断时留下的半份目录里 config.json
@@ -197,13 +234,14 @@ class GeneralEmbedder:
         self,
         *,
         model_id: str = "BAAI/bge-m3",
-        device: str = "cpu",
+        device: str | None = None,
         use_fp16: bool = False,
     ) -> None:
         from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
+        self.device = device or best_device()
         self._fn = BGEM3EmbeddingFunction(
-            model_name=resolve_model(model_id), use_fp16=use_fp16, device=device
+            model_name=resolve_model(model_id), use_fp16=use_fp16, device=self.device
         )
         self.dims = {"dense_general": int(self._fn.dim["dense"])}
 
@@ -237,18 +275,18 @@ class BiomedEmbedder:
         self,
         *,
         model_id: str = "cambridgeltl/SapBERT-from-PubMedBERT-fulltext",
-        device: str = "cpu",
+        device: str | None = None,
         batch_size: int = 32,
     ) -> None:
         import torch
         from transformers import AutoModel, AutoTokenizer
 
         path = resolve_model(model_id)
+        self.device = device or best_device()
         self._torch = torch
-        self._device = device
         self._batch_size = batch_size
         self._tok = AutoTokenizer.from_pretrained(path)
-        self._model = AutoModel.from_pretrained(path).to(device).eval()
+        self._model = AutoModel.from_pretrained(path).to(self.device).eval()
         self.dims = {"dense_biomed": int(self._model.config.hidden_size)}
 
     def encode(self, texts: list[str]) -> list[EmbeddingBundle]:
@@ -259,11 +297,11 @@ class BiomedEmbedder:
             batch = texts[start : start + self._batch_size]
             toks = self._tok(
                 batch, padding=True, truncation=True, max_length=256, return_tensors="pt"
-            ).to(self._device)
+            ).to(self.device)
             with torch.inference_mode():
                 cls = self._model(**toks).last_hidden_state[:, 0, :]
             cls = torch.nn.functional.normalize(cls, p=2, dim=1)
-            out.extend(EmbeddingBundle(dense_biomed=v.tolist()) for v in cls)
+            out.extend(EmbeddingBundle(dense_biomed=v.tolist()) for v in cls.cpu())
         return out
 
 
@@ -294,8 +332,11 @@ def _row_to_dict(matrix: object, row: int) -> dict[int, float]:
     return {int(c): float(v) for c, v in zip(coo.col, coo.data, strict=True)}
 
 
-def get_embedder(name: str = "fake", *, device: str = "cpu") -> Embedder:
-    """配置开关的唯一落点。默认 fake —— 不下模型也能跑通全链路。"""
+def get_embedder(name: str = "fake", *, device: str | None = None) -> Embedder:
+    """配置开关的唯一落点。默认 fake —— 不下模型也能跑通全链路。
+
+    `device=None` 表示自动挑（CUDA > MPS > CPU）。
+    """
     if name == "fake":
         return FakeEmbedder()
     if name == "bge-m3":

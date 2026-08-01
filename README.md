@@ -20,7 +20,7 @@ uv run hmd eval      # 检索消融 + 指标目标达成情况
 uv run hmd serve     # 起 REST + MCP 服务
 ```
 
-`make check` = ruff + 全量测试，共 **466 条测试**。
+`make check` = ruff + 全量测试，共 **469 条测试**。
 其中 7 条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
 **这 7 条长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
 `hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。
@@ -49,11 +49,18 @@ uv run hmd index --embedder dual --recreate
 
 - **本地优先**：手工放进 `data/cache/models/models/<仓库名>/` 的权重直接生效。
   内网里手动拷权重是常态，应该走"放对位置"而不是"改代码"。
-- **Gitee 兜底**：官方源取不到时自动改用 [gitee.com/hf-models](https://gitee.com/hf-models)
-  （权重走 LFS，本机须装 `git-lfs`），并**打印实际用了哪个源** ——
-  权重来源必须可追溯，否则同一份代码在两台机器上可能加载到不同模型而报告里看不出来。
+- **Gitee 兜底**：官方源取不到时自动改用 [gitee.com/hf-models](https://gitee.com/hf-models)，
+  并**打印实际用了哪个源** —— 权重来源必须可追溯，否则同一份代码在两台机器上
+  可能加载到不同模型而报告里看不出来。
+  clone 前先验 `git lfs version`：没装 git-lfs 时 clone 照样"成功"，
+  但权重是几百字节的指针文本，报错要推迟到 `AutoModel` 加载才出现、且与 LFS 无关。
 - 仓库名逐条登记在 `embed._MIRRORS`：各站命名空间彼此独立，猜不出来。
   没登记的直接报错，不去 clone 一个不存在的仓库。
+
+**算力后端自动选择**：`best_device()` 按 **CUDA > MPS（Apple Silicon）> CPU** 挑，
+`--embedder` 相关的构造函数都接受 `device=` 显式覆盖。
+实测 MPS 与 CPU 的向量余弦 ≈ 1.0、最大逐元素偏差 3.4e-07（float32 舍入噪声），
+因此下面引用的消融数字与所用后端无关。
 
 **SapBERT 只走 PyTorch，且必须取 `[CLS]`。** 这里刻意不用 `SentenceTransformer`：
 官方权重目录里没有 `modules.json`，sentence-transformers 会自动补一层
@@ -245,7 +252,7 @@ fake 的"生医稠密"列根本不是 SapBERT，只是确定性哈希。
 所以 `hmd eval` 的输出会在标题上标注 `embedder=`，
 并在非 `sapbert` / `dual` 时追加一行显式免责 —— 假嵌入器的数字不得被当成模型结论。
 
-代价：真模型下单查询 P50 从 ~0.2ms 升到 ~250ms（CPU 推理）。
+代价：真模型下单查询 P50 从 ~0.2ms 升到 ~107ms（Apple Silicon MPS）/ ~250ms（CPU）。
 
 ### 指标目标与豁免机制
 
