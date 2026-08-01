@@ -37,6 +37,11 @@ ontology = [
 # 向量检索。torch 由 pymilvus[model] 间接引入，体积大，因此单列 extra。
 vector = [
     "pymilvus[model]>=2.5.0",
+    # BGE-M3 的实现在 FlagEmbedding 里，pymilvus 只做惰性 import。
+    # 不显式声明的话 pymilvus 会在运行时自己 pip install —— 那次安装既绕过
+    # uv 的锁定，也会被下一次 `uv sync` 抹掉，表现为"装了但导入不到"。
+    "FlagEmbedding>=1.3.3",
+    "sentence-transformers>=3.0.0",
 ]
 # 版面解析。pymupdf 为 AGPL-3.0/商业双授权，对外服务前需法务确认（见 NOTICE）。
 parse = [

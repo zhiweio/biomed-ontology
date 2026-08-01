@@ -12,7 +12,7 @@
 ## 快速开始
 
 ```bash
-uv sync --extra dev --extra rdf --extra ontology --extra parse --extra service
+uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --extra service
 
 uv run hmd kb        # 构建知识库并打印统计
 uv run hmd demo      # 跑 7 个演示场景（全部自带断言，不是打印）
@@ -20,20 +20,30 @@ uv run hmd eval      # 检索消融 + 指标目标达成情况
 uv run hmd serve     # 起 REST + MCP 服务
 ```
 
-`make check` = ruff + 全量测试。**445 passed, 7 skipped**（7 条是 Milvus 集成测试，
-无 Docker 时跳过而非失败）。
+`make check` = ruff + 全量测试，共 **454 条测试**。
+其中 7 条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
+**这 7 条长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
+`hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。
 
 ### 可选：Milvus
 
 ```bash
 make milvus-up                                  # docker compose，standalone 单机版
 uv run hmd index --embedder fake --recreate     # 写入切片；fake 嵌入器不下载模型
+uv run hmd eval --milvus --entitlements MOCK_LICENSED   # 九臂消融（3 本地 + 6 Milvus）
 make milvus-down
 ```
 
 `--embedder` 可选 `fake` / `bge-m3` / `sapbert` / `dual`。
 默认 `fake` 是有意为之：CI 不应该下载 GB 级权重，
 而确定性哈希向量足以验证**索引、过滤、融合**这些真正容易出错的部分。
+
+不加 `--milvus` 时那 6 个臂会明确列在"未运行的臂（后端不可达，非结果）"下，
+**不会**退化成本地后端顶替。这条是刻意的：一份写着 Milvus 却实际由本地跑出的数字，
+比没有数字更危险。同理，`--milvus` 遇到集合不存在会直接退出而不是静默降级。
+
+> `--embedder fake` 跑出的"生医稠密"列并不是 SapBERT，
+> 因此该模式下的 SapBERT 净值不具备模型层面的解释力，只用于验证链路。
 
 ---
 

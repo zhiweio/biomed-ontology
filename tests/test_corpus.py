@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
@@ -35,6 +37,33 @@ def test_chunk_ids_are_content_derived(kb):
 
     again = build_knowledge_base()
     assert {c.chunk_id for c in again.chunks} == {c.chunk_id for c in kb.chunks}
+
+
+def test_chunk_ids_survive_a_process_boundary():
+    """同进程内重建看不出问题：内置 `hash()` 在一个进程里是恒定的。
+
+    真正的失配发生在"索引进程"和"检索进程"之间 —— 表格/图像切片曾用
+    `hash(table_id)` 当种子，PYTHONHASHSEED 一变 ID 全变，
+    表现为 Milvus 里的 ID 在知识库里查无此人。所以这里必须跨进程比。
+    """
+    import subprocess
+    import sys
+
+    prog = (
+        "from biomed_ontology.pipeline import build_knowledge_base;"
+        "print(' '.join(sorted(c.chunk_id for c in build_knowledge_base().chunks)))"
+    )
+    seen = set()
+    for seed in ("0", "1", "2"):
+        out = subprocess.run(
+            [sys.executable, "-c", prog],
+            capture_output=True,
+            text=True,
+            check=True,
+            env={**os.environ, "PYTHONHASHSEED": seed},
+        )
+        seen.add(out.stdout.strip())
+    assert len(seen) == 1, "切片 ID 随 PYTHONHASHSEED 漂移，说明种子里混进了随机化的 hash()"
 
 
 def test_facts_carry_at_least_one_evidence(kb):

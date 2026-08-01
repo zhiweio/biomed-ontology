@@ -91,6 +91,33 @@ def test_unavailable_arms_are_named_not_omitted(kb):
     assert "未运行的臂" in ev.as_table()
 
 
+def test_sapbert_delta_discloses_which_embedder_produced_it():
+    """ "SapBERT 净值"这个标题本身会误导 —— fake 嵌入器下那一列根本不是 SapBERT。
+
+    数字和它的产地必须同屏，否则会被当成模型结论转述进采购文档。
+    """
+    from biomed_ontology.eval import ArmResult, RetrievalEval
+
+    def arm(name: str, recall: float) -> ArmResult:
+        return ArmResult(
+            arm=name, label=name, recall_at_10=recall, precision_at_5=0.0, ndcg_at_10=0.0, mrr=0.0
+        )
+
+    arms = {
+        "milvus_hybrid_3col": arm("milvus_hybrid_3col", 0.8),
+        "milvus_hybrid_2col": arm("milvus_hybrid_2col", 0.9),
+        "bm25_only": arm("bm25_only", 0.5),
+        "ontology_hybrid": arm("ontology_hybrid", 0.6),
+    }
+    faked = RetrievalEval(arms=arms, embedder="fake").as_table()
+    assert "embedder=fake" in faked
+    assert "并未加载 SapBERT" in faked
+
+    real = RetrievalEval(arms=arms, embedder="dual").as_table()
+    assert "embedder=dual" in real
+    assert "并未加载 SapBERT" not in real
+
+
 def test_entitlement_gated_queries_are_skipped_without_the_entitlement(kb):
     """无凭据时跳过商业源的查询，而不是当成"没召回"计零分。
 

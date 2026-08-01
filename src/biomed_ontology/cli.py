@@ -189,6 +189,9 @@ def gate_cmd(
 @app.command("eval")
 def eval_cmd(
     entitlements: str = typer.Option("", "--entitlements", help="逗号分隔的已采购源 ID"),
+    milvus: bool = typer.Option(False, "--milvus", help="连 Milvus 跑另外 6 个臂"),
+    embedder: str = typer.Option("fake", "--embedder", help="仅 --milvus 时生效"),
+    collection: str | None = typer.Option(None, "--collection"),
 ) -> None:
     """跑 gold set 评测：归一化准确率 + 检索消融 + 指标目标达成情况。"""
     from biomed_ontology.eval import eval_normalization, eval_retrieval
@@ -200,11 +203,37 @@ def eval_cmd(
     console.print(eval_normalization(kb).as_table())
     console.print()
 
-    ev = eval_retrieval(kb, entitlements=ents)
+    backend = _milvus_backend(embedder, collection) if milvus else None
+    ev = eval_retrieval(
+        kb,
+        entitlements=ents,
+        milvus_backend=backend,
+        embedder=embedder if milvus else "",
+    )
     console.print(ev.as_table())
     console.print()
     # 目标与实测同屏输出：把"没达成"和数字摆在一起，避免只有好消息被转述出去
     console.print(render_outcomes(check_targets(ev)))
+
+
+def _milvus_backend(embedder: str, collection: str | None):
+    """连不上就直接退出，不静默降级 —— 报告里的"Milvus 臂"必须真的是 Milvus 跑的。"""
+    from biomed_ontology.config import settings
+    from biomed_ontology.embed import get_embedder
+    from biomed_ontology.registry import load_registry
+    from biomed_ontology.search.backends.milvus import MilvusBackend
+
+    backend = MilvusBackend(
+        uri=settings.milvus_uri,
+        token=settings.milvus_token.get_secret_value(),
+        collection=collection or settings.milvus_collection,
+        embedder=get_embedder(embedder),
+        known_sources=frozenset(s.id for s in load_registry().active()),
+    )
+    if not backend.client.has_collection(backend.collection):
+        console.print(f"[red]集合 {backend.collection} 不存在，先跑 hmd index[/red]")
+        raise typer.Exit(1)
+    return backend
 
 
 @app.command("demo")
@@ -360,7 +389,7 @@ def index_cmd(
         token=settings.milvus_token.get_secret_value(),
         collection=collection or settings.milvus_collection,
         embedder=get_embedder(embedder),
-        known_sources=frozenset(s.source_id for s in registry.active()),
+        known_sources=frozenset(s.id for s in registry.active()),
     )
     backend.ensure_collection(drop_existing=recreate)
 

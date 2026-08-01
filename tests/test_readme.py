@@ -59,13 +59,17 @@ def test_readme_demo_count_matches_the_registry(readme):
     assert f"{len(DEMOS)} 个演示场景" in readme
 
 
-def test_readme_test_count_matches_reality(readme):
-    """写死通过数是为了让"某条测试悄悄不再跑了"这件事被看见。"""
-    claimed = re.search(r"\*\*(\d+) passed, (\d+) skipped\*\*", readme)
-    assert claimed, "README 未声明测试通过数"
-    collected = len(list(Path(__file__).parent.glob("test_*.py")))
-    assert collected > 0
-    assert int(claimed.group(1)) > int(claimed.group(2))
+def test_readme_test_count_matches_reality(readme, request):
+    """写死总数是为了让"某条测试悄悄不再跑了"这件事被看见。
+
+    这里刻意不写 passed/skipped 的拆分：Milvus 那 7 条跑没跑取决于 Docker 在不在，
+    把环境差异写进断言，只会训练出"改一下数字让它绿"的反射。总数不随环境变。
+    """
+    claimed = re.search(r"\*\*(\d+) 条测试\*\*", readme)
+    assert claimed, "README 未声明测试总数"
+    if request.config.getoption("file_or_dir"):
+        pytest.skip("只在全量 pytest 下校验总数")
+    assert request.session.testscollected == int(claimed.group(1))
 
 
 def test_readme_does_not_promise_a_milvus_fallback(readme):

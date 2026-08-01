@@ -134,13 +134,20 @@ class MilvusBackend:
             collection_name=self.collection, schema=schema, index_params=index
         )
 
-    def upsert(self, rows: list[dict[str, Any]]) -> int:
-        """`rows` 需含元数据与 `text`；向量在此处算，调用方不必知道模型。"""
+    def upsert(self, rows: list[dict[str, Any]], *, flush: bool = True) -> int:
+        """`rows` 需含元数据与 `text`；向量在此处算，调用方不必知道模型。
+
+        默认 flush：Milvus 的默认一致性是 Bounded，不 flush 时刚写的数据查不到，
+        而失败形态是“检索返回空” —— 看起来像召回差，不像数据没进去。
+        分批写入时传 `flush=False`，最后自行调一次。
+        """
         if not rows:
             return 0
         bundles = self.embedder.encode([str(r["text"]) for r in rows])
         payload = [{**row, **bundle} for row, bundle in zip(rows, bundles, strict=True)]
         self.client.upsert(collection_name=self.collection, data=payload)
+        if flush:
+            self.client.flush(self.collection)
         return len(payload)
 
     # ----------------------------------------------------------------- 检索

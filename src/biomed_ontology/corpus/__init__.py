@@ -170,7 +170,7 @@ def chunk_document(doc: Document, *, max_chars: int = 600) -> list[Chunk]:
     for t in doc.tables:
         chunks.append(
             Chunk(
-                chunk_id=_chunk_id(doc.doc_id, "tbl", hash(t.table_id) & 0xFFFFFF),
+                chunk_id=_chunk_id(doc.doc_id, "tbl", t.table_id),
                 doc_id=doc.doc_id,
                 text=(f"{t.caption}\n" if t.caption else "") + t.as_text(),
                 section=f"table:{t.table_id}",
@@ -187,7 +187,7 @@ def chunk_document(doc: Document, *, max_chars: int = 600) -> list[Chunk]:
         body = " ".join(filter(None, [im.caption, im.vision_summary]))
         chunks.append(
             Chunk(
-                chunk_id=_chunk_id(doc.doc_id, "img", hash(im.image_id) & 0xFFFFFF),
+                chunk_id=_chunk_id(doc.doc_id, "img", im.image_id),
                 doc_id=doc.doc_id,
                 text=body,
                 section=f"image:{im.image_id}",
@@ -224,5 +224,7 @@ def _split_section(text: str, max_chars: int) -> list[tuple[str, int, int]]:
 
 
 def _chunk_id(doc_id: str, kind: str, seed: Any) -> str:
+    """`seed` 必须是稳定值。内置 `hash()` 逐进程随机，会让切片 ID 每次重建都变 ——
+    索引随即失配，已发出的引用也解不开。"""
     h = hashlib.sha1(f"{doc_id}|{kind}|{seed}".encode()).hexdigest()[:10]
     return f"CHK:{kind}.{h}"

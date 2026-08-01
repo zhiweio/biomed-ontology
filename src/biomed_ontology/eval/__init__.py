@@ -226,6 +226,9 @@ class RetrievalEval:
     # 因后端不可达而未跑的臂。报告里必须显式列出 ——
     # 悄悄少几行会让读者以为那些配置没做，而不是没测。
     unavailable: dict[str, str] = field(default_factory=dict)
+    # 跑 Milvus 臂时实际用的嵌入器。fake 下“生医稠密”列根本不是 SapBERT，
+    # 不标出来的话那个净值会被当成模型结论转述出去。
+    embedder: str = ""
 
     def lift(
         self,
@@ -260,10 +263,17 @@ class RetrievalEval:
 
         hi, lo = SAPBERT_DELTA
         if hi in self.arms and lo in self.arms:
-            lines.append("\nSapBERT 净值（三列 − 双列，rerank 关闭）：")
+            lines.append(
+                f"\nSapBERT 净值（三列 − 双列，rerank 关闭，embedder={self.embedder or '?'}）："
+            )
             for lang in [None, *sorted({lg for a in self.arms.values() for lg in a.by_lang})]:
                 tag = lang or "全部"
                 lines.append(f"  {tag:<6} Recall@10 {self.delta(lang=lang):+.3f}")
+            if self.embedder not in {"sapbert", "dual"}:
+                lines.append(
+                    f"  ⚠ embedder={self.embedder or '?'} 并未加载 SapBERT，"
+                    "上面的净值只验证链路贯通，不能用于回答“SapBERT 值不值得上”。"
+                )
 
         if self.unavailable:
             lines.append("\n未运行的臂（后端不可达，非结果）：")
@@ -404,6 +414,7 @@ def eval_retrieval(
     top_k: int = 10,
     arms: dict[str, dict[str, Any]] | None = None,
     milvus_backend: Any = None,
+    embedder: str = "",
 ) -> RetrievalEval:
     """跑消融。Milvus 臂需显式传入后端 —— 不可达时标记为未运行而非回落。
 
@@ -468,4 +479,4 @@ def eval_retrieval(
             result.by_lang[lang] = _aggregate(arm, cfg["label"], subset)
         results[arm] = result
 
-    return RetrievalEval(arms=results, unavailable=unavailable)
+    return RetrievalEval(arms=results, unavailable=unavailable, embedder=embedder)
