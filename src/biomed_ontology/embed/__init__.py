@@ -33,34 +33,101 @@ VECTOR_FIELDS = ("dense_general", "sparse_lexical", "dense_biomed")
 
 _TOKEN = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]")
 
-# HF 仓库 ID → ModelScope 仓库 ID。两边的命名空间是独立的，没有换算规则，只能逐条列。
-_MODELSCOPE_IDS = {
-    "BAAI/bge-m3": "BAAI/bge-m3",
-    "cambridgeltl/SapBERT-from-PubMedBERT-fulltext": "Xenova/SapBERT-from-PubMedBERT-fulltext",
+_GITEE_ORG = "https://gitee.com/hf-models"
+
+# HF 仓库 ID → 各镜像站的仓库名。命名空间彼此独立，没有换算规则，只能逐条登记。
+#
+# `modelscope: None` 表示该站**没有 PyTorch 权重**：SapBERT 在 ModelScope 上
+# 只有 Xenova 的 ONNX 版，而本项目只走 PyTorch，所以它不是一个可选源。
+_MIRRORS: dict[str, dict[str, str | None]] = {
+    "BAAI/bge-m3": {
+        "modelscope": "BAAI/bge-m3",
+        "gitee": "bge-m3",
+    },
+    "cambridgeltl/SapBERT-from-PubMedBERT-fulltext": {
+        "modelscope": None,
+        "gitee": "SapBERT-from-PubMedBERT-fulltext",
+    },
 }
 
 
-def resolve_model(model_id: str) -> str:
-    """把 HF 仓库 ID 换成可直接喂给 transformers 的路径。
+def _local_dir(model_id: str) -> Path:
+    from biomed_ontology.config import settings
 
-    `hub=hf` 时原样返回，由下游自己去 huggingface.co 拿；
-    `hub=modelscope` 时先下载快照再返回本地目录 —— 下不动就报错，
-    不回落到 HF，否则内网环境下会卡在一次必然失败的超时上。
+    return settings.model_cache_dir / "models" / model_id.rsplit("/", 1)[-1]
+
+
+def _mirror_repo(model_id: str, site: str) -> str:
+    try:
+        repo = _MIRRORS[model_id][site]
+    except KeyError:
+        raise ValueError(f"{model_id} 未登记镜像，请补进 embed._MIRRORS") from None
+    if repo is None:
+        raise LookupError(f"{site} 上没有 {model_id} 的 PyTorch 权重")
+    return repo
+
+
+def _from_gitee(model_id: str) -> str:
+    """clone Gitee 的 hf-models 镜像。权重走 LFS，本机须装 git-lfs。"""
+    import subprocess
+    import tempfile
+
+    target = _local_dir(model_id)
+    url = f"{_GITEE_ORG}/{_mirror_repo(model_id, 'gitee')}"
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    # 先 clone 到临时目录再原子改名。clone 中断时留下的半份目录里 config.json
+    # 一定在（它不是 LFS 文件），会被下一次 resolve_model 当成"本地已有"直接返回 ——
+    # 那是一份 LFS 指针没拉下来的坏模型，要到加载时才炸，且看不出是哪来的。
+    with tempfile.TemporaryDirectory(dir=target.parent) as staging:
+        staged = Path(staging) / "repo"
+        # 仓库名取自上面的固定表，不是外部输入；且不经 shell。
+        subprocess.run(["git", "clone", "--depth", "1", url, str(staged)], check=True)
+        staged.rename(target)
+    return str(target)
+
+
+def resolve_model(model_id: str) -> str:
+    """返回可直接喂给 transformers 的本地目录（或仓库 ID）。
+
+    顺序：**本地已有 → 选定的 hub → Gitee 兜底**。
+
+    本地优先是为了让手工放进 `data/cache/models/models/<仓库名>` 的权重直接生效 ——
+    内网里手动拷权重是常态，应该走"放对位置"而不是"改代码"。
+
+    兜底只在下载失败时触发，且**会打印实际用了哪个源**：权重来源必须可追溯，
+    否则同一份代码在两台机器上可能加载到不同的模型，而报告里看不出来。
+    未登记镜像属配置错误，直接抛出，不被兜底掩盖。
     """
     from biomed_ontology.config import settings
 
-    if settings.model_hub != "modelscope":
-        return model_id
+    local = _local_dir(model_id)
+    if (local / "config.json").is_file():
+        return str(local)
+
+    if settings.model_hub == "gitee":
+        return _from_gitee(model_id)
+
     try:
-        target = _MODELSCOPE_IDS[model_id]
-    except KeyError:
-        raise ValueError(
-            f"{model_id} 没有登记 ModelScope 对应仓库，请补进 embed._MODELSCOPE_IDS"
-        ) from None
+        if settings.model_hub == "modelscope":
+            from modelscope import snapshot_download as ms_download
 
-    from modelscope import snapshot_download
+            return ms_download(
+                _mirror_repo(model_id, "modelscope"), cache_dir=str(settings.model_cache_dir)
+            )
+        from huggingface_hub import snapshot_download as hf_download
 
-    return snapshot_download(target, cache_dir=str(settings.model_cache_dir))
+        return hf_download(model_id, cache_dir=str(settings.model_cache_dir))
+    except ValueError:
+        raise
+    except Exception as exc:
+        # 下载失败的形态太多（TLS 重置、404、LFS 缺失、超时），逐个列必然漏。
+        # flush：这行是权重来源的唯一线索，管道里丢掉就查不出加载了哪份模型。
+        print(
+            f"[embed] {settings.model_hub} 取 {model_id} 失败（{exc}），改用 Gitee 镜像",
+            flush=True,
+        )
+        return _from_gitee(model_id)
 
 
 class EmbeddingBundle(dict[str, object]):
@@ -155,12 +222,13 @@ class GeneralEmbedder:
 class BiomedEmbedder:
     """SapBERT：UMLS 同义词对齐训练，把"savolitinib"与"AZD6094"拉到一起。
 
-    **英文单语**。中文专利上它大概率无增益甚至有害 —— 所以 P13 给它单独一臂，
-    并按语种分表；如果 zh 为负，就按语种路由向量列而不是一刀切。
+    **英文单语**。P13 因此给它单独一臂并按语种分表 —— 总平均会把
+    "英文涨了、中文没动"抹平。
 
-    权重格式按目录里实际有什么来定：ModelScope 上只有 ONNX 版（Xenova），
-    HF 上是 PyTorch 版。两条路都取 `[CLS]` 再 L2 归一 —— 这是 SapBERT 的
-    规定取法，换成 mean pooling 会得到另一个模型的向量。
+    **必须取 `[CLS]` 再 L2 归一**，这是 SapBERT 的规定取法。
+    这里不用 `SentenceTransformer`：官方权重目录里没有 `modules.json`，
+    sentence-transformers 会自动补一层 **mean pooling**，
+    于是拿到的是另一个模型的向量 —— 不报错，只是悄悄换掉语义。
     """
 
     name = "sapbert"
@@ -170,39 +238,33 @@ class BiomedEmbedder:
         *,
         model_id: str = "cambridgeltl/SapBERT-from-PubMedBERT-fulltext",
         device: str = "cpu",
+        batch_size: int = 32,
     ) -> None:
+        import torch
+        from transformers import AutoModel, AutoTokenizer
+
         path = resolve_model(model_id)
-        onnx = Path(path) / "onnx" / "model.onnx"
-        self._onnx = onnx.is_file()
-        if self._onnx:
-            import onnxruntime
-            from transformers import AutoTokenizer
-
-            self._tok = AutoTokenizer.from_pretrained(path)
-            self._sess = onnxruntime.InferenceSession(str(onnx), providers=["CPUExecutionProvider"])
-            self._inputs = {i.name for i in self._sess.get_inputs()}
-            dim = int(self._sess.get_outputs()[0].shape[-1])
-        else:
-            from sentence_transformers import SentenceTransformer
-
-            self._model = SentenceTransformer(path, device=device)
-            dim = int(self._model.get_sentence_embedding_dimension())
-        self.dims = {"dense_biomed": dim}
-
-    def _encode_onnx(self, texts: list[str]) -> list[list[float]]:
-        import numpy as np
-
-        toks = self._tok(texts, padding=True, truncation=True, max_length=256, return_tensors="np")
-        feed = {k: v for k, v in toks.items() if k in self._inputs}
-        cls = self._sess.run(None, feed)[0][:, 0, :]
-        norm = np.linalg.norm(cls, axis=1, keepdims=True)
-        return (cls / np.where(norm == 0, 1, norm)).tolist()
+        self._torch = torch
+        self._device = device
+        self._batch_size = batch_size
+        self._tok = AutoTokenizer.from_pretrained(path)
+        self._model = AutoModel.from_pretrained(path).to(device).eval()
+        self.dims = {"dense_biomed": int(self._model.config.hidden_size)}
 
     def encode(self, texts: list[str]) -> list[EmbeddingBundle]:
-        if self._onnx:
-            return [EmbeddingBundle(dense_biomed=v) for v in self._encode_onnx(texts)]
-        vecs = self._model.encode(texts, normalize_embeddings=True)
-        return [EmbeddingBundle(dense_biomed=list(map(float, v))) for v in vecs]
+        torch = self._torch
+        out: list[EmbeddingBundle] = []
+        # 分批：索引时整个语料是一次传进来的，不切批会随语料规模把内存吃穿。
+        for start in range(0, len(texts), self._batch_size):
+            batch = texts[start : start + self._batch_size]
+            toks = self._tok(
+                batch, padding=True, truncation=True, max_length=256, return_tensors="pt"
+            ).to(self._device)
+            with torch.inference_mode():
+                cls = self._model(**toks).last_hidden_state[:, 0, :]
+            cls = torch.nn.functional.normalize(cls, p=2, dim=1)
+            out.extend(EmbeddingBundle(dense_biomed=v.tolist()) for v in cls)
+        return out
 
 
 class CompositeEmbedder:

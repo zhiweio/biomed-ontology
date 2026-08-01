@@ -8,8 +8,8 @@ GEN_ART := schema/generated
 SCHEMAS := hmd_concept hmd_fact hmd_taxonomy hmd_obs hmd_agentapi
 COMPOSE := docker compose -f docker/milvus-standalone.yml
 
-.PHONY: all gen gen-py gen-jsonschema gen-shacl gen-owl canon-ttl lint test check clean \
-        milvus-up milvus-down milvus-logs corpus
+.PHONY: all gen gen-py gen-jsonschema gen-shacl gen-owl canon-ttl canon-check nightly \
+        lint test check clean milvus-up milvus-down milvus-logs corpus
 
 all: gen lint test
 
@@ -52,6 +52,16 @@ gen-owl:
 # 不规范化的话生成物无法 review：真实变更被几千行纯重排淹没。
 canon-ttl:
 	@uv run python scripts/canon_ttl.py $(GEN_ART)/*.ttl
+
+# 全量规范化校验，只判定不落盘。to_canonical_graph 是图同构算法，
+# 随空白节点数急剧变慢（全部 10 份约 4 分半，hmd_agentapi.owl.ttl 一份就占 79 秒），
+# 因此不进 make check —— 慢到没人跑的测试等于没有测试。挂 nightly。
+# 默认套件里 tests/test_canon_ttl.py 只跑每类最小的一份，守的是"机制没坏"。
+nightly: canon-check
+
+canon-check:
+	@uv run python scripts/canon_ttl.py --check $(GEN_ART)/*.ttl
+	@echo "全部生成物均为规范形式"
 
 lint:
 	uv run ruff check src tests scripts

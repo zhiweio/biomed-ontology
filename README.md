@@ -20,7 +20,7 @@ uv run hmd eval      # 检索消融 + 指标目标达成情况
 uv run hmd serve     # 起 REST + MCP 服务
 ```
 
-`make check` = ruff + 全量测试，共 **464 条测试**。
+`make check` = ruff + 全量测试，共 **466 条测试**。
 其中 7 条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
 **这 7 条长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
 `hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。
@@ -38,17 +38,29 @@ make milvus-down
 默认 `fake` 是有意为之：CI 不应该下载 GB 级权重，
 而确定性哈希向量足以验证**索引、过滤、融合**这些真正容易出错的部分。
 
-连不上 huggingface.co 时（内网常见，表现为 TLS 直接被重置）改走 ModelScope：
+### 模型权重从哪来
+
+解析顺序是 **本地已有 → 选定的源 → Gitee 兜底**（`embed.resolve_model`）。
 
 ```bash
-export HMD_MODEL_HUB=modelscope        # 仓库 ID 映射见 embed._MODELSCOPE_IDS
+export HMD_MODEL_HUB=modelscope   # 可选 hf（默认）/ modelscope / gitee
 uv run hmd index --embedder dual --recreate
 ```
 
-映射逐条显式登记，没登记的模型直接报错 —— **不回落到 HF**，
-否则内网下会卡在一次必然失败的超时上，看起来像"卡住了"而不是"下不了"。
-注意 ModelScope 上的 SapBERT 只有 ONNX 版，`BiomedEmbedder` 会据此切到
-onnxruntime；两条路都取 `[CLS]` 再 L2 归一，保持与 HF PyTorch 版同一取法。
+- **本地优先**：手工放进 `data/cache/models/models/<仓库名>/` 的权重直接生效。
+  内网里手动拷权重是常态，应该走"放对位置"而不是"改代码"。
+- **Gitee 兜底**：官方源取不到时自动改用 [gitee.com/hf-models](https://gitee.com/hf-models)
+  （权重走 LFS，本机须装 `git-lfs`），并**打印实际用了哪个源** ——
+  权重来源必须可追溯，否则同一份代码在两台机器上可能加载到不同模型而报告里看不出来。
+- 仓库名逐条登记在 `embed._MIRRORS`：各站命名空间彼此独立，猜不出来。
+  没登记的直接报错，不去 clone 一个不存在的仓库。
+
+**SapBERT 只走 PyTorch，且必须取 `[CLS]`。** 这里刻意不用 `SentenceTransformer`：
+官方权重目录里没有 `modules.json`，sentence-transformers 会自动补一层
+**mean pooling**（实测 `pooling_mode: mean`），于是拿到的是另一个模型的向量 ——
+不报错，只是悄悄换掉语义。因此改用 `AutoModel` + 显式 `[CLS]` + L2 归一。
+ModelScope 上唯一的 SapBERT 是 Xenova 的 ONNX 版、没有 PyTorch 权重，
+故在 `_MIRRORS` 里显式登记为 `None`（并有测试守着，防止被"顺手"填回去）。
 
 不加 `--milvus` 时那 6 个臂会明确列在"未运行的臂（后端不可达，非结果）"下，
 **不会**退化成本地后端顶替。这条是刻意的：一份写着 Milvus 却实际由本地跑出的数字，
@@ -113,6 +125,15 @@ N-Triples 不行 —— 它按集合迭代序直接倾倒，不排序。
 `tests/test_canon_ttl.py` 守三条性质：已提交的生成物已是规范形式、
 重新序列化后规范化能回到同一份字节、以及**规范化不改变图语义**
 （最后一条是安全带：一个把文件清空的实现同样"幂等"）。
+
+默认套件只跑每类最小的一份文件：`to_canonical_graph` 是图同构算法，
+随空白节点数急剧变慢，全部 10 份要 4 分半（`hmd_agentapi.owl.ttl` 一份就占 79 秒）。
+把它塞进 `make check` 的真实后果不是"慢一点"，是大家不再跑 `make check`。
+**全量覆盖挂 nightly**：
+
+```bash
+make nightly        # = make canon-check，全部 10 份，只判定不落盘，约 50s
+```
 
 ---
 

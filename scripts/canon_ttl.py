@@ -37,8 +37,8 @@ def _sort_set_valued_lists(graph: Graph) -> None:
                 collection[index] = member
 
 
-def canonicalize(path: Path) -> bool:
-    """重写为规范形式。返回内容是否发生变化。"""
+def canonicalize(path: Path, *, check: bool = False) -> bool:
+    """重写为规范形式，返回内容是否发生变化。`check=True` 时只判定、不落盘。"""
     original = path.read_text(encoding="utf-8")
     graph = Graph()
     graph.parse(data=original, format="turtle")
@@ -54,19 +54,29 @@ def canonicalize(path: Path) -> bool:
     out = canonical.serialize(format="turtle")
     if out == original:
         return False
-    path.write_text(out, encoding="utf-8")
+    if not check:
+        path.write_text(out, encoding="utf-8")
     return True
 
 
 def main(argv: list[str]) -> int:
-    if not argv:
-        print("用法: canon_ttl.py <file.ttl>...", file=sys.stderr)
+    check = "--check" in argv
+    paths = [Path(a) for a in argv if a != "--check"]
+    if not paths:
+        print("用法: canon_ttl.py [--check] <file.ttl>...", file=sys.stderr)
         return 2
-    for arg in argv:
-        path = Path(arg)
-        if canonicalize(path):
-            print(f"canon {path}")
-    return 0
+
+    drifted = [p for p in paths if canonicalize(p, check=check)]
+    if not check:
+        for p in drifted:
+            print(f"canon {p}")
+        return 0
+
+    for p in drifted:
+        print(f"非规范形式: {p}", file=sys.stderr)
+    if drifted:
+        print(f"\n{len(drifted)}/{len(paths)} 份生成物不是规范形式，请跑 make gen", file=sys.stderr)
+    return 1 if drifted else 0
 
 
 if __name__ == "__main__":

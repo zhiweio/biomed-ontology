@@ -29,7 +29,7 @@ _SPEC.loader.exec_module(canon_ttl)
 # 全部 10 份跑一遍要 4 分半，而 hmd_agentapi.owl.ttl 一份就占 79 秒。
 # 把它塞进默认套件的真实后果不是"慢一点"，是大家不再跑 make check。
 #
-# 全量覆盖交给 `make gen` —— 它对所有文件重新规范化，多出来的 diff 会当场暴露。
+# 全量覆盖挂在 `make nightly`（= `make canon-check`，只判定不落盘）。
 # 这里守的是**机制没坏**：规范化确实消除重排，且不改变图语义。
 TTL_FILES = [
     GENERATED / "hmd_concept.shacl.ttl",

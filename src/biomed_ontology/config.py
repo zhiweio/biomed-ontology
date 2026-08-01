@@ -29,7 +29,7 @@ __all__ = [
 ]
 
 LayoutBackendName = Literal["pymupdf", "mineru"]
-ModelHubName = Literal["hf", "modelscope"]
+ModelHubName = Literal["hf", "modelscope", "gitee"]
 SearchBackendName = Literal["local", "milvus"]
 VisionProviderName = Literal["null", "openai", "qwen"]
 
@@ -68,8 +68,9 @@ class Settings(BaseSettings):
     milvus_collection: str = "hmd_chunks"
 
     # --- 模型权重源 -------------------------------------------------------
-    # 内网环境往往连不上 huggingface.co（TLS 直接被重置），改走 ModelScope。
-    # 仓库 ID 两边不同名，映射写在 embed._MODELSCOPE_IDS。
+    # 内网往往连不上 huggingface.co（TLS 直接被重置）。取不到时自动回落 Gitee
+    # 镜像（gitee.com/hf-models），仓库名映射见 embed._MIRRORS。
+    # 手工放进 model_cache_dir/models/<仓库名> 的权重优先于任何下载。
     model_hub: ModelHubName = "hf"
     model_cache_dir: Path = Path("data/cache/models")
 
