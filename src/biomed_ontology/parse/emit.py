@@ -163,6 +163,7 @@ def _table_block(block: Any, idx: int, assets: dict[Any, Any]) -> TableBlock:
         bbox=list(block.bbox) or [0.0, 0.0, 0.0, 0.0],
         header=header,
         rows=rows,
+        asset_path=result.rel_path if result else None,
     )
 
 
@@ -174,9 +175,10 @@ def _image_block(block: Any, idx: int, assets: dict[Any, Any]) -> ImageBlock:
         page=block.page,
         bbox=list(block.bbox) or [0.0, 0.0, 0.0, 0.0],
         kind="figure",
-        vision_summary=result.summary if result else None,
+        vision_summary=(result.summary or None) if result else None,
         # 只放行过了形状校验的值 —— sanitize 在 vision 层已经做过
         extracted_values=dict(result.extracted) if result else {},
+        asset_path=result.rel_path if result else None,
     )
 
 

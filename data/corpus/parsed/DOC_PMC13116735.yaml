@@ -1,0 +1,2312 @@
+corpus_version: 0.1.0
+parse:
+  backend: pymupdf
+  degraded:
+  - formula
+  same_as: {}
+sections_meta:
+- section_id: SEC:PMC13116735#0000
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: Introduction
+  section_title: Introduction
+  section_level: 1
+  sort_order: 0
+  start_page: 1
+  end_page: 1
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=1 page=1
+- section_id: SEC:PMC13116735#0001
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 'Metastatic Colorectal Cancer Beyond Third-Line Treatment:'
+  section_title: 'Metastatic Colorectal Cancer Beyond Third-Line Treatment:'
+  section_level: 1
+  sort_order: 1
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 17.9
+  - 粗体
+- section_id: SEC:PMC13116735#0002
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: Systematic Review and Meta-Analysis of Later-Line Therapies
+  section_title: Systematic Review and Meta-Analysis of Later-Line Therapies
+  section_level: 1
+  sort_order: 2
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 17.9
+  - 粗体
+- section_id: SEC:PMC13116735#0003
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 37045 Legnago, Italy
+  section_title: 37045 Legnago, Italy
+  section_level: 1
+  sort_order: 3
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 37045
+- section_id: SEC:PMC13116735#0004
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: Abstract
+  section_title: Abstract
+  section_level: 1
+  sort_order: 4
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.66
+  evidence:
+  - 命中标准章节名
+- section_id: SEC:PMC13116735#0005
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 1.Introduction
+  section_title: 1.Introduction
+  section_level: 1
+  sort_order: 5
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 1
+- section_id: SEC:PMC13116735#0006
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 2 of 11
+  section_title: 2 of 11
+  section_level: 1
+  sort_order: 6
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2
+- section_id: SEC:PMC13116735#0007
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: Materials & Methods
+  section_title: Materials & Methods
+  section_level: 1
+  sort_order: 7
+  start_page: 3
+  end_page: 3
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=1 page=3
+- section_id: SEC:PMC13116735#0008
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 3 of 11
+  section_title: 3 of 11
+  section_level: 1
+  sort_order: 8
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3
+- section_id: SEC:PMC13116735#0009
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0008
+  section_path: 3 of 11 / Study Design
+  section_title: Study Design
+  section_level: 2
+  sort_order: 9
+  start_page: 3
+  end_page: 3
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=3
+- section_id: SEC:PMC13116735#0010
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0008
+  section_path: 3 of 11 / Search Strategy and Data Extraction
+  section_title: Search Strategy and Data Extraction
+  section_level: 2
+  sort_order: 10
+  start_page: 3
+  end_page: 3
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=3
+- section_id: SEC:PMC13116735#0011
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0008
+  section_path: 3 of 11 / 2.1.Study Design
+  section_title: 2.1.Study Design
+  section_level: 2
+  sort_order: 11
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.1
+- section_id: SEC:PMC13116735#0012
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0008
+  section_path: 3 of 11 / 2.2.Search Strategy and Data Extraction
+  section_title: 2.2.Search Strategy and Data Extraction
+  section_level: 2
+  sort_order: 12
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.2
+- section_id: SEC:PMC13116735#0013
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0012
+  section_path: 3 of 11 / 2.2.Search Strategy and Data Extraction / 2.Materials &
+    Methods
+  section_title: 2.Materials & Methods
+  section_level: 3
+  sort_order: 13
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=3 page=3
+  - 字号 12.0
+  - 粗体
+- section_id: SEC:PMC13116735#0014
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: Results
+  section_title: Results
+  section_level: 1
+  sort_order: 14
+  start_page: 4
+  end_page: 4
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=1 page=4
+- section_id: SEC:PMC13116735#0015
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 4 of 11
+  section_title: 4 of 11
+  section_level: 1
+  sort_order: 15
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4
+- section_id: SEC:PMC13116735#0016
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 3.Results
+  section_title: 3.Results
+  section_level: 1
+  sort_order: 16
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3
+- section_id: SEC:PMC13116735#0017
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0016
+  section_path: 3.Results / Statistical Analyses
+  section_title: Statistical Analyses
+  section_level: 2
+  sort_order: 17
+  start_page: 4
+  end_page: 4
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=4
+- section_id: SEC:PMC13116735#0018
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0016
+  section_path: 3.Results / Study Characteristics
+  section_title: Study Characteristics
+  section_level: 2
+  sort_order: 18
+  start_page: 4
+  end_page: 4
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=4
+- section_id: SEC:PMC13116735#0019
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0016
+  section_path: 3.Results / 2.3.Statistical Analyses
+  section_title: 2.3.Statistical Analyses
+  section_level: 2
+  sort_order: 19
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.3
+- section_id: SEC:PMC13116735#0020
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0016
+  section_path: 3.Results / 3.1.Study Characteristics
+  section_title: 3.1.Study Characteristics
+  section_level: 2
+  sort_order: 20
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.1
+- section_id: SEC:PMC13116735#0021
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 5 of 11
+  section_title: 5 of 11
+  section_level: 1
+  sort_order: 21
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13116735#0022
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa
+  section_title: 8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa
+  section_level: 1
+  sort_order: 22
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 8
+- section_id: SEC:PMC13116735#0023
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0022
+  section_path: 8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa
+    / Overall Survival
+  section_title: Overall Survival
+  section_level: 2
+  sort_order: 23
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+- section_id: SEC:PMC13116735#0024
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0022
+  section_path: 8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa
+    / 3.2.Overall Survival
+  section_title: 3.2.Overall Survival
+  section_level: 2
+  sort_order: 24
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.2
+- section_id: SEC:PMC13116735#0025
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 6 of 11
+  section_title: 6 of 11
+  section_level: 1
+  sort_order: 25
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 6
+- section_id: SEC:PMC13116735#0026
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0025
+  section_path: 6 of 11 / Comparative Analysis of Mean Overall Survival
+  section_title: Comparative Analysis of Mean Overall Survival
+  section_level: 2
+  sort_order: 26
+  start_page: 6
+  end_page: 6
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=6
+- section_id: SEC:PMC13116735#0027
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0025
+  section_path: 6 of 11 / Survival Curve Comparison
+  section_title: Survival Curve Comparison
+  section_level: 2
+  sort_order: 27
+  start_page: 6
+  end_page: 6
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=6
+- section_id: SEC:PMC13116735#0028
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0025
+  section_path: 6 of 11 / 3.3.Comparative Analysis of Mean Overall Survival
+  section_title: 3.3.Comparative Analysis of Mean Overall Survival
+  section_level: 2
+  sort_order: 28
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.3
+- section_id: SEC:PMC13116735#0029
+  doc_id: DOC:PMC13116735
+  parent_section_id: SEC:PMC13116735#0025
+  section_path: 6 of 11 / 3.4.Survival Curve Comparison
+  section_title: 3.4.Survival Curve Comparison
+  section_level: 2
+  sort_order: 29
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.4
+- section_id: SEC:PMC13116735#0030
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 7 of 11
+  section_title: 7 of 11
+  section_level: 1
+  sort_order: 30
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7
+- section_id: SEC:PMC13116735#0031
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 5 mg/day
+  section_title: 5 mg/day
+  section_level: 1
+  sort_order: 31
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13116735#0032
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '7.4'
+  section_title: '7.4'
+  section_level: 1
+  sort_order: 32
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7
+- section_id: SEC:PMC13116735#0033
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '2.6'
+  section_title: '2.6'
+  section_level: 1
+  sort_order: 33
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2
+- section_id: SEC:PMC13116735#0034
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '4.8'
+  section_title: '4.8'
+  section_level: 1
+  sort_order: 34
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4
+- section_id: SEC:PMC13116735#0035
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 160 mg/day
+  section_title: 160 mg/day
+  section_level: 1
+  sort_order: 35
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 160
+- section_id: SEC:PMC13116735#0036
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '6.4'
+  section_title: '6.4'
+  section_level: 1
+  sort_order: 36
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 6
+- section_id: SEC:PMC13116735#0037
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '1.4'
+  section_title: '1.4'
+  section_level: 1
+  sort_order: 37
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 1
+- section_id: SEC:PMC13116735#0038
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '0.0050'
+  section_title: '0.0050'
+  section_level: 1
+  sort_order: 38
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 0
+- section_id: SEC:PMC13116735#0039
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '5.0'
+  section_title: '5.0'
+  section_level: 1
+  sort_order: 39
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13116735#0040
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '8.8'
+  section_title: '8.8'
+  section_level: 1
+  sort_order: 40
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 8
+- section_id: SEC:PMC13116735#0041
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '2.5'
+  section_title: '2.5'
+  section_level: 1
+  sort_order: 41
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2
+- section_id: SEC:PMC13116735#0042
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '6.3'
+  section_title: '6.3'
+  section_level: 1
+  sort_order: 42
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 6
+- section_id: SEC:PMC13116735#0043
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 35 mg/m2BID
+  section_title: 35 mg/m2BID
+  section_level: 1
+  sort_order: 43
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 35
+- section_id: SEC:PMC13116735#0044
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '7.1'
+  section_title: '7.1'
+  section_level: 1
+  sort_order: 44
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7
+- section_id: SEC:PMC13116735#0045
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '1.8'
+  section_title: '1.8'
+  section_level: 1
+  sort_order: 45
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 1
+- section_id: SEC:PMC13116735#0046
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '5.3'
+  section_title: '5.3'
+  section_level: 1
+  sort_order: 46
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13116735#0047
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: Discussion
+  section_title: Discussion
+  section_level: 1
+  sort_order: 47
+  start_page: 8
+  end_page: 8
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=1 page=8
+- section_id: SEC:PMC13116735#0048
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 8 of 11
+  section_title: 8 of 11
+  section_level: 1
+  sort_order: 48
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 8
+- section_id: SEC:PMC13116735#0049
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '7.4 #2'
+  section_title: '7.4'
+  section_level: 1
+  sort_order: 49
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7
+- section_id: SEC:PMC13116735#0050
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '3.7'
+  section_title: '3.7'
+  section_level: 1
+  sort_order: 50
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3
+- section_id: SEC:PMC13116735#0051
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '6.4 #2'
+  section_title: '6.4'
+  section_level: 1
+  sort_order: 51
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 6
+- section_id: SEC:PMC13116735#0052
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '1.9'
+  section_title: '1.9'
+  section_level: 1
+  sort_order: 52
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 1
+- section_id: SEC:PMC13116735#0053
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '8.8 #2'
+  section_title: '8.8'
+  section_level: 1
+  sort_order: 53
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 8
+- section_id: SEC:PMC13116735#0054
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '3.2'
+  section_title: '3.2'
+  section_level: 1
+  sort_order: 54
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3
+- section_id: SEC:PMC13116735#0055
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '7.1 #2'
+  section_title: '7.1'
+  section_level: 1
+  sort_order: 55
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7
+- section_id: SEC:PMC13116735#0056
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: '2.0'
+  section_title: '2.0'
+  section_level: 1
+  sort_order: 56
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2
+- section_id: SEC:PMC13116735#0057
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 4.Discussion
+  section_title: 4.Discussion
+  section_level: 1
+  sort_order: 57
+  start_page: 8
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4
+- section_id: SEC:PMC13116735#0058
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 9 of 11
+  section_title: 9 of 11
+  section_level: 1
+  sort_order: 58
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 9
+- section_id: SEC:PMC13116735#0059
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: Conclusions
+  section_title: Conclusions
+  section_level: 1
+  sort_order: 59
+  start_page: 10
+  end_page: 10
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=1 page=10
+- section_id: SEC:PMC13116735#0060
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 10 of 11
+  section_title: 10 of 11
+  section_level: 1
+  sort_order: 60
+  start_page: 10
+  end_page: 10
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 10
+- section_id: SEC:PMC13116735#0061
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 5.Conclusions
+  section_title: 5.Conclusions
+  section_level: 1
+  sort_order: 61
+  start_page: 10
+  end_page: 10
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13116735#0062
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: References
+  section_title: References
+  section_level: 1
+  sort_order: 62
+  start_page: 11
+  end_page: 11
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=1 page=11
+  - pymupdf 版面信号 level=3 page=11
+  - 字号 12.0
+  - 粗体
+  - 命中标准章节名
+- section_id: SEC:PMC13116735#0063
+  doc_id: DOC:PMC13116735
+  parent_section_id: null
+  section_path: 11 of 11
+  section_title: 11 of 11
+  section_level: 1
+  sort_order: 63
+  start_page: 11
+  end_page: 11
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 11
+documents:
+- doc_id: DOC:PMC13116735
+  source_id: PUBMED
+  external_id: PMC13116735
+  title: 'Metastatic Colorectal Cancer Beyond Third-Line Treatment: Systematic Review
+    and Meta-Analysis of Later-Line Therapies.'
+  doc_type: JOURNAL_ARTICLE
+  language: en
+  license_tier: TIER_0
+  sections:
+  - name: Introduction
+    text: 'Academic Editor: Fabio Francesco Di
+
+      Mola
+
+      Received: 10 March 2026
+
+      Revised: 1 April 2026
+
+      Accepted: 13 April 2026
+
+      Published: 20 April 2026
+
+      Copyright: © 2026 by the authors.
+
+      Licensee MDPI, Basel, Switzerland.
+
+      This article is an open access article
+
+      distributed under the terms and
+
+      conditions of theCreative Commons
+
+      Attribution (CC BY) license.
+
+      Systematic Review
+
+      Jacopo Giuliani1,*
+
+      , Emilia Durante1, Daniela Mangiola1, Andrea Georgopulos2
+
+      , Beatrice Mantoan3
+
+      and Francesco Fiorica1,2
+
+      1
+
+      Department of Clinical Oncology, Section of Medical Oncology, AULSS 9 Scaligera,
+      37045 Legnago, Italy
+
+      2
+
+      Department of Clinical Oncology, Section of Radiation Oncology and Nuclear Medicine,
+      AULSS 9 Scaligera,
+
+      37045 Legnago, Italy
+
+      3
+
+      Department of Diagnostic Imaging, AULSS 9 Scaligera, 37045 Legnago, Italy
+
+      *
+
+      Correspondence:jacopo.giuliani@aulss9.veneto.it; Tel.:+39-0442622801
+
+      Abstract
+
+      Objectives:Toevaluateandindirectlycompareoverallsurvival(OS)andsafetyofre-
+
+      gorafenib,fruquintinib,andtrifluridine/tipiracil(TAS-102)monotherapyinrefractory
+
+      metastatic colorectal cancer (mCRC) beyond the third line.Methods:A systematic
+      review
+
+      and meta-analysis of phase II/III randomized controlled trials was conducted
+      according
+
+      toPRISMAguidelines.PubMed/MEDLINE,Embase,andCochraneCENTRALwere
+
+      searched from inception.Eligible studies included patients with mCRC previously
+      treated
+
+      with standard chemotherapy and biologic agents, receiving regorafenib, fruquintinib,
+      or
+
+      TAS-102asmonotherapyinthefourthlineorlater.OSdatawerereconstructedfrom
+
+      publishedKaplan–Meiercurves.PooledmedianandmeanOSwereestimatedusinga
+
+      random-effects model, and heterogeneity was assessed using the I2statistic.Safety
+      out-
+
+      comes were descriptively summarized.Results:Four RCTs were included.The pooled
+
+      median OS was 7.83 months (95% CI: 6.98–8.80), and the pooled mean OS was 8.90
+      months
+
+      (95% CI: 8.00–9.81), with no heterogeneity (I2= 0%).Survival gains versus placebo
+      ranged
+
+      from 1.4 to 2.6 months.Survival curves largely overlapped, with differences
+      below one
+
+      month.Safety was consistent with known profiles.Conclusions:These agents provide
+
+      comparable efficacy with modest survival benefit in late-line mCRC, highlighting
+      the need
+
+      for improved strategies and better treatment sequencing.
+
+      Keywords:metastatic colorectal cancer; late-line therapy; trifluridine/tipiracil;
+      regorafenib;
+
+      fruquintinib; overall survival; systematic review
+
+      1.Introduction
+
+      Metastatic colorectal cancer (mCRC) remains a major cause of cancer-related
+      mortality
+
+      worldwidedespiteimprovementsinsystemictherapies.Inselectedpatients,tailored
+
+      multidisciplinary approaches, including surgical resection of metastatic lesions,
+      may offer
+
+      long-termsurvivalbenefits,particularlyinoligometastaticdisease.Standardfirst-and
+
+      second-line treatments typically consist of combination chemotherapy (fluoropyrimidine,
+
+      oxaliplatin, irinotecan) with targeted agents such as anti-VEGF or anti-EGFR
+      antibodies,
+
+      achieving median overall survival (OS) approaching 30 months in selected populations.
+
+      However, most patients eventually experience disease progression, and treatment
+      options
+
+      beyond the second line are limited and associated with modest benefit, underscoring
+      an
+
+      unmet clinical need in this refractory setting.
+
+      J. Clin.Med. 2026, 15, 3128
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 1
+  - name: 2 of 11
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      2 of 11
+
+      Twooralagents,trifluridine/tipiracil[1](TAS102)andregorafenib[2],havelong
+
+      been established as standard salvage therapies for mCRC after progression on
+      standard
+
+      regimens, demonstrating statistically significant albeit incremental OS benefits
+      compared
+
+      with best supportive care (BSC) or placebo in pivotal trials.These agents are
+      approved
+
+      for use in patients previously treated with fluoropyrimidine-, oxaliplatin-,
+      and irinotecan-
+
+      based chemotherapy, as well as prior anti-VEGF therapy, and anti-EGFR therapy
+      if RAS
+
+      wild-type.Regorafenib, an oral multi-kinase inhibitor that targets angiogenic,
+      stromal and
+
+      oncogenic kinases including VEGFR, has been shown to increase OS in refractory
+      mCRC
+
+      and remains a benchmark in this setting.
+
+      More recently, combination strategies aiming to enhance efficacy over monotherapy
+
+      havebeeninvestigated.TheSUNLIGHTphaseIIItrial[3]establishedthatTAS102in
+
+      combination with bevacizumab (an anti-VEGF antibody) significantly improves
+      survival
+
+      outcomes versus (vs.)TAS102 alone in refractory mCRC, resulting in regulatory
+      approvals
+
+      in multiple jurisdictions for patients who have received at least two prior
+      lines of therapy. In
+
+      this study, the addition of bevacizumab increased median OS and progression-free
+      survival
+
+      (PFS) compared with TAS102 alone, supporting maintenance of anti-angiogenic
+      blockade
+
+      beyond progression on prior bevacizumab-containing regimens.
+
+      In parallel, regorafenib continues to be utilized as a salvage option, including
+      after
+
+      progression on TAS102 plus bevacizumab, with retrospective real-world analyses
+      suggest-
+
+      ing similar efficacy and safety outcomes in this sequence [4,5].Additionally,
+      fruquintinib, a
+
+      highly selective oral inhibitor of VEGFR-1, -2 and -3, has emerged as an effective
+      third-line
+
+      therapy, demonstrating significant improvements in OS and PFS compared with
+      placebo
+
+      in the international phase III FRESCO-2 trial [6], with a median OS of 7.4 months
+      in the
+
+      fruquintinibgroupvs.4.8monthsintheplacebogroup(HR=0.66,95%CI0.55–0·80,
+
+      p < 0.0001). These results have informed regulatory approvals globally for previously
+      treated
+
+      mCRC, including in patients who have progressed following TAS102 and/or regorafenib.
+
+      Importantly, despite these advances, the absolute magnitude of survival benefit
+      ob-
+
+      served with currently available later-line therapies remains limited, typically
+      below three
+
+      months.This raises critical questions regarding their clinical relevance, cost-effectiveness,
+
+      and overall value, particularly in heavily pretreated patients with limited
+      life expectancy.
+
+      TheoptimalmanagementofmCRCbeyondthethirdlineoftherapyremainsan
+
+      areaofsubstantialclinicaluncertainty.WhilecombinationstrategiessuchasTAS102
+
+      plus bevacizumab have reshaped the standard third-line approach, treatment decisions
+
+      afterfailureofstandardchemotherapydoubletsandbiologicagentsandparticularly
+
+      after progression on a third-line regimen are not guided by direct comparative
+      evidence.
+
+      Inroutinepractice,patientswhohavealreadyreceivedfluoropyrimidine,oxaliplatin
+
+      and irinotecan-based chemotherapy, as well as anti-VEGF and, where appropriate,
+      anti-
+
+      EGFR therapy, may receive sequential oral agents including regorafenib, fruquintinib,
+      or
+
+      trifluridine/tipiracil (TAS-102) monotherapy, depending on prior sequencing
+      strategies.
+
+      In clinical scenarios where TAS102 plus bevacizumab is administered in the third
+      line,
+
+      subsequentoptionsaretypicallylimitedtoregorafeniborfruquintinib.Conversely,in
+
+      settings where regorafenib is chosen as third-line therapy, TAS-102 monotherapy
+      may be
+
+      reserved for later lines.Therefore, a clear understanding of the relative efficacy
+      and safety
+
+      of these agents beyond third-line therapy is critically needed to inform evidence-based
+
+      sequencing decisions.
+
+      The primary aim of this study was to conduct a systematic review and quantitative
+
+      meta-analysis of phase II/III randomized controlled trials (RCTs) with reconstructed
+      sur-
+
+      vival data in order to evaluate OS among patients receiving regorafenib, fruquintinib,
+      or
+
+      TAS-102 monotherapy beyond the third line for refractory mCRC. Specifically,
+      this anal-
+
+      ysis aimed to estimate pooled survival outcomes and to perform an indirect descriptive
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 2
+  - name: 3 of 11 / 2.2.Search Strategy and Data Extraction / 2.Materials & Methods
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      3 of 11
+
+      comparisonofsurvivaldynamicsacrossapprovedlate-linetherapiesintheabsenceof
+
+      head-to-head trials.
+
+      By focusing exclusively on treatment beyond the third line and excluding combination
+
+      strategies such as TAS-102 plus bevacizumab administered in third line, this
+      meta-analysis
+
+      aims to clarify the comparative benefit-risk profiles of currently available
+      oral agents in
+
+      the late-line setting.The results are expected to provide clinically meaningful
+      evidence
+
+      to guide sequencing strategies in heavily pretreated mCRC patients and to identify
+      areas
+
+      where prospective comparative trials are urgently needed.
+
+      2.1.Study Design
+
+      This study was designed as a systematic review and quantitative meta-analysis
+      [7,8]
+
+      conducted in accordance with the Preferred Reporting Items for Systematic Reviews
+      and
+
+      Meta-Analyses (PRISMA) guidelines [9,10].In the Supplementary Material, you
+      can find
+
+      the PRISMA checklist [10].
+
+      In addition to OS, qualitative information on study characteristics, including
+      inclusion
+
+      and exclusion criteria, patient populations, and sample size assumptions, was
+      collected to
+
+      improve contextual interpretation of results.
+
+      Studies were included if they met the following criteria:
+
+      1.
+
+      Population:adult patients (≥18 years) with histologically confirmed metastatic
+      col-
+
+      orectaladenocarcinomapreviouslytreatedwithatleastthreepriorsystemiclines,
+
+      including fluoropyrimidine, oxaliplatin, irinotecan, and anti-VEGF therapy (and
+      anti-
+
+      EGFR therapy for RAS wild-type tumors when applicable).
+
+      2.
+
+      Intervention:regorafenib, fruquintinib, or TAS-102 administered as monotherapy
+      in
+
+      the fourth line or later.
+
+      3.
+
+      Comparator:placebo or best supportive care.
+
+      4.
+
+      Outcomes:reporting OS with available Kaplan–Meier survival curves.
+
+      Retrospective studies, single-arm trials, non-randomized studies, third-line
+      combina-
+
+      tion regimens, and non-English publications were excluded.
+
+      The primary and sole quantitative endpoint of this meta-analysis was OS, defined
+      as
+
+      the time from randomization to death from any cause.
+
+      Studies evaluating TAS-102 in combination with bevacizumab as third-line therapy
+
+      were excluded, as the objective of the present analysis was to focus exclusively
+      on treatments
+
+      administeredbeyondthethirdline.Retrospectivestudies,single-armtrialswithouta
+
+      comparator arm, case reports, and non-English publications were excluded.
+
+      Exclusion criteria were consolidated into a single section to avoid redundancy
+      and
+
+      improve clarity.
+
+      No time restrictions were applied in the literature search.
+
+      2.2.Search Strategy and Data Extraction
+
+      A comprehensive literature search was conducted in PubMed/MEDLINE, Embase,
+
+      and the Cochrane Central Register of Controlled Trials (CENTRAL) from database
+      inception
+
+      to the most recent date prior to analysis.Major oncology conference proceedings
+      were
+
+      also screened.The search strategy combined terms related to metastatic colorectal
+      cancer,
+
+      refractory disease, late-line therapy, regorafenib, fruquintinib, TAS-102, randomized,
+      and
+
+      phaseIIItrials.Referencelistsofrelevantarticlesweremanuallyreviewedtoidentify
+
+      additional eligible studies.The search strategy included combinations of the
+      following
+
+      keywordsandMedicalSubjectHeadings(MeSH)terms:“metastaticcolorectalcancer,”
+
+      “refractorycolorectalcancer,”“fourthline,”“laterline,”“regorafenib,”“fruquintinib,”
+
+      “trifluridine,” “tipiracil,” “TAS-102,” “randomized,” and “phase III.”
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 3
+  - name: 3.Results / Statistical Analyses
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      4 of 11
+
+      Thefullsearchstrategy(includingcompletesearchstringsforeachdatabase)was
+
+      defined to ensure reproducibility.
+
+      Twoindependentreviewers(JGandFF)screenedtitlesandabstracts,followedby
+
+      full-textevaluationaccordingtopredefinedeligibilitycriteria.Discrepancieswerere-
+
+      solved through discussion.From each eligible trial, the following study-level
+      data were
+
+      extracted:study name, publication year, geographic region, number of participants,
+      treat-
+
+      ment arms, and reported survival outcomes.Kaplan–Meier curves for OS were retrieved
+
+      for reconstruction.
+
+      When individual patient data were not available, published Kaplan–Meier survival
+
+      curves were digitized to reconstruct time-to-event data using established statistical
+      meth-
+
+      ods.Extracted information was used exclusively for survival reconstruction and
+      pooled
+
+      survival estimation.
+
+      Information on planned sample size and statistical power calculations, when
+      available,
+
+      was also extracted.
+
+      Risk of bias was assessed independently by two reviewers using the Cochrane
+      Risk
+
+      of Bias tool, evaluating randomization, allocation concealment, blinding, completeness
+      of
+
+      outcome data, and selective reporting [11].
+
+      Publicationbiaswasnotformallyassessedduetothelimitednumberofincluded
+
+      studies; this was clearly distinguished from study-level risk of bias assessment.
+
+      2.3.Statistical Analyses
+
+      Statistical analyses focused primarily OS.
+
+      Kaplan–Meier curves were digitized and individual patient data were reconstructed
+
+      using the Guyot method.Numbers at risk were extracted when available, censoring
+      was
+
+      handled according to established methods, and reconstructed curves were visually
+      val-
+
+      idatedagainstpublisheddata.MedianOSandhazardratioswereconsideredprimary
+
+      reference endpoints, while mean OS was estimated to allow pooled survival curve
+      genera-
+
+      tion and comparison of survival dynamics over time.
+
+      A random-effects model was used to account for potential between-study variability.
+
+      Median OS values were summarized descriptively across studies and aggregated
+      to provide
+
+      an overall estimate.
+
+      Between-study heterogeneity was assessed using the I2statistic and the χ2test.An
+
+      I2value<25%wasconsideredlowheterogeneity,25–50%moderate,and>50%high
+
+      heterogeneity.
+
+      Reconstructedsurvivalcurveswerevisuallycomparedtoevaluatedifferencesin
+
+      survival dynamics over time [12].All statistical analyses were performed using
+      R software
+
+      R version 4.2.0 (R Foundation for Statistical Computing, Vienna, Austria), with
+      survival
+
+      and meta-analysis packages.
+
+      Given the limited number of included trials (n = 4), formal assessment of publication
+
+      bias was not performed.
+
+      3.Results
+
+      3.1.Study Characteristics
+
+      A dedicated Study Characteristics section was introduced to improve clarity.
+
+      Four RCTs treatment were included in the meta-analysis (Figure 1).The investigated
+
+      agents were TAS-102 alone (1 RCT), regorafenib (2 independent RCTs), and fruquintinib
+
+      (1 RCT). All studies enrolled heavily pretreated patients with refractory disease
+      and re-
+
+      portedOSastheprimaryendpoint.ThesummaryoftheanalyzedphaseIIIRCTsis
+
+      reported in Table 1.
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 4
+  - name: 8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa
+      / Overall Survival
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      5 of 11
+
+      Figure 1.Study flow chart.
+
+      Althoughinclusioncriteriawerebroadlysimilar,differenceswereobservedinge-
+
+      ographicdistributionandpriortreatmentexposure.Notably,theCONCURtrial[13]
+
+      enrolledexclusivelyAsianpatientsandincludedalowerproportionofpriorbiologic
+
+      therapy compared with other studies.
+
+      3.2.Overall Survival
+
+      Pooled Survival Estimates
+
+      TheaggregatedmedianOSacrosstheincludedstudieswas7.83months(95%
+
+      CI:6.98–8.80 months).
+
+      ThepooledestimatedmeanOSwas8.90months(95%CI:
+
+      8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa
+
+      high degree of consistency in survival outcomes across the included RCTs.
+
+      The median OS gain versus placebo ranged from 1.4 to 2.6 months, with an approxi-
+
+      mate pooled improvement of 2.1 months.
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 5
+  - name: 6 of 11 / Comparative Analysis of Mean Overall Survival
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      6 of 11
+
+      No statistical heterogeneity was observed (I2= 0%); however, this finding should
+      be
+
+      interpreted cautiously given the small number of included trials.
+
+      3.3.Comparative Analysis of Mean Overall Survival
+
+      Numerical differences in mean OS were observed among treatments:
+
+      •
+
+      regorafenib (CONCUR) [13] showed the highest mean OS (9.34 months).
+
+      •
+
+      TAS-102 (RECOURSE) [1] demonstrated a mean OS of approximately 9.07 months.
+
+      •
+
+      regorafenib (CORRECT) [2] showed a mean OS of approximately 8.67 months.
+
+      •
+
+      fruquintinib (FRESCO-2) [6] demonstrated a mean OS of approximately 8.50 months.
+
+      The maximum absolute difference between treatments remained below one month,
+
+      indicating limited clinically meaningful differences across agents.
+
+      A summary of median OS, median PFS, and major grade ≥3 adverse events for each
+
+      included trial is reported in Table 2, providing a direct comparison of efficacy
+      and safety
+
+      across approved late-line therapies.
+
+      3.4.Survival Curve Comparison
+
+      The reconstructed OS curves (Figure 1) demonstrated a broadly overlapping pattern
+
+      across the four treatment strategies.At early time points (3–6 months), survival
+      probabili-
+
+      ties were comparable across agents, with slight numerical separation favoring
+      regorafenib
+
+      (CONCUR) [13].Between 9 and 12 months, modest divergence was observed, with
+      rego-
+
+      rafenib(CONCUR)[13]maintainingthehighestsurvivalprobability,followedbyTAS-
+
+      102 (RECOURSE) [1], while regorafenib (CORRECT) [2] and fruquintinib (FRESCO-2)
+      [6]
+
+      showedslightlylowerbutlargelyoverlappingsurvivalestimates.Atlatertimepoints
+
+      (15–18 months), survival probabilities converged, with all treatments demonstrating
+      similar
+
+      tail behavior and no evidence of substantial long-term divergence.
+
+      Overall, the survival curves indicate:parallel decline over time, absence of
+      late separa-
+
+      tion and no visually appreciable heterogeneity in survival dynamics
+
+      These findings are consistent with the quantitative heterogeneity analysis (I2=
+      0%),
+
+      supporting comparable survival benefit across approved fourth-line and later
+      therapies in
+
+      refractory mCRC (Figure 2).
+
+      Figure 2.Overall survival probability over time according to treatment.Estimated
+      overall survival
+
+      probabilitiesat3,6,9,12,15,and18monthsforpatientstreatedwithfruquintinib,regorafenib
+
+      (CONCUR trial [13] and CORRECT trial [2]) and TAS-102.
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 6
+  - name: 7 of 11
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      7 of 11
+
+      Table 1.Summary of phase III RCTs evaluating fruquintinib, regorafenib, and
+      TAS-102 in patients with metastatic colorectal cancer.For each study (FRESCO-2,
+
+      CORRECT, CONCUR, and RECOURSE), the table reports the treatment regimen, total
+      number of enrolled patients (N), primary endpoint, median overall survival
+
+      (OS), absolute OS gain compared with placebo, and corresponding p-value.
+
+      Trial
+
+      Comparative
+
+      Regimens
+
+      Total N
+
+      Patients
+
+      Primary
+
+      Endpoint
+
+      Median OS
+
+      (Months)
+
+      OS Gain
+
+      (Months)
+
+      p-Value
+
+      Sample
+
+      Size/Power
+
+      Key Inclusion Criteria
+
+      FRESCO-2 [6]
+
+      fruquintinib
+
+      5 mg/day
+
+      (D1–D21, q28d)
+
+      461
+
+      OS
+
+      7.4
+
+      2.6
+
+      <0.0001
+
+      Sample size
+
+      powered for OS
+
+      with HR 0.66
+
+      Adults ≥18 y, mCRC previously
+
+      treated with ≥3 lines including
+
+      fluoropyrimidine, oxaliplatin,
+
+      irinotecan, and anti-VEGF
+
+      placebo
+
+      230
+
+      4.8
+
+      CORRECT [2]
+
+      Regorafenib
+
+      160 mg/day
+
+      (D1–D21, q28d)
+
+      505
+
+      OS
+
+      6.4
+
+      1.4
+
+      0.0050
+
+      Powered to
+
+      detect HR 0.70
+
+      with 80% power
+
+      Adults ≥18 y, mCRC refractory to
+
+      standard therapies
+
+      placebo
+
+      255
+
+      5.0
+
+      CONCUR [13]
+
+      Regorafenib
+
+      160 mg/day
+
+      (D1–D21, q28d)
+
+      136
+
+      OS
+
+      8.8
+
+      2.5
+
+      <0.001
+
+      Planned sample
+
+      size based on OS
+
+      HR 0.55
+
+      Asian adults ≥18 y, mCRC
+
+      previously treated with ≥2 lines
+
+      chemotherapy; ECOG PS 0–1
+
+      placebo
+
+      68
+
+      6.3
+
+      RECOURSE [1]
+
+      TAS-102
+
+      35 mg/m2BID
+
+      (D1–D5 and
+
+      D8–D12, q28d)
+
+      534
+
+      OS
+
+      7.1
+
+      1.8
+
+      <0.001
+
+      Powered for OS
+
+      with 80% power
+
+      Adults ≥18 y, mCRC refractory to
+
+      ≥2 prior regimens including
+
+      fluoropyrimidine, oxaliplatin,
+
+      irinotecan, anti-VEGF; RAS
+
+      wild-type for anti-EGFR
+
+      placebo
+
+      266
+
+      5.3
+
+      Legend:N = number; OS = overall survival, TAS-102 = trifluridine/tipiracil;
+      ECOG PS = Eastern Cooperative Oncology Group Performance Status.OS Gain = absolute
+      median OS
+
+      improvement vs.placebo.Key inclusion/exclusion criteria are summarized for clarity.Sample
+      size/power details reported when available.
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 7
+  - name: Discussion
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      8 of 11
+
+      Table 2.Comparative Efficacy and Safety of Late-Line Therapies in Metastatic
+      Colorectal Cancer.
+
+      Trial
+
+      Median OS
+
+      (Months)
+
+      Median PFS
+
+      (Months)
+
+      Major Grade ≥3
+
+      Adverse Events
+
+      Clinical Relevance/Comments
+
+      FRESCO-2
+
+      [6]/fruquintini
+
+      7.4
+
+      3.7
+
+      Hypertension 10%,
+
+      Hand-foot syndrome
+
+      6%, Fatigue 5%
+
+      Modest OS benefit (2.6 months vs.
+
+      placebo), manageable toxicity;
+
+      clinically relevant for patients
+
+      refractory to prior
+
+      TAS-102/regorafenib.
+
+      CORRECT
+
+      [2]/regorafenib
+
+      6.4
+
+      1.9
+
+      Fatigue 9%, Hand-foot
+
+      syndrome 17%,
+
+      Hypertension 7%
+
+      Incremental OS improvement
+
+      (1.4 months vs.placebo) with
+
+      notable toxicities; requires careful
+
+      patient selection.
+
+      CONCUR
+
+      [13]/regorafenib
+
+      8.8
+
+      3.2
+
+      Fatigue 13%, Hand-foot
+
+      syndrome 21%,
+
+      Hypertension 9%
+
+      Numerically higher OS
+
+      (2.5 months vs.placebo) in Asian
+
+      population; toxicity profile similar
+
+      to CORRECT; clinical benefit
+
+      modest but consistent.
+
+      RECOURSE
+
+      [1]/TAS-102
+
+      7.1
+
+      2.0
+
+      Neutropenia 38%,
+
+      Anemia 10%, Fatigue 5%
+
+      OS gain of 1.8 months vs.placebo;
+
+      hematologic toxicity is most
+
+      relevant; clinical benefit limited
+
+      but reproducible.
+
+      Legend:OS = Overall Survival; PFS = Progression-Free Survival; Grade ≥3 AEs
+      = Common high-grade toxicities;
+
+      Clinical relevance includes magnitude of OS benefit and safety considerations.
+
+      4.Discussion
+
+      This meta-analysis of pivotal randomized phase III trials demonstrates that
+      currently
+
+      approved later-line therapies for mCRC provide consistent survival outcomes
+      across stud-
+
+      ies,withapooledmedianoverallsurvivalof7.83monthsandameanoverallsurvival
+
+      of 8.90 months.The absence of statistically detectable heterogeneity (I2= 0%)
+      suggests
+
+      ahighdegreeofconsistencyacrosstrials;however,thisfindingshouldbeinterpreted
+
+      cautiouslygiventhelimitednumberofincludedstudiesandtheknownlowstatistical
+
+      power of heterogeneity metrics in small meta-analyses.
+
+      Despite this apparent consistency, the most clinically relevant finding of the
+      present
+
+      analysis is the limited magnitude of benefit observed across all included treatments.The
+
+      medianoverallsurvivalgainversusplaceborangedfrom1.4to2.6months,withan
+
+      approximate pooled improvement of 2.1 months.While these differences reached
+      statistical
+
+      significance in all trials, their clinical meaningfulness remains debatable,
+      particularly in a
+
+      population characterized by advanced disease, cumulative treatment toxicity,
+      and limited
+
+      life expectancy.
+
+      Thisdiscrepancybetweenstatisticalsignificanceandclinicalrelevanceisawell-
+
+      recognized challenge in oncology drug development, especially in later-line
+      settings.In
+
+      heavily pretreated patients, even small survival gains may be considered valuable;
+      however,
+
+      such benefits must be carefully contextualized within a broader framework that
+      includes
+
+      quality of life, symptom control, and treatment burden.
+
+      From a mechanistic perspective, the agents included in this analysis share overlapping
+
+      anti-angiogenic or cytotoxic properties, which may partially explain the similarity
+      in efficacy
+
+      outcomes.Regorafenib and fruquintinib both target angiogenic pathways through
+      VEGFR
+
+      inhibition, while TAS-102 exerts cytotoxic effects via nucleoside analog incorporation.The
+
+      convergenceofsurvivalcurvesobservedinthisanalysissuggeststhatthesedifferent
+
+      mechanisms ultimately translate into comparable clinical outcomes in the refractory
+      setting,
+
+      where tumor biology may be dominated by resistance mechanisms and clonal heterogeneity.
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 8
+  - name: 9 of 11
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      9 of 11
+
+      An important aspect that warrants careful consideration is the toxicity profile
+      of these
+
+      agents.Although not quantitatively analyzed in this meta-analysis, previous
+      studies have
+
+      consistently reported clinically relevant adverse events associated with later-line
+      therapies.
+
+      Regorafenib and fruquintinib are commonly associated with hypertension, hand-foot
+      skin
+
+      reaction, fatigue, and hepatotoxicity, while TAS-102 is associated with hematologic
+      toxicities
+
+      such as neutropenia and anemia.These adverse events may significantly impact
+      treatment
+
+      adherence, dose intensity, and patient quality of life, and should therefore
+      be integrated
+
+      into treatment decision-making.
+
+      In addition to toxicity, the economic burden of later-line therapies represents
+      a critical
+
+      and often under-discussed issue.The relatively high cost of these oral agents,
+      combined
+
+      with modest survival benefits,raises concerns regarding cost-effectiveness and
+      sustain-
+
+      ability,particularlyinhealthcaresystemswithlimitedresources.Inthiscontext,the
+
+      valueoftreatmentshouldnotbeassessedsolelyonstatisticalendpoints,butratheron
+
+      a comprehensive evaluation of clinical benefit, toxicity, patient-reported outcomes,
+      and
+
+      economic impact.
+
+      Another key consideration relates to the design of the included trials, all
+      of which used
+
+      placebo as the comparator.While this approach allows for clear demonstration
+      of drug
+
+      activity, it may overestimate the perceived benefit in the absence of active
+      comparators.
+
+      In real-world clinical practice, patients often receive sequential therapies,
+      and the relative
+
+      positioning of these agents remains uncertain.Therefore, cross-trial comparisons
+      should be
+
+      interpreted with caution, and the lack of head-to-head studies represents a
+      significant gap
+
+      in the current evidence base.
+
+      The interpretation of numerical differences between trials is further complicated
+      by
+
+      differencesinstudypopulations.Inparticular,theCONCURtrialenrolledexclusively
+
+      Asian patients and included a lower proportion of patients previously treated
+      with biologic
+
+      agents compared with the CORRECT trial.These differences in baseline characteristics,
+
+      prior treatment exposure, and potential pharmacogenomic factors may partially
+      explain
+
+      the numerically higher survival observed in CONCUR. This highlights the importance
+      of
+
+      considering population heterogeneity when interpreting indirect comparisons.
+
+      From a methodological standpoint, this study employed reconstruction of individual
+
+      patient data from published Kaplan–Meier curves,which represents a well-established
+
+      approach in the absence of original datasets.To enhance the robustness of the
+      analysis,
+
+      numbers at risk were incorporated when available, censoring was handled according
+      to
+
+      standard methods, and reconstructed curves were visually validated against published
+
+      data.Nevertheless, this approach remains inherently limited and cannot fully
+      substitute
+
+      for analyses based on original individual patient data.
+
+      Theuseofmeanoverallsurvivalderivedfromreconstructeddatarepresentsan
+
+      additional methodological consideration.While median OS remains the standard
+      endpoint
+
+      in oncology trials, mean OS provides complementary information by capturing
+      the entire
+
+      survival distribution and enabling the generation of pooled survival curves.This
+      approach
+
+      allows for a more comprehensive comparison of survival dynamics over time, although
+      it
+
+      should be interpreted alongside conventional endpoints.
+
+      Theabsenceofstatisticallysignificantheterogeneityshouldnotbeinterpretedas
+
+      definitiveevidenceofequivalencebetweentreatments.Giventhesmallnumberofin-
+
+      cluded studies, both I2and χ2tests have limited sensitivity to detect true heterogeneity.
+
+      Therefore, the observed consistency in outcomes should be viewed as suggestive
+      rather
+
+      than conclusive.
+
+      Importantly, the findings of this analysis reinforce the concept that treatment
+      selection
+
+      in the later-line setting should be individualized.Given the minimal differences
+      in efficacy,
+
+      factors such as toxicity profile, patient comorbidities, performance status,
+      prior treatment
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 9
+  - name: Conclusions
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      10 of 11
+
+      exposure,routeofadministration,andpatientpreferencesshouldplayacentralrole
+
+      in decision-making.
+
+      The modest survival gains observed also raise the question of potential clinical
+      futility
+
+      in certain subgroups of patients, particularly those with poor performance status
+      or rapidly
+
+      progressivedisease.Insuchcases,bestsupportivecareorpalliativeapproachesmay
+
+      represent more appropriate options, emphasizing the need for careful patient
+      selection and
+
+      shared decision-making.
+
+      This analysis has several limitations.First, it is based on reconstructed rather
+      than
+
+      original individual patient data, limiting the ability to perform adjusted analyses.Second,
+
+      cross-trial comparisons are inherently subject to bias due to differences in
+      study design
+
+      and patient populations.Third, the small number of included studies limits the
+      robustness
+
+      ofstatisticalinferences,particularlywithrespecttoheterogeneityandpublicationbias.
+
+      Fourth, toxicity and quality of life outcomes were not quantitatively assessed,
+      representing
+
+      an important area for future research.
+
+      Finally, despite the availability of multiple later-line therapies, the overall
+      prognosis
+
+      of patients with refractory mCRC remains poor, underscoring a substantial unmet
+      clinical
+
+      need [14].Future research should focus on biomarker-driven approaches, identification
+
+      of predictive factors of response, rational combination strategies, and the
+      development of
+
+      more effective treatments.Prospective head-to-head trials and real-world studies
+      will be
+
+      essential to better define optimal sequencing strategies and improve patient
+      outcomes.
+
+      5.Conclusions
+
+      In this meta-analysis of pivotal phase III RCTs evaluating TAS-102, regorafenib,
+      and
+
+      fruquintinib in refractory mCRC, survival outcomes were highly consistent, with
+      no sta-
+
+      tistical heterogeneity and only modest numerical differences between agents.Although
+
+      statistically significant, the survival benefits observed with currently available
+      later-line
+
+      therapies remain modest and of uncertain clinical relevance, with median improvements
+
+      consistently below three months.These findings highlight the importance of integrating
+
+      toxicity, quality of life, cost-effectiveness, and patient preferences into
+      treatment decisions,
+
+      as well as the urgent need for more effective therapeutic strategies.
+
+      SupplementaryMaterials:Thefollowingsupportinginformationcanbedownloadedat:https:
+
+      //www.mdpi.com/article/10.3390/jcm15083128/s1, PRISMA 2020 checklist.
+
+      Author Contributions:Conceptualization:J.G.; methodology:J.G. and F.F.; software:F.F.;
+      formal
+
+      analusis:J.G.andF.F.;datacuration:J.G.;writing—originaldraftpreparation:J.G.;reviewand
+
+      editing:E.D., D.M., A.G., B.M. and F.F. All Authors contributed equally to (1)
+      conception and design,
+
+      acquisitionofdata,oranalysisandinterpretationofdata;(2)draftingthearticleandrevisingit
+
+      criticallyforimportantintellectualcontent.Allauthorshavereadandagreedtothepublished
+
+      version of the manuscript.
+
+      Funding:This research received no external funding.
+
+      Institutional Review Board Statement:Not Applicable.
+
+      Informed Consent Statement:Not Applicable.
+
+      Data Availability Statement:The original contributions presented in this study
+      are included in the
+
+      article/Supplementary Material.Further inquiries can be directed to the corresponding
+      author.
+
+      Conflicts of Interest:The authors declare no conflict of interest.
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 10
+  - name: References
+    text: 'J. Clin.Med. 2026, 15, 3128
+
+      11 of 11
+
+      1.
+
+      Mayer, R.J.; Van Cutsem, E.; Falcone, A.; Yoshino, T.; Garcia-Carbonero, R.;
+      Mizunuma, N.; Yamazaki, K.; Shimada, Y.; Tabernero,
+
+      J.; Komatsu, Y.; et al.Randomized trial of TAS-102 for refractory metastatic
+      colorectal cancer.N. Engl.J. Med.2015, 372, 1909–1919.
+
+      [CrossRef] [PubMed]
+
+      2.
+
+      Grothey,A.;Van Cutsem,E.;Sobrero,A.;Siena,S.;Falcone,A.;Ychou,M.;Humblet,Y.;Bouché,O.;Mineur,L.;Barone,C.;
+
+      et al.Regorafenib monotherapy for previously treated metastatic colorectal cancer
+      (CORRECT): An international, multicentre,
+
+      randomized, placebo-controlled, phase 3 trial.Lancet 2013, 381, 303–312.[CrossRef]
+      [PubMed]
+
+      3.
+
+      Prager, G.W.; Taieb, J.; Fakih, M.; Ciardiello, F.; Van Cutsem, E.; Elez, E.;
+      Cruz, F.M.; Wyrwicz, L.; Stroyakovskiy, D.; Pápai, Z.;
+
+      et al.Trifluridine-Tipiracil and Bevacizumab in Refractory Metastatic Colorectal
+      Cancer.N. Engl.J. Med.2023, 388, 1657–1667.
+
+      [CrossRef] [PubMed]
+
+      4.
+
+      Coutzac,C.;Trouilloud,I.;Artru,P.;Henriques,J.;Masson,T.;Doat,S.;Bouché,O.;Coriat,R.;Saint,A.;Moulin,V.;etal.
+
+      Sequential Treatment with Trifluridine/Tipiracil and Regorafenib in Refractory
+      Metastatic Colorectal Cancer Patients:An AGEO
+
+      Prospective “Real-World Study”.Clin.Color.Cancer 2022, 21, 132–140.[CrossRef]
+      [PubMed]
+
+      5.
+
+      Patel, A.K.; Abhyankar, R.; Brais, L.K.; Duh, M.S.; Barghout, V.E.; Huynh, L.;
+      Yenikomshian, M.A.; Ng, K.; Fuchs, C.S. Trifluri-
+
+      dine/Tipiracil and Regorafenib in Patients with Metastatic Colorectal Cancer:A
+      Retrospective Study at a Tertiary Oncology
+
+      Center.Oncologist 2021, 26, e2161–e2169.[CrossRef] [PubMed]
+
+      6.
+
+      Dasari, A.; Lonardi, S.; Garcia-Carbonero, R.; Elez, E.; Yoshino, T.; Sobrero,
+      A.; Yao, J.; García-Alfonso, P.; Kocsis, J.; Cubillo Gracian,
+
+      A.;et al.Fruquintinib versus placebo in patients with refractory metastatic
+      colorectal cancer (FRESCO-2):An international,
+
+      multicentre, randomised, double-blind, phase 3 study.Lancet 2023, 402, 41–53.[CrossRef]
+      [PubMed]
+
+      7.
+
+      Simmonds,M.;Stewart,L.A.;Parmar,M.K.B. Meta-analysis of individual patient data
+      from randomized trials:A review of
+
+      methods used in practice.Clin.Trials 2005, 2, 209–217.[CrossRef] [PubMed]
+
+      8.
+
+      Parmar, M.K.; Torri, V.; Stewart, L. Extracting summary statistics to perform
+      meta-analyses of the published literature for survival
+
+      endpoints.Stat.Med.1998, 17, 2815–2834.[CrossRef]
+
+      9.
+
+      Moher,D.;Liberati,A.;Tetzlaff,J.;Altman,D.G.;PRISMAGroup.Preferredreportingitemsforsystematicreviewsand
+
+      meta-analyses:The PRISMA statement.PLoS Med.2009, 6, e1000097.[CrossRef] [PubMed]
+
+      10.
+
+      Page,M.J.;McKenzie,J.E.;Bossuyt,P.M.;Boutron,I.;Hoffmann,T.C.;Mulrow,C.D.;Shamseer,L.;Tetzlaff,J.M.;Akl,E.A.;
+
+      Brennan, S.E.; et al.The PRISMA 2020 statement:An updated guideline for reporting
+      systematic reviews.BMJ 2021, 372, n71.
+
+      [CrossRef]
+
+      11.
+
+      Higgins, J.P.; Altman, D.G.; Gøtzsche, P.C.; Jüni, P.; Moher, D.; Oxman, A.D.;
+      Savovic, J.; Schulz, K.F.; Weeks, L.; Sterne, J.A.; et al.
+
+      The Cochrane Collaboration’s tool for assessing risk of bias in randomised trials.BMJ
+      2011, 343, d5928.[CrossRef] [PubMed]
+
+      12.
+
+      Guyot, P.; Ades, A.E.; Ouwens, M.J.; Welton, N.J. Enhanced secondary analysis
+      of survival data:Reconstructing the data from
+
+      published Kaplan-Meier survival curves.BMC Med.Res.Methodol.2012, 12, 9.[CrossRef]
+
+      13.
+
+      Li, J.;Qin, S.;Xu, R.;Yau, T.C.;Ma, B.;Pan, H.;Xu, J.;Bai, Y.;Chi, Y.;Wang,
+      L.;et al.Regorafenib plus best supportive care
+
+      versus placebo plus best supportive care in Asian patients with previously treated
+      metastatic colorectal cancer (CONCUR): A
+
+      randomised, double-blind, placebo-controlled, phase 3 trial.Lancet Oncol.2015,
+      16, 619–629.[CrossRef] [PubMed]
+
+      14.
+
+      Cervantes, A.; Adam, R.; Roselló, S.; Arnold, D.; Normanno, N.; Taïeb, J.; Seligmann,
+      J.; De Baere, T.; Osterlund, P.; Yoshino, T.;
+
+      et al.Metastatic colorectal cancer:ESMO Clinical Practice Guidelines for diagnosis,
+      treatment and follow-up.Ann.Oncol.2023,
+
+      34, 10–32.[CrossRef] [PubMed]
+
+      Disclaimer/Publisher’sNote:Thestatements,opinionsanddatacontainedinallpublicationsaresolelythoseoftheindividual
+
+      author(s) and contributor(s) and not of MDPI and/or the editor(s).MDPI and/or
+      the editor(s) disclaim responsibility for any injury to
+
+      people or property resulting from any ideas, methods, instructions or products
+      referred to in the content.
+
+      https://doi.org/10.3390/jcm15083128'
+    page: 11
+  tables: []
+  images:
+  - image_id: IMG:0000
+    caption: Figure 1.Study flow chart.
+    page: 5
+    bbox:
+    - 166.3939971923828
+    - 71.86749267578125
+    - 469.27349853515625
+    - 559.5469970703125
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0005_r000.png
+  - image_id: IMG:0001
+    caption: Figure 2.Overall survival probability over time according to treatment.Estimated
+      overall survival
+    page: 6
+    bbox:
+    - 51.25520706176758
+    - 501.871337890625
+    - 544.6942749023438
+    - 680.4310302734375
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0006_r001.png

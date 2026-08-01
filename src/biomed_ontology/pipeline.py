@@ -144,7 +144,11 @@ def build_knowledge_base(
     classifier = TaxonomyClassifier(taxonomy)
     kb.taxonomy_version = taxonomy.taxonomy_version
 
-    corpus_files = sorted((root / "corpus").glob("*.yaml"))
+    # `parsed/` 是 `hmd parse` 的落点。不递归的话，机器解析出来的真实文献
+    # 会安静地被排除在知识库外，而 `hmd kb` 的计数看上去一切正常。
+    corpus_files = sorted((root / "corpus").glob("*.yaml")) + sorted(
+        (root / "corpus" / "parsed").glob("*.yaml")
+    )
     documents: list[Document] = []
     for f in corpus_files:
         documents.extend(load_corpus(f))

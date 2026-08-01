@@ -1,0 +1,1388 @@
+corpus_version: 0.1.0
+parse:
+  backend: pymupdf
+  degraded: []
+  same_as: {}
+sections_meta:
+- section_id: SEC:PMC13052964#0000
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: Medicine
+  section_title: Medicine
+  section_level: 1
+  sort_order: 0
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 39.6
+- section_id: SEC:PMC13052964#0001
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: Post-marketing signal detection of
+  section_title: Post-marketing signal detection of
+  section_level: 1
+  sort_order: 1
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 20.0
+- section_id: SEC:PMC13052964#0002
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: fruquintinib-associated adverse events
+  section_title: fruquintinib-associated adverse events
+  section_level: 1
+  sort_order: 2
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 20.0
+- section_id: SEC:PMC13052964#0003
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: using the FAERS database
+  section_title: using the FAERS database
+  section_level: 1
+  sort_order: 3
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 20.0
+- section_id: SEC:PMC13052964#0004
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: Abstract
+  section_title: Abstract
+  section_level: 1
+  sort_order: 4
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.66
+  evidence:
+  - 命中标准章节名
+- section_id: SEC:PMC13052964#0005
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: 1. Introduction
+  section_title: 1. Introduction
+  section_level: 1
+  sort_order: 5
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 1
+- section_id: SEC:PMC13052964#0006
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0005
+  section_path: 1. Introduction / Cui Liu, MMa
+  section_title: Cui Liu, MMa
+  section_level: 2
+  sort_order: 6
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=3 page=1
+  - 字号 10.5
+- section_id: SEC:PMC13052964#0007
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0006
+  section_path: 1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*
+  section_title: ', Hao Zhang, MMa,*'
+  section_level: 3
+  sort_order: 7
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=3 page=1
+  - 字号 10.5
+- section_id: SEC:PMC13052964#0008
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: 2. Methods
+  section_title: 2. Methods
+  section_level: 1
+  sort_order: 8
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2
+- section_id: SEC:PMC13052964#0009
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: 2024. As a result, 1188 patients treated with Fruquintinib as
+  section_title: 2024. As a result, 1188 patients treated with Fruquintinib as
+  section_level: 1
+  sort_order: 9
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2024
+- section_id: SEC:PMC13052964#0010
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0009
+  section_path: 2024. As a result, 1188 patients treated with Fruquintinib as / 2.1.
+    Data collection and cleansing
+  section_title: 2.1. Data collection and cleansing
+  section_level: 2
+  sort_order: 10
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.1
+- section_id: SEC:PMC13052964#0011
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0009
+  section_path: 2024. As a result, 1188 patients treated with Fruquintinib as / 2.2.
+    Signal detection and statistics
+  section_title: 2.2. Signal detection and statistics
+  section_level: 2
+  sort_order: 11
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.2
+- section_id: SEC:PMC13052964#0012
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: 3. Result
+  section_title: 3. Result
+  section_level: 1
+  sort_order: 12
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3
+- section_id: SEC:PMC13052964#0013
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '51.70'
+  section_title: '51.70'
+  section_level: 1
+  sort_order: 13
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 51
+- section_id: SEC:PMC13052964#0014
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '42.90'
+  section_title: '42.90'
+  section_level: 1
+  sort_order: 14
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 42
+- section_id: SEC:PMC13052964#0015
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '5.40'
+  section_title: '5.40'
+  section_level: 1
+  sort_order: 15
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13052964#0016
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '1.60'
+  section_title: '1.60'
+  section_level: 1
+  sort_order: 16
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 1
+- section_id: SEC:PMC13052964#0017
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '27.20'
+  section_title: '27.20'
+  section_level: 1
+  sort_order: 17
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 27
+- section_id: SEC:PMC13052964#0018
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '20.80'
+  section_title: '20.80'
+  section_level: 1
+  sort_order: 18
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 20
+- section_id: SEC:PMC13052964#0019
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '0.90'
+  section_title: '0.90'
+  section_level: 1
+  sort_order: 19
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 0
+- section_id: SEC:PMC13052964#0020
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '49.50'
+  section_title: '49.50'
+  section_level: 1
+  sort_order: 20
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 49
+- section_id: SEC:PMC13052964#0021
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '15.50'
+  section_title: '15.50'
+  section_level: 1
+  sort_order: 21
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 15
+- section_id: SEC:PMC13052964#0022
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '71.40'
+  section_title: '71.40'
+  section_level: 1
+  sort_order: 22
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 71
+- section_id: SEC:PMC13052964#0023
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '1.90'
+  section_title: '1.90'
+  section_level: 1
+  sort_order: 23
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 1
+- section_id: SEC:PMC13052964#0024
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: '9.30'
+  section_title: '9.30'
+  section_level: 1
+  sort_order: 24
+  start_page: 3
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 9
+- section_id: SEC:PMC13052964#0025
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0024
+  section_path: 9.30 / 3.1. Basic information for adverse event reporting
+  section_title: 3.1. Basic information for adverse event reporting
+  section_level: 2
+  sort_order: 25
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.1
+- section_id: SEC:PMC13052964#0026
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0024
+  section_path: 9.30 / 3.2. Risk signaling SOC
+  section_title: 3.2. Risk signaling SOC
+  section_level: 2
+  sort_order: 26
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.2
+- section_id: SEC:PMC13052964#0027
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0024
+  section_path: 9.30 / 3.3. Risk signaling PT
+  section_title: 3.3. Risk signaling PT
+  section_level: 2
+  sort_order: 27
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.3
+- section_id: SEC:PMC13052964#0028
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0024
+  section_path: 9.30 / 3.4. Subgroup analysis
+  section_title: 3.4. Subgroup analysis
+  section_level: 2
+  sort_order: 28
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.4
+- section_id: SEC:PMC13052964#0029
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0024
+  section_path: 9.30 / 3.5. Comparative study on differences in adverse reactions
+  section_title: 3.5. Comparative study on differences in adverse reactions
+  section_level: 2
+  sort_order: 29
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.5
+- section_id: SEC:PMC13052964#0030
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: 4. Discussion
+  section_title: 4. Discussion
+  section_level: 1
+  sort_order: 30
+  start_page: 5
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4
+- section_id: SEC:PMC13052964#0031
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: 5. Conclusion
+  section_title: 5. Conclusion
+  section_level: 1
+  sort_order: 31
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13052964#0032
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: 6. Limitations
+  section_title: 6. Limitations
+  section_level: 1
+  sort_order: 32
+  start_page: 7
+  end_page: 7
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 6
+- section_id: SEC:PMC13052964#0033
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: Acknowledgments
+  section_title: Acknowledgments
+  section_level: 1
+  sort_order: 33
+  start_page: 7
+  end_page: 8
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.66
+  evidence:
+  - 命中标准章节名
+- section_id: SEC:PMC13052964#0034
+  doc_id: DOC:PMC13052964
+  parent_section_id: null
+  section_path: References
+  section_title: References
+  section_level: 1
+  sort_order: 34
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.66
+  evidence:
+  - 命中标准章节名
+- section_id: SEC:PMC13052964#0035
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 3.27 (2.84–3.78)
+  section_title: 3.27 (2.84–3.78)
+  section_level: 2
+  sort_order: 35
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.27
+- section_id: SEC:PMC13052964#0036
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 11.78 (9.94–13.96)
+  section_title: 11.78 (9.94–13.96)
+  section_level: 2
+  sort_order: 36
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 11.78
+- section_id: SEC:PMC13052964#0037
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 2.18 (1.8–2.63)
+  section_title: 2.18 (1.8–2.63)
+  section_level: 2
+  sort_order: 37
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.18
+- section_id: SEC:PMC13052964#0038
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 4.18 (3.45–5.07)
+  section_title: 4.18 (3.45–5.07)
+  section_level: 2
+  sort_order: 38
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4.18
+- section_id: SEC:PMC13052964#0039
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 24.75 (20.38–30.07)
+  section_title: 24.75 (20.38–30.07)
+  section_level: 2
+  sort_order: 39
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 24.75
+- section_id: SEC:PMC13052964#0040
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 4.36 (4.16–4.57)
+  section_title: 4.36 (4.16–4.57)
+  section_level: 2
+  sort_order: 40
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4.36
+- section_id: SEC:PMC13052964#0041
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 3.04 (2.89–3.2)
+  section_title: 3.04 (2.89–3.2)
+  section_level: 2
+  sort_order: 41
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.04
+- section_id: SEC:PMC13052964#0042
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 7.27 (6.81–7.77)
+  section_title: 7.27 (6.81–7.77)
+  section_level: 2
+  sort_order: 42
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7.27
+- section_id: SEC:PMC13052964#0043
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 5.05 (4.7–5.43)
+  section_title: 5.05 (4.7–5.43)
+  section_level: 2
+  sort_order: 43
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5.05
+- section_id: SEC:PMC13052964#0044
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 20.77 (19.33–22.32)
+  section_title: 20.77 (19.33–22.32)
+  section_level: 2
+  sort_order: 44
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 20.77
+- section_id: SEC:PMC13052964#0045
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 5.47 (5.34–5.6)
+  section_title: 5.47 (5.34–5.6)
+  section_level: 2
+  sort_order: 45
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5.47
+- section_id: SEC:PMC13052964#0046
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 3.51 (3.42–3.6)
+  section_title: 3.51 (3.42–3.6)
+  section_level: 2
+  sort_order: 46
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.51
+- section_id: SEC:PMC13052964#0047
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 2.36 (2.29–2.44)
+  section_title: 2.36 (2.29–2.44)
+  section_level: 2
+  sort_order: 47
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.36
+- section_id: SEC:PMC13052964#0048
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 7.33 (7.1–7.57)
+  section_title: 7.33 (7.1–7.57)
+  section_level: 2
+  sort_order: 48
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7.33
+- section_id: SEC:PMC13052964#0049
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 55.57 (53.29–57.94)
+  section_title: 55.57 (53.29–57.94)
+  section_level: 2
+  sort_order: 49
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 55.57
+- section_id: SEC:PMC13052964#0050
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 2.84 (2.76–2.93)
+  section_title: 2.84 (2.76–2.93)
+  section_level: 2
+  sort_order: 50
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.84
+- section_id: SEC:PMC13052964#0051
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 2.16 (2.1–2.24)
+  section_title: 2.16 (2.1–2.24)
+  section_level: 2
+  sort_order: 51
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.16
+- section_id: SEC:PMC13052964#0052
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 2.68 (2.57–2.8)
+  section_title: 2.68 (2.57–2.8)
+  section_level: 2
+  sort_order: 52
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2.68
+- section_id: SEC:PMC13052964#0053
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 4.11 (3.94–4.28)
+  section_title: 4.11 (3.94–4.28)
+  section_level: 2
+  sort_order: 53
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4.11
+- section_id: SEC:PMC13052964#0054
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 3.56 (3.39–3.73)
+  section_title: 3.56 (3.39–3.73)
+  section_level: 2
+  sort_order: 54
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3.56
+- section_id: SEC:PMC13052964#0055
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 5.1 (4.51–5.76)
+  section_title: 5.1 (4.51–5.76)
+  section_level: 2
+  sort_order: 55
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5.1
+- section_id: SEC:PMC13052964#0056
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 4.2 (3.59–4.91)
+  section_title: 4.2 (3.59–4.91)
+  section_level: 2
+  sort_order: 56
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4.2
+- section_id: SEC:PMC13052964#0057
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 33.12 (27.14–40.42)
+  section_title: 33.12 (27.14–40.42)
+  section_level: 2
+  sort_order: 57
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 33.12
+- section_id: SEC:PMC13052964#0058
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 12.44 (10.09–15.34)
+  section_title: 12.44 (10.09–15.34)
+  section_level: 2
+  sort_order: 58
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 12.44
+- section_id: SEC:PMC13052964#0059
+  doc_id: DOC:PMC13052964
+  parent_section_id: SEC:PMC13052964#0034
+  section_path: References / 4.02 (3.18–5.09)
+  section_title: 4.02 (3.18–5.09)
+  section_level: 2
+  sort_order: 59
+  start_page: 9
+  end_page: 9
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4.02
+documents:
+- doc_id: DOC:PMC13052964
+  source_id: PUBMED
+  external_id: PMC13052964
+  title: Post-marketing signal detection of fruquintinib-associated adverse events
+    using the FAERS database.
+  doc_type: JOURNAL_ARTICLE
+  language: en
+  license_tier: TIER_0
+  sections:
+  - name: 1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*
+    text: 'Observational Study
+
+      1
+
+      ®
+
+      Abstract
+
+      Fruquintinib, a targeted therapeutic agent approved in 2018 for the treatment
+      of metastatic colorectal cancer, is gradually being
+
+      applied in an expanding range of clinical settings. Given the complexities associated
+      with real-world dosing, a comprehensive
+
+      evaluation of its safety profile is essential for optimizing clinical decision-making.
+      We conducted a retrospective pharmacovigilance
+
+      study utilizing a spontaneous reporting system. Reports related to Fruquintinib
+      were extracted through a standardized data
+
+      cleaning process and cross-validated using 3 complementary signal detection
+      algorithms: proportional reporting ratio, Bayesian
+
+      confidence propagation neural network, and reporting odds ratio (ROR). This
+      approach was employed to systematically assess
+
+      the drug’s safety and identify potential adverse event signals. A total of 92
+      statistically significant safety signals were identified
+
+      from 1188 independent cases included in the analysis, corresponding to 1836
+      adverse event reports. The signal distribution
+
+      exhibited organ system specificity, with gastrointestinal reactions being the
+      most prevalent category. These reactions primarily
+
+      manifested as typical drug-related toxicities, including diarrhea and nausea.
+      Other notable complications included neurological,
+
+      respiratory, dermatological, renal, and cardiovascular events. Important aes
+      not mentioned in the instructions, such as bone
+
+      marrow suppression (ROR = 11.17), peripheral neuropathy (ROR = 4.24) and dehydration
+      (ROR = 3.98), were also discovered.
+
+      This study systematically characterizes the post-marketing safety profile of
+      Fruquintinib through a multi-algorithm synergistic
+
+      analysis, confirming that its safety profile aligns with the clinically expected
+      outcomes based on its mechanism of action. Future
+
+      research should focus on analyzing drug interaction mechanisms and exploring
+      biomarkers to develop a precise risk-benefit
+
+      assessment model.
+
+      Abbreviations: ADE = adverse drug event, BCPNN = Bayesian confidence propagation
+      neural network, CRC = colorectal
+
+      cancer, EMT = epithelial-mesenchymal transition, eNOS-NO = endothelial nitric
+      oxide synthase-nitric oxide, FAERS = FDA adverse
+
+      event reporting system, FDA = food and drug administration, GMA = glomerular
+      microangiopathy, HICs = high- and middle-
+
+      income countries, IC = information components, MAD = measure of disproportionality,
+      MedDRA = medical dictionary of regulatory
+
+      activities, NMPA = National Medical Products Administration, PRR = proportional
+      reporting ratio, PT = preferred terminology,
+
+      ROR = reporting odds ratio, SOC = system organ classification, TMA = thrombotic
+      microangiopathy, US = United States, VEGFR =
+
+      vascular endothelial growth factor receptors.
+
+      Keywords: adverse events, FAERS, fruquintinib, pharmacovigilance
+
+      1. Introduction
+
+      Colorectal cancer (CRC), the third most common malignancy
+
+      globally and the second leading cause of cancer-related deaths,
+
+      demonstrates substantial global heterogeneity in its disease bur­
+
+      den.[1] Epidemiological data indicate significant geographic vari­
+
+      ations in the global incidence of CRC, with particularly high
+
+      rates observed in high- and middle-income countries (HICs).
+
+      These variations are closely associated with factors such as
+
+      urbanization, dietary changes toward Western patterns, and
+
+      population aging. Despite improvements in prognosis due to
+
+      the promotion of healthy lifestyles and increased early screening
+
+      awareness, 15% to 30% of patients still present with distant
+
+      metastases at initial diagnosis. The liver is the most common
+
+      site of metastasis (approximately 50%–70%), followed by the
+
+      lungs, peritoneum, and lymph nodes. This metastatic pattern is
+
+      strongly linked to the biological characteristics of CRC and its
+
+      vascular invasion pathways.[2]
+
+      The authors have no funding and conflicts of interest to disclose.
+
+      All data generated or analyzed during this study are included in this published
+
+      article [and its supplementary information files].
+
+      The FAERS comprises de-identified spontaneous reports for which research-
+
+      specific informed consent was not obtained, as per regulatory standards. This
+
+      study was exempt from ethical review and informed consent requirements under
+
+      applicable guidelines, given its exclusive use of publicly accessible, anonymized
+
+      data sourced from the FAERS database.
+
+      a Department of Pharmacy, Chengdu Seventh People’s Hospital (Affiliated Cancer
+
+      Hospital of Chengdu Medical College), Chengdu, Sichuan, China.
+
+      * Correspondence: Hao Zhang, Department of Pharmacy, Chengdu Seventh
+
+      People’s Hospital (Affiliated Cancer Hospital of Chengdu Medical College),
+
+      No.1188 Shuangxing Avenue, Shuangliu District, Chengdu 610213, Sichuan,
+
+      China (e-mail: 862089482@qq.com).
+
+      Copyright © 2026 the Author(s). Published by Wolters Kluwer Health, Inc.
+
+      This is an open access article distributed under the Creative Commons
+
+      Attribution License 4.0 (CCBY), which permits unrestricted use, distribution,
+      and
+
+      reproduction in any medium, provided the original work is properly cited.
+
+      How to cite this article: Liu C, Zhang H. Post-marketing signal detection of
+
+      fruquintinib-associated adverse events using the FAERS database. Medicine
+
+      2026;105:14(e48239).
+
+      Received: 22 May 2025 / Received in ﬁnal form: 7 March 2026 / Accepted: 18
+
+      March 2026
+
+      http://dx.doi.org/10.1097/MD.0000000000048239'
+    page: 1
+  - name: 2024. As a result, 1188 patients treated with Fruquintinib as / 2.1. Data
+      collection and cleansing
+    text: "2\nLiu and Zhang • Medicine (2026) 105:14\b\nMedicine\nFruquintinib, a\
+      \ highly selective small molecule tyrosine\nkinase inhibitor targeting vascular\
+      \ endothelial growth factor\nreceptors (VEGFR) 1, 2, and 3, was independently\
+      \ developed\nby Hutchison Whampoa Pharmaceuticals. It was approved for\nmarketing\
+      \ in September 2018 through the priority review pro­\ncess by the National Medical\
+      \ Products Administration of China.\nFruquintinib is indicated for patients\
+      \ with metastatic colorectal\ncancer (mCRC) who have failed at least 2 prior\
+      \ standard che­\nmotherapy regimens.[3] The drug inhibits vascular endothelial\n\
+      cell proliferation and migration by competitively binding to the\nintracellular\
+      \ tyrosine kinase domain of VEGFR and specifically\nblocking ligand-induced\
+      \ phosphorylation of the VEGF recep­\ntor. Notably, VEGFR-1 and VEGFR-2 exhibit\
+      \ high expression\nin colorectal cancer cells, playing a critical role in regulating\n\
+      tumor cell proliferation, survival, and epithelial-mesenchymal\ntransition through\
+      \ activation of the PI3K/Akt and MAPK/\nERK signaling pathways. In contrast,\
+      \ the VEGFR-3 signaling\naxis is primarily involved in regulating lymphangiogenesis.[4–6]\n\
+      Reported adverse events (AEs) include hypertension (38.7%),\nhand-foot syndrome\
+      \ (27.4%), bleeding (21.9%), abnormal liver\nfunction (elevated AST/ALT in 19.3%),\
+      \ proteinuria (15.8%),\nand hypothyroidism (12.4%). The incidence of grade 3\
+      \ or\nhigher AEs is approximately 42.6%,[7] which can be managed\nwith dose\
+      \ adjustments and supportive therapy.\nThe FDA adverse event reporting system\
+      \ (FAERS) is a pub­\nlicly accessible spontaneous reporting database that includes\
+      \ a\nvast collection of AEs, medication errors, and product quality\ncomplaints\
+      \ submitted by healthcare professionals, manufactur­\ners, and other stakeholders.\
+      \ It offers a valuable source of real-\nworld data for drug safety research,\
+      \ making it an essential tool\nfor identifying potential adverse reactions and\
+      \ assessing the\nsafety of drugs in clinical practice.[8]\nThis study aimed\
+      \ to identify and characterize post-marketing\nadverse event signals associated\
+      \ with Fruquintinib in the FAERS\ndatabase from 2023 to 2024 to support clinical\
+      \ risk manage­\nment and pharmacovigilance practice.\n2. Methods\n2.1. Data\
+      \ collection and cleansing\nThe FAERS database includes 7 core data elements:\
+      \ demo­\ngraphic and management information (DEMO), adverse drug\nreaction data\
+      \ (REAC), patient outcomes (OUTC), drug infor­\nmation (DRUG), treatment start/end\
+      \ dates (THER), report­\ning source (RPSR), and indications for use/diagnosis\
+      \ (INDI).\nAdverse drug event (ADE) descriptors were standardized and\nadapted\
+      \ with reference to the medical dictionary for regula­\ntory activities (MedDRA28.0).\
+      \ Following the FDA’s recom­\nmended method for removing duplicate reports,\
+      \ select the\nPRIMARYID, CASEID, and FDA_DT fields from the DEMO\ntable. Sort\
+      \ the records in the order of CASEID, FDA_DT, and\nthen PRIMARYID. For reports\
+      \ with identical CASEIDs, retain\nthe one with the largest FDA_DT value. Subsequently,\
+      \ for\nreports with matching CASEID and FDA_DT values, retain\nthe one with\
+      \ the largest PRIMARYID value. ADE reports\nwith the same preferred term (PT)\
+      \ were grouped together\nand categorized by the system organ class (SOC). A\
+      \ total of\n3293,302 patient reports were screened from the FAERS data­\nbase,\
+      \ with 391,174 duplicates removed. Reports identifying\n“Fruquintinib” as the\
+      \ primary suspected drug were selected\nfor inclusion in the study from November\
+      \ 2023 to December\n2024. As a result, 1188 patients treated with Fruquintinib\
+      \ as\nprimary therapy and 1836 adverse event cases were included\nfor further\
+      \ analysis, as shown in Figure 1.\n2.2. Signal detection and statistics\nMeasure\
+      \ of disproportionality (MAD) is a widely used ADR\nsignal detection method\
+      \ both domestically and internation­\nally. In this study, several signal detection\
+      \ methods were used,\nincluding reported ratio ratio (ROR), proportional reporting\n\
+      ratio (PRR), and Bayesian belief propagation neural network\n(BCPNN) as part\
+      \ of the disproportionality analysis method.\nROR is one of the classical signal\
+      \ detection methods that help\nto eliminate bias by providing a more accurate\
+      \ risk estima­\ntion. PRR has higher specificity compared to ROR. BCPNN\nevaluates\
+      \ drugs mainly based on information components\nand their 95% confidence intervals\
+      \ and has the advantage of\nintegrating and cross-validating data from multiple\
+      \ sources.[9]\nThis comprehensive approach improves the accuracy of safety\n\
+      signal identification, reduces false positives through cross-\nvalidation, balances\
+      \ sensitivity and specificity, and enhances\nthe detection of rare AEs by adjusting\
+      \ thresholds and vari­\nances. The specific formulas are shown in Tables 1 and\
+      \ 2. Each\nPT was judgmentally screened according to the thresholds in\nFigure\
+      \ 1. The process of selecting AEs from the FAERS database. AEs = adverse events,\
+      \ FAERS = FDA adverse event reporting system."
+    page: 2
+  - name: 9.30 / 3.1. Basic information for adverse event reporting
+    text: "3\nLiu and Zhang • Medicine (2026) 105:14\b\nwww.md-journal.com\nTable\
+      \ 2, and the judgmental criteria of the 3 algorithms had\nto be met simultaneously\
+      \ before an ADE signal was generated.\nThe generation of ADE signals suggests\
+      \ a statistical correla­\ntion with the drug, and the stronger the signal, the\
+      \ stronger\nthe correlation between the 2. All statistical analyses were per­\n\
+      formed using R software 4.3.2 and Microsoft Excel for data\nanalysis.[10]\n\
+      3. Result\n3.1. Basic information for adverse event reporting\nThe analysis\
+      \ yielded a total of 1836 AEs related to Fruquintinib,\nreported between November\
+      \ 2023 and December 2024,\ninvolving 1188 patients. The distribution of patients\
+      \ by gen­\nder was roughly equal, with a slightly higher proportion of\nmales.\
+      \ The majority of patients (48%) were aged between 18\nand 85 years. The United\
+      \ States reported the highest number\nof adverse reactions, accounting for 848\
+      \ cases (71.4%), fol­\nlowed by China (15.5%). Detailed information is provided\n\
+      in Table 3. The time to the onset of adverse reactions was\ndefined as the interval\
+      \ between the occurrence of the adverse\nevent and the initiation of Fruquintinib\
+      \ treatment. The most\ncommon period for AEs to occur was within the first 30\
+      \ days\nof treatment, which accounted for approximately 63% of\nreported cases\
+      \ (Fig. 2).\n3.2. Risk signaling SOC\nIn this study, a signal detection method\
+      \ was employed to\nsystematically analyze AEs associated with Fruquintinib.\n\
+      The analysis identified 16 SOCs and 92 PTs related to the\nreported AEs. Based\
+      \ on the frequency of adverse event\nreports, the top 3 SOC categories were\
+      \ systemic diseases\nand drug administration site reactions, gastrointestinal\
+      \ dis­\norders, and abnormalities in various laboratory tests. The\nspecific\
+      \ distribution is shown in Figure 3. Quantitative\nsignal detection revealed\
+      \ that the signal intensities of AEs\nin these 3 SOCs significantly exceeded\
+      \ the preset thresh­\nold. Gastrointestinal disorders exhibited the highest\
+      \ signal\nintensity (ROR = 2.04), followed by laboratory abnormal­\nities (ROR\
+      \ = 1.69), and systemic diseases and site-of-\nadministration reactions, which\
+      \ were statistically significant\nbut had relatively lower signal intensity\
+      \ (ROR = 1.36). The\nresults of this multidimensional analysis may suggest a\n\
+      association between Fruquintinib and these 3 categories of\nsystemic and organ-specific\
+      \ adverse reactions, with gastroin­\ntestinal toxicity being particularly prominent.\n\
+      Table 1\nFourfold table for calculation.\nType of drug\nTarget AEs\nOther AEs\n\
+      Total\nFruquintinib\na\nb\na + b\nNon-fruquintinib\nc\nd\nc + d\nTotal\na +\
+      \ c\nb + d\nN = a + b + c + d\nAEs = adverse events.\nTable 2\nThree major algorithms\
+      \ used for signal detection.\nAlgorithms\nEquation\nCriteria\nROR\nROR = ad/b/c\n\
+      lower limit of 95% CI >1, N ≥3\n95% CI = eln (ROR) ± 1.96 (1/a + 1/b + 1/c +\
+      \ 1/d)0.5\nPRR\nPRR = a(c + d)/c/(a + b)\nPRR ≥2, χ2 ≥4, N ≥3\nχ2 = [(ad-bc)2](a\
+      \ + b + c + d)/[(a + b)(c + d)(a + c)(b + d)]\nBCPNN\nIC = log2a(a + b + c +\
+      \ d)/(a + c)(a + b)\nIC025 >0\n95% CI = E(IC) ± 2V(IC)0.5\nBCPNN = Bayesian\
+      \ belief propagation neural network, CI = confidence interval, IC = information\
+      \ component, IC025 = the lower limit of 95% CI of the IC, PRR = proportional\
+      \ reporting ratio, ROR = reporting\nodds ratio.\nTable 3\nBasic information\
+      \ of fruqunintinib ADE signal.\nBasic information\nCategorization\nCase number,\
+      \ n\nCase proportion, %\nGender\nMale\n614\n51.70\nFemale\n510\n42.90\nUnknown\n\
+      64\n5.40\nAge\n<18\n19\n1.60\n18–64\n323\n27.20\n65–85\n247\n20.80\n>85\n11\n\
+      0.90\nUnknown\n588\n49.50\nCountry\nChina\n184\n15.50\nUnited States\n848\n\
+      71.40\nJapan\n22\n1.90\nFrance\n22\n1.90\nOthers\n112\n9.30\nADE = adverse drug\
+      \ event."
+    page: 3
+  - name: 9.30 / 3.3. Risk signaling PT
+    text: "4\nLiu and Zhang • Medicine (2026) 105:14\b\nMedicine\n3.3. Risk signaling\
+      \ PT\nIn this study, a total of 1836 cases of Fruquintinib-related\nAEs were\
+      \ systematically evaluated using 3 complementary\nsignal detection algorithms:\
+      \ PRR, Bayesian confidence prop­\nagation neural network (BCPNN), and reporting\
+      \ odds ratio\n(ROR). The analysis was conducted based on data from\nthe FAERS\
+      \ database. After applying strict exclusion crite­\nria, which included nondrug-related\
+      \ events, complications\narising from drug administration procedures, pregnancy-\n\
+      specific events, and genetic disorders, 92 statistically signifi­\ncant safety\
+      \ signals were identified. The signal validation results\ndemonstrated a high\
+      \ degree of consistency with the known\nrisk profiles currently listed in the\
+      \ drug’s labeling. Among\nthe 1188 independent patients included in the analysis,\
+      \ the\nAEs exhibited multisystem involvement. Gastrointestinal dis­\norders,\
+      \ systemic diseases and administration site reactions,\nand laboratory abnormalities\
+      \ were the most prevalent event\ncategories according to the MedDRA SOC. A frequency\n\
+      analysis of the PTs revealed that fatigue (ROR = 3.27), ele­\nvated blood pressure\
+      \ (ROR = 11.78), diarrhea (ROR = 2.18),\nweakness (ROR = 4.18), and dysphonia\
+      \ (ROR = 24.75) were\nthe 5 most frequently reported AEs (see Fig. 4 for the\
+      \ top 30\nrankings). Notably, when ROR values were used to assess sig­\nnal\
+      \ intensity, the top 5 high-risk signals identified were renal\nrestrictive\
+      \ thrombotic microangiopathy (ROR = 11.17), ele­\nvated carcinoembryonic antigen\
+      \ (ROR = 41.89), tongue ulcers\n(ROR = 33.13), vocal difficulties (ROR = 24.75),\
+      \ and bile\nduct obstruction (ROR = 20.09). These signals exhibited sig­\nnificantly\
+      \ higher intensities than the traditionally recognized\nhigh-incidence AEs (see\
+      \ Fig. 5 for the top 30 signal intensity\nrankings). Important aes not mentioned\
+      \ in the instructions,\nsuch as bone marrow suppression (ROR = 11.17), peripheral\n\
+      neuropathy (ROR = 4.24) and dehydration (ROR = 3.98),\nwere also discovered.\n\
+      3.4. Subgroup analysis\nWe performed subgroup analyses by gender and age group\n\
+      separately, with a view to exploring whether adverse reactions\ndiffered in\
+      \ different populations, but the final results showed a\nroughly balanced distribution,\
+      \ as shown in Figures 6 and 7.\n3.5. Comparative study on differences in adverse\
+      \ reactions\nto VEGFR inhibitors\nConducting an in-depth investigation into\
+      \ the differences in\nadverse drug reactions (ADRs) among various medications\
+      \ is of\nFigure 2. Distribution of AEs over time. AEs = adverse events.\nFigure\
+      \ 3. Results of SOC classification of ADE signals. ADE = adverse drug event,\
+      \ SOC = system organ classification."
+    page: 4
+  - name: 4. Discussion
+    text: "5\nLiu and Zhang • Medicine (2026) 105:14\b\nwww.md-journal.com\nparamount\
+      \ importance for refining clinical treatment strategies\nand safeguarding patient\
+      \ medication safety. With this in mind,\nwe adopted a standardized and rigorous\
+      \ approach to search the\nFAERS database, focusing specifically on 4 VEGFR inhibitors:\n\
+      Axitinib, Cabozantinib, Sunitinib, and Vandetanib. We system­\natically gathered\
+      \ reports where these drugs were identified as\nthe primary suspected medications.\
+      \ Subsequently, we applied\npredetermined screening criteria to select reports\
+      \ that met our\nstudy requirements, with the objective of thoroughly examining\n\
+      whether significant differences exist in ADRs among these dif­\nferent VEGFR\
+      \ inhibitors.\nThe results of our study demonstrated that these VEGFR\ninhibitors\n\
+      exhibit\nseveral\ncommon\nadverse\nreactions.\nSpecifically, 5 VEGFR inhibitors,\
+      \ including fruquintinib, were\nfound to be associated with the following AEs:\
+      \ palmar-plantar\nerythrodysaesthesia syndrome, blood pressure increased, blis­\n\
+      ter, decreased appetite, glossodynia, oral pain, stomatitis, dry\nmouth, hypothyroidism,\
+      \ diarrhoea and proteinuria. The top 5\nother adverse reactions are detailed\
+      \ in Table 4. Furthermore,\nwe identified adverse reactions that are specific\
+      \ to fruquintinib,\nnamely bone marrow suppression, peripheral neuropathy, and\n\
+      dehydration.\n4. Discussion\nThe male-to-female ratio among the reported cases\
+      \ was approx­\nimately 1:1, with a slight predominance of males. The inci­\n\
+      dence of the disease was more common among older patients,\nwhich aligns with\
+      \ epidemiological findings on the disease.[2] The\nmajority of reports originated\
+      \ from the United States, followed\nby Europe. This distribution may be influenced\
+      \ by regional vari­\nations in drug usage as well as differences in disease\
+      \ incidence\nacross racial groups.[11]\nAmong the 16 SOC categories associated\
+      \ with fruquintinib-\nrelated ADE signals, systemic diseases/administration\
+      \ site reac­\ntions, gastrointestinal disorders, renal/urinary disorders, and\n\
+      abnormal laboratory test parameters were most frequently\nreported.[7] This\
+      \ distribution pattern corresponds to the known\nsafety profile outlined in\
+      \ the drug’s prescribing information.\nA comprehensive frequency and risk analysis\
+      \ of ADRs associ­\nated with fruquintinib revealed that the primary ADRs requiring\n\
+      clinical monitoring include elevated blood pressure, hand-foot\nskin reaction\
+      \ (HFSR), proteinuria, diarrhea, and oral muco­\nsitis. Real-world data from\
+      \ a Chinese cohort (n = 76) further\nvalidated these findings. In a single-center\
+      \ retrospective study,\nthe major hematologic toxicities observed were hypertension\n\
+      Figure 4. Top 30 PT of frequency. PT = preferred term.\n6\nLiu and Zhang • Medicine\
+      \ (2026) 105:14\b\nMedicine\n(9.2%), HFSR (7.9%), and thrombocytopenia (3.9%).\
+      \ Non-\nhematologic toxicities included oral mucositis (1.3%) and pro­\nteinuria\
+      \ (1.3%). Notably, the incidence of ALT elevation (1.3%)\nand neutropenia (1.3%)\
+      \ in this cohort was lower than that\nreported in the FRESCO phase III clinical\
+      \ trial, potentially due\nto differences in baseline hepatic function among\
+      \ the enrolled\npatients.[12]\nShu et al described a case of pemphigus vulgaris\
+      \ (CTCAE\ngrade 3) during fruquintinib monotherapy, which presented with\nfeatures\
+      \ distinct from typical HFSR: a diffuse maculopapular\nrash affecting the trunk\
+      \ and proximal extremities, histopathol­\nogy showing dermal lymphocytic infiltration\
+      \ with eosinophilia,\nand complete resolution of symptoms after discontinuation\
+      \ of\nthe drug, followed by recurrence upon re-administration.[13] This\ncase\
+      \ may be associated with the need to be vigilant about the\npotential spectrum\
+      \ of hypersensitivity reactions to fruquintinib.\nThe hypothesized mechanism\
+      \ may involve immune regulation\nabnormalities due to VEGFR inhibition, although\
+      \ specific sig­\nnaling pathways remain to be confirmed by in vitro studies.\n\
+      Zhao et al[14] reported a case of fruquintinib-related renal\nrestrictive thrombotic\
+      \ microangiopathy (RTMA) in a 73-year-\nold male patient. During treatment for\
+      \ metastatic colorectal\ncancer with fruquintinib, the patient developed skin\
+      \ peeling of\nthe hands and feet, elevated blood pressure, and increased urine\n\
+      foam. On the 28th day after starting treatment, renal dysfunction\nprompted\
+      \ referral to the nephrology department, where renal\nultrasound and biopsy\
+      \ confirmed RTMA. The kidney injury\npotentially related to fruquintinib may\
+      \ involve a dual mecha­\nnism: direct endothelial cytotoxicity leading to microvascular\n\
+      barrier dysfunction, and compensatory upregulation of pro-\nangiogenic factors\
+      \ (e.g., Ang-2, FGF-2). This response can dis­\nrupt endothelial-podocyte interactions,\
+      \ evidenced by elevated\nsoluble endothelial factors (sVEGFR-1, sEndoglin),\
+      \ which\ninterfere with the localization and function of podocyte pro­\nteins\
+      \ (nephrin, podocin) in the glomerular filtration barrier. Guo\nreported a case\
+      \ of drug-induced glomerular microangiopathy\n(GMA) potentially related to focal\
+      \ segmental glomerulosclero­\nsis following treatment with tirilizumab and fruquintinib.\
+      \ The\npatient, who presented with bilateral lower extremity edema\nand foamy\
+      \ urine, was diagnosed with GMA after renal biopsy.[15]\nBleeding risk is another\
+      \ significant adverse effect of\nfruquintinib. A rare case of cerebellar hemorrhage\
+      \ has been\nreported in a colorectal cancer patient undergoing treatment\nwith\
+      \ the drug.[16] Studies suggest that VEGF inhibitors con­\ntribute to the formation\
+      \ of reactive oxygen species, reduce\nthe activity of the endothelial nitric\
+      \ oxide synthase-nitric\noxide (eNOS-NO) pathway, and increase circulating levels\
+      \ of\nendothelin-1, a potent vasoconstrictor. These effects are import­\nant\
+      \ factors influencing blood pressure regulation. Additionally,\nVEGFR inhibitors\
+      \ compromise vascular integrity and angio­\ngenesis, weaken the vessel wall,\
+      \ impair endothelial cell repair,\nand disrupt the blood-brain barrier, thereby\
+      \ increasing the risk\nof hemorrhage.[17] Ledet reported a case of reversible\
+      \ poste­\nrior cerebral syndrome in a 41-year-old female patient, who\nFigure\
+      \ 5. Top 30 PT of signal intensity. PT = preferred term."
+    page: 5
+  - name: 5. Conclusion
+    text: "7\nLiu and Zhang • Medicine (2026) 105:14\b\nwww.md-journal.com\ndeveloped\
+      \ acute headache, nausea, and vomiting 2 months after\nstarting fruquintinib.\
+      \ This eventually led to a generalized tonic-\nclonic seizure, which resolved\
+      \ with symptomatic treatment.[18]\nThis hypothesized mechanism may be related\
+      \ to fruquintinib’s\nimpact on endothelial cell homeostasis, potentially resulting\
+      \ in\narterial hypertension and inadequate cerebral perfusion.[19]\n5. Conclusion\n\
+      These findings potentially related to fruquintinib with side\neffects that cannot\
+      \ be ignored. In clinical practice, emphasis\nshould be placed on core risk\
+      \ factors such as hypertension, pro­\nteinuria, neurological dysfunction, and\
+      \ early renal toxicity in\npatients, with dynamic monitoring and proactive intervention\n\
+      implemented. Meanwhile, future research needs to delve into\nthe specific mechanisms\
+      \ by which population characteristics,\ndrug dosage gradients, and duration\
+      \ of medication influence the\noccurrence of adverse reactions.\n6. Limitations\n\
+      There are some limitations in this study. The FAERS database\nis a spontaneous\
+      \ presentation system, and there are prob­\nlems of omission, misreporting and\
+      \ missing information in\nthe data. The information comes from various sources\
+      \ (e.g.,\npharmaceutical companies, patients, doctors, etc), and there is a\n\
+      certain degree of reporting bias.[20] Although the deduplication\nprocess in\
+      \ this study based on FAERS can mitigate the impact\nof duplicate submissions,\
+      \ the current data cannot support pre­\ncise incidence calculations due to underreporting\
+      \ caused by the\nsystem’s passivity and the unknowable nature of unreported\n\
+      populations. We sincerely call for further research to explore\nmore robust\
+      \ quantitative methods to overcome the limitations\nof existing surveillance\
+      \ systems. The dataset timeframe (1 year)\nlimits trend and longitudinal analysis.\
+      \ Although the screening\nthreshold of ADE signal was improved in this study\
+      \ by combin­\ning ROR method, BCPNN method and PRR method, the pos­\nsibility\
+      \ of false-positive ADE signal still could not be ruled out.\nThe generation\
+      \ of ADE signal could only indicate that there is a\nstatistical correlation\
+      \ between the drug and the ADE, while the\ncausal relationship between the drug\
+      \ and the ADE still needs\nfurther clinical research and evaluation. The data\
+      \ in this study\nare mainly from Europe and the United States, and whether\n\
+      they are applicable to the Chinese patient population remains\nto be verified.\n\
+      Acknowledgments\nWe are grateful to the staff and participants of The FDA adverse\n\
+      event reporting system (FAERS).\nFigure 6. The subgroup analysis in gender."
+    page: 7
+  - name: Acknowledgments
+    text: "8\nLiu and Zhang • Medicine (2026) 105:14\b\nMedicine\nFigure 7. The subgroup\
+      \ analysis in age."
+    page: 7
+  - name: References / 3.27 (2.84–3.78)
+    text: "9\nLiu and Zhang • Medicine (2026) 105:14\b\nwww.md-journal.com\nAuthor\
+      \ contributions\nWriting – original draft: Cui Liu, Hao Zhang.\nWriting – review\
+      \ & editing: Cui Liu.\nReferences\n[1] Underwood PW, Ruff SM, Pawlik TM. Update\
+      \ on targeted ther­\napy and immunotherapy for metastatic colorectal cancer.\
+      \ Cells.\n2024;13:245.\n[2] Cervantes A, Adam R, Roselló S, et al; ESMO Guidelines\
+      \ Committee.\nElectronic address: clinicalguidelines@esmo.org. Metastatic colorectal\n\
+      cancer: ESMO clinical practice guideline for diagnosis, treatment and\nfollow-up.\
+      \ Ann Oncol. 2023;34:10–32.\n[3] Shirley M. Fruquintinib: first global approval.\
+      \ Drugs. 2018;78:1757–61.\n[4] Tampellini M, Sonetto C, Scagliotti GV. Novel\
+      \ anti-angiogenic ther­\napeutic strategies in colorectal cancer. Expert Opin\
+      \ Investig Drugs.\n2016;25:507–20.\n[5] Karkkainen MJ, Petrova TV. Vascular\
+      \ endothelial growth factor\nreceptors in the regulation of angiogenesis and\
+      \ lymphangiogenesis.\nOncogene. 2000;19:5598–605.\n[6] Sun Q, Zhou J, Zhang\
+      \ Z, et al. Discovery of fruquintinib, a potent\nand highly selective small\
+      \ molecule inhibitor of VEGFR 1, 2, 3 tyrosine\nkinases for cancer therapy.\
+      \ Cancer Biol Ther. 2014;15:1635–45.\n[7] Chen Z, Jiang L. The clinical application\
+      \ of fruquintinib on colorectal\ncancer. Expert Rev Clin Pharmacol. 2019;12:713–21.\n\
+      [8] Hoffman KB, Dimbil M, Erdman CB, Tatonetti NP, Overstreet BM. The\nWeber\
+      \ effect and the United States Food and Drug Administration’s\nAdverse Event\
+      \ Reporting System (FAERS): analysis of sixty-two drugs\napproved from 2006\
+      \ to 2010. Drug Saf. 2014;37:283–94.\n[9] Liu C, Wang X, Zhou C, Cao X. A real-world\
+      \ disproportionality analy­\nsis of cidofovir from the FDA Adverse Event Reporting\
+      \ System (FAERS)\ndatabase. Expert Opin Drug Saf. 2025:1–9.\n[10] Zhang H, Zhao\
+      \ P, Huang H. Adverse events of Capmatinib: a real-world\ndrug safety surveillance\
+      \ study based on the FDA adverse event report­\ning system (FAERS) database.\
+      \ Medicine (Baltim). 2025;104:e41460.\n[11] Deng Y, Li X. Fruquintinib and its\
+      \ use in the treatment of metastatic\ncolorectal cancer. Future Oncol. 2019;15:2571–6.\n\
+      [12] Song Y, Qu T, Zhang H, et al. The real-world practice of fruquintinib\n\
+      for Chinese patients with metastatic colorectal cancer. Cancer Manag\nRes. 2021;13:6199–205.\n\
+      [13] Shu Y, Zheng S. Case report: severe rashes associated with fruquintinib\n\
+      in a patient with metastatic colorectal cancer. Front Oncol.\n2021;11:688231.\n\
+      [14] Zhao R, Fan R, Pan Y, Han Y, Wang Y, Chen W. Fruquintinib-induced\nrenal-limited\
+      \ thrombotic microangiopathy: a case report. BMC\nNephrol. 2024;25:170.\n[15]\
+      \ Guo L, Hao ZZ, Zhang Q, Liu QJ, Gao Y, Ran L. Renal microangiop­\nathy and\
+      \ immune complex glomerulonephritis induced by anti-tumour\nagents: a case report.\
+      \ Open Life Sci. 2024;19:20220986.\n[16] Jones DT, Cruz G, Lugue MT, et al.\
+      \ Fruquintinib-induced cerebellar\nhemorrhage in left-sided descending metastatic\
+      \ colorectal adenocarci­\nnoma: a case report and risk assessment. Cureus. 2024;16:e68203.\n\
+      [17] le Noble FAC, Mourad JJ, Levy BI, Struijker-Boudier HAJ. VEGF\n(Vascular\
+      \ Endothelial Growth Factor) inhibition and hypertension: does\nmicrovascular\
+      \ rarefaction play a role? Hypertension. 2023;80:901–11.\n[18] Ledet CB, Sener\
+      \ U, Johnson DR, Ku K, Halfdanarson TR. Fruquintinib-\nassociated posterior\
+      \ reversible encephalopathy syndrome in a patient\nwith multiply metastatic\
+      \ rectal cancer. Clin Colorectal Cancer.\n2025;24:98–100.\n[19] Largeau B, Bergeron\
+      \ S, Auger F, et al. Experimental models of posterior\nreversible encephalopathy\
+      \ syndrome: a review from pathophysiology\nto therapeutic targets. Stroke. 2024;55:484–93.\n\
+      [20] Sakaeda T, Tamon A, Kadoyama K, Okuno Y. Data mining of the pub­\nlic version\
+      \ of the FDA adverse event reporting system. Int J Med Sci.\n2013;10:796–803.\n\
+      Table 4\nTop 5 PT of VEGFR inhibitor.\nDrug\nPT\nN\nROR (95% Cl)\nFruquintinib\n\
+      Fatigue\n196\n3.27 (2.84–3.78)\nBlood pressure increased\n138\n11.78 (9.94–13.96)\n\
+      Diarrhoea\n109\n2.18 (1.8–2.63)\nAsthenia\n107\n4.18 (3.45–5.07)\nDysphonia\n\
+      105\n24.75 (20.38–30.07)\nAxitinib\nDiarrhoea\n1835\n4.36 (4.16–4.57)\nFatigue\n\
+      1571\n3.04 (2.89–3.2)\nHypertension\n921\n7.27 (6.81–7.77)\nDecreased appetite\n\
+      772\n5.05 (4.7–5.43)\nDysphonia\n768\n20.77 (19.33–22.32)\nCabozantinib\nDiarrhoea\n\
+      7798\n5.47 (5.34–5.6)\nFatigue\n6262\n3.51 (3.42–3.6)\nNausea\n4058\n2.36 (2.29–2.44)\n\
+      Decreased appetite\n3844\n7.33 (7.1–7.57)\nPalmar-plantar erythrodysaesthesia\
+      \ syndrome\n2585\n55.57 (53.29–57.94)\nSunitinib\nDiarrhoea\n4077\n2.84 (2.76–2.93)\n\
+      Fatigue\n3803\n2.16 (2.1–2.24)\nAsthenia\n2262\n2.68 (2.57–2.8)\nDecreased appetite\n\
+      2232\n4.11 (3.94–4.28)\nHypertension\n1689\n3.56 (3.39–3.73)\nVandetanib\nDiarrhoea\n\
+      273\n5.1 (4.51–5.76)\nRash\n160\n4.2 (3.59–4.91)\nElectrocardiogram qt prolonged\n\
+      99\n33.12 (27.14–40.42)\nAcne\n89\n12.44 (10.09–15.34)\nHypertension\n70\n4.02\
+      \ (3.18–5.09)\nADE = adverse drug event, CI = confidence interval, PT = preferred\
+      \ terminology, ROR = reporting odds ratio, VEGFR = vascular endothelial growth\
+      \ factor receptors."
+    page: 9
+  tables: []
+  images:
+  - image_id: IMG:0000
+    caption: Figure 1. The process of selecting AEs from the FAERS database. AEs =
+      adverse events, FAERS = FDA adverse event reporting system.
+    page: 2
+    bbox:
+    - 109.5
+    - 520.445068359375
+    - 469.5
+    - 731.6450805664062
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0002_r000.png
+  - image_id: IMG:0001
+    caption: Figure 2. Distribution of AEs over time. AEs = adverse events.
+    page: 4
+    bbox:
+    - 61.5
+    - 60.0009765625
+    - 517.5
+    - 225.1199951171875
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0004_r001.png
+  - image_id: IMG:0002
+    caption: Figure 3. Results of SOC classification of ADE signals. ADE = adverse
+      drug event, SOC = system organ classification.
+    page: 4
+    bbox:
+    - 49.5
+    - 269.47491455078125
+    - 529.5
+    - 467.8749084472656
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0004_r002.png
+  - image_id: IMG:0003
+    caption: Figure 4. Top 30 PT of frequency. PT = preferred term.
+    page: 5
+    bbox:
+    - 94.5
+    - 60.0
+    - 514.5
+    - 495.67999267578125
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0005_r003.png
+  - image_id: IMG:0004
+    caption: Figure 5. Top 30 PT of signal intensity. PT = preferred term.
+    page: 6
+    bbox:
+    - 61.5
+    - 60.0
+    - 517.5
+    - 438.719970703125
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0006_r004.png
+  - image_id: IMG:0005
+    caption: Figure 6. The subgroup analysis in gender.
+    page: 7
+    bbox:
+    - 94.5
+    - 60.0
+    - 514.5
+    - 453.44000244140625
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0007_r005.png
+  - image_id: IMG:0006
+    caption: Figure 7. The subgroup analysis in age.
+    page: 8
+    bbox:
+    - 79.5
+    - 60.0
+    - 499.4999694824219
+    - 435.6799621582031
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0008_r006.png

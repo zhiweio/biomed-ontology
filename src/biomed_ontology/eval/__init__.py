@@ -113,6 +113,17 @@ ARMS: dict[str, dict[str, Any]] = {
 SAPBERT_DELTA = ("milvus_hybrid_3col", "milvus_hybrid_2col")
 
 
+def _has_sapbert(name: str | None) -> bool:
+    """净值这行字有没有资格被引用，取决于生医列到底是不是 SapBERT 算出来的。
+
+    两种写法都要认：命令行别名（`dual`）和组合模型的真名
+    （`bge-m3+sapbert+qwen3-vl`）。只认其中一种，就会在一份本来可信的报告上
+    盖一个"数据不可信"的戳 —— 假阴性在这里和假阳性一样坏。
+    """
+    lowered = (name or "").lower()
+    return "sapbert" in lowered or lowered in {"dual", "multimodal"}
+
+
 def load_gold(name: str, *, gold_dir: Path | None = None) -> dict[str, Any]:
     path = (gold_dir or GOLD_DIR) / f"{name}.yaml"
     return yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -209,6 +220,10 @@ class ArmResult:
     # 命中声称“这篇文档讲了这个概念”，它就必须真的讲了。
     # 低于 1.0 意味着系统在造引用 —— 这比召回低严重得多。
     citation_fidelity: float = 1.0
+    # 前十里有多少条是 gold 判过的。语料扩了而标注没跟上时，未判定的命中
+    # 一律按“不相关”计入分母，召回会塌下来 —— 塌的是标注覆盖，不是检索质量。
+    # 这一列就是用来分辨这两者的：它低，上面那些指标就只是下界。
+    judged_at_10: float = 1.0
     latency_p50_ms: float = 0.0
     latency_p95_ms: float = 0.0
     query_count: int = 0
@@ -269,7 +284,7 @@ class RetrievalEval:
             for lang in [None, *sorted({lg for a in self.arms.values() for lg in a.by_lang})]:
                 tag = lang or "全部"
                 lines.append(f"  {tag:<6} Recall@10 {self.delta(lang=lang):+.3f}")
-            if self.embedder not in {"sapbert", "dual"}:
+            if not _has_sapbert(self.embedder):
                 lines.append(
                     f"  ⚠ embedder={self.embedder or '?'} 并未加载 SapBERT，"
                     "上面的净值只验证链路贯通，不能用于回答“SapBERT 值不值得上”。"
@@ -287,6 +302,14 @@ class RetrievalEval:
             lines.extend(f"  {label:<24} {v:.3f}" for label, v in sorted(broken.items()))
         else:
             lines.append("\n引用忠实度：全部臂 1.000（无造引用）")
+
+        worst = min((a.judged_at_10 for a in self.arms.values()), default=1.0)
+        if worst < 0.9:
+            lines.append(
+                f"\n⚠ 标注覆盖不足：最差的臂前十里只有 {worst:.0%} 命中被 gold 判定过。"
+                "\n  未判定的命中一律按不相关计入分母，上表各项因此是**下界**而非测量值，"
+                "\n  也不能与标注期语料上的历史数字直接相比。要出可比的数，先把 gold 扩到当前语料。"
+            )
         return "\n".join(lines)
 
     def _block(self, lang: str | None, title: str) -> str:
@@ -341,11 +364,13 @@ class _QueryScore:
     ap: float
     elapsed_ms: float
     fidelity: float = 1.0
+    judged: float = 1.0
 
 
 def _aggregate(arm: str, label: str, scores: list[_QueryScore]) -> ArmResult:
     n = len(scores) or 1
     return ArmResult(
+        judged_at_10=sum(s.judged for s in scores) / n,
         arm=arm,
         label=label,
         recall_at_10=sum(s.recall for s in scores) / n,
@@ -434,14 +459,31 @@ def eval_retrieval(
     ctx = TraceContext(trace_id="eval", ontology_release_id=kb.release_id)
 
     cases = []
+    dangling: list[str] = []
     for q in gold["queries"]:
         need = q.get("requires_entitlement")
         if need and need not in entitlements:
             # 无凭据时该 query 的正解不可见，计入会把"合规过滤"错算成"召回差"。
             continue
-        rel = {index[k]: v for k, v in (q.get("relevant") or {}).items() if k in index}
+        labels = q.get("relevant") or {}
+        dangling.extend(f"{q['id']}:{k}" for k in labels if k not in index)
+        rel = {index[k]: v for k, v in labels.items() if k in index}
         if rel:
             cases.append((q["id"], q["text"], q.get("lang", "und"), rel))
+
+    if dangling:
+        # 标注指向了不存在的切片，多半是切片键变了。静悄悄丢掉的话，
+        # 召回会莫名其妙地降，而所有人都会去查检索器 —— 查错了地方。
+        raise ValueError(
+            f"gold 有 {len(dangling)} 条标注对不上任何切片，评测拒绝在残缺标注上出数：\n  "
+            + "\n  ".join(sorted(dangling)[:10])
+        )
+
+    # gold 只在这些文档上做过判断。索引里其余文档的命中都是"没人看过"，
+    # 按不相关计入分母只会低估召回。
+    judged_ids = {cid for _, _, _, rel in cases for cid in rel}
+    judged_docs = {c.doc_id for c in kb.chunks if c.chunk_id in judged_ids}
+    doc_of = {c.chunk_id: c.doc_id for c in kb.chunks}
 
     results: dict[str, ArmResult] = {}
     unavailable: dict[str, str] = {}
@@ -469,8 +511,12 @@ def eval_retrieval(
                 [h.chunk_id for h in hits], rel, top_k=top_k
             )
             fidelity = _citation_fidelity(kb, hits)
+            top = [h.chunk_id for h in hits][:top_k]
+            judged = (
+                sum(1 for cid in top if doc_of.get(cid) in judged_docs) / len(top) if top else 1.0
+            )
             scores.append(
-                _QueryScore(qid, lang, recall, precision, ndcg, rr, ap, elapsed, fidelity)
+                _QueryScore(qid, lang, recall, precision, ndcg, rr, ap, elapsed, fidelity, judged)
             )
 
         result = _aggregate(arm, cfg["label"], scores)

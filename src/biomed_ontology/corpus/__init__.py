@@ -48,6 +48,8 @@ class TableBlock(BaseModel):
     bbox: list[float] = Field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
     header: list[str] = Field(default_factory=list)
     rows: list[list[str]] = Field(default_factory=list)
+    asset_path: str | None = None
+    """渲染出的图像相对路径，供多模态向量列读取像素。手写语料没有。"""
 
     def cells(self) -> list[TableCell]:
         return [
@@ -63,7 +65,7 @@ class TableBlock(BaseModel):
 
 
 class ImageBlock(BaseModel):
-    """图像块。PoC 不做真实视觉推理，用 caption + 视觉模型输出的结构化描述占位。"""
+    """图像块。caption 与 VLM 摘要是它的文本面，`asset_path` 是它的像素面。"""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -74,6 +76,8 @@ class ImageBlock(BaseModel):
     kind: str = "figure"
     vision_summary: str | None = None
     extracted_values: dict[str, str] = Field(default_factory=dict)
+    asset_path: str | None = None
+    """渲染出的图像相对路径，供多模态向量列读取像素。手写语料没有。"""
 
 
 class DocumentSection(BaseModel):
@@ -117,6 +121,9 @@ class Chunk:
     source_ref: str | None = None
     """表格/图像切片对应的 table_id 或 image_id，供下钻定位。"""
 
+    asset_path: str | None = None
+    """图像切片的像素在哪。文本切片为 None —— 多模态列据此决定看图还是读字。"""
+
     concept_ids: list[str] = field(default_factory=list)
     concept_ids_expanded: list[str] = field(default_factory=list)
     labels: list[str] = field(default_factory=list)
@@ -143,6 +150,57 @@ def load_corpus(path: Path) -> list[Document]:
 _SENT_SPLIT = re.compile(r"(?<=[.。!?！？])\s+")
 
 
+# Milvus 的 VARCHAR 上限按 UTF-8 字节算，而中文一个字占 3 字节。
+# 留出余量而不是顶着 8192 写，是因为超限的失败形态是整批写入回滚，不是丢一条。
+_TABLE_MAX_BYTES = 6000
+
+
+def _split_table(t: TableBlock, *, max_chars: int) -> list[str]:
+    """长表按行切片。表头在每一片里重复，否则后半张表的数字没有列名可依。
+
+    单条巨型向量表达不了一张几十行的表 —— 它只会得到一个谁都不像的平均。
+    """
+    header = " | ".join(t.header)
+    rows = [" | ".join(r) for r in t.rows]
+    if not rows:
+        return [header]
+
+    budget = max(max_chars - len(header.encode()), 512)
+    parts: list[str] = []
+    cur: list[str] = []
+    size = 0
+    for row in rows:
+        n = len(row.encode()) + 1
+        if cur and size + n > budget:
+            parts.append("\n".join([header, *cur]) if header else "\n".join(cur))
+            cur, size = [], 0
+        cur.append(row)
+        size += n
+    if cur:
+        parts.append("\n".join([header, *cur]) if header else "\n".join(cur))
+    return parts
+
+
+# 论文的"包装纸"：署名、致谢、利益冲突、参考文献表。
+# 它们对"这个药疗效如何"一类问题永远不是答案，却因为词汇高度重合而挤进前十。
+_BOILERPLATE = re.compile(
+    r"(reference|bibliograph|acknowledg|author\s*contribution|conflict\s*of\s*interest"
+    r"|competing\s*interest|disclosure|funding|data\s*availability|ethics\s*statement"
+    r"|publisher.s\s*note|supplementary|abbreviation|additional\s*information"
+    r"|参考文献|致谢|利益冲突|作者贡献)",
+    re.IGNORECASE,
+)
+
+
+def _is_boilerplate(section: str) -> bool:
+    """按 section 路径的**末段**判断。
+
+    路径是 `父 / 子` 拼出来的，拿整条串匹配会因为祖先叫 "References" 就把
+    它下面的所有内容一起误杀 —— 版面错切时这种嵌套很常见。
+    """
+    return bool(_BOILERPLATE.search(section.rsplit("/", 1)[-1]))
+
+
 def chunk_document(doc: Document, *, max_chars: int = 600) -> list[Chunk]:
     """按 section 切片，句子边界对齐。
 
@@ -152,6 +210,11 @@ def chunk_document(doc: Document, *, max_chars: int = 600) -> list[Chunk]:
     chunks: list[Chunk] = []
     offset = 0
     for sec in doc.sections:
+        if _is_boilerplate(sec.name):
+            # offset 照常推进：切片 ID 的种子是全文偏移，跳过不等于当它不存在，
+            # 否则删一节参考文献会把后面所有正文切片的 ID 全部平移。
+            offset += len(sec.text) + 2
+            continue
         for text, start, end in _split_section(sec.text, max_chars):
             chunks.append(
                 Chunk(
@@ -168,20 +231,25 @@ def chunk_document(doc: Document, *, max_chars: int = 600) -> list[Chunk]:
         offset += len(sec.text) + 2
 
     for t in doc.tables:
-        chunks.append(
-            Chunk(
-                chunk_id=_chunk_id(doc.doc_id, "tbl", t.table_id),
-                doc_id=doc.doc_id,
-                text=(f"{t.caption}\n" if t.caption else "") + t.as_text(),
-                section=f"table:{t.table_id}",
-                char_start=0,
-                char_end=0,
-                modality=ModalityChannelEnum.TABLE,
-                page=t.page,
-                bbox=list(t.bbox),
-                source_ref=t.table_id,
+        head = f"{t.caption}\n" if t.caption else ""
+        for part, body in enumerate(_split_table(t, max_chars=_TABLE_MAX_BYTES - len(head))):
+            # 第 0 片沿用 table_id 作种子，长表增行时不会把已有切片 ID 全冲掉。
+            seed = t.table_id if part == 0 else f"{t.table_id}#{part}"
+            chunks.append(
+                Chunk(
+                    chunk_id=_chunk_id(doc.doc_id, "tbl", seed),
+                    doc_id=doc.doc_id,
+                    text=head + body,
+                    section=f"table:{t.table_id}",
+                    char_start=0,
+                    char_end=0,
+                    modality=ModalityChannelEnum.TABLE,
+                    page=t.page,
+                    bbox=list(t.bbox),
+                    source_ref=t.table_id,
+                    asset_path=t.asset_path,
+                )
             )
-        )
 
     for im in doc.images:
         body = " ".join(filter(None, [im.caption, im.vision_summary]))
@@ -197,6 +265,7 @@ def chunk_document(doc: Document, *, max_chars: int = 600) -> list[Chunk]:
                 page=im.page,
                 bbox=list(im.bbox),
                 source_ref=im.image_id,
+                asset_path=im.asset_path,
             )
         )
     return chunks

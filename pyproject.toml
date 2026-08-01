@@ -44,6 +44,13 @@ vector = [
     "sentence-transformers>=3.0.0",
     # 内网连不上 huggingface.co 时改走 ModelScope（HMD_MODEL_HUB=modelscope）。
     "modelscope>=1.20.0",
+    # Qwen3-VL-Embedding 的视觉列。官方推理脚本随权重下发，但它 import 的这两个
+    # 包不在权重里：qwen-vl-utils 负责把图缩放到合法的 patch 数，av 是它的解码后端。
+    # transformers 下限来自模型卡：4.57 才认得 qwen3_vl 这个 model_type。
+    "transformers>=4.57.0",
+    "qwen-vl-utils>=0.0.14",
+    "av>=15.0.0",
+    "torchvision>=0.20.0",
 ]
 # 版面解析。pymupdf 为 AGPL-3.0/商业双授权，对外服务前需法务确认（见 NOTICE）。
 parse = [

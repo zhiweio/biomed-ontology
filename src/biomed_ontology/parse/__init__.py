@@ -15,6 +15,7 @@ from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJusti
 from biomed_ontology._generated.hmd_fact import DocTypeEnum, LanguageEnum
 from biomed_ontology.config import Settings
 from biomed_ontology.observability import TraceContext, new_trace_id
+from biomed_ontology.parse.assets import AssetRecord
 from biomed_ontology.parse.emit import ParsedDocument, emit_document
 from biomed_ontology.parse.layout import (
     LayoutBackend,
@@ -38,6 +39,7 @@ from biomed_ontology.parse.vision import (
 )
 
 __all__ = [
+    "AssetRecord",
     "HeadingCandidate",
     "LayoutBackend",
     "LayoutBlock",
@@ -166,23 +168,31 @@ def describe_assets(
     *,
     vision: VisionProvider,
     ctx: TraceContext | None = None,
-) -> dict[tuple[int, tuple[float, ...]], VisionResult]:
-    """图片/表格 → 可被文本检索命中的摘要。键为 (页码, bbox)。"""
-    if isinstance(vision, NullVisionProvider):
-        return {}
+) -> dict[tuple[int, tuple[float, ...]], AssetRecord]:
+    """图片/表格 → 落盘的图像 + 可选的文本摘要。键为 (页码, bbox)。
 
+    **渲染与描述是两件事，不能绑在一起**：即使没配 VLM 也要把图渲染出来，
+    因为多模态向量列吃的是像素，不是摘要。早先这里对 NullVisionProvider 直接返回空，
+    结果是"没配 VLM"连带把视觉检索也悄悄关掉了。
+    """
     from biomed_ontology.parse.assets import image_regions, render_regions
 
     regions = image_regions(layout.blocks)
     if not regions:
         return {}
 
-    out: dict[tuple[int, tuple[float, ...]], VisionResult] = {}
+    out: dict[tuple[int, tuple[float, ...]], AssetRecord] = {}
     rendered = render_regions(pdf_path, regions, out_dir)
+    described = not isinstance(vision, NullVisionProvider)
+
     for (page, bbox), asset in zip(regions, rendered, strict=False):
-        result = vision.describe(asset.data, prompt=_ASSET_PROMPT, media_type="image/png")
-        out[(page, tuple(bbox))] = result
-        if ctx is not None:
+        result = (
+            vision.describe(asset.data, prompt=_ASSET_PROMPT, media_type="image/png")
+            if described
+            else None
+        )
+        out[(page, tuple(bbox))] = AssetRecord(rel_path=asset.rel_path, vision=result)
+        if ctx is not None and result is not None:
             for w in result.warnings:
                 ctx.record_decision(
                     stage="parse.vision",

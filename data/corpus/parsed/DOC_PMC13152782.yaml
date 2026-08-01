@@ -1,0 +1,1568 @@
+corpus_version: 0.1.0
+parse:
+  backend: pymupdf
+  degraded: []
+  same_as: {}
+sections_meta:
+- section_id: SEC:PMC13152782#0000
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 'Savolitinib in brain and leptomeningeal metastases from non-small
+    cell lung cancer: a case report'
+  section_title: 'Savolitinib in brain and leptomeningeal metastases from non-small
+    cell lung cancer: a case report'
+  section_level: 1
+  sort_order: 0
+  start_page: 1
+  end_page: 1
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=1 page=1
+- section_id: SEC:PMC13152782#0001
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: Savolitinibinbrainand
+  section_title: Savolitinibinbrainand
+  section_level: 1
+  sort_order: 1
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 21.0
+- section_id: SEC:PMC13152782#0002
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: leptomeningealmetastases
+  section_title: leptomeningealmetastases
+  section_level: 1
+  sort_order: 2
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 21.0
+- section_id: SEC:PMC13152782#0003
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: fromnon-smallcelllung
+  section_title: fromnon-smallcelllung
+  section_level: 1
+  sort_order: 3
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 21.0
+- section_id: SEC:PMC13152782#0004
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: cancer:acasereport
+  section_title: cancer:acasereport
+  section_level: 1
+  sort_order: 4
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 21.0
+- section_id: SEC:PMC13152782#0005
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 1Introduction
+  section_title: 1Introduction
+  section_level: 1
+  sort_order: 5
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=1
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0006
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0005
+  section_path: 1Introduction / 1 Introduction
+  section_title: 1 Introduction
+  section_level: 2
+  sort_order: 6
+  start_page: 1
+  end_page: 1
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=1
+- section_id: SEC:PMC13152782#0007
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0006
+  section_path: 1Introduction / 1 Introduction / XuejiaoQi1,2,3,ZhijiaoSong1,2,3,
+    JunyingHe1,2,3andHui Bu1,2,3*
+  section_title: XuejiaoQi1,2,3,ZhijiaoSong1,2,3, JunyingHe1,2,3andHui Bu1,2,3*
+  section_level: 3
+  sort_order: 7
+  start_page: 1
+  end_page: 1
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=3 page=1
+  - 字号 11.0
+- section_id: SEC:PMC13152782#0008
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 2 Casepresentation
+  section_title: 2 Casepresentation
+  section_level: 1
+  sort_order: 8
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=2
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0009
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 0.33) were independent predictors of improved survival in LM (5).
+  section_title: 0.33) were independent predictors of improved survival in LM (5).
+  section_level: 1
+  sort_order: 9
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 0
+- section_id: SEC:PMC13152782#0010
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 10.3389/fonc.2026.1627170
+  section_title: 10.3389/fonc.2026.1627170
+  section_level: 1
+  sort_order: 10
+  start_page: 2
+  end_page: 2
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 10
+- section_id: SEC:PMC13152782#0011
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0010
+  section_path: 10.3389/fonc.2026.1627170 / 2 Case presentation
+  section_title: 2 Case presentation
+  section_level: 2
+  sort_order: 11
+  start_page: 2
+  end_page: 2
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=2
+- section_id: SEC:PMC13152782#0012
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: '10.3389/fonc.2026.1627170 #2'
+  section_title: 10.3389/fonc.2026.1627170
+  section_level: 1
+  sort_order: 12
+  start_page: 3
+  end_page: 3
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 10
+- section_id: SEC:PMC13152782#0013
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0012
+  section_path: '10.3389/fonc.2026.1627170 #2 / 3 Discussion'
+  section_title: 3 Discussion
+  section_level: 2
+  sort_order: 13
+  start_page: 3
+  end_page: 3
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=3
+  - pymupdf 版面信号 level=1 page=3
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0014
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: Data availabilitystatement
+  section_title: Data availabilitystatement
+  section_level: 1
+  sort_order: 14
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=4
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0015
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: Ethicsstatement
+  section_title: Ethicsstatement
+  section_level: 1
+  sort_order: 15
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=4
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0016
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 2.0%(15).However,METex14skippingmutationsinCNSmetas-
+  section_title: 2.0%(15).However,METex14skippingmutationsinCNSmetas-
+  section_level: 1
+  sort_order: 16
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 2
+- section_id: SEC:PMC13152782#0017
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: '10.3389/fonc.2026.1627170 #3'
+  section_title: 10.3389/fonc.2026.1627170
+  section_level: 1
+  sort_order: 17
+  start_page: 4
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 10
+- section_id: SEC:PMC13152782#0018
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0017
+  section_path: '10.3389/fonc.2026.1627170 #3 / 4 Conclusion'
+  section_title: 4 Conclusion
+  section_level: 2
+  sort_order: 18
+  start_page: 4
+  end_page: 4
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=4
+  - pymupdf 版面信号 level=1 page=4
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0019
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0017
+  section_path: '10.3389/fonc.2026.1627170 #3 / Data availability statement'
+  section_title: Data availability statement
+  section_level: 2
+  sort_order: 19
+  start_page: 4
+  end_page: 4
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=4
+- section_id: SEC:PMC13152782#0020
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0017
+  section_path: '10.3389/fonc.2026.1627170 #3 / Ethics statement'
+  section_title: Ethics statement
+  section_level: 2
+  sort_order: 20
+  start_page: 4
+  end_page: 4
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=4
+- section_id: SEC:PMC13152782#0021
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: Authorcontributions
+  section_title: Authorcontributions
+  section_level: 1
+  sort_order: 21
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=5
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0022
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: Conﬂictofinterest
+  section_title: Conﬂictofinterest
+  section_level: 1
+  sort_order: 22
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=5
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0023
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: GenerativeAI statement
+  section_title: GenerativeAI statement
+  section_level: 1
+  sort_order: 23
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=5
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0024
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: Publisher’snote
+  section_title: Publisher’snote
+  section_level: 1
+  sort_order: 24
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - pymupdf 版面信号 level=1 page=5
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0025
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 3.WilcoxJA,BoireAA.Leveragingmolecularandimmune-basedtherapiesin
+  section_title: 3.WilcoxJA,BoireAA.Leveragingmolecularandimmune-basedtherapiesin
+  section_level: 1
+  sort_order: 25
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 3
+- section_id: SEC:PMC13152782#0026
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 4.WilcoxJA,ChukwuekeUN,AhnMJ,AizerAA,BaleTA,BrandsmaD,etal.
+  section_title: 4.WilcoxJA,ChukwuekeUN,AhnMJ,AizerAA,BaleTA,BrandsmaD,etal.
+  section_level: 1
+  sort_order: 26
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 4
+- section_id: SEC:PMC13152782#0027
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 5.WasilewskiD,EitnerC,AtesR,MuradS,ShakedZ,SteinleJA,etal.Clinical
+  section_title: 5.WasilewskiD,EitnerC,AtesR,MuradS,ShakedZ,SteinleJA,etal.Clinical
+  section_level: 1
+  sort_order: 27
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 5
+- section_id: SEC:PMC13152782#0028
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 6.GwakDS,HwangYH,KimYW.Casereport:Brainmetastasisconﬁnedtothe
+  section_title: 6.GwakDS,HwangYH,KimYW.Casereport:Brainmetastasisconﬁnedtothe
+  section_level: 1
+  sort_order: 28
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 6
+- section_id: SEC:PMC13152782#0029
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: '7.AtallahO,ChaurasiaB.Brainmetastasislocalizedtothesameareaofinfarction:'
+  section_title: '7.AtallahO,ChaurasiaB.Brainmetastasislocalizedtothesameareaofinfarction:'
+  section_level: 1
+  sort_order: 29
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 7
+- section_id: SEC:PMC13152782#0030
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 8.MachuraB,KucharskiD,BozekO,EksnerB,KokoszkaB,PekalaT,etal.Deep
+  section_title: 8.MachuraB,KucharskiD,BozekO,EksnerB,KokoszkaB,PekalaT,etal.Deep
+  section_level: 1
+  sort_order: 30
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 8
+- section_id: SEC:PMC13152782#0031
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 9.RhunEL,WellerM,BrandsmaD,BentVM,AzambujaED,HenrikssonR,etal.
+  section_title: 9.RhunEL,WellerM,BrandsmaD,BentVM,AzambujaED,HenrikssonR,etal.
+  section_level: 1
+  sort_order: 31
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 9
+- section_id: SEC:PMC13152782#0032
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 99. doi:10.1093/annonc/mdx221
+  section_title: 99. doi:10.1093/annonc/mdx221
+  section_level: 1
+  sort_order: 32
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 99
+- section_id: SEC:PMC13152782#0033
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 13.XiaSK,DuanWZ,XuMX,LiMG,TangMY,Wei S,etal.Mesothelinpromotes
+  section_title: 13.XiaSK,DuanWZ,XuMX,LiMG,TangMY,Wei S,etal.Mesothelinpromotes
+  section_level: 1
+  sort_order: 33
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 13
+- section_id: SEC:PMC13152782#0034
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 14.Lin JX, Sun H, Peng YL, Xie Z, Liu SYM, Wu YL. Comprehensive management
+    of
+  section_title: 14.Lin JX, Sun H, Peng YL, Xie Z, Liu SYM, Wu YL. Comprehensive management
+    of
+  section_level: 1
+  sort_order: 34
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 14
+- section_id: SEC:PMC13152782#0035
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 15.XuZG,LiHX,DongYJ,ChengP,LuoF,FuSJ,etal.IncidenceandPD-L1
+  section_title: 15.XuZG,LiHX,DongYJ,ChengP,LuoF,FuSJ,etal.IncidenceandPD-L1
+  section_level: 1
+  sort_order: 35
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 15
+- section_id: SEC:PMC13152782#0036
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: '10.3389/fonc.2026.1627170 #4'
+  section_title: 10.3389/fonc.2026.1627170
+  section_level: 1
+  sort_order: 36
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 10
+- section_id: SEC:PMC13152782#0037
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0036
+  section_path: '10.3389/fonc.2026.1627170 #4 / Author contributions'
+  section_title: Author contributions
+  section_level: 2
+  sort_order: 37
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+- section_id: SEC:PMC13152782#0038
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0036
+  section_path: '10.3389/fonc.2026.1627170 #4 / Funding'
+  section_title: Funding
+  section_level: 2
+  sort_order: 38
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+  - pymupdf 版面信号 level=1 page=5
+  - 字号 13.5
+- section_id: SEC:PMC13152782#0039
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0036
+  section_path: '10.3389/fonc.2026.1627170 #4 / Acknowledgments'
+  section_title: Acknowledgments
+  section_level: 2
+  sort_order: 39
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+  - pymupdf 版面信号 level=1 page=5
+  - 字号 13.5
+  - 命中标准章节名
+- section_id: SEC:PMC13152782#0040
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0036
+  section_path: '10.3389/fonc.2026.1627170 #4 / Conflict of interest'
+  section_title: Conflict of interest
+  section_level: 2
+  sort_order: 40
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+- section_id: SEC:PMC13152782#0041
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0036
+  section_path: '10.3389/fonc.2026.1627170 #4 / Generative AI statement'
+  section_title: Generative AI statement
+  section_level: 2
+  sort_order: 41
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+- section_id: SEC:PMC13152782#0042
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0036
+  section_path: '10.3389/fonc.2026.1627170 #4 / Publisher’s note'
+  section_title: Publisher’s note
+  section_level: 2
+  sort_order: 42
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+- section_id: SEC:PMC13152782#0043
+  doc_id: DOC:PMC13152782
+  parent_section_id: SEC:PMC13152782#0036
+  section_path: '10.3389/fonc.2026.1627170 #4 / References'
+  section_title: References
+  section_level: 2
+  sort_order: 43
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+  - pymupdf 版面信号 level=1 page=5
+  - 字号 13.5
+  - 命中标准章节名
+- section_id: SEC:PMC13152782#0044
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 16.ShenL,ZhaoJK,YangY,MuSY,YuYF,HanYC,etal.Prominentresponseto
+  section_title: 16.ShenL,ZhaoJK,YangY,MuSY,YuYF,HanYC,etal.Prominentresponseto
+  section_level: 1
+  sort_order: 44
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 16
+- section_id: SEC:PMC13152782#0045
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 18.WangF,LiuY,QiuWL,ShumE,FengM,ZhaoDJ,etal.Functionalanalysisof
+  section_title: 18.WangF,LiuY,QiuWL,ShumE,FengM,ZhaoDJ,etal.Functionalanalysisof
+  section_level: 1
+  sort_order: 45
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 18
+- section_id: SEC:PMC13152782#0046
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 21.Batra U, Singh AK, Nathany S, Dewan A, Sharma M, Amrith BP, et
+    al. Real world
+  section_title: 21.Batra U, Singh AK, Nathany S, Dewan A, Sharma M, Amrith BP, et
+    al. Real world
+  section_level: 1
+  sort_order: 46
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 21
+- section_id: SEC:PMC13152782#0047
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 23.Hou HL, Sun DT, Zhang XC. The role of MDM2 ampliﬁcation and overexpression
+  section_title: 23.Hou HL, Sun DT, Zhang XC. The role of MDM2 ampliﬁcation and overexpression
+  section_level: 1
+  sort_order: 47
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 23
+- section_id: SEC:PMC13152782#0048
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 24.Drilon A, Clark JW, Weiss J, Ou SHI, Camidge DR, Solomon BJ, et
+    al. Antitumor
+  section_title: 24.Drilon A, Clark JW, Weiss J, Ou SHI, Camidge DR, Solomon BJ, et
+    al. Antitumor
+  section_level: 1
+  sort_order: 48
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 24
+- section_id: SEC:PMC13152782#0049
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: 25.LiMM,HuangJY,XingRY,DuXY,WeiCH,WangHJ.Exploringpractical
+  section_title: 25.LiMM,HuangJY,XingRY,DuXY,WeiCH,WangHJ.Exploringpractical
+  section_level: 1
+  sort_order: 49
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 25
+- section_id: SEC:PMC13152782#0050
+  doc_id: DOC:PMC13152782
+  parent_section_id: null
+  section_path: '10.3389/fonc.2026.1627170 #5'
+  section_title: 10.3389/fonc.2026.1627170
+  section_level: 1
+  sort_order: 50
+  start_page: 6
+  end_page: 6
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.62
+  evidence:
+  - 编号模式 10
+documents:
+- doc_id: DOC:PMC13152782
+  source_id: PUBMED
+  external_id: PMC13152782
+  title: 'Savolitinib in brain and leptomeningeal metastases from non-small cell lung
+    cancer: a case report.'
+  doc_type: JOURNAL_ARTICLE
+  language: en
+  license_tier: TIER_0
+  sections:
+  - name: 1Introduction / 1 Introduction / XuejiaoQi1,2,3,ZhijiaoSong1,2,3, JunyingHe1,2,3andHui
+      Bu1,2,3*
+    text: '1KeyLaboratoryofClinicalNeurology,MinistryofEducation,Hebei MedicalUniversity,Shijiazhuang,
+
+      Hebei,China,2Department ofNeurology,the SecondHospital ofHebei MedicalUniversity,
+
+      Shijiazhuang,Hebei,China,3KeyNeurologicalLaboratoryofHebei Province,Shijiazhuang,
+
+      Hebei,China
+
+      Inthepopulationwithnon-smallcelllungcancer(NSCLC),theincidenceof
+
+      mesenchymal–epithelialtransitionfactorexon14(METex14)skippingmutations
+
+      is approximately 3%–4%. However, the prevalence of this mutation appears to
+      be
+
+      loweramongpatientswithNSCLCpresentingwithbrainmetastases(BMs)or
+
+      leptomeningealmetastases(LMs).AlthoughMETex14skippingmutationsconfer
+
+      highsensitivitytosmall-moleculeMETtyrosinekinaseinhibitor(TKI),data
+
+      regardingtheirefﬁcacyspeciﬁcallyagainstBMorLMremainlimited.Herein,we
+
+      presented the case of a 66-year-old man diagnosed with lung adenocarcinoma.
+
+      METex14skippingmutationsweredetectedincirculatingtumorDNA(ctDNA)
+
+      fromthecerebrospinalﬂuid(CSF)vianext-generationsequencing(NGS).The
+
+      patient derived signiﬁcant clinical beneﬁt from savolitinib treatment, achieving
+      an
+
+      intracranialpartialresponse(PR)uponevaluation.Inconclusion,NGS-based
+
+      detectionofctDNAinCSFprovidesavaluabletoolforelucidatingtumor
+
+      heterogeneityandthedistinctmolecularproﬁlesofcentralnervoussystem
+
+      (CNS) metastases compared to primary tumors. Furthermore, savolitinib demon-
+
+      stratedpromisingintracranialactivityandamanageablesafetyproﬁleinthis
+
+      METex14-alteredNSCLCcase.Theseﬁndingssuggestthatsavolitinibmayrep-
+
+      resent a viable novel treatment option for this patient population. Collectively,
+      our
+
+      dataindicatethatsavolitinibholdspromiseasanoveltreatmentstrategyfor
+
+      thispopulation.
+
+      KEYWORDS
+
+      brain metastases, leptomeningeal metastases, mesenchymal-epithelial transition
+      factor,
+
+      non-small cell lung cancer, savolitinib
+
+      Central nervous system (CNS) metastases are a frequent and advanced complication
+      of
+
+      non-small cell lung cancer(NSCLC). They areestimated tooccur in20%–25% of patients
+
+      withadvancedNSCLCatinitialpresentationanddevelopin30%–40%ofpatientsduring
+
+      thecourseoftheirdisease(1).CNSmetastasesincludebrainmetastases(BMs)and
+
+      leptomeningealmetastases(LMs).LM,alsoknownasleptomeningealcarcinomatosis,
+
+      involvestheinﬁltrationofmetastaticcancercellsintothecerebrospinalﬂuid(CSF)(2,3).
+
+      Clinical trials of systemic treatments largely exclude patients with BM, especially
+      LM. As a
+
+      FrontiersinOncology
+
+      frontiersin.org
+
+      01
+
+      OPEN ACCESS
+
+      EDITEDBY
+
+      JoshNeman,
+
+      UniversityofSouthern California,
+
+      United States
+
+      REVIEWEDBY
+
+      DavidWasilewski,
+
+      Charite´UniversityMedicineBerlin,
+
+      Germany
+
+      Miao Rui,
+
+      ZunyiMedicalUniversity,China
+
+      *CORRESPONDENCE
+
+      HuiBu
+
+      buhuisci@163.com
+
+      RECEIVED 12May2025
+
+      REVISED 14December 2025
+
+      ACCEPTED 07April 2026
+
+      PUBLISHED 24 April2026
+
+      CITATION
+
+      Qi X,Song Z,HeJ andBuH (2026)
+
+      Savolitinibinbrainandleptomeningeal
+
+      metastasesfromnon-smallcell
+
+      lung cancer:a casereport.
+
+      Front. Oncol.16:1627170.
+
+      doi: 10.3389/fonc.2026.1627170
+
+      COPYRIGHT
+
+      © 2026 Qi, Song, He and Bu. This is an
+
+      open-access article distributed under the
+
+      terms of the Creative Commons
+
+      Attribution License (CC BY). The use,
+
+      distributionorreproduction inother
+
+      forumsispermitted,provided the
+
+      originalauthor(s)andthe copyright
+
+      owner(s)arecredited andthat the
+
+      originalpublicationin thisjournal is
+
+      cited,inaccordance with accepted
+
+      academicpractice.Nouse, distribution
+
+      orreproductionis permittedwhichdoes
+
+      notcomplywith theseterms.
+
+      TYPE CaseReport
+
+      PUBLISHED 24April2026
+
+      DOI 10.3389/fonc.2026.1627170'
+    page: 1
+  - name: 10.3389/fonc.2026.1627170 / 2 Case presentation
+    text: 'result,theoptimalmanagementofLMandBMispoorlydeﬁned.
+
+      The prognosis of patients with NSCLC with CNS metastases is poor,
+
+      andfurtherimprovementisgreatlyneeded.Themedianoverall
+
+      survival(OS)forpatientswithBMis3–7months.However,the
+
+      medianOSofLMisonlyapproximately3monthsinheavilypre-
+
+      treated patients (4, 5). Male sex [hazard ratio (HR) 0.61], absence of
+
+      hydrocephalus (HR 0.42), and targeted therapy post-diagnosis (HR
+
+      0.33) were independent predictors of improved survival in LM (5).
+
+      The presence of mesenchymal–epithelial transition factor exon
+
+      14(METex14)skippingmutationsinCSFisrareinpatientswith
+
+      NSCLCwithCNSmetastases.Savolitinibisahighlyselectiveoral
+
+      targetedtherapyforNSCLCharboringtheMETex14skipping
+
+      mutations.However,dataontheefﬁcacyofsavolitinibinpatients
+
+      with CNS metastases remain limited. Here, we report a patient with
+
+      NSCLCandCNSmetastasesharboringMETex14skippingmuta-
+
+      tionswhobeneﬁted fromsavolitinib.
+
+      A66-year-oldmanwasadmittedtoourhospitalinNovember
+
+      2022,witha3-dayhistoryofleft-sidedlimbweaknessandslurred
+
+      speech,accompaniedbynauseaandvomiting.Abraincomputed
+
+      tomography(CT)scanrevealedahypodenselesionintheright
+
+      frontallobe.Althoughthepatient’ssymptomsimprovedslightly
+
+      withantiplateletandsupportivetherapy,leftlimbweaknessand
+
+      speechimpairmentpersisted.Hewasinitiallydiagnosedwith
+
+      cerebralinfarction.Hehadahistoryofhypertensionforover10
+
+      years and pulmonary nodule resection2 years prior.Postoperative
+
+      pathologyconﬁrmedlungadenocarcinomawithaMETex14skip-
+
+      ping mutation, for which he was on regular follow-up. He had a 20-
+
+      year smokinghistorybuthadquit2 yearsearlier.
+
+      Contrast-enhancedcranial magneticresonanceimaging(MRI)
+
+      showednodularandring-enhancingabnormalitiesinthebilateral
+
+      frontal,temporal,andparietallobes(Figure1A).HisKarnofsky
+
+      Performance Status (KPS) was 50. Lumbar puncture examination of
+
+      CSF revealedelevated intracranialpressure(ICP)(>330 mmH2O),
+
+      increased white blood cell count (17 × 106/L), and elevated protein
+
+      level (0.46 g/L). Cytological analysis of CSF conﬁrmed the presence
+
+      of tumor cells (Figure 2). Next-generation sequencing (NGS) of the
+
+      CSFsampleratherthanplasmaidentiﬁedMETex14skipping
+
+      mutation,alongwithampliﬁcationsofcyclin-dependentkinase4
+
+      (CDK4),mousedoubleminute2homolog(MDM2),andtelome-
+
+      rase reversetranscriptase(TERT)(Figures3A, B).
+
+      BasedonCSFandMRIﬁndings,thepatientwasdeﬁnitively
+
+      diagnosed with both BM and LM. Because of the patient’s refusal of
+
+      radiotherapyandchemotherapy,thepatientreceivedoral
+
+      savolitinib(400mg/day),asingleintrathecalinjectionofmetho-
+
+      trexate(5mg,twiceaweek),andsupportivecare.Thepatient
+
+      FIGURE1
+
+      Headcontrast-enhancedMRI. (A)Thisshowedthe nodularandring enhancementofthe fronto-temporo-parietallobesbefore
+      savolitinibtreatment
+
+      (whitearrow). (B) MRIproﬁle8monthspost-savolitinibtreatment(whitearrow).
+
+      Qi etal.
+
+      10.3389/fonc.2026.1627170
+
+      FrontiersinOncology
+
+      frontiersin.org
+
+      02'
+    page: 2
+  - name: '10.3389/fonc.2026.1627170 #2 / 3 Discussion'
+    text: 'experiencedmildnauseaandtolerablevomitingasadverseeffects.
+
+      Within the ﬁrst 8 days of treatment, his limb weakness and speech
+
+      impairmentshowedcorrespondingimprovement.Hewassubse-
+
+      quently discharged from the hospital on continued oral savolitinib.
+
+      Thepatientdeclinedtherecommendedfollow-upbrainMRIat2
+
+      monthsformetastasismonitoring,whoseKPSscorewas60.A
+
+      follow-upbrainMRIperformedat7monthsafterdischarge
+
+      demonstratedintracranialpartialresponse(PR),andKPSscore
+
+      was 70 (Figure 1B). The patient ultimately died in October 2023 due
+
+      toseverepneumoniaandsepticshock.HisOSfollowingthe
+
+      diagnosisof BMandLM was11 months.
+
+      This case highlights the importance of savolitinib for patients with
+
+      NSCLCwithCNSmetastasesharboringtheMETex14skipping
+
+      FIGURE3
+
+      A novel MET exon 14 skipping was discovered in the CSF of a patient with NSCLC
+      and CNS metastases. (A) Illustration of a METex14 variant. (B) Sequencing
+
+      reads of MET is shown by the Integrative Genomics Viewer.
+
+      FIGURE2
+
+      May–Grünwald–Giemsastainingof theCSF sample.Thedata showedthe tumorcellsinthe
+      CSF (×1,000).
+
+      Qi etal.
+
+      10.3389/fonc.2026.1627170
+
+      FrontiersinOncology
+
+      frontiersin.org
+
+      03'
+    page: 3
+  - name: '10.3389/fonc.2026.1627170 #3 / 4 Conclusion'
+    text: 'mutation. It also highlights the critical role of timely CSF NGS analysis
+
+      in detecting actionable genetic alterations to guide precise treatment.
+
+      Clinically, both BM and LM can mimic other neurological conditions,
+
+      such as cerebral infarction, whichis sometimes the initial presenting
+
+      symptom in patients with underlying malignancy.
+
+      Notably, literature indicates that early-stage cerebral infarction
+
+      lesions on contrast-enhanced MRI may demonstrate enhancement,
+
+      suggestingthepotentialhemorrhageandpoorprognosis(6).In
+
+      contrast,BMstypicallymanifestonMRIasnodularorring-
+
+      enhancinglesions.Theseimagingfeaturesarecloselyassociated
+
+      withthehistologicalsubtypeoftheprimarytumorandareoften
+
+      accompaniedbyextensiveperitumoraledema(7).Acharacteristic
+
+      radiological ﬁnding of BM is a “small lesion with extensive edema”
+
+      (8).Giventhepatient’shistoryoflungadenocarcinomaandthe
+
+      presenceofmultipleenhancingintracraniallesionsonMRI,BM
+
+      was consideredmorelikelythancerebralinfarction.
+
+      ThegoldstandardfordiagnosingLMremainsthecytological
+
+      detection of tumor cells in CSF, with a sensitivity of 75%–90% and
+
+      speciﬁcityapproaching100%.Importantly,thedetectionratemay
+
+      exceed90%afterthreerepeatedlumbarpunctures(9).Emerging
+
+      evidencealsosuggeststhatCSF-derivedcirculatingtumorDNA
+
+      (ctDNA) analysis can reveal distinct genetic proﬁles of intracranial
+
+      metastases.CtDNA in cerebrospinalﬂuid aidsin diseasediagnosis
+
+      andenhancesourunderstandingofresistancemechanismsin
+
+      patientswithCNSinvolvement(10).Consequently,wepursued
+
+      CSFctDNAtestingforfurthertherapeuticguidance.
+
+      Interestingly,thectDNAidentiﬁedinthiscaserevealeda
+
+      METex14skippingmutationco-ampliﬁedwithCDK4and
+
+      MDM2,alterationsthatweredetectedintheCSFbutnotin
+
+      plasma.Asakeymodalityofliquidbiopsy,ctDNAplaysapivotal
+
+      role in tumor diagnosis and management (11). In patients with CNS
+
+      progression,plasma-basedliquidbiopsiesdetectactionablemuta-
+
+      tionsinonlyapproximately6%ofcases,whereasCSF-derived
+
+      ctDNAsigniﬁcantly improvesdetectionsensitivity(12).
+
+      METmutationisakeydriverofoncogenicactivationanda
+
+      major mechanism of resistance to epidermal growth factor receptor
+
+      tyrosinekinaseinhibitors(EGFR-TKIs)inNSCLC(13).Common
+
+      METalterationsincludeMETex14skippingmutationsandMET
+
+      ampliﬁcation(14).InaChinesepopulationwithNSCLC,the
+
+      incidenceofMETex14skippingmutationsrangesfrom0.9%to
+
+      2.0%(15).However,METex14skippingmutationsinCNSmetas-
+
+      tasesarelessreported(16,17).Inmousemodels,50%oftumors
+
+      carryingtheMETex14skippingmutationsdevelopedBM.In
+
+      contrast,BMswerecompletelyabsentinthecontrolgroup.
+
+      In this case, the patient’s primary lung adenocarcinoma harbored
+
+      METex14 skipping mutations. He subsequently developed intracranial
+
+      progressionwithoutevidenceofactivepulmonarydisease.The
+
+      mechanismofMETex14skippingmutationsinCNSmetastasesis
+
+      complex.Wangetal.reportedthatMETex14increasedreceptor
+
+      activityandexpressiononcellsurfaces,andprolongeddownstream
+
+      signalingthroughimpairmentofendocyticdegradation,resultingin
+
+      signiﬁcantly enhanced cell migration and scattering invasion capacity,
+
+      especially BM (18). Savolitinib is a highly selective MET-TKI (19). An
+
+      objective response rate of approximately 50% has been observed with
+
+      ﬁrst-linesavolitinibinpatientswithNSCLCharboringMETex14
+
+      skippingmutations(20,21).However,evidenceregardingBMin
+
+      patientswithNSCLCharboringMETex14skippingmutationsis
+
+      primarily conﬁned to case reports and retrospective analyses, lacking
+
+      robustdatafromprospectivetrials.Follow-upbrainMRIrevealeda
+
+      reductioninthepatientafter7monthsoforalsavolitinibadminis-
+
+      tration.Yuetal.reported10patientswithNSCLCwithMETex14
+
+      skippingmutationstreatedwithsavolitinib.Nineachievedstable
+
+      disease(withcompleteintracranialresponseinthree)andonehad
+
+      extracranial progression, though the LM status was not speciﬁed (20).
+
+      Previous studies described TP53 and MDM2 as the most common
+
+      co-occurring mutations in patients with NSCLC harboring METex14
+
+      skipping mutations (22). MDM2 ampliﬁcation and overexpression are
+
+      associated with resistance to chemotherapy and TKIs, as well as rapid
+
+      diseaseprogressionfollowingimmunotherapy(23).Notably,inthis
+
+      case, the patient presented with ampliﬁcations of MDM2 and CDK4.
+
+      This aligns with prior studies indicating that patients with METex14
+
+      skippingmutationsandMDM2ampliﬁcationmaynotrespondto
+
+      crizotinib but can derive clinical beneﬁt from savolitinib (24).
+
+      Regarding adverse effects, the patient received savolitinib 400 mg
+
+      once daily and experienced only mild nausea and vomiting. Common
+
+      adverse reactions of savolitinib primarily include nausea and vomiting,
+
+      peripheraledema,hypoalbuminemia,hepatorenalimpairment,fa-
+
+      tigue, and hypokalemia, most ofwhichare grade 1–2 adverse events
+
+      (21).Managementshouldbebasedonclinicalpracticeandimple-
+
+      mentedthroughlifestyleanddietarymodiﬁcations,pharmacological
+
+      interventions, and treatment modiﬁcation (25).
+
+      In conclusion, this case report describes a patient with NSCLC
+
+      andCNSmetastases(BMandLM)whoseCSFtestedpositivefor
+
+      METex14skippingmutations.Hedemonstratedclinicalandradi-
+
+      ologicalimprovementfollowingsavolitinibtreatment.Thisreport
+
+      contributes to the growing evidence on the management of patients
+
+      with NSCLC with CNS metastases harboring this speciﬁc mutation.
+
+      FurtherprospectiveclinicalstudiesonsavolitinibforNSCLCwith
+
+      CNS metastasesarewarranted.
+
+      Theoriginalcontributionspresentedinthestudyareincluded
+
+      inthearticle/supplementarymaterial.Furtherinquiriescanbe
+
+      directedtothecorrespondingauthor.
+
+      The studies involving humans were approved by Ethical Review
+
+      ApprovaloftheSecondHospitalofHebeiMedicalUniversity
+
+      Approval No: 2025P017. The studies were conducted in accordance
+
+      withthelocallegislationandinstitutionalrequirements.The
+
+      participants provided their written informed consent to participate
+
+      inthisstudy.Writteninformedconsentwasobtainedfromthe
+
+      Qi etal.
+
+      10.3389/fonc.2026.1627170
+
+      FrontiersinOncology
+
+      frontiersin.org
+
+      04'
+    page: 4
+  - name: '10.3389/fonc.2026.1627170 #4 / Author contributions'
+    text: 'individual(s)forthepublicationofanypotentiallyidentiﬁable
+
+      imagesordataincludedinthisarticle.Writteninformedconsent
+
+      was obtainedfrom theparticipant/patient(s)forthepublicationof
+
+      thiscasereport.
+
+      XQ: Investigation, Supervision, Writing – original draft, Writing –
+
+      review&editing.ZS:Datacuration,Writing–review&editing.JH:
+
+      Investigation,Supervision,Writing–originaldraft.HB:Supervision,
+
+      Writing – original draft, Writing – review & editing.
+
+      Theauthor(s)declaredthatﬁnancialsupportwasreceivedfor
+
+      thisworkand/oritspublication.Thisworkwassupportedbythe
+
+      HebeiProvincialHealthCommissionScientiﬁcResearchFund
+
+      Project(GrantNo.20221013),theCentralGovernmentGuiding
+
+      Local Science and Technology Development Fund Project (Grant No.
+
+      236Z7753G)andtheHebeiProvinceMedicalResearch–Enterprise
+
+      JointInnovationSpecialProgram(GrantNo.LH20250238).The
+
+      funderhadnoroleinstudydesign,datacollectionandanalysis,
+
+      decision to publish, or preparation of the manuscript.
+
+      Wewouldliketoacknowledgethededicatedworkofallthe
+
+      staff. We appreciate the patient’s self-dedication. The authors would
+
+      like to thank Yueli Zou from the Department of Neuropathology for
+
+      her kindassistance.
+
+      Theauthor(s)declaredthatthisworkwasconductedinthe
+
+      absence of anycommercial orﬁnancial relationshipsthat couldbe
+
+      construedasapotentialconﬂictof interest.
+
+      Theauthor(s)declaredthatgenerativeAIwasnotusedinthe
+
+      creation ofthismanuscript.
+
+      Any alternative text (alt text) provided alongside ﬁgures in this
+
+      article has been generated by Frontiers with the support of artiﬁcial
+
+      intelligenceandreasonableeffortshavebeenmadetoensure
+
+      accuracy,includingreviewbytheauthorswhereverpossible.If
+
+      you identifyanyissues,pleasecontact us.
+
+      All claims expressed in this article are solely those of the authors
+
+      anddonotnecessarilyrepresentthoseoftheirafﬁliatedorganiza-
+
+      tions, or those of thepublisher,the editors and thereviewers. Any
+
+      product that may be evaluatedin this article, or claimthat may be
+
+      madebyitsmanufacturer,isnotguaranteedorendorsedby
+
+      thepublisher.
+
+      1.Barnholtz-Sloan JS, Sloan AE, Davis FG, Vigneau FD, Lai P, Sawaya RE. Incidence
+
+      proportionsofbrainmetastasesinpatientsdiagnosed(1973to2001)inthe
+
+      MetropolitanDetroitCancerSurveillanceSystem.JClinOncol.(2004)22:2865–72.
+
+      doi:10.1200/JCO.2004.12.149
+
+      2.Achrol AS, Rennert RC, Anders C, Sofﬁetti R, Ahluwalia MS, Nayak L, et al.
+      Brain
+
+      metastases.NatRevDisPrimers.(2019)5:5. doi:10.1038/s41572-018-0055-y
+
+      3.WilcoxJA,BoireAA.Leveragingmolecularandimmune-basedtherapiesin
+
+      leptomeningealmetastases.CNSDrugs.(2023)37:45–67.doi:10.1007/s40263-022-
+
+      00975-5
+
+      4.WilcoxJA,ChukwuekeUN,AhnMJ,AizerAA,BaleTA,BrandsmaD,etal.
+
+      Leptomeningeal metastases from solid tumors: a SNO and ASCO consensus review
+      on
+
+      clinicalmanagementandfuturedirections.Neuro-Oncol.(2024)26:1781–804.
+
+      doi:10.1093/neuonc/noae103
+
+      5.WasilewskiD,EitnerC,AtesR,MuradS,ShakedZ,SteinleJA,etal.Clinical
+
+      characteristicsandoutcomesinleptomeningealdiseasewithorwithoutbrainmetas-
+
+      tasis: insights from an explorative data analysis of the Charité LMD registry.
+      J Neuro-
+
+      Oncol.(2025) 175:943–65.doi:10.1007/s11060-025-04937-x
+
+      6.GwakDS,HwangYH,KimYW.Casereport:Brainmetastasisconﬁnedtothe
+
+      infarctedareafollowingstroke.FrontNeurol.(2020)11:617142.doi:10.3389/
+
+      fneur.2020.617142
+
+      7.AtallahO,ChaurasiaB.Brainmetastasislocalizedtothesameareaofinfarction:
+
+      illustrativecase.JNeurosurg CaseLessons.(2023) 6:E23325.doi:10.3171/CASE23325
+
+      8.MachuraB,KucharskiD,BozekO,EksnerB,KokoszkaB,PekalaT,etal.Deep
+
+      learningensemblesfordetectingbrainmetastasesinlongitudinalmulti-modalMRI
+
+      studies.ComputMedImagingGraph.(2024)116:102401.doi:10.1016/
+
+      j.compmedimag.2024.102401
+
+      9.RhunEL,WellerM,BrandsmaD,BentVM,AzambujaED,HenrikssonR,etal.
+
+      EANO-ESMOclinicalpracticeguidelinesfordiagnosis,treatmentandfollow-upof
+
+      patients with leptomeningeal metastasis from solid tumours. Ann Oncol. (2017)
+      28:84–
+
+      99. doi:10.1093/annonc/mdx221
+
+      10.Zheng MM, Xia Y, Pan K, Sun F, Tan A, Dong XR, et al. The evolving landscape
+      of
+
+      leptomeningeal metastases from NSCLC: an international,contemporary, multicenter
+
+      cohortstudy.AnnOncol.(2025)20:S0923-7534(25)04931-2.doi:10.1016/
+
+      j.annonc.2025.09.140
+
+      11.Zheng MM, Zhou Q, Chen HJ, Jiang BY, Tang LB, Jie GL, et al. Cerebrospinal
+      ﬂuid
+
+      circulatingtumorDNAproﬁlingforriskstratiﬁcationandmatchedtreatmentof
+
+      central nervous system metastases. NatMed.(2025) 31:1547-56. doi:10.1038/s41591-
+
+      025-03538-5
+
+      12.Liu XC, Mei FJ, Mei F, Jia YQ, Zhou YZ, Li CX, et al. Cerebrospinal ﬂuid
+      ctDNA
+
+      testing shows an advantage over plasma ctDNA testing in advanced non-small cell
+      lung
+
+      cancerpatientswithbrainmetastases.FrontOncol.(2023)13:1322635.doi:10.3389/
+
+      fonc.2023.1322635
+
+      13.XiaSK,DuanWZ,XuMX,LiMG,TangMY,Wei S,etal.Mesothelinpromotes
+
+      brain metastasis of non-small cell lung cancer by activating MET. Exp Clin Cancer
+      Res.
+
+      (2024) 43:103.doi:10.1186/s13046-024-03015-w
+
+      14.Lin JX, Sun H, Peng YL, Xie Z, Liu SYM, Wu YL. Comprehensive management of
+
+      MET tyrosine kinase inhibitor-induced peripheral edema in patients with MET-altered
+
+      non-small-celllungcancer:anarrativereview.TranslLungCancerRes.(2025)
+
+      14:1482–95. doi:10.21037/tlcr-24-866
+
+      15.XuZG,LiHX,DongYJ,ChengP,LuoF,FuSJ,etal.IncidenceandPD-L1
+
+      expression of MET 14 skipping in Chinese population: a non-selective NSCLC cohort
+
+      studyusingRNA-basedsequencing.OncoTargetsTher.(2020)13:6245–53.
+
+      doi:10.2147/OTT.S241231
+
+      Qi etal.
+
+      10.3389/fonc.2026.1627170
+
+      FrontiersinOncology
+
+      frontiersin.org
+
+      05'
+    page: 5
+  - name: 16.ShenL,ZhaoJK,YangY,MuSY,YuYF,HanYC,etal.Prominentresponseto
+    text: '16.ShenL,ZhaoJK,YangY,MuSY,YuYF,HanYC,etal.Prominentresponseto
+
+      savolitinib monotherapyinhigh-grade fetaladenocarcinomawith METampliﬁcation
+
+      andconcurrentbrainmetastasis:acasereport.TranslLungCancerRes.(2024)
+
+      13:1407–13. doi:10.21037/tlcr-24-124
+
+      17.Li J, Feng Y, Tan Y, Duan QQ, Zhang Q. Case report: A lung adenocarcinoma
+      with
+
+      brainmetastasisharborednovelMET14skippingalterationsensitivetosavolitinib.
+
+      FrontOncol.(2022) 12:863560.doi:10.3389/fonc.2022.863560
+
+      18.WangF,LiuY,QiuWL,ShumE,FengM,ZhaoDJ,etal.Functionalanalysisof
+
+      METexon14skippingalterationincancerinvasionandmetastaticdissemination.
+
+      Cancer Res.(2022) 82:1365–79.doi:10.1158/0008-5472
+
+      19.Zhang L, Wang Y, Lin L, Yu Y, Lu S. Chinese multidisciplinary expert consensus
+      on
+
+      themanagementofadversedrugreactionsassociatedwithsavolitinib.TherAdvMed
+
+      Oncol.(2023) 15:17588359231216089.doi:10.1177/17588359231216089
+
+      20.Yu YF, Guo QS, Zhang YC, Fang J, Zhong DS, Liu BG, et al. Savolitinib in
+      patients
+
+      inChinawithlocallyadvancedormetastatictreatment-naivenon-small-celllung
+
+      cancerharbouringMETexon14skippingmutations:resultsfromasingle-arm,
+
+      multicohort,multicentre,open-label,phase3bconﬁrmatorystudy.LancetRespir
+
+      Med.(2024) 12:958–66.doi:10.1016/S2213-2600(24)00211-X
+
+      21.Batra U, Singh AK, Nathany S, Dewan A, Sharma M, Amrith BP, et al. Real world
+
+      experience with MET inhibitors in MET exon 14 skipping mutated non-small cell
+      lung
+
+      cancer:largestIndianperspective.DiscovOncol.(2025)16:286.doi:10.1007/s12672-
+
+      025-01864-1
+
+      22.Lu S, Fang J, Li XY, Cao LJ, Zhou JY, Guo QS, et al. Once-daily savolitinib
+      in Chinese
+
+      patientswithpulmonarysarcomatoidcarcinomasandothernon-small-celllungcancers
+
+      harbouring MET exon 14 skipping alterations: a multicentre, single-arm, open-label,
+      phase 2
+
+      study. Lancet Respir Med. (2021) 9:1154–64. doi: 10.1016/S2213-2600(21)00084-9
+
+      23.Hou HL, Sun DT, Zhang XC. The role of MDM2 ampliﬁcation and overexpression
+
+      intherapeuticresistanceofMalignanttumors.CancerCellInt.(2019)19:216.
+
+      doi:10.1186/s12935-019-0937-4
+
+      24.Drilon A, Clark JW, Weiss J, Ou SHI, Camidge DR, Solomon BJ, et al. Antitumor
+
+      activityofcrizotinibinlungcancersharboringaMETexon14alteration.NatMed.
+
+      (2020) 26:47–51. doi:10.1038/s41591-019-0716-8
+
+      25.LiMM,HuangJY,XingRY,DuXY,WeiCH,WangHJ.Exploringpractical
+
+      experiencewithdifferenttreatmentsinNSCLCpatientswithMET-deregulated:a
+
+      retrospective analysis from the real world. BMC Pulm Med. (2025) 25:35. doi:
+      10.1186/
+
+      s12890-024-03437-4
+
+      Qi etal.
+
+      10.3389/fonc.2026.1627170
+
+      FrontiersinOncology
+
+      frontiersin.org
+
+      06'
+    page: 6
+  tables: []
+  images:
+  - image_id: IMG:0000
+    caption: FIGURE1
+    page: 2
+    bbox:
+    - 141.33538818359375
+    - 418.3940124511719
+    - 453.08966064453125
+    - 737.3480224609375
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0002_r000.png
+  - image_id: IMG:0001
+    caption: FIGURE2
+    page: 3
+    bbox:
+    - 155.6219940185547
+    - 82.99859619140625
+    - 438.80303955078125
+    - 273.77020263671875
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0003_r001.png
+  - image_id: IMG:0002
+    caption: FIGURE3
+    page: 3
+    bbox:
+    - 79.02999877929688
+    - 462.27410888671875
+    - 515.3380126953125
+    - 727.7100219726562
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0003_r002.png

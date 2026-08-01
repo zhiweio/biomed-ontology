@@ -192,11 +192,17 @@ def eval_cmd(
     milvus: bool = typer.Option(False, "--milvus", help="连 Milvus 跑另外 6 个臂"),
     embedder: str = typer.Option("fake", "--embedder", help="仅 --milvus 时生效"),
     collection: str | None = typer.Option(None, "--collection"),
+    allow_fake: bool = typer.Option(
+        False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
+    ),
 ) -> None:
     """跑 gold set 评测：归一化准确率 + 检索消融 + 指标目标达成情况。"""
     from biomed_ontology.eval import eval_normalization, eval_retrieval
     from biomed_ontology.eval.targets import check_targets, render_outcomes
     from biomed_ontology.pipeline import build_knowledge_base
+
+    if milvus:
+        _require_real_embedder(embedder, allow_fake=allow_fake)
 
     kb = build_knowledge_base()
     ents = frozenset(e.strip() for e in entitlements.split(",") if e.strip())
@@ -208,7 +214,9 @@ def eval_cmd(
         kb,
         entitlements=ents,
         milvus_backend=backend,
-        embedder=embedder if milvus else "",
+        # 报的是模型真名（bge-m3+sapbert+qwen3-vl），不是命令行别名。
+        # 别名说不清生医列到底装了什么，而这行字要给净值背书。
+        embedder=backend.embedder.name if backend else "",
     )
     console.print(ev.as_table())
     console.print()
@@ -216,22 +224,54 @@ def eval_cmd(
     console.print(render_outcomes(check_targets(ev)))
 
 
+def _require_real_embedder(name: str, *, allow_fake: bool) -> None:
+    """挡住 fake。
+
+    fake 是哈希向量，语义相似度连符号都可能和真模型相反（实测 −0.042 vs +0.104）。
+    一个由它产出的数字看起来和真数字一模一样，却会把结论带反方向 ——
+    所以这里宁可让命令失败，也不让它默默跑完。
+    """
+    from biomed_ontology.embed import REAL_EMBEDDERS
+
+    if name in REAL_EMBEDDERS:
+        return
+    if name == "fake" and allow_fake:
+        console.print("[yellow]警告：fake embedder 只验证接线，本次产出不可用于任何报告[/yellow]")
+        return
+    console.print(
+        f"[red]--embedder {name} 不是垂类模型。报告口径必须用 {' / '.join(REAL_EMBEDDERS)} 之一；"
+        "只想验证管线接线请显式加 --allow-fake。[/red]"
+    )
+    raise typer.Exit(1)
+
+
 def _milvus_backend(embedder: str, collection: str | None):
     """连不上就直接退出，不静默降级 —— 报告里的"Milvus 臂"必须真的是 Milvus 跑的。"""
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
+    from biomed_ontology.pipeline import DATA_ROOT
     from biomed_ontology.registry import load_registry
     from biomed_ontology.search.backends.milvus import MilvusBackend
 
+    model = get_embedder(embedder)
     backend = MilvusBackend(
         uri=settings.milvus_uri,
         token=settings.milvus_token.get_secret_value(),
         collection=collection or settings.milvus_collection,
-        embedder=get_embedder(embedder),
+        embedder=model,
         known_sources=frozenset(s.id for s in load_registry().active()),
+        asset_root=DATA_ROOT / "assets",
     )
     if not backend.client.has_collection(backend.collection):
         console.print(f"[red]集合 {backend.collection} 不存在，先跑 hmd index[/red]")
+        raise typer.Exit(1)
+
+    stamped = backend.stamped_embedder()
+    if stamped and stamped != model.name:
+        console.print(
+            f"[red]集合 {backend.collection} 是用 {stamped} 建的，现在却拿 {model.name} 检索。"
+            "两套向量不在同一空间，算出来的分数没有意义 —— 先 hmd index --recreate。[/red]"
+        )
         raise typer.Exit(1)
     return backend
 
@@ -368,28 +408,37 @@ def parse_cmd(
 
 @app.command("index")
 def index_cmd(
-    embedder: str = typer.Option("fake", "--embedder", help="fake | bge-m3 | sapbert | dual"),
+    embedder: str = typer.Option(
+        "multimodal", "--embedder", help="multimodal | dual | bge-m3 | sapbert | qwen3-vl | fake"
+    ),
     collection: str | None = typer.Option(None, "--collection"),
     recreate: bool = typer.Option(False, "--recreate", help="先删表再建，用于换 embedder"),
+    allow_fake: bool = typer.Option(
+        False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
+    ),
 ) -> None:
-    """把知识库切片写入 Milvus。三向量列一次算完，不分次前向。"""
+    """把知识库切片写入 Milvus。各向量列一次算完，不分次前向。"""
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
-    from biomed_ontology.pipeline import build_knowledge_base
+    from biomed_ontology.pipeline import DATA_ROOT, build_knowledge_base
     from biomed_ontology.registry import load_registry
     from biomed_ontology.search import HybridSearcher
     from biomed_ontology.search.backends.milvus import MilvusBackend, chunk_to_row
+
+    _require_real_embedder(embedder, allow_fake=allow_fake)
 
     kb = build_knowledge_base()
     searcher = HybridSearcher(kb)
     registry = load_registry()
 
+    model = get_embedder(embedder)
     backend = MilvusBackend(
         uri=settings.milvus_uri,
         token=settings.milvus_token.get_secret_value(),
         collection=collection or settings.milvus_collection,
-        embedder=get_embedder(embedder),
+        embedder=model,
         known_sources=frozenset(s.id for s in registry.active()),
+        asset_root=DATA_ROOT / "assets",
     )
     backend.ensure_collection(drop_existing=recreate)
 
@@ -399,9 +448,10 @@ def index_cmd(
     table = Table(title=f"索引 {backend.collection}")
     table.add_column("指标")
     table.add_column("值", justify="right")
-    table.add_row("embedder", embedder)
+    table.add_row("embedder", model.name)
     table.add_row("切片", str(written))
-    table.add_row("向量列", "3")
+    table.add_row("向量列", str(len(backend.vector_fields())))
+    table.add_row("带图切片", str(sum(1 for r in rows if r["asset_path"])))
     console.print(table)
 
     # 分档计数：受限内容有没有真的进库，是许可过滤能否被验证的前提

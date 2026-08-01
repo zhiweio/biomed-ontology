@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -35,6 +36,7 @@ ALLOWED_HOSTS = frozenset(
     {
         "www.ncbi.nlm.nih.gov",
         "ftp.ncbi.nlm.nih.gov",
+        "pmc-oa-opendata.s3.amazonaws.com",
         "www.ebi.ac.uk",
         "europepmc.org",
         "patentimages.storage.googleapis.com",
@@ -42,7 +44,11 @@ ALLOWED_HOSTS = frozenset(
     }
 )
 
-OA_SERVICE = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi"
+# PMC 的分发通道 2026 年换了地方：FTP 上的 oa_package 树已挪进 deprecated/ 且将于
+# 2026-08 删除，而 oa.fcgi 至今仍在广播那批必然 404 的旧链接（已实测）。
+# 因此不再走 oa.fcgi，改用 AWS Open Data 桶：每篇一个 `PMC<id>.<版本>/` 目录，
+# 内含 pdf / xml / txt 与全部插图，另有一份 json 载明许可与撤稿状态。
+PMC_BUCKET = "https://pmc-oa-opendata.s3.amazonaws.com"
 EPMC_SEARCH = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 
 # 允许入库的许可。NC/ND 变体被刻意排除：PoC 产出可能进入商业决策流程，
@@ -58,6 +64,7 @@ class Entry:
     pmcid: str = ""
     url: str = ""
     note: str = ""
+    title: str = ""
 
 
 class FetchError(RuntimeError):
@@ -92,35 +99,59 @@ def _download(client: httpx.Client, url: str, dest: Path) -> int:
     return total
 
 
+def _s3_to_https(url: str) -> str:
+    """`s3://bucket/key?md5=...` → https。md5 查询串是校验值，不是下载参数，去掉。"""
+    path = url.removeprefix("s3://pmc-oa-opendata/").split("?", 1)[0]
+    return f"{PMC_BUCKET}/{path}"
+
+
+def _version_of(prefix: str) -> int:
+    tail = prefix.rstrip("/").rsplit(".", 1)[-1]
+    return int(tail) if tail.isdigit() else 0
+
+
+def _pmc_manifest(client: httpx.Client, pmcid: str) -> dict:
+    """定位文章目录并取回它的元数据 json。
+
+    目录名带版本号（`PMC123.1`），版本不能猜 —— 列一次前缀，取最高的那版。
+    """
+    listing = client.get(
+        PMC_BUCKET, params={"list-type": "2", "prefix": f"{pmcid}.", "delimiter": "/"}
+    )
+    listing.raise_for_status()
+    # XML 解析是放大攻击面（billion laughs）。来源虽在白名单内，仍先限长再解析。
+    if len(listing.content) > 1 * 1024 * 1024:
+        raise FetchError(f"{pmcid}: 桶列表响应过大，拒绝解析")
+
+    root = ET.fromstring(listing.text)
+    ns = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
+    prefixes = [el.text or "" for el in root.findall(".//s3:CommonPrefixes/s3:Prefix", ns)]
+    if not prefixes:
+        raise FetchError(f"{pmcid}: 不在 PMC 开放获取子集中")
+
+    folder = max(prefixes, key=_version_of).rstrip("/")
+    meta = client.get(f"{PMC_BUCKET}/{folder}/{folder}.json")
+    meta.raise_for_status()
+    return dict(meta.json())
+
+
 def _resolve_pmc(client: httpx.Client, pmcid: str) -> tuple[str, str]:
-    """经 OA Web Service 拿到下载地址与**服务端声明的**许可。
+    """返回 (PDF 地址, **发布方声明的**许可)。
 
     许可不取清单里的自填值：清单是人写的，会过期也会写错，
-    而 OA 服务返回的是 NCBI 当前的权威声明。两者不一致时以服务端为准并报错。
+    而这份 json 是 PMC 当前的权威声明。两者不一致时以它为准并报错。
     """
-    resp = client.get(OA_SERVICE, params={"id": pmcid}, follow_redirects=True)
-    resp.raise_for_status()
-    # XML 解析是放大攻击面（billion laughs）。来源虽在白名单内，仍先限长再解析。
-    if len(resp.content) > 1 * 1024 * 1024:
-        raise FetchError(f"{pmcid}: OA 响应过大，拒绝解析")
-    root = ET.fromstring(resp.text)
+    meta = _pmc_manifest(client, pmcid)
 
-    error = root.find(".//error")
-    if error is not None:
-        raise FetchError(f"{pmcid}: OA 服务返回 {error.get('code')} {error.text or ''}".strip())
+    # 撤稿文献进研发知识库比缺一篇危险得多：它会以同等权重参与检索与事实抽取，
+    # 而"这条结论已被撤回"在下游任何一环都看不出来。
+    if meta.get("is_retracted"):
+        raise FetchError(f"{pmcid}: 已撤稿，拒绝入库")
 
-    link = root.find(".//link[@format='pdf']") or root.find(".//link")
-    if link is None or not link.get("href"):
-        raise FetchError(f"{pmcid}: OA 服务未返回可下载链接")
-
-    href = link.get("href", "")
-    # OA 服务给的是 ftp:// 地址，转成同主机的 https。
-    if href.startswith("ftp://"):
-        href = "https://" + href.removeprefix("ftp://")
-
-    record = root.find(".//record")
-    license_ = (record.get("license") if record is not None else "") or "UNKNOWN"
-    return href, license_
+    pdf_url = str(meta.get("pdf_url") or "")
+    if not pdf_url:
+        raise FetchError(f"{pmcid}: 该文只有全文 XML，没有 PDF")
+    return _s3_to_https(pdf_url), str(meta.get("license_code") or "UNKNOWN")
 
 
 def _license_ok(license_: str) -> bool:
@@ -161,13 +192,15 @@ def discover(client: httpx.Client, queries: list[dict]) -> list[Entry]:
             if not pmcid or pmcid in seen:
                 continue
             seen.add(pmcid)
+            title = (rec.get("title") or "").strip()
             found.append(
                 Entry(
                     doc_id=f"DOC:{pmcid}",
                     kind="pmc",
                     license="CC BY",
                     pmcid=pmcid,
-                    note=f"{q['label']} — {(rec.get('title') or '')[:80]}",
+                    note=f"{q['label']} — {title[:80]}",
+                    title=title,
                 )
             )
     return found
@@ -178,6 +211,7 @@ def fetch(manifest: Path, out_dir: Path) -> int:
     queries = load_queries(manifest)
     out_dir.mkdir(parents=True, exist_ok=True)
     rows: list[tuple[str, str, str, str]] = []
+    records: list[dict[str, str]] = []
     failures = 0
 
     with httpx.Client(timeout=TIMEOUT, headers={"User-Agent": "hmd-biomed-ontology/0.1"}) as client:
@@ -210,11 +244,26 @@ def fetch(manifest: Path, out_dir: Path) -> int:
                     size = _download(client, url, dest)
                     print(f"  ok    {entry.doc_id}  {size / 1024:.0f} KB  [{declared}]")
                 rows.append((entry.doc_id, declared, url, entry.note))
+                records.append(
+                    {
+                        "doc_id": entry.doc_id,
+                        "pdf": dest.name,
+                        "title": entry.title or entry.doc_id,
+                        "license": declared,
+                        "url": url,
+                    }
+                )
             except (FetchError, httpx.HTTPError, ET.ParseError) as exc:
                 failures += 1
                 print(f"  FAIL  {entry.doc_id}: {exc}", file=sys.stderr)
 
     _write_sources(out_dir / "SOURCES.md", rows)
+    # SOURCES.md 是给人看的（标题截断、表格转义），解析步骤要的是原文。
+    # 两份一起写，免得有人去解析 Markdown 表格拿标题。
+    (out_dir / "corpus.json").write_text(
+        json.dumps(sorted(records, key=lambda r: r["doc_id"]), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     print(f"\n完成：{len(rows)} 份成功，{failures} 份失败。清单见 {out_dir / 'SOURCES.md'}")
     return 1 if failures else 0
 

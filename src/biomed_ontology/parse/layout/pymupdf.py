@@ -92,8 +92,13 @@ class PyMuPDFBackend:
             if table_blocks:
                 degraded.add("table_structure")
 
+            page_text: list[LayoutBlock] = []
+            image_boxes: list[tuple[float, ...]] = []
             for blk in page.get_text("dict")["blocks"]:
-                if blk.get("type") == 1:  # 图片：P11 才做渲染与 VLM
+                if blk.get("type") == 1:
+                    bbox = _bbox_of(blk)
+                    if _big_enough(bbox):
+                        image_boxes.append(bbox)
                     continue
                 for line in blk.get("lines", ()):
                     parsed = _line_to_block(line, page_no, body_size)
@@ -104,7 +109,18 @@ class PyMuPDFBackend:
                         degraded.add("formula")
                     if _inside_any(block.bbox, table_boxes):
                         continue  # 表格文本已由 HTML 资产承载，重复入库会污染检索
-                    blocks.append(block)
+                    page_text.append(block)
+
+            blocks.extend(page_text)
+            blocks.extend(
+                LayoutBlock(
+                    kind="image",
+                    text=_caption_for(bbox, page_text),
+                    page=page_no,
+                    bbox=bbox,
+                )
+                for bbox in _merge_overlaps(image_boxes)
+            )
 
             if not page.get_text("text").strip() and page.get_images():
                 degraded.add("ocr")  # 纯图页：有像素没文本
@@ -122,6 +138,9 @@ class PyMuPDFBackend:
         boxes: list[tuple[float, ...]] = []
         out: list[LayoutBlock] = []
         for idx, table in enumerate(found.tables):
+            if not _is_real_table(table):
+                # 丢弃后不把 bbox 记进 table_boxes，这片区域于是回到正常的文本路径。
+                continue
             # 文件名只由页码与序号拼，绝不取自文档内容 —— 那是路径穿越入口
             rel = f"tables/p{page_no:04d}_t{idx}.html"
             target = out_dir / rel
@@ -140,6 +159,93 @@ class PyMuPDFBackend:
                 )
             )
         return boxes, out
+
+
+# 排版软件常把一张插图切成许多条带，另有 logo、分隔线、背景色块混在其中。
+# 不设下限就会渲染出成百上千张几像素的碎片，把视觉列淹掉。
+_MIN_SIDE = 48.0
+_MIN_AREA = 12_000.0
+
+_CAPTION = re.compile(r"^\s*(fig(?:ure)?|scheme|chart|graph|图)\s*\.?\s*\d+", re.IGNORECASE)
+
+# 单元格里能装下的最长文本。真实表格的格子是短的：数值、药名、p 值。
+# 一个 4000 字的"格子"只说明版面分析把整页正文当成了表。
+_MAX_CELL = 800
+
+
+def _is_real_table(table: Any) -> bool:
+    """挡住"把整页正文认成表格"的误检。
+
+    实测里 PyMuPDF 曾把一整页综述正文识别成 16 列 × 25 行、每格都是同一段 4KB 散文，
+    渲染出来 226KB。这种块进库有三重害处：挤掉真正的表、向量是一段毫无指向的平均、
+    还会撑爆下游的字段长度上限。
+
+    误检时宁可当普通正文处理 —— 正文至少还是对的，只是丢了结构。
+    """
+    try:
+        rows = table.extract()
+    except Exception:  # pragma: no cover - 畸形表格
+        return False
+    cells = [str(c) for row in rows for c in row if c]
+    if not cells:
+        return False
+    if max(len(c) for c in cells) > _MAX_CELL:
+        return False
+    # 同一段文字被复制到大半个表里，是"整页被框成表"的另一个指纹。
+    return len(set(cells)) * 2 >= len(cells)
+
+
+def _bbox_of(blk: dict[str, Any]) -> tuple[float, ...]:
+    return tuple(float(v) for v in blk.get("bbox", (0.0, 0.0, 0.0, 0.0)))
+
+
+def _big_enough(bbox: tuple[float, ...]) -> bool:
+    if len(bbox) != 4:
+        return False
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    return w >= _MIN_SIDE and h >= _MIN_SIDE and w * h >= _MIN_AREA
+
+
+def _merge_overlaps(boxes: list[tuple[float, ...]]) -> list[tuple[float, ...]]:
+    """把相交/相邻的图像块并成一张图。
+
+    一幅多子图的 Figure 在 PDF 里往往是十几个独立的 XObject。分开渲染会让
+    "(A) 生存曲线 (B) 瀑布图"变成十几张没有上下文的碎图，而视觉模型要的是整幅图。
+    """
+    merged: list[list[float]] = []
+    for box in sorted(boxes, key=lambda b: (b[1], b[0])):
+        cur = list(box)
+        for other in merged:
+            if _overlaps(cur, other, pad=8.0):
+                other[0] = min(other[0], cur[0])
+                other[1] = min(other[1], cur[1])
+                other[2] = max(other[2], cur[2])
+                other[3] = max(other[3], cur[3])
+                break
+        else:
+            merged.append(cur)
+    return [tuple(b) for b in merged]
+
+
+def _overlaps(a: list[float], b: list[float], *, pad: float) -> bool:
+    return not (a[2] + pad < b[0] or b[2] + pad < a[0] or a[3] + pad < b[1] or b[3] + pad < a[1])
+
+
+def _caption_for(bbox: tuple[float, ...], texts: list[LayoutBlock]) -> str:
+    """认领同页最近的一行 "Figure N…"。图注在图下方是学术排版的惯例，故先看下方。
+
+    认不到就返回空串 —— 空 caption 好过张冠李戴的 caption：
+    后者会让检索把 A 图的证据挂到 B 图的结论上。
+    """
+    best: tuple[float, str] | None = None
+    for blk in texts:
+        if len(blk.bbox) != 4 or not _CAPTION.match(blk.text):
+            continue
+        gap = blk.bbox[1] - bbox[3]
+        dist = gap if gap >= 0 else (bbox[1] - blk.bbox[3]) * 2  # 上方的图注罚一倍
+        if 0 <= dist <= 160 and (best is None or dist < best[0]):
+            best = (dist, blk.text)
+    return best[1] if best else ""
 
 
 def _body_font_size(pages: list[Any]) -> float:
@@ -187,12 +293,28 @@ def _line_to_block(
     )
 
 
+# 期刊版式里天生就比正文大的非标题文本：页眉页脚的 DOI、期号、页码。
+# 它们每页复现，字号常常压过章节标题，纯靠字号的判据必然中招。
+_NOT_HEADING = re.compile(
+    r"""^\s*(
+        10\.\d{4,}/\S*            # 裸 DOI
+      | \d+\s+of\s+\d+            # "2 of 11" 页脚
+      | (page\s*)?\d{1,4}         # 光秃秃一个页码
+      | \d{1,3}\s*\.\s*[A-Z]\S*   # "26.Zong,Y.et al" —— 参考文献条目
+      | (vol(ume)?|issue|no)\b.*
+    )\s*$""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
 def _heading_level(text: str, size: float, body: float, *, bold: bool) -> int | None:
     """字号比正文大多少 → 层级。返回 None 表示这是正文。
 
     长行一律不当标题：标题在版面上短，这条比任何字号阈值都稳。
     """
     if len(text) > 120 or text.endswith((".", "。", "；", ";")):
+        return None
+    if _NOT_HEADING.match(text):
         return None
     ratio = size / body if body else 1.0
     if ratio >= 1.45:

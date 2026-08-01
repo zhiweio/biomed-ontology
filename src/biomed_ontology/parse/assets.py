@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-__all__ = ["RenderedAsset", "render_regions", "safe_asset_name"]
+__all__ = ["AssetRecord", "RenderedAsset", "render_regions", "safe_asset_name"]
 
 _UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 _DOTS = re.compile(r"\.{2,}")
@@ -23,6 +23,25 @@ class RenderedAsset:
     page: int
     bbox: tuple[float, ...]
     data: bytes
+
+
+@dataclass(frozen=True)
+class AssetRecord:
+    """一个图块的两份产物：落盘的像素，以及可选的 VLM 文本摘要。
+
+    分成两个字段而不是一个，是因为二者的可得性不同：像素总有，摘要只在配了 VLM 时才有。
+    """
+
+    rel_path: str
+    vision: Any = None
+
+    @property
+    def summary(self) -> str:
+        return getattr(self.vision, "summary", "") or ""
+
+    @property
+    def extracted(self) -> dict[str, str]:
+        return dict(getattr(self.vision, "extracted", {}) or {})
 
 
 def safe_asset_name(stem: str, suffix: str) -> str:
@@ -41,6 +60,13 @@ def render_regions(
     *,
     dpi: int = 144,
 ) -> list[RenderedAsset]:
+    from biomed_ontology.config import settings
+    from biomed_ontology.licensing import assert_component_cleared
+
+    # 渲染绕开了版面后端直接调 pymupdf，法务闸门因此必须在这里也拦一道 ——
+    # 否则 layout_backend=mineru 时，AGPL 组件会从这条侧门被拉进来。
+    assert_component_cleared("pymupdf", accept_uncleared=settings.accept_uncleared_components)
+
     import pymupdf
 
     out_dir.mkdir(parents=True, exist_ok=True)

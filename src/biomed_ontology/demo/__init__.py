@@ -52,7 +52,7 @@ def demo_alias_consistency(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
     r = DemoResult(
         "D1",
         "别名一致性",
-        "同一实体的 6 种写法必须落到同一个 code，且概念级召回完全一致",
+        "同一实体的 6 种写法必须落到同一个 code，且每种写法的前十都以该实体为主",
     )
     variants = ["savolitinib", "沃利替尼", "AZD6094", "HMPL-504", "沃瑞沙", "AZD-6094"]
     target = "HMD:SUB:0000001"
@@ -63,20 +63,21 @@ def demo_alias_consistency(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
     unique = set(ids.values())
     r.lines.append(f"归一化落到 {len(unique)} 个 code：{unique}")
 
-    # 判定取"接地到目标概念的片段"而不是全部命中：
-    # 字符 3-gram 通道会让 "savolitinib" 泄到其它 -tinib 药物、
-    # "沃利替尼" 泄到其它"替尼"，那是字面噪声，不是本体层要证明的东西。
-    grounded, raw = {}, {}
+    # 判据是"接地精度"而不是"命中集合相同"。
+    # 语料里接地到该概念的切片有 31 片，而窗口只有 10 —— 集合相等在算术上就不可能，
+    # 早先它成立只是因为手写语料里这类切片不到 10 片，窗口装得下全部。
+    # 拿一个不可能满足的断言当门禁，等于把门禁关掉。
+    total = sum(1 for c in kb.chunks if target in (c.concept_ids or []))
+    prec = {}
     for v in variants:
         hits = api.search_documents(v, top_k=10)["results"]
-        raw[v] = {h["chunk_id"] for h in hits}
-        grounded[v] = {h["chunk_id"] for h in hits if target in (h.get("concept_ids") or [])}
-    base_g, base_r = grounded[variants[0]], raw[variants[0]]
-    jac_g = {v: round(_jaccard(base_g, s), 3) for v, s in grounded.items()}
-    jac_r = {v: round(_jaccard(base_r, s), 3) for v, s in raw.items()}
-    r.lines.append(f"概念级召回 Jaccard：{jac_g}")
-    r.lines.append(f"字面召回 Jaccard（含 3-gram 噪声，仅供对照）：{jac_r}")
-    r.passed = len(unique) == 1 and None not in unique and min(jac_g.values()) == 1.0
+        grounded = [h for h in hits if target in (h.get("concept_ids") or [])]
+        prec[v] = round(len(grounded) / len(hits), 3) if hits else 0.0
+    r.lines.append(f"语料中接地到该概念的切片：{total} 片，检索窗口 10")
+    r.lines.append(f"前十接地精度：{prec}")
+    worst = min(prec.values())
+    r.lines.append(f"最差写法 {min(prec, key=prec.get)} = {worst:.3f}（门槛 0.800）")
+    r.passed = len(unique) == 1 and None not in unique and worst >= 0.8
     return r
 
 

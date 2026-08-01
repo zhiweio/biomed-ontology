@@ -13,6 +13,7 @@ WHY 这一支的载体。所以这里只返回各列的 `(chunk_id, score)`，�
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
@@ -26,17 +27,19 @@ from biomed_ontology.search.backends.base import (
 __all__ = ["MilvusBackend", "collection_schema"]
 
 # 列 → 检索通道。稀疏列对应 BM25 通道（两者都是词法匹配），
-# 两条稠密列共用 DENSE 通道但可分别启用，消融靠 vector_fields 控制。
+# 三条稠密列共用 DENSE 通道但可分别启用，消融靠 vector_fields 控制。
 _CHANNEL = {
     "sparse_lexical": RetrievalChannelEnum.BM25,
     "dense_general": RetrievalChannelEnum.DENSE,
     "dense_biomed": RetrievalChannelEnum.DENSE,
+    "dense_visual": RetrievalChannelEnum.DENSE,
 }
 
 _METRIC = {
     "sparse_lexical": "IP",
     "dense_general": "COSINE",
     "dense_biomed": "COSINE",
+    "dense_visual": "COSINE",
 }
 
 _INDEX = {
@@ -51,13 +54,28 @@ _INDEX = {
         "metric_type": "COSINE",
         "params": {"M": 16, "efConstruction": 200},
     },
+    "dense_visual": {
+        "index_type": "HNSW",
+        "metric_type": "COSINE",
+        "params": {"M": 16, "efConstruction": 200},
+    },
+}
+
+DEFAULT_DIMS = {
+    "dense_general": 1024,
+    "dense_biomed": 768,
+    "dense_visual": 2048,
 }
 
 
-def collection_schema(client: Any, *, dims: dict[str, int]) -> Any:
+def collection_schema(
+    client: Any, *, dims: dict[str, int], sparse: bool = True, description: str = ""
+) -> Any:
     from pymilvus import DataType
 
-    schema = client.create_schema(auto_id=False, enable_dynamic_field=False)
+    schema = client.create_schema(
+        auto_id=False, enable_dynamic_field=False, description=description
+    )
     schema.add_field("chunk_id", DataType.VARCHAR, is_primary=True, max_length=128)
     schema.add_field("doc_id", DataType.VARCHAR, max_length=128)
     # 采购边界即物理边界：无凭据查询不会触碰付费来源的分区
@@ -69,6 +87,10 @@ def collection_schema(client: Any, *, dims: dict[str, int]) -> Any:
     schema.add_field("page", DataType.INT32)
     schema.add_field("modality", DataType.VARCHAR, max_length=32)
     schema.add_field("degraded", DataType.VARCHAR, max_length=256)
+    # 图块像素的落盘位置。命中视觉列时要能把原图摆回给人看 ——
+    # 一个只能给出向量得分、拿不出图的命中，在审计场景下不算证据。
+    # 给默认值而非必填：绝大多数切片是纯文本，本就没有图。
+    schema.add_field("asset_path", DataType.VARCHAR, max_length=512, default_value="")
     schema.add_field(
         "labels", DataType.ARRAY, element_type=DataType.VARCHAR, max_capacity=32, max_length=64
     )
@@ -80,9 +102,12 @@ def collection_schema(client: Any, *, dims: dict[str, int]) -> Any:
         max_length=64,
     )
     schema.add_field("text", DataType.VARCHAR, max_length=8192)
-    schema.add_field("dense_general", DataType.FLOAT_VECTOR, dim=dims["dense_general"])
-    schema.add_field("sparse_lexical", DataType.SPARSE_FLOAT_VECTOR)
-    schema.add_field("dense_biomed", DataType.FLOAT_VECTOR, dim=dims["dense_biomed"])
+    # 只建 embedder 真的会写的列。向量列不可为空，多建一列的下场是整批 upsert 全挂。
+    for name in ("dense_general", "dense_biomed", "dense_visual"):
+        if name in dims:
+            schema.add_field(name, DataType.FLOAT_VECTOR, dim=dims[name])
+    if sparse:
+        schema.add_field("sparse_lexical", DataType.SPARSE_FLOAT_VECTOR)
     return schema
 
 
@@ -97,11 +122,14 @@ class MilvusBackend:
         collection: str = "hmd_chunks",
         embedder: Embedder | None = None,
         known_sources: frozenset[str] | None = None,
+        asset_root: Path | None = None,
         client: Any = None,
     ) -> None:
         self.collection = collection
         self.embedder = embedder or FakeEmbedder()
         self.known_sources = known_sources
+        # 切片里存的是相对路径（collection 才能跨机器搬），读像素时在这里拼回绝对路径。
+        self.asset_root = asset_root
         self._client = client
         self._uri = uri
         self._token = token
@@ -123,16 +151,46 @@ class MilvusBackend:
             return
 
         dims = {
-            "dense_general": self.embedder.dims.get("dense_general", 1024),
-            "dense_biomed": self.embedder.dims.get("dense_biomed", 768),
+            name: int(self.embedder.dims.get(name, default))
+            for name, default in DEFAULT_DIMS.items()
         }
-        schema = collection_schema(self.client, dims=dims)
+        # 拿一次真前向问 embedder"你到底出哪几列"，而不是靠登记表。
+        # 登记表会和实现漂移，而 schema 与写入对不上时只会在批量写入时才爆。
+        emitted = set(self.embedder.encode(["probe"])[0])
+        dims = {k: v for k, v in dims.items() if k in emitted}
+        sparse = "sparse_lexical" in emitted
+        # 把建表用的 embedder 刻进集合描述。用 A 模型写入、用 B 模型检索不会报错，
+        # 只会给出一批看上去很正常、实际毫无意义的分数 —— 那是最难发现的错。
+        schema = collection_schema(
+            self.client, dims=dims, sparse=sparse, description=f"embedder={self.embedder.name}"
+        )
         index = self.client.prepare_index_params()
         for field, spec in _INDEX.items():
-            index.add_index(field_name=field, **spec)
+            if field in dims or (field == "sparse_lexical" and sparse):
+                index.add_index(field_name=field, **spec)
         self.client.create_collection(
             collection_name=self.collection, schema=schema, index_params=index
         )
+
+    def _asset(self, rel_path: Any) -> str | None:
+        """切片存的相对路径 → 本机绝对路径。图不在就返回 None（退化成纯文本编码）。"""
+        if not rel_path or self.asset_root is None:
+            return None
+        path = self.asset_root / str(rel_path)
+        return str(path) if path.is_file() else None
+
+    def stamped_embedder(self) -> str:
+        """建这张表时用的 embedder 名。集合不存在或没刻名字则返回空串。"""
+        if not self.client.has_collection(self.collection):
+            return ""
+        desc = str(self.client.describe_collection(self.collection).get("description", ""))
+        return desc.removeprefix("embedder=") if desc.startswith("embedder=") else ""
+
+    def vector_fields(self) -> tuple[str, ...]:
+        """集合里真实存在的向量列。以库为准，不以代码里的常量为准。"""
+        info = self.client.describe_collection(self.collection)
+        names = {f["name"] for f in info.get("fields", ())}
+        return tuple(f for f in _METRIC if f in names)
 
     def upsert(self, rows: list[dict[str, Any]], *, flush: bool = True) -> int:
         """`rows` 需含元数据与 `text`；向量在此处算，调用方不必知道模型。
@@ -143,7 +201,10 @@ class MilvusBackend:
         """
         if not rows:
             return 0
-        bundles = self.embedder.encode([str(r["text"]) for r in rows])
+        bundles = self.embedder.encode(
+            [str(r["text"]) for r in rows],
+            images=[self._asset(r.get("asset_path")) for r in rows],
+        )
         payload = [{**row, **bundle} for row, bundle in zip(rows, bundles, strict=True)]
         self.client.upsert(collection_name=self.collection, data=payload)
         if flush:
@@ -153,7 +214,12 @@ class MilvusBackend:
     # ----------------------------------------------------------------- 检索
 
     def retrieve(self, request: RetrievalRequest) -> BackendResult:
-        fields = request.vector_fields or ("sparse_lexical", "dense_general", "dense_biomed")
+        fields = request.vector_fields or (
+            "sparse_lexical",
+            "dense_general",
+            "dense_biomed",
+            "dense_visual",
+        )
         expr = self._filter(request)
         depth = request.top_k * 3
 
@@ -261,6 +327,7 @@ def chunk_to_row(chunk: Any, meta: ChunkMeta, *, degraded: str = "") -> dict[str
         "page": int(getattr(chunk, "page", 1)),
         "modality": str(getattr(chunk.modality, "value", chunk.modality)),
         "degraded": degraded,
+        "asset_path": getattr(chunk, "asset_path", None) or "",
         "labels": list(meta.labels),
         "concept_ids_expanded": list(getattr(chunk, "concept_ids_expanded", ())),
         "text": chunk.text,
