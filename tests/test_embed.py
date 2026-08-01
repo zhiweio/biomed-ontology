@@ -84,3 +84,30 @@ def test_unknown_embedder_fails_loudly():
 def test_default_embedder_needs_no_model_download():
     """默认必须零依赖：不下 GB 级权重也能跑通全链路。"""
     assert get_embedder().name == "fake"
+
+
+def test_hf_hub_passes_the_repo_id_through_untouched():
+    from biomed_ontology.embed import resolve_model
+
+    assert resolve_model("BAAI/bge-m3") == "BAAI/bge-m3"
+
+
+def test_unmapped_model_fails_loudly_instead_of_falling_back_to_hf(monkeypatch):
+    """内网连不上 huggingface.co 时，回落只会换来一次必然失败的长超时 ——
+    那看起来像"卡住了"，而不是"这个模型没登记镜像"。"""
+    from biomed_ontology import config, embed
+
+    monkeypatch.setattr(config, "settings", config.Settings(model_hub="modelscope"))
+    with pytest.raises(ValueError, match="_MODELSCOPE_IDS"):
+        embed.resolve_model("openai/clip-vit-base-patch32")
+
+
+def test_every_real_embedder_default_is_mirrored():
+    """默认模型 ID 必须都在镜像表里，否则切到 modelscope 才发现漏了一个。"""
+    import inspect
+
+    from biomed_ontology.embed import _MODELSCOPE_IDS, BiomedEmbedder, GeneralEmbedder
+
+    for cls in (GeneralEmbedder, BiomedEmbedder):
+        default = inspect.signature(cls).parameters["model_id"].default
+        assert default in _MODELSCOPE_IDS, f"{cls.__name__} 的默认模型未登记 ModelScope 映射"

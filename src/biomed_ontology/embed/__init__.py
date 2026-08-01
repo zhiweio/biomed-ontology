@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 __all__ = [
@@ -31,6 +32,35 @@ __all__ = [
 VECTOR_FIELDS = ("dense_general", "sparse_lexical", "dense_biomed")
 
 _TOKEN = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]")
+
+# HF 仓库 ID → ModelScope 仓库 ID。两边的命名空间是独立的，没有换算规则，只能逐条列。
+_MODELSCOPE_IDS = {
+    "BAAI/bge-m3": "BAAI/bge-m3",
+    "cambridgeltl/SapBERT-from-PubMedBERT-fulltext": "Xenova/SapBERT-from-PubMedBERT-fulltext",
+}
+
+
+def resolve_model(model_id: str) -> str:
+    """把 HF 仓库 ID 换成可直接喂给 transformers 的路径。
+
+    `hub=hf` 时原样返回，由下游自己去 huggingface.co 拿；
+    `hub=modelscope` 时先下载快照再返回本地目录 —— 下不动就报错，
+    不回落到 HF，否则内网环境下会卡在一次必然失败的超时上。
+    """
+    from biomed_ontology.config import settings
+
+    if settings.model_hub != "modelscope":
+        return model_id
+    try:
+        target = _MODELSCOPE_IDS[model_id]
+    except KeyError:
+        raise ValueError(
+            f"{model_id} 没有登记 ModelScope 对应仓库，请补进 embed._MODELSCOPE_IDS"
+        ) from None
+
+    from modelscope import snapshot_download
+
+    return snapshot_download(target, cache_dir=str(settings.model_cache_dir))
 
 
 class EmbeddingBundle(dict[str, object]):
@@ -96,10 +126,18 @@ class GeneralEmbedder:
 
     name = "bge-m3"
 
-    def __init__(self, *, device: str = "cpu", use_fp16: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        model_id: str = "BAAI/bge-m3",
+        device: str = "cpu",
+        use_fp16: bool = False,
+    ) -> None:
         from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
-        self._fn = BGEM3EmbeddingFunction(use_fp16=use_fp16, device=device)
+        self._fn = BGEM3EmbeddingFunction(
+            model_name=resolve_model(model_id), use_fp16=use_fp16, device=device
+        )
         self.dims = {"dense_general": int(self._fn.dim["dense"])}
 
     def encode(self, texts: list[str]) -> list[EmbeddingBundle]:
@@ -119,6 +157,10 @@ class BiomedEmbedder:
 
     **英文单语**。中文专利上它大概率无增益甚至有害 —— 所以 P13 给它单独一臂，
     并按语种分表；如果 zh 为负，就按语种路由向量列而不是一刀切。
+
+    权重格式按目录里实际有什么来定：ModelScope 上只有 ONNX 版（Xenova），
+    HF 上是 PyTorch 版。两条路都取 `[CLS]` 再 L2 归一 —— 这是 SapBERT 的
+    规定取法，换成 mean pooling 会得到另一个模型的向量。
     """
 
     name = "sapbert"
@@ -129,12 +171,36 @@ class BiomedEmbedder:
         model_id: str = "cambridgeltl/SapBERT-from-PubMedBERT-fulltext",
         device: str = "cpu",
     ) -> None:
-        from sentence_transformers import SentenceTransformer
+        path = resolve_model(model_id)
+        onnx = Path(path) / "onnx" / "model.onnx"
+        self._onnx = onnx.is_file()
+        if self._onnx:
+            import onnxruntime
+            from transformers import AutoTokenizer
 
-        self._model = SentenceTransformer(model_id, device=device)
-        self.dims = {"dense_biomed": int(self._model.get_sentence_embedding_dimension())}
+            self._tok = AutoTokenizer.from_pretrained(path)
+            self._sess = onnxruntime.InferenceSession(str(onnx), providers=["CPUExecutionProvider"])
+            self._inputs = {i.name for i in self._sess.get_inputs()}
+            dim = int(self._sess.get_outputs()[0].shape[-1])
+        else:
+            from sentence_transformers import SentenceTransformer
+
+            self._model = SentenceTransformer(path, device=device)
+            dim = int(self._model.get_sentence_embedding_dimension())
+        self.dims = {"dense_biomed": dim}
+
+    def _encode_onnx(self, texts: list[str]) -> list[list[float]]:
+        import numpy as np
+
+        toks = self._tok(texts, padding=True, truncation=True, max_length=256, return_tensors="np")
+        feed = {k: v for k, v in toks.items() if k in self._inputs}
+        cls = self._sess.run(None, feed)[0][:, 0, :]
+        norm = np.linalg.norm(cls, axis=1, keepdims=True)
+        return (cls / np.where(norm == 0, 1, norm)).tolist()
 
     def encode(self, texts: list[str]) -> list[EmbeddingBundle]:
+        if self._onnx:
+            return [EmbeddingBundle(dense_biomed=v) for v in self._encode_onnx(texts)]
         vecs = self._model.encode(texts, normalize_embeddings=True)
         return [EmbeddingBundle(dense_biomed=list(map(float, v))) for v in vecs]
 

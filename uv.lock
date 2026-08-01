@@ -375,6 +375,7 @@ service = [
 ]
 vector = [
     { name = "flagembedding" },
+    { name = "modelscope" },
     { name = "pymilvus", extra = ["model"] },
     { name = "sentence-transformers" },
 ]
@@ -393,6 +394,7 @@ requires-dist = [
     { name = "kgcl-schema", marker = "extra == 'ontology'", specifier = ">=0.6.0" },
     { name = "linkml", specifier = ">=1.8.0" },
     { name = "linkml-runtime", specifier = ">=1.8.0" },
+    { name = "modelscope", marker = "extra == 'vector'", specifier = ">=1.20.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "networkx", specifier = ">=3.3" },
     { name = "oaklib", marker = "extra == 'ontology'", specifier = ">=0.6.10" },
@@ -2055,6 +2057,39 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979 },
+]
+
+[[package]]
+name = "modelscope"
+version = "1.39.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "filelock" },
+    { name = "modelscope-hub" },
+    { name = "packaging" },
+    { name = "requests" },
+    { name = "setuptools" },
+    { name = "tqdm" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/da/56/9ecae749768f93d42e85be8d00d2b02cd85eedc58e965f721fc51a7035b4/modelscope-1.39.0.tar.gz", hash = "sha256:d2e223bd42cc8054d1388b7584c52fdfa7f304888ae5c0efe6406d621499d259", size = 4548145 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/54/25/b4ea67e6f9e9a3453b5df7bf3d6fab297a7f9a92b1701165f1950b8f9164/modelscope-1.39.0-py3-none-any.whl", hash = "sha256:a363298e4620db83b3ec0057a23a73c4ee1fa122ca11b375e72ef94874123efa", size = 6038508 },
+]
+
+[[package]]
+name = "modelscope-hub"
+version = "0.1.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "filelock" },
+    { name = "requests" },
+    { name = "tqdm" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/40/62/96d04c7618489461b92fb5e6ffabfea6617dc57b0a9b4fb67d4b29961ca2/modelscope_hub-0.1.9.tar.gz", hash = "sha256:e42564e7d132d440c3b2162f6746b510697eabe6ac18b3dd0ef52c18fc6e8742", size = 148342 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/39/56/3162f656c02ecd7118e249f19d2673712cbefd852fbe805e508a9739608d/modelscope_hub-0.1.9-py3-none-any.whl", hash = "sha256:d3d66b83aef7e5de131edf88206353e5f9122949ff3cd273ac57ab919abc763c", size = 152618 },
 ]
 
 [[package]]

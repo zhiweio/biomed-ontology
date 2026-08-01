@@ -20,6 +20,7 @@ from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, Settings
 
 __all__ = [
     "LayoutBackendName",
+    "ModelHubName",
     "SearchBackendName",
     "Settings",
     "VisionProviderName",
@@ -28,6 +29,7 @@ __all__ = [
 ]
 
 LayoutBackendName = Literal["pymupdf", "mineru"]
+ModelHubName = Literal["hf", "modelscope"]
 SearchBackendName = Literal["local", "milvus"]
 VisionProviderName = Literal["null", "openai", "qwen"]
 
@@ -64,6 +66,12 @@ class Settings(BaseSettings):
     milvus_uri: str = "http://localhost:19530"
     milvus_token: SecretStr = SecretStr("")
     milvus_collection: str = "hmd_chunks"
+
+    # --- 模型权重源 -------------------------------------------------------
+    # 内网环境往往连不上 huggingface.co（TLS 直接被重置），改走 ModelScope。
+    # 仓库 ID 两边不同名，映射写在 embed._MODELSCOPE_IDS。
+    model_hub: ModelHubName = "hf"
+    model_cache_dir: Path = Path("data/cache/models")
 
     # --- 服务层安全 -------------------------------------------------------
     trust_entitlement_header: bool = False

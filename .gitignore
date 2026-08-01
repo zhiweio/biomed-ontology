@@ -226,6 +226,7 @@ __marimo__/
 # 再分发的合规责任就转移到本仓库。只提交清单与下载脚本。
 data/raw/*.pdf
 data/assets/
+data/cache/
 docker/volumes/
 
 logs/docs/

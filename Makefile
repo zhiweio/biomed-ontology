@@ -8,7 +8,7 @@ GEN_ART := schema/generated
 SCHEMAS := hmd_concept hmd_fact hmd_taxonomy hmd_obs hmd_agentapi
 COMPOSE := docker compose -f docker/milvus-standalone.yml
 
-.PHONY: all gen gen-py gen-jsonschema gen-shacl gen-owl lint test check clean \
+.PHONY: all gen gen-py gen-jsonschema gen-shacl gen-owl canon-ttl lint test check clean \
         milvus-up milvus-down milvus-logs corpus
 
 all: gen lint test
@@ -38,6 +38,7 @@ gen-shacl:
 		echo "gen-shacl $$s"; \
 		uv run gen-shacl $(SCHEMA_DIR)/$$s.yaml > $(GEN_ART)/$$s.shacl.ttl; \
 	done
+	@$(MAKE) --no-print-directory canon-ttl
 
 gen-owl:
 	@mkdir -p $(GEN_ART)
@@ -45,6 +46,12 @@ gen-owl:
 		echo "gen-owl $$s"; \
 		PYTHONWARNINGS=ignore::DeprecationWarning uv run gen-owl $(SCHEMA_DIR)/$$s.yaml > $(GEN_ART)/$$s.owl.ttl; \
 	done
+	@$(MAKE) --no-print-directory canon-ttl
+
+# rdflib 每次给空白节点新标签，同一份 schema 会生成排列不同的 TTL。
+# 不规范化的话生成物无法 review：真实变更被几千行纯重排淹没。
+canon-ttl:
+	@uv run python scripts/canon_ttl.py $(GEN_ART)/*.ttl
 
 lint:
 	uv run ruff check src tests scripts

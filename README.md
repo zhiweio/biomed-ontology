@@ -20,7 +20,7 @@ uv run hmd eval      # 检索消融 + 指标目标达成情况
 uv run hmd serve     # 起 REST + MCP 服务
 ```
 
-`make check` = ruff + 全量测试，共 **454 条测试**。
+`make check` = ruff + 全量测试，共 **464 条测试**。
 其中 7 条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
 **这 7 条长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
 `hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。
@@ -37,6 +37,18 @@ make milvus-down
 `--embedder` 可选 `fake` / `bge-m3` / `sapbert` / `dual`。
 默认 `fake` 是有意为之：CI 不应该下载 GB 级权重，
 而确定性哈希向量足以验证**索引、过滤、融合**这些真正容易出错的部分。
+
+连不上 huggingface.co 时（内网常见，表现为 TLS 直接被重置）改走 ModelScope：
+
+```bash
+export HMD_MODEL_HUB=modelscope        # 仓库 ID 映射见 embed._MODELSCOPE_IDS
+uv run hmd index --embedder dual --recreate
+```
+
+映射逐条显式登记，没登记的模型直接报错 —— **不回落到 HF**，
+否则内网下会卡在一次必然失败的超时上，看起来像"卡住了"而不是"下不了"。
+注意 ModelScope 上的 SapBERT 只有 ONNX 版，`BiomedEmbedder` 会据此切到
+onnxruntime；两条路都取 `[CLS]` 再 L2 归一，保持与 HF PyTorch 版同一取法。
 
 不加 `--milvus` 时那 6 个臂会明确列在"未运行的臂（后端不可达，非结果）"下，
 **不会**退化成本地后端顶替。这条是刻意的：一份写着 Milvus 却实际由本地跑出的数字，
@@ -82,6 +94,25 @@ flowchart LR
 **LinkML 是唯一事实来源。** 所有 Python 数据模型由 `make gen` 从 `schema/` 生成到
 `src/biomed_ontology/_generated/`，该目录不手改、不入 lint。
 契约、OpenAPI、MCP 描述符全部从同一份 schema 导出 —— 手写第二份就一定会漂移。
+
+**生成是确定性的。** `make gen` 逐字节幂等：同一份 schema 跑两次，`git diff` 为空。
+
+这不是洁癖。rdflib 每次序列化都给空白节点新标签，
+`sh:property [ ... ]` 这些匿名块的排列随之改变，曾经一次 `make gen` 就刷出
+**6341 增 = 6341 删**，内容一字未动。后果是生成物**失去可审查性** ——
+真实的 schema 变更被淹没在纯重排里，review 只能整块跳过；
+工作区又永远是脏的，久了就形成"顺手 `git checkout -- schema/generated`"的习惯，
+连带真变更一起丢。
+
+`scripts/canon_ttl.py` 在 `gen-shacl` / `gen-owl` 之后重写生成物：
+用 `to_canonical_graph()` 按图同构给空白节点算确定性标签，
+再把 `sh:ignoredProperties` 这个语义上是集合、却被写成 RDF list 的字段排序
+（图同构会如实保留 list 顺序，而那个顺序来自 Python set 的遍历序）。
+N-Triples 不行 —— 它按集合迭代序直接倾倒，不排序。
+
+`tests/test_canon_ttl.py` 守三条性质：已提交的生成物已是规范形式、
+重新序列化后规范化能回到同一份字节、以及**规范化不改变图语义**
+（最后一条是安全带：一个把文件清空的实现同样"幂等"）。
 
 ---
 
@@ -169,6 +200,31 @@ uv run hmd demo --id D7
 后端不可达时它们被标记为**未运行**并在报告中列名，**绝不回落到本地后端** ——
 回落会让报告里的"Milvus 三列混合"其实是本地 TF-IDF 跑的，
 这种错误一旦进了采购决策文档就再也追不回来。
+
+### SapBERT 值多少召回
+
+问题是"要不要为生医专用塔多付一列存储和一次前向"，
+所以答案必须是个减法：**三列混合 − 双列混合**，两臂唯一差别就是那一列。
+
+真模型（`--embedder dual`，BGE-M3 + SapBERT，n=8）：
+
+| | Recall@10 净值 |
+|---|---|
+| 全部 | **+0.104** |
+| 仅 en | **+0.125** |
+| 仅 zh | **+0.083** |
+
+结论：**这一列值得上**。方向也和先验一致 —— 英文增益明显大于中文
+（SapBERT 是 UMLS 英文同义词对训练的单语模型）。
+但先验里"中文可能有害、届时需按语种路由向量列"那一支**没有兑现**：
+zh 实测 +0.083，是正的，因此不做按语种路由。
+
+⚠️ 同一组指标在 `--embedder fake` 下是 **−0.042 / −0.083 / ±0.000** —— **符号相反**。
+fake 的"生医稠密"列根本不是 SapBERT，只是确定性哈希。
+所以 `hmd eval` 的输出会在标题上标注 `embedder=`，
+并在非 `sapbert` / `dual` 时追加一行显式免责 —— 假嵌入器的数字不得被当成模型结论。
+
+代价：真模型下单查询 P50 从 ~0.2ms 升到 ~250ms（CPU 推理）。
 
 ### 指标目标与豁免机制
 
