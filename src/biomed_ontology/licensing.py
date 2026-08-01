@@ -17,16 +17,20 @@ from dataclasses import dataclass
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 
 __all__ = [
+    "COMPONENTS",
     "POLICIES",
+    "ComponentObligation",
     "LicenseTierEnum",
     "LicenseViolation",
     "TierPolicy",
+    "assert_component_cleared",
     "assert_exportable",
     "is_exportable",
     "is_trainable",
     "max_visible_tier",
     "named_graph_uri",
     "policy_for",
+    "uncleared_components",
 ]
 
 NAMED_GRAPH_BASE = "https://w3id.org/asliva/biomed-ontology/graph"
@@ -148,3 +152,71 @@ def assert_exportable(tier: LicenseTierEnum, *, what: str) -> None:
         raise LicenseViolation(
             f"{what} 属于 {tier.value}（{POLICIES[tier].description}），禁止导出"
         )
+
+
+# ---------------------------------------------------------------- 第三方组件
+#
+# 上面管的是**数据**的许可，这里管的是**软件**的许可。两者不能混进同一张表：
+# 数据源有实体类型、权威范围、命名图，解析器一个都没有。
+#
+# 之所以把软件许可也写成可执行的闸门而非只写进 NOTICE：法务义务如果只存在于
+# 文档里，就只有写它的人知道；写成启动时抛异常，才能保证换人接手时也绕不过去。
+
+
+@dataclass(frozen=True)
+class ComponentObligation:
+    component_id: str
+    license_id: str
+    obligation: str
+    review: str
+    """not_required / pending / cleared —— pending 表示义务已识别但法务尚未结论。"""
+
+
+COMPONENTS: dict[str, ComponentObligation] = {
+    "pymupdf": ComponentObligation(
+        component_id="pymupdf",
+        license_id="AGPL-3.0 / 商业双授权",
+        obligation="内部工具用途通常无碍；对外提供服务需 Artifex 商业许可，或改用 pypdfium2。",
+        review="pending",
+    ),
+    "mineru": ComponentObligation(
+        component_id="mineru",
+        license_id="MinerU Open Source License (Apache-2.0 + 附加条款)",
+        obligation=(
+            "月活 > 1 亿或月总收入 > 2000 万美元（与关联方合并计算）须另行取得商业许可；"
+            "对第三方提供在线服务须显著标明使用了 MinerU。阿斯利华的收入规模可能触及门槛。"
+        ),
+        review="pending",
+    ),
+    "knowhere": ComponentObligation(
+        component_id="knowhere",
+        license_id="Apache-2.0",
+        obligation="保留许可与版权声明，并标注已作出的修改（见 NOTICE）。",
+        review="cleared",
+    ),
+}
+
+
+def assert_component_cleared(component_id: str, *, accept_uncleared: bool = False) -> None:
+    """启用第三方组件前的法务闸门。
+
+    `accept_uncleared` 只应由显式配置（HMD_ACCEPT_UNCLEARED_COMPONENTS）驱动，
+    且会在启动告警里留痕 —— 允许本地试用，但不允许无声地带进生产。
+    """
+    ob = COMPONENTS.get(component_id)
+    if ob is None or ob.review == "cleared" or ob.review == "not_required":
+        return
+    if accept_uncleared:
+        return
+    raise LicenseViolation(
+        f"组件 {component_id} 的许可义务尚未经法务结论（{ob.license_id}）：{ob.obligation} "
+        f"完成核实后把 COMPONENTS['{component_id}'].review 改为 'cleared'；"
+        f"仅本地试用可设 HMD_ACCEPT_UNCLEARED_COMPONENTS=true。"
+    )
+
+
+def uncleared_components() -> list[ComponentObligation]:
+    return sorted(
+        (c for c in COMPONENTS.values() if c.review == "pending"),
+        key=lambda c: c.component_id,
+    )

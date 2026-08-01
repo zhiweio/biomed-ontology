@@ -1,0 +1,74 @@
+# NOTICE
+
+biomed-ontology (Asliva 生物医药语义底座 PoC)
+Copyright 2026 Asliva
+
+本产品包含或衍生自以下第三方作品。
+
+---
+
+## Ontos-AI / knowhere — Apache License 2.0
+
+本仓库 `src/biomed_ontology/parse/` 下的**语义树构建算法**衍生自
+[Ontos-AI/knowhere](https://github.com/Ontos-AI/knowhere)，
+按 Apache License 2.0 使用。
+
+具体复刻的部分：目录抽取与粗骨架构建、三源标题候选竞争与置信度评分、
+过肥叶节点的 LLM 细化、叶节点粒度切片与 SAME-AS 去重、
+以 `section_path` 作为导航主键的设计。
+
+已作出的修改（Apache 2.0 §4(b) 要求标注）：
+
+- 解析边界由**纯 Markdown** 改为 **Markdown + 逐块 provenance**（页码与 bbox）。
+  knowhere 只消费 MinerU 的 `full.md`；本项目额外消费版面坐标，
+  因为引用优先（Citationware）要求碎片能还原到原文 PDF 的具体位置。
+- 标题来源与证据（knowhere 的 `H1Candidate.source` / `evidence`）
+  额外写入 `TraceContext.record_decision`，使层级判定成为可审计的决策记录。
+- 以 `LayoutBackend` 协议支持 PyMuPDF 与 MinerU 双后端；knowhere 三条解析路径互斥。
+- 去除 Celery / PostgreSQL / S3 / 分片并行等基础设施依赖。
+- 数据模型改由 LinkML 生成，不使用 knowhere 的 `ParsedRow`。
+
+knowhere 的 Apache 2.0 许可全文见 https://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+## MinerU — MinerU Open Source License（Apache 2.0 + 附加条款）
+
+MinerU 是**可选**的版面解析后端，默认不启用（`HMD_LAYOUT_BACKEND=pymupdf`）。
+本仓库**不包含** MinerU 代码，也不将其列为 Python 依赖 —— 仅在启用时通过 HTTP
+调用外部 `mineru-api` 服务。
+
+MinerU 自 3.1.0（2026-04-18）起由 AGPLv3 改为「MinerU Open Source License」，
+即 Apache 2.0 加三条附加条款。其中两条对本项目有实际约束：
+
+1. **商用门槛** —— 可免费商用，除非（与关联方合并计算）月活超过 1 亿
+   或月总收入超过 2000 万美元，超过则需另行取得商业许可。
+
+   > ⚠️ **待法务核实**：阿斯利华的合并收入规模可能触及该门槛。
+   > 启用 MinerU 后端前必须完成核实，并按结论决定是否采购商业许可。
+   > 该义务登记在 `licensing.COMPONENTS["mineru"]`，`review` 为 `pending` 时
+   > 启用该后端会直接抛 `LicenseViolation` —— 义务只写进文档没人会读，写成闸门才绕不过去。
+
+2. **在线服务标识** —— 若基于 MinerU 对第三方提供在线服务，
+   须在界面或公开文档显著位置标明使用了 MinerU。
+
+违反上述任一条款将导致许可自动终止，无需通知。
+
+---
+
+## PyMuPDF — AGPL-3.0 / 商业双授权
+
+默认版面解析后端（`--extra parse`）。
+
+内部工具用途通常无碍；若以本项目为基础对外提供服务，
+需取得 Artifex 的商业许可，或改用许可更宽松的 `pypdfium2`（能力略弱）。
+**此项同样待法务核实**，登记在 `licensing.COMPONENTS["pymupdf"]`。
+
+---
+
+## 语料
+
+`data/raw/` 下的文献 PDF **不随本仓库分发**，由 `scripts/fetch_corpus.py`
+在本地各自取得。许可关系停留在原始发布方与使用者之间；
+下载脚本会以 NCBI OA 服务的声明为准校验许可，NonCommercial 变体一律拒绝。
+实际取得的文件及其许可记录见 `data/raw/SOURCES.md`（生成物，不入库）。

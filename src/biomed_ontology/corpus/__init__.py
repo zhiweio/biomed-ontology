@@ -127,6 +127,10 @@ class CorpusFile(BaseModel):
 
     corpus_version: str
     documents: list[Document]
+    # 解析产物的溯源。手写语料省略它；机器解析的必须带上 ——
+    # 反之就无法回答"这批切片是哪个后端、在什么能力下产出的"。
+    parse: dict[str, Any] | None = None
+    sections_meta: list[dict[str, Any]] = Field(default_factory=list)
 
 
 def load_corpus(path: Path) -> list[Document]:

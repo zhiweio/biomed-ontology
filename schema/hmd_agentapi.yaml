@@ -171,6 +171,7 @@ classes:
       - expansion_size
       - results
       - total
+      - evidence_tree
 
   SearchHit:
     description: 一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件。
@@ -190,6 +191,58 @@ classes:
       - page
       - labels
       - explain
+
+  EvidenceDoc:
+    description: 证据树的文档层。best_score 用于排序，chunk_count 用于识别集中度。
+    slots:
+      - doc_id
+      - title
+      - license_tier
+      - sections
+      - chunk_count
+      - best_score
+
+  EvidenceSection:
+    slots:
+      - section_path
+      - page_start
+      - page_end
+      - chunks
+
+  EvidenceChunk:
+    slots:
+      - chunk_id
+      - page
+      - score
+      - retrieval_channel
+      - snippet
+
+  RestoreRequest:
+    description: >-
+      引用优先（Citationware）的还原入口。检索返回的是高匹配度的碎片，
+      但人要核对的是原文 —— 没有这一步，agent 只能拿着一句话去说服人，
+      而对方无法翻回原文第几页确认。
+    slots:
+      - chunk_id
+      - restore_scope
+      - max_chars
+    slot_usage:
+      chunk_id:
+        required: true
+
+  RestoreResponse:
+    is_a: ToolEnvelope
+    slots:
+      - full_text
+      - breadcrumb
+      - section_path
+      - section_id
+      - doc_id
+      - page_start
+      - page_end
+      - sibling_paths
+      - truncated
+      - restored_chunk_ids
 
   SparqlRequest:
     description: >-
@@ -388,6 +441,54 @@ slots:
     description: 调用方主动设定的 tier 上限，用于在外发场景下自我约束。
   total:
     range: integer
+  restore_scope:
+    range: RestoreScopeEnum
+    description: 还原范围。默认 SECTION —— 整篇文档往往超出 agent 的上下文预算。
+  max_chars:
+    range: integer
+    description: 还原上限。超出即截断并置 truncated，绝不静默丢内容。
+  full_text:
+    range: string
+    description: 按 sort_order 重排后的连续原文。
+  breadcrumb:
+    range: string
+    description: 文档标题 → 各级章节标题的可读路径，供人核对位置。
+  section_path:
+    range: string
+  section_id:
+    range: string
+  page_start:
+    range: integer
+  page_end:
+    range: integer
+  sibling_paths:
+    range: string
+    multivalued: true
+  truncated:
+    range: boolean
+  restored_chunk_ids:
+    range: string
+    multivalued: true
+    description: 参与还原的切片。缺了它就无法核对还原是否完整。
+  evidence_tree:
+    range: EvidenceDoc
+    multivalued: true
+    inlined_as_list: true
+    description: >-
+      文档 → 章节 → 碎片的聚合视图。扁平列表会让同一段落的多个碎片
+      看上去像多条独立证据，造成证据量的错觉。
+  sections:
+    range: EvidenceSection
+    multivalued: true
+    inlined_as_list: true
+  chunks:
+    range: EvidenceChunk
+    multivalued: true
+    inlined_as_list: true
+  chunk_count:
+    range: integer
+  best_score:
+    range: float
   concept_detail:
     range: ConceptDetail
     inlined: true

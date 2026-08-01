@@ -1,0 +1,23 @@
+# PoC 语料清单。PDF 本体不入 git，只提交这份清单与 scripts/fetch_corpus.py。
+#
+# 两种写法：
+#   queries    —— 检索式，每次执行经 Europe PMC 重新求值（推荐）
+#   documents  —— 显式条目，用于专利等无法检索的来源
+#
+# 优先用 queries：硬编 PMCID 会随时间腐坏（撤稿、许可变更、迁移），
+# 而且没人会去复核；检索式把"我要哪一类文献"这个真实意图留在仓库里。
+# 许可以 NCBI OA 服务的返回为准，与此处声明不符即报错停下。
+
+queries:
+  - label: savolitinib
+    query: savolitinib AND (MET OR "non-small cell lung cancer")
+    limit: 3
+  - label: fruquintinib
+    query: fruquintinib AND (VEGFR OR "colorectal cancer")
+    limit: 3
+  - label: surufatinib
+    query: surufatinib AND ("neuroendocrine" OR angio-immuno)
+    limit: 3
+
+# 专利与临床试验登记记录：无 OA 服务可校验，许可须人工核实后写在 note 里。
+documents: []

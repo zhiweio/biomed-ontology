@@ -47,6 +47,39 @@ classes:
       doc_type:
         required: true
 
+  DocumentSection:
+    description: >-
+      语义树的一个节点。文档不是切片的扁平袋子，而是有层级的 —— 检索命中的是碎片，
+      但研究员要看的是碎片所在的完整章节（Citationware：引用优先）。
+      section_path 是导航主键：碎片靠它找回兄弟节点与父章节，无需重新解析原文。
+    slots:
+      - section_id
+      - doc_id
+      - parent_section_id
+      - section_path
+      - section_title
+      - section_level
+      - sort_order
+      - start_page
+      - end_page
+      - summary
+      - heading_source
+      - heading_confidence
+    slot_usage:
+      section_id:
+        identifier: true
+        required: true
+      doc_id:
+        required: true
+      section_path:
+        required: true
+      section_level:
+        required: true
+      heading_source:
+        description: >-
+          该层级的判定来源。与 heading_confidence 一起构成决策记录，
+          同时写入 TraceContext.record_decision，使"层级怎么定的"可审计。
+
   Chunk:
     description: >-
       文档切片，检索与抽取的基本单位。
@@ -55,6 +88,9 @@ classes:
       - chunk_id
       - doc_id
       - section
+      - section_id
+      - section_path
+      - sort_order
       - char_start
       - char_end
       - page
@@ -63,6 +99,11 @@ classes:
       - modality
       - concept_ids
       - concept_ids_expanded
+      - same_as_chunk_id
+      - asset_path
+      - asset_summary
+      - asset_keywords
+      - degraded
     slot_usage:
       chunk_id:
         identifier: true
@@ -77,6 +118,14 @@ classes:
         description: >-
           含本体子树扩展的概念集合，用于召回。
           与 concept_ids 分开存是为了让"查 NSCLC 召回肺腺癌"不污染精确匹配。
+      same_as_chunk_id:
+        description: >-
+          指向内容等价的属主切片。同一段正文可能同时归属多个叶节点（如跨章节的表格说明），
+          去重后只保留一份，其余以此引用属主，避免同一证据在结果里重复占位。
+      degraded:
+        description: >-
+          产出该切片时缺失的能力（如 formula / bbox / ocr）。
+          一路透传到 agent：与其让下游以为拿到了完整信息，不如显式声明这次少了什么。
 
   Fact:
     description: >-
@@ -227,3 +276,53 @@ slots:
     description: rerank 前的名次。保留它才能判断 rerank 是帮忙还是帮倒忙。
   retrieval_channel:
     range: RetrievalChannelEnum
+
+  # --- 语义树 -----------------------------------------------------------
+  section_id:
+    range: string
+    pattern: "^SEC:[A-Za-z0-9._:-]+$"
+  parent_section_id:
+    range: string
+    pattern: "^SEC:[A-Za-z0-9._:-]+$"
+  section_path:
+    range: string
+    description: '层级路径，如 "Results / Efficacy / ORR"。检索结果的面包屑与还原主键。'
+  section_title:
+    range: string
+  section_level:
+    range: integer
+    description: 1-based 层级深度。跳级会被 SYNTHETIC 层补齐，保证树无断层。
+  sort_order:
+    range: integer
+    description: 同层内的阅读顺序。还原完整章节时按它重组，不依赖字典序。
+  start_page:
+    range: integer
+  end_page:
+    range: integer
+  summary:
+    range: string
+  heading_source:
+    range: HeadingSourceEnum
+  heading_confidence:
+    range: float
+    minimum_value: 0.0
+    maximum_value: 1.0
+  same_as_chunk_id:
+    range: string
+    pattern: "^CHK:[A-Za-z0-9._:-]+$"
+
+  # --- 多模态资产 -------------------------------------------------------
+  asset_path:
+    range: string
+    description: >-
+      表格 HTML / 图像 PNG 的仓库相对路径。
+      绝不由文档内容拼接得出（路径穿越），一律由 doc_id + 内容哈希生成。
+  asset_summary:
+    range: string
+    description: 视觉模型对表格/图像的文本摘要，使视觉内容可被文本查询命中。
+  asset_keywords:
+    range: string
+    multivalued: true
+  degraded:
+    range: string
+    multivalued: true

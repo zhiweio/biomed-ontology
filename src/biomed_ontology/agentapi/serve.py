@@ -136,6 +136,7 @@ def dispatch(
         "find_analogous": "concept_id",
         "submit_feedback": "verdict",
         "sparql_query": "template",
+        "restore_context": "chunk_id",
     }.get(tool_name)
     if positional and positional in kwargs:
         return handler(kwargs.pop(positional), **kwargs)

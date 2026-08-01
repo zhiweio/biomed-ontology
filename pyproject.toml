@@ -13,6 +13,7 @@ dependencies = [
     "curies>=0.10.0",
     "bioregistry>=0.11.0",
     "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
     "pyyaml>=6.0.2",
     "networkx>=3.3",
     "polars>=1.9.0",
@@ -33,11 +34,30 @@ ontology = [
     "pronto>=2.5.7",
     "kgcl-schema>=0.6.0",
 ]
+# 向量检索。torch 由 pymilvus[model] 间接引入，体积大，因此单列 extra。
+vector = [
+    "pymilvus[model]>=2.5.0",
+]
+# 版面解析。pymupdf 为 AGPL-3.0/商业双授权，对外服务前需法务确认（见 NOTICE）。
+parse = [
+    "pymupdf>=1.24.0",
+    "pillow>=10.4.0",
+]
+vision = [
+    "openai>=1.54.0",
+]
+service = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    # 3.x 把 streamable_http_app() 改名为 http_app()，跨大版本挂载方式不同
+    "fastmcp>=3.0.0,<4.0.0",
+]
 dev = [
     "pytest>=8.3.0",
     "pytest-cov>=5.0.0",
     "ruff>=0.7.0",
     "mypy>=1.13.0",
+    "respx>=0.21.1",
 ]
 
 [project.scripts]
@@ -68,6 +88,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # typer 的参数声明惯用法就是在默认值里调用 Option()。
 "src/biomed_ontology/cli.py" = ["B008"]
+# FastAPI 同理：Body()/Header() 必须写在默认值里才能被框架识别。
+"src/biomed_ontology/service/app.py" = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

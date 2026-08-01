@@ -1,0 +1,82 @@
+# 检索指标目标。**这个文件的存在就是为了让"没达成"有地方写。**
+#
+# 没有豁免机制时，一条达不到的断言只有两条出路：删掉它，或者调低它。
+# 两条都会让对外结论慢慢和事实脱节，而且没人记得是什么时候脱的。
+# 这里的做法是：目标照写，达不到就填 waiver + waiver_owner，
+# 让"未达成"变成一条**署名的、带理由的、可复审的**记录。
+#
+# 反向绊线同样存在：目标已达成却还挂着豁免，也会让测试失败 ——
+# 因为那意味着对外结论仍在引用一条过期的免责说明。
+version: "0.1.0"
+targets:
+  - id: T1
+    metric: recall_at_10
+    arm: ontology_hybrid
+    baseline_arm: bm25_only
+    comparison: relative_gain
+    threshold: 0.10
+    rationale: 本体增强要证明自己值得维护，召回相对提升 10% 是最低门槛。
+
+  - id: T2
+    metric: ndcg_at_10
+    arm: ontology_hybrid
+    baseline_arm: bm25_only
+    comparison: not_worse
+    threshold: 0.0
+    rationale: 召回涨了但排序变差，等于把噪声推给下游 agent，不算收益。
+    waiver: |
+      未达成。实测 nDCG@10 0.817 → 0.814，净 -0.002。
+      净值很小，但**不是噪声**，逐 query 看得很清楚：
+        Q1(zh) -0.128、Q2(en) -0.196  ← 这两条召回完全没变（1.000/0.667 前后一致），
+                                          扩展只是把一个 grade-1（部分相关）碎片顶到了
+                                          grade-2（高度相关）碎片前面，RR 从 1.000 掉到 0.500。
+        Q4(zh) +0.160、Q5(en) +0.135  ← 这两条是真涨召回（0.333→0.667、0.500→1.000）。
+      结论：这是排序缺陷而非召回权衡 —— 扩展把相关性等级的次序弄反了。
+      与 T4 的 MRR 下降同源，都由 Q1/Q2 那一次错位贡献。
+      当前不阻断，因为召回收益（T1 +12.8%）明显大于这 0.002；
+      但正确的修法是在融合后加一层重排把等级次序纠回来，而不是调低这条阈值。
+    waiver_owner: 检索方向负责人
+    waiver_review_by: 引入重排臂后立即复审；重排若仍修不回则应收紧扩展深度
+
+  - id: T3
+    metric: precision_at_5
+    arm: ontology_hybrid
+    baseline_arm: bm25_only
+    comparison: not_worse
+    threshold: 0.0
+    rationale: 前五条是 agent 实际会读的部分，不能为了召回牺牲它。
+
+  - id: T4
+    metric: mrr
+    arm: ontology_hybrid
+    baseline_arm: bm25_only
+    comparison: not_worse
+    threshold: 0.0
+    rationale: 首条命中位置直接决定 agent 的引用质量。
+    waiver: |
+      未达成。实测 MRR 0.938 → 0.812，绝对 -0.125。
+      来源精确可定位：Q1 与 Q2 的首位命中各从第 1 名掉到第 2 名（RR 1.000 → 0.500），
+      两条 query 各贡献 -0.0625，合计正好 -0.125，其余 6 条 query 的 RR 一动没动。
+      而这两条的 recall 前后完全一致 —— 说明不是"扩展召回了噪声"，
+      而是扩展把一个 grade-1 碎片排到了 grade-2 碎片前面，是等级次序错了。
+      同一批数据上 MAP（对每个相关项都计分）未下降，佐证整体排序没有退化。
+      注意样本量只有 8 条 query / 13 个 chunk，MRR 只看第一条命中，
+      单条 query 的一次错位就能左右整个均值，绝对值不具备外推性。
+      **这条理由本身也要在 gold 集扩到 30+ 条 query 后复审** ——
+      届时若 MRR 仍降，则应认定为扩展过度召回，需要收紧扩展深度。
+    waiver_owner: 检索方向负责人
+    waiver_review_by: gold 集扩容至 30 条 query 时，或引入重排臂后（以先到者为准）
+
+  - id: T5
+    metric: citation_fidelity
+    arm: ontology_hybrid
+    comparison: at_least
+    threshold: 1.0
+    rationale: |
+      引用忠实度是这里唯一一条**不接受豁免**的目标。
+      召回差只是找不到，用户会知道自己没拿到答案；
+      引用不忠实是把一个看似有据的错误答案递出去，用户没有识别它的手段。
+      本体扩展天然放大这个风险：扩展出来的概念很容易被顺手记成"原文说的"。
+      因此这里对每条命中都回查语料真值，任何低于 1.000 的取值都必须当作缺陷修掉，
+      而不是签一张豁免继续发版。
+

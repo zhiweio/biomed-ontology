@@ -10,6 +10,7 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology.agentapi import AgentApi
 from biomed_ontology.evolution import (
     MiningInput,
@@ -253,6 +254,67 @@ def demo_facts_and_license(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
     return r
 
 
+# ---------------------------------------------------------------- D7 引用还原
+
+
+def demo_citation_restore(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+    r = DemoResult(
+        "D7",
+        "引用优先：碎片 → 原文",
+        "任取一个检索碎片都能还原完整章节并回到原始页码；还原不绕开许可",
+    )
+
+    res = api.search_documents("surufatinib neuroendocrine tumors", top_k=5)
+    r.lines.append(f"检索命中 {res['total']} 条，聚成 {len(res['evidence_tree'])} 篇文档：")
+    for node in res["evidence_tree"]:
+        secs = "、".join(s["section_path"] or "(无标题)" for s in node["sections"])
+        r.lines.append(
+            f"  {node['doc_id']} 碎片 {node['chunk_count']} 个 → "
+            f"章节 {len(node['sections'])} 处：{secs}"
+        )
+
+    hit = res["results"][0]
+    back = api.restore_context(hit["chunk_id"])
+    r.lines.append(
+        f"还原 {hit['chunk_id']}：{back['breadcrumb']} "
+        f"p{back['page_start']}-{back['page_end']}，"
+        f"{len(hit['snippet'])} 字碎片 → {len(back['full_text'])} 字全节"
+        f"（共 {len(back['restored_chunk_ids'])} 个碎片，截断={back['truncated']}）"
+    )
+    r.lines.append(f"同级章节可继续查阅：{'、'.join(back['sibling_paths']) or '（无）'}")
+
+    # 截断必须自报，否则"还原完整原文"就是一句假话。
+    cut = api.restore_context(hit["chunk_id"], max_chars=60)
+    r.lines.append(
+        f"限长 60 字时：truncated={cut['truncated']}，实际返回 {len(cut['full_text'])} 字"
+    )
+
+    # 还原最容易变成的后门：拿碎片 id 换受限全文。
+    restricted = next(
+        (c for c in kb.chunks if kb.document(c.doc_id).license_tier is not LicenseTierEnum.TIER_0),
+        None,
+    )
+    denied = api.restore_context(restricted.chunk_id)
+    allowed = api.restore_context(restricted.chunk_id, entitlements=_LICENSED)
+    r.lines.append(
+        f"受限文档 {restricted.doc_id}：无凭据还原 {len(denied.get('full_text') or '')} 字"
+        f"（{denied['warnings'][0] if denied['warnings'] else 'OK'}） / "
+        f"有凭据还原 {len(allowed['full_text'])} 字"
+    )
+
+    fragment = next(c for c in kb.chunks if c.chunk_id == hit["chunk_id"])
+    r.passed = (
+        fragment.text in back["full_text"]
+        and back["page_start"] >= 1
+        and back["breadcrumb"].count(" / ") >= 1
+        and cut["truncated"]
+        and not denied.get("full_text")
+        and bool(allowed["full_text"])
+        and len(res["evidence_tree"]) <= res["total"]
+    )
+    return r
+
+
 DEMOS: dict[str, Callable[[KnowledgeBase, AgentApi], DemoResult]] = {
     "D1": demo_alias_consistency,
     "D2": demo_hierarchy_expansion,
@@ -260,6 +322,7 @@ DEMOS: dict[str, Callable[[KnowledgeBase, AgentApi], DemoResult]] = {
     "D4": demo_traceability,
     "D5": demo_evolution_loop,
     "D6": demo_facts_and_license,
+    "D7": demo_citation_restore,
 }
 
 

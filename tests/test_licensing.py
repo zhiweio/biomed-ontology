@@ -10,11 +10,13 @@ import pytest
 from biomed_ontology._generated.hmd_concept import EntityTypeEnum, LicenseTierEnum
 from biomed_ontology.licensing import (
     LicenseViolation,
+    assert_component_cleared,
     assert_exportable,
     is_exportable,
     is_trainable,
     named_graph_uri,
     policy_for,
+    uncleared_components,
 )
 from biomed_ontology.registry import SourceRole, Track
 
@@ -145,3 +147,32 @@ def test_every_entity_type_has_an_authoritative_source(registry):
         if not registry.by_entity_type(et):
             continue
         assert registry.authoritative_for(et), f"{et.value} 缺少权威源"
+
+
+# ------------------------------------------------------- 第三方软件组件义务
+
+
+def test_uncleared_component_blocks_activation():
+    """法务义务只写进 NOTICE 就只有写它的人知道；写成闸门才绕不过去。"""
+    with pytest.raises(LicenseViolation, match="尚未经法务结论"):
+        assert_component_cleared("mineru")
+
+
+def test_cleared_component_passes():
+    assert_component_cleared("knowhere")  # 不抛即通过
+
+
+def test_unknown_component_is_not_gated():
+    """未登记的组件不拦 —— 闸门管的是已识别义务，不是白名单。"""
+    assert_component_cleared("pytest")
+
+
+def test_explicit_acknowledgement_allows_local_trial():
+    assert_component_cleared("mineru", accept_uncleared=True)
+
+
+def test_pending_components_are_enumerable_for_legal_review():
+    ids = {c.component_id for c in uncleared_components()}
+    assert {"mineru", "pymupdf"} <= ids
+    for c in uncleared_components():
+        assert c.obligation, f"{c.component_id} 登记了待核实却没写义务内容"

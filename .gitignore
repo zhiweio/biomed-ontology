@@ -222,3 +222,10 @@ __marimo__/
 .next/
 .claude/settings.json
 .zcode/
+# 真实语料与解析产物：体积之外更要紧的是许可 —— 仓库一旦包含第三方全文，
+# 再分发的合规责任就转移到本仓库。只提交清单与下载脚本。
+data/raw/*.pdf
+data/assets/
+docker/volumes/
+
+logs/docs/

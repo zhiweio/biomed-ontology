@@ -7,30 +7,46 @@ BM25 找字面、向量找语义、图找"经由概念关系可达"。
 
 license 过滤在候选生成阶段就介入，而不是返回前裁剪：
 后者会让"总命中数"这类统计量泄漏无权数据的存在性。
+
+词法/向量召回下沉到 `backends/`（本地内存或 Milvus）；
+图通道留在本层，因为它依赖本体规范化器与概念倒排，向量库替不了。
 """
 
 from __future__ import annotations
 
-import math
-import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass, field
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJustificationEnum
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
-from biomed_ontology.alias import normalize_alias
 from biomed_ontology.corpus import Chunk
 from biomed_ontology.licensing import tier_rank
 from biomed_ontology.observability import Candidate, TraceContext
 from biomed_ontology.pipeline import KnowledgeBase
+from biomed_ontology.search.backends import (
+    Bm25Index,
+    ChunkMeta,
+    DenseIndex,
+    LicenseScope,
+    LocalBackend,
+    RetrievalRequest,
+    SearchBackend,
+)
 
-__all__ = ["Bm25Index", "HybridSearcher", "SearchHit", "rrf_fuse"]
+__all__ = [
+    "Bm25Index",
+    "DenseIndex",
+    "HybridSearcher",
+    "LicenseScope",
+    "LocalBackend",
+    "SearchBackend",
+    "SearchHit",
+    "rrf_fuse",
+]
 
-_TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9\-]+|\d+(?:\.\d+)?|[\u4e00-\u9fff]")
-
-
-def _tokens(text: str) -> list[str]:
-    return [normalize_alias(t) or t.casefold() for t in _TOKEN.findall(text)]
+_OPEN_RANK = tier_rank(LicenseTierEnum.TIER_1)
+# 对外别名：还原原文要用同一个公开档阈值，各写一份迟早对不上。
+OPEN_RANK = _OPEN_RANK
 
 
 @dataclass
@@ -47,95 +63,6 @@ class SearchHit:
     labels: list[str] = field(default_factory=list)
     channel_ranks: dict[str, int] = field(default_factory=dict)
     explain: str = ""
-
-
-class Bm25Index:
-    """Okapi BM25。自实现而非引入 elasticsearch：PoC 要能离线可重放，
-    外部服务会把评测结果和某一次索引状态绑死。"""
-
-    def __init__(self, k1: float = 1.5, b: float = 0.75) -> None:
-        self.k1, self.b = k1, b
-        self._docs: dict[str, Counter[str]] = {}
-        self._len: dict[str, int] = {}
-        self._df: Counter[str] = Counter()
-        self._avgdl = 0.0
-
-    def add(self, key: str, text: str) -> None:
-        tf = Counter(_tokens(text))
-        self._docs[key] = tf
-        self._len[key] = sum(tf.values())
-        for term in tf:
-            self._df[term] += 1
-        self._avgdl = sum(self._len.values()) / max(1, len(self._len))
-
-    def search(self, query: str, *, allowed: set[str] | None = None, top_k: int = 20):
-        n = len(self._docs)
-        if not n:
-            return []
-        q = _tokens(query)
-        scores: dict[str, float] = defaultdict(float)
-        for term in q:
-            df = self._df.get(term, 0)
-            if not df:
-                continue
-            idf = math.log(1 + (n - df + 0.5) / (df + 0.5))
-            for key, tf in self._docs.items():
-                if allowed is not None and key not in allowed:
-                    continue
-                f = tf.get(term, 0)
-                if not f:
-                    continue
-                dl = self._len[key]
-                denom = f + self.k1 * (1 - self.b + self.b * dl / max(1e-9, self._avgdl))
-                scores[key] += idf * (f * (self.k1 + 1)) / denom
-        return sorted(scores.items(), key=lambda kv: (-kv[1], kv[0]))[:top_k]
-
-
-class DenseIndex:
-    """字符 3-gram TF-IDF 余弦。刻意不用预训练向量模型。
-
-    PoC 阶段引入外部 embedding 会让"本体带来多少增量"这个核心问题
-    被"换个 embedding 会不会更好"淹没。生产替换点就是这个类，接口不变。
-    """
-
-    def __init__(self, n: int = 3) -> None:
-        self.n = n
-        self._vecs: dict[str, dict[str, float]] = {}
-        self._idf: dict[str, float] = {}
-        self._raw: dict[str, Counter[str]] = {}
-
-    def add(self, key: str, text: str) -> None:
-        self._raw[key] = Counter(self._grams(text))
-
-    def build(self) -> None:
-        n_docs = max(1, len(self._raw))
-        df: Counter[str] = Counter()
-        for c in self._raw.values():
-            df.update(c.keys())
-        self._idf = {g: math.log(1 + n_docs / (1 + d)) for g, d in df.items()}
-        for key, c in self._raw.items():
-            vec = {g: cnt * self._idf.get(g, 0.0) for g, cnt in c.items()}
-            norm = math.sqrt(sum(v * v for v in vec.values())) or 1.0
-            self._vecs[key] = {g: v / norm for g, v in vec.items()}
-
-    def search(self, query: str, *, allowed: set[str] | None = None, top_k: int = 20):
-        qc = Counter(self._grams(query))
-        qv = {g: cnt * self._idf.get(g, 0.0) for g, cnt in qc.items()}
-        qn = math.sqrt(sum(v * v for v in qv.values())) or 1.0
-        qv = {g: v / qn for g, v in qv.items()}
-        out = []
-        for key, vec in self._vecs.items():
-            if allowed is not None and key not in allowed:
-                continue
-            small, large = (qv, vec) if len(qv) < len(vec) else (vec, qv)
-            s = sum(v * large.get(g, 0.0) for g, v in small.items())
-            if s > 0:
-                out.append((key, s))
-        return sorted(out, key=lambda kv: (-kv[1], kv[0]))[:top_k]
-
-    def _grams(self, text: str) -> list[str]:
-        t = f" {normalize_alias(text) or text.casefold()} "
-        return [t[i : i + self.n] for i in range(max(0, len(t) - self.n + 1))]
 
 
 def rrf_fuse(
@@ -160,21 +87,41 @@ def rrf_fuse(
 
 
 class HybridSearcher:
-    def __init__(self, kb: KnowledgeBase) -> None:
+    def __init__(self, kb: KnowledgeBase, backend: SearchBackend | None = None) -> None:
         self.kb = kb
-        self.bm25 = Bm25Index()
-        self.dense = DenseIndex()
         self._by_concept: dict[str, set[str]] = defaultdict(set)
         self._chunks: dict[str, Chunk] = {}
+        self._meta: dict[str, ChunkMeta] = {}
+
+        local = LocalBackend() if backend is None else None
         for ch in kb.chunks:
             self._chunks[ch.chunk_id] = ch
-            # 概念注入索引文本：让 BM25 也能命中"文中写 ORPATHYS、查询写沃利替尼"这类跨别名情形。
-            enriched = ch.text + " " + " ".join(self._concept_terms(ch))
-            self.bm25.add(ch.chunk_id, enriched)
-            self.dense.add(ch.chunk_id, enriched)
+            self._meta[ch.chunk_id] = self._chunk_meta(ch)
+            if local is not None:
+                # 概念注入索引文本：让 BM25 也能命中跨别名情形，
+                # 例如文中写 ORPATHYS 而查询写"沃利替尼"。
+                enriched = ch.text + " " + " ".join(self._concept_terms(ch))
+                local.add(self._meta[ch.chunk_id], enriched)
             for cid in ch.concept_ids:
                 self._by_concept[cid].add(ch.chunk_id)
-        self.dense.build()
+        if local is not None:
+            local.build()
+        self.backend: SearchBackend = local if local is not None else backend  # type: ignore[assignment]
+
+    def _chunk_meta(self, chunk: Chunk) -> ChunkMeta:
+        doc = self.kb.document(chunk.doc_id)
+        return ChunkMeta(
+            chunk_id=chunk.chunk_id,
+            doc_id=chunk.doc_id,
+            source_id=doc.source_id if doc else "",
+            # 文档元数据缺失时按最高密级处理：宁可挡掉也不能默认放行。
+            license_rank=tier_rank(doc.license_tier) if doc else tier_rank(LicenseTierEnum.TIER_3),
+            labels=tuple(chunk.labels),
+        )
+
+    def chunk_meta(self, chunk_id: str) -> ChunkMeta | None:
+        """对外暴露切片的许可元数据 —— 索引侧要用同一份，不能各算各的。"""
+        return self._meta.get(chunk_id)
 
     def _concept_terms(self, chunk: Chunk) -> list[str]:
         terms = []
@@ -183,24 +130,6 @@ class HybridSearcher:
             if c:
                 terms.extend(filter(None, [c.preferred_label_en, c.preferred_label_zh]))
         return terms
-
-    # -------------------------------------------------- 许可
-
-    def _allowed_chunks(self, entitlements: frozenset[str], max_tier: LicenseTierEnum):
-        allowed, filtered = set(), 0
-        cap = tier_rank(max_tier)
-        for ch in self.kb.chunks:
-            doc = self.kb.document(ch.doc_id)
-            if doc is None:
-                continue
-            t = tier_rank(doc.license_tier)
-            if t > cap or (
-                t > tier_rank(LicenseTierEnum.TIER_1) and doc.source_id not in entitlements
-            ):
-                filtered += 1
-                continue
-            allowed.add(ch.chunk_id)
-        return allowed, filtered
 
     # -------------------------------------------------- 检索
 
@@ -219,25 +148,31 @@ class HybridSearcher:
             RetrievalChannelEnum.GRAPH,
         ),
         labels: list[str] | None = None,
+        vector_fields: tuple[str, ...] = (),
     ) -> tuple[list[SearchHit], int]:
         ent = entitlements if entitlements is not None else ctx.entitlements
-        allowed, filtered = self._allowed_chunks(ent, max_tier)
-        if labels:
-            wanted = set(labels)
-            allowed = {c for c in allowed if wanted & set(self._chunks[c].labels)}
+        scope = LicenseScope(
+            max_rank=tier_rank(max_tier), open_rank=_OPEN_RANK, entitled_sources=ent
+        )
+        request = RetrievalRequest(
+            query=query,
+            scope=scope,
+            top_k=top_k,
+            labels=tuple(labels or ()),
+            channels=channels,
+            vector_fields=vector_fields,
+        )
 
-        results: dict[RetrievalChannelEnum, list[tuple[str, float]]] = {}
-        with ctx.span("search", **{"hmd.query": query[:120], "hmd.allowed": len(allowed)}) as sp:
+        with ctx.span(
+            "search", **{"hmd.query": query[:120], "hmd.backend": self.backend.name}
+        ) as sp:
+            result = self.backend.retrieve(request)
+            results = dict(result.channels)
+            filtered = result.filtered_count
+
             concept_ids: list[str] = []
-            if RetrievalChannelEnum.BM25 in channels:
-                results[RetrievalChannelEnum.BM25] = self.bm25.search(
-                    query, allowed=allowed, top_k=top_k * 3
-                )
-            if RetrievalChannelEnum.DENSE in channels:
-                results[RetrievalChannelEnum.DENSE] = self.dense.search(
-                    query, allowed=allowed, top_k=top_k * 3
-                )
             if RetrievalChannelEnum.GRAPH in channels:
+                allowed = self._graph_allowed(request)
                 graph_hits, concept_ids = self._graph_channel(query, ctx, allowed, expand)
                 results[RetrievalChannelEnum.GRAPH] = graph_hits[: top_k * 3]
 
@@ -251,6 +186,20 @@ class HybridSearcher:
                 }
             )
         return hits, filtered
+
+    def _graph_allowed(self, request: RetrievalRequest) -> set[str]:
+        """图通道自己的许可过滤，走与后端**同一个**谓词。
+
+        图通道的候选来自内存概念倒排而非后端索引，若不在此复用 `scope.permits`，
+        它就会成为绕过许可隔离的旁路。
+        """
+        wanted = set(request.labels)
+        return {
+            m.chunk_id
+            for m in self._meta.values()
+            if request.scope.permits(m.license_rank, m.source_id)
+            and (not wanted or wanted & set(m.labels))
+        }
 
     def _graph_channel(
         self, query: str, ctx: TraceContext, allowed: set[str], expand: bool

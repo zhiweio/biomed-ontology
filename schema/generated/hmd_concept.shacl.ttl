@@ -12,29 +12,13 @@ skos:Concept a sh:NodeShape ;
     rdfs:comment "一个生物医药概念的唯一锚点。所有别名、外部 ID、抽取事实、索引条目都挂在这个 ID 上。 ID 单调递增、永不复用；废弃走 replaced_by / consider 而不是删除。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:description "等价团的代表 ID，选取规则见 ontology/clique.py。 仅作展示与回溯用途，不是主键。" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 6 ;
-            sh:path hmd:primary_xref ],
-        [ sh:in ( biolink:GeneOrGeneProduct biolink:ChemicalEntity biolink:Disease biolink:MolecularActivity "MODALITY" biolink:ClinicalTrial biolink:BiologicalEntity "ADVERSE_EVENT" ) ;
+    sh:property [ sh:datatype xsd:string ;
+            sh:description "英文首选标签" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
-            sh:order 1 ;
-            sh:path hmd:entity_type ],
-        [ sh:description "等价团其余成员，含外采数据的 vendor ID" ;
-            sh:nodeKind sh:IRI ;
-            sh:order 7 ;
-            sh:path skos:exactMatch ],
-        [ sh:description "Biolink Model 类别，用于与外部图谱对齐" ;
-            sh:nodeKind sh:IRI ;
-            sh:order 2 ;
-            sh:path hmd:category ],
-        [ sh:datatype xsd:boolean ;
-            sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:is_obsolete ],
+            sh:order 3 ;
+            sh:path skos:prefLabel ],
         [ sh:description "废弃概念的候选替代（非唯一，需人工判断）" ;
             sh:nodeKind sh:IRI ;
             sh:order 11 ;
@@ -42,58 +26,79 @@ skos:Concept a sh:NodeShape ;
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path skos:definition ],
+            sh:order 14 ;
+            sh:path hmd:modified_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
         [ sh:nodeKind sh:IRI ;
             sh:order 8 ;
             sh:path hmd:parents ],
-        [ sh:description "内部概念 CURIE" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 0 ;
-            sh:path skos:notation ],
-        [ sh:description "废弃概念的唯一继任者" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 10 ;
-            sh:path oio:replacedBy ],
         [ sh:datatype xsd:string ;
-            sh:description "英文首选标签" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path skos:prefLabel ],
-        [ sh:datatype xsd:string ;
-            sh:description "中文首选标签。中文层是自建增量（D5）—— 开放许可源的中文覆盖不足，LLM 生成的候选必须人工审校后才能升为 preferred。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 4 ;
-            sh:path skos:prefLabel ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:order 5 ;
+            sh:path skos:definition ],
+        [ sh:description "等价团其余成员，含外采数据的 vendor ID" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 7 ;
+            sh:path skos:exactMatch ],
+        [ sh:datatype xsd:boolean ;
             sh:maxCount 1 ;
-            sh:order 12 ;
-            sh:path hmd:license_tier ],
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:is_obsolete ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 13 ;
             sh:path hmd:created_in_release ;
             sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:description "等价团的代表 ID，选取规则见 ontology/clique.py。 仅作展示与回溯用途，不是主键。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 6 ;
+            sh:path hmd:primary_xref ],
+        [ sh:description "Biolink Model 类别，用于与外部图谱对齐" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 2 ;
+            sh:path hmd:category ],
+        [ sh:description "废弃概念的唯一继任者" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 10 ;
+            sh:path oio:replacedBy ],
+        [ sh:in ( biolink:GeneOrGeneProduct biolink:ChemicalEntity biolink:Disease biolink:MolecularActivity "MODALITY" biolink:ClinicalTrial biolink:BiologicalEntity "ADVERSE_EVENT" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 1 ;
+            sh:path hmd:entity_type ],
+        [ sh:defaultValue "TIER_0" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
+            sh:order 12 ;
+            sh:path hmd:license_tier ],
+        [ sh:description "内部概念 CURIE" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 0 ;
+            sh:path skos:notation ],
         [ sh:datatype xsd:string ;
+            sh:description "中文首选标签。中文层是自建增量（D5）—— 开放许可源的中文覆盖不足，LLM 生成的候选必须人工审校后才能升为 preferred。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 14 ;
-            sh:path hmd:modified_in_release ;
-            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ;
+            sh:order 4 ;
+            sh:path skos:prefLabel ] ;
     sh:targetClass skos:Concept .
 
 hmd:Clique a sh:NodeShape ;
     rdfs:comment "等价团：一组通过 exact_match 互相连通的外部 ID 集合，对应唯一一个内部概念。 建团用连通分量算法，冲突（同团内出现两个来自同一权威源的不同 ID）进人工队列。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:minCount 1 ;
+    sh:property [ sh:datatype xsd:string ;
+            sh:description "建团冲突说明，非空即需人工介入" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:conflict_flags ],
+        [ sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 1 ;
             sh:path hmd:members ],
@@ -102,31 +107,25 @@ hmd:Clique a sh:NodeShape ;
             sh:nodeKind sh:IRI ;
             sh:order 0 ;
             sh:path skos:notation ],
-        [ sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
-            sh:maxCount 1 ;
-            sh:order 4 ;
-            sh:path hmd:built_by_justification ],
         [ sh:maxCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 2 ;
             sh:path hmd:primary_xref ],
-        [ sh:datatype xsd:string ;
-            sh:description "建团冲突说明，非空即需人工介入" ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:conflict_flags ] ;
+        [ sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
+            sh:maxCount 1 ;
+            sh:order 4 ;
+            sh:path hmd:built_by_justification ] ;
     sh:targetClass hmd:Clique .
 
 hmd:Hierarchy a sh:NodeShape ;
     rdfs:comment "概念层级边。检索时的子树扩展依赖这张表 （查 NSCLC 要能召回 MET ex14 skipping 肺腺癌）。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:string ;
-            sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 4 ;
-            sh:path hmd:source_version ],
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 1 ;
+            sh:path hmd:parent_id ],
         [ sh:datatype xsd:string ;
             sh:description "数据源标识，必须在 source registry 中注册" ;
             sh:maxCount 1 ;
@@ -134,16 +133,17 @@ hmd:Hierarchy a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 3 ;
             sh:path hmd:source ],
+        [ sh:datatype xsd:string ;
+            sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:source_version ],
         [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 0 ;
             sh:path hmd:child_id ],
-        [ sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 1 ;
-            sh:path hmd:parent_id ],
         [ sh:in ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch biolink:subclass_of biolink:affects biolink:treats biolink:has_target biolink:biomarker_for biolink:has_adverse_event biolink:studied_to_treat ) ;
             sh:maxCount 1 ;
             sh:order 2 ;
@@ -154,33 +154,58 @@ hmd:Synonym a sh:NodeShape ;
     rdfs:comment "别名条目。scope 必填 —— 检索扩展行为完全由 scope 驱动（D2）。 is_ambiguous 为真时，该别名不得直接单选，必须走上下文消歧（D3）。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:in ( "en" "zh" "la" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 4 ;
-            sh:path hmd:lang ],
-        [ sh:datatype xsd:string ;
-            sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
+    sh:property [ sh:datatype xsd:date ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:source_version ],
-        [ sh:defaultValue "PENDING" ;
-            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
+            sh:order 13 ;
+            sh:path hmd:valid_from ],
+        [ sh:in ( oio:hasExactSynonym oio:hasNarrowSynonym oio:hasBroadSynonym oio:hasRelatedSynonym ) ;
             sh:maxCount 1 ;
-            sh:order 11 ;
-            sh:path hmd:review_status ],
+            sh:minCount 1 ;
+            sh:order 5 ;
+            sh:path hmd:scope ],
+        [ sh:datatype xsd:string ;
+            sh:description "归一化形式：小写、去连字符与空白、希腊字母转写、全角转半角。 词典精确匹配走这一列，alias_raw 只用于展示与溯源。" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:alias_norm ],
+        [ sh:datatype xsd:string ;
+            sh:description "别名条目的稳定 ID。可观测埋点回传的就是这个 ID —— 归因排障时要能从一条错误结论定位到具体哪一行别名（Demo 场景 4）。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 0 ;
+            sh:path hmd:alias_id ;
+            sh:pattern "^HMDA:\\d{9}$" ],
         [ sh:datatype xsd:boolean ;
             sh:description "该别名映射到多个概念，禁止直接单选" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 10 ;
             sh:path hmd:is_ambiguous ],
-        [ sh:datatype xsd:date ;
+        [ sh:datatype xsd:string ;
+            sh:description "原始写法，保留大小写、连字符与空白" ;
             sh:maxCount 1 ;
+            sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 13 ;
-            sh:path hmd:valid_from ],
+            sh:order 2 ;
+            sh:path hmd:alias_raw ],
+        [ sh:defaultValue "TIER_0" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
+            sh:order 12 ;
+            sh:path hmd:license_tier ],
+        [ sh:defaultValue "PENDING" ;
+            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
+            sh:maxCount 1 ;
+            sh:order 11 ;
+            sh:path hmd:review_status ],
+        [ sh:in ( "en" "zh" "la" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 4 ;
+            sh:path hmd:lang ],
         [ sh:datatype xsd:float ;
             sh:maxCount 1 ;
             sh:maxInclusive 1e+00 ;
@@ -195,69 +220,39 @@ hmd:Synonym a sh:NodeShape ;
             sh:order 14 ;
             sh:path hmd:valid_to ],
         [ sh:datatype xsd:string ;
-            sh:description "归一化形式：小写、去连字符与空白、希腊字母转写、全角转半角。 词典精确匹配走这一列，alias_raw 只用于展示与溯源。" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:alias_norm ],
-        [ sh:datatype xsd:string ;
             sh:description "数据源标识，必须在 source registry 中注册" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 7 ;
             sh:path hmd:source ],
-        [ sh:in ( oio:hasExactSynonym oio:hasNarrowSynonym oio:hasBroadSynonym oio:hasRelatedSynonym ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 5 ;
-            sh:path hmd:scope ],
         [ sh:datatype xsd:string ;
-            sh:description "原始写法，保留大小写、连字符与空白" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 2 ;
-            sh:path hmd:alias_raw ],
-        [ sh:datatype xsd:string ;
-            sh:description "别名条目的稳定 ID。可观测埋点回传的就是这个 ID —— 归因排障时要能从一条错误结论定位到具体哪一行别名（Demo 场景 4）。" ;
+            sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 0 ;
-            sh:path hmd:alias_id ;
-            sh:pattern "^HMDA:\\d{9}$" ],
-        [ sh:in ( "INN" "BRAND" "INTERNAL_CODE" "PARTNER_CODE" "RESEARCH_CODE" "ABBREV" "SYMBOL" "CHEMICAL_NAME" "TRANSLATION" "MISSPELLING" "LEGACY" ) ;
-            sh:maxCount 1 ;
-            sh:order 6 ;
-            sh:path hmd:alias_type ],
+            sh:order 8 ;
+            sh:path hmd:source_version ],
         [ sh:description "内部概念 CURIE" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 1 ;
             sh:path skos:notation ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+        [ sh:in ( "INN" "BRAND" "INTERNAL_CODE" "PARTNER_CODE" "RESEARCH_CODE" "ABBREV" "SYMBOL" "CHEMICAL_NAME" "TRANSLATION" "MISSPELLING" "LEGACY" ) ;
             sh:maxCount 1 ;
-            sh:order 12 ;
-            sh:path hmd:license_tier ] ;
+            sh:order 6 ;
+            sh:path hmd:alias_type ] ;
     sh:targetClass hmd:Synonym .
 
 sssom:Mapping a sh:NodeShape ;
     rdfs:comment "SSSOM 映射记录。外采数据（UMLS / DrugBank / 智慧芽 / 医药魔方） 一律通过此表挂靠到内部 CURIE，而非替代内部 ID（设计决策 D9）。 这让底座保持供应商中立：停订阅只失去一组 xref，内部 ID 与历史报告不受影响。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:float ;
+    sh:property [ sh:defaultValue "PENDING" ;
+            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
             sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:confidence ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:author_id ],
+            sh:order 14 ;
+            sh:path hmd:review_status ],
         [ sh:datatype xsd:string ;
             sh:description "数据源标识，必须在 source registry 中注册" ;
             sh:maxCount 1 ;
@@ -265,58 +260,48 @@ sssom:Mapping a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 11 ;
             sh:path hmd:source ],
-        [ sh:in ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch biolink:subclass_of biolink:affects biolink:treats biolink:has_target biolink:biomarker_for biolink:has_adverse_event biolink:studied_to_treat ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 3 ;
-            sh:path hmd:predicate_id ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path hmd:object_label ],
-        [ sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 4 ;
-            sh:path hmd:object_id ],
-        [ sh:defaultValue "PENDING" ;
-            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
-            sh:maxCount 1 ;
-            sh:order 14 ;
-            sh:path hmd:review_status ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 2 ;
-            sh:path hmd:subject_label ],
-        [ sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 6 ;
-            sh:path hmd:mapping_justification ],
-        [ sh:description "内部 HMD CURIE 或外部 CURIE（建团阶段两端都可能是外部 ID）" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 1 ;
-            sh:path hmd:subject_id ],
-        [ sh:datatype xsd:date ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 10 ;
-            sh:path hmd:mapping_date ],
         [ sh:datatype xsd:string ;
             sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 12 ;
             sh:path hmd:source_version ],
+        [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 4 ;
+            sh:path hmd:object_id ],
+        [ sh:description "内部 HMD CURIE 或外部 CURIE（建团阶段两端都可能是外部 ID）" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 1 ;
+            sh:path hmd:subject_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:author_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 2 ;
+            sh:path hmd:subject_label ],
         [ sh:defaultValue "TIER_0" ;
             sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
             sh:maxCount 1 ;
             sh:order 13 ;
             sh:path hmd:license_tier ],
+        [ sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 6 ;
+            sh:path hmd:mapping_justification ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 5 ;
+            sh:path hmd:object_label ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -327,7 +312,22 @@ sssom:Mapping a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 0 ;
             sh:path hmd:mapping_id ;
-            sh:pattern "^HMDM:\\d{9}$" ] ;
+            sh:pattern "^HMDM:\\d{9}$" ],
+        [ sh:datatype xsd:float ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:confidence ],
+        [ sh:datatype xsd:date ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 10 ;
+            sh:path hmd:mapping_date ],
+        [ sh:in ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch biolink:subclass_of biolink:affects biolink:treats biolink:has_target biolink:biomarker_for biolink:has_adverse_event biolink:studied_to_treat ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 3 ;
+            sh:path hmd:predicate_id ] ;
     sh:targetClass sssom:Mapping .
 
 

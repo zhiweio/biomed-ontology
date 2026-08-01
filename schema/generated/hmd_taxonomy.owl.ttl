@@ -11,17 +11,32 @@
 hmd:Chunk a owl:Class ;
     rdfs:label "Chunk" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:section ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:ModalityChannelEnum ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:section ],
+            owl:onProperty hmd:char_start ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:concept_ids_expanded ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:concept_ids_expanded ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:chunk_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:char_end ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:asset_path ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^CHK:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:onProperty hmd:same_as_chunk_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:doc_id ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -30,46 +45,94 @@ hmd:Chunk a owl:Class ;
             owl:onProperty hmd:doc_id ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:char_start ],
+            owl:onProperty hmd:section_id ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:text ],
+            owl:onProperty hmd:asset_path ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^SEC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:onProperty hmd:section_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:asset_summary ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
             owl:onProperty hmd:chunk_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:char_end ],
+            owl:onProperty hmd:same_as_chunk_id ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:integer ;
-            owl:onProperty hmd:page ],
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:asset_keywords ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:asset_path ],
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
-            owl:onProperty hmd:text ],
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:asset_keywords ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:sort_order ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:modality ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:doc_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:text ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:section_path ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:section ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:doc_id ],
+            owl:onProperty hmd:section_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:char_start ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:asset_summary ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:concept_ids ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:integer ;
-            owl:onProperty hmd:char_start ],
+            owl:onProperty hmd:page ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:page ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:sort_order ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:bbox ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:concept_ids ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:section_path ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:degraded ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:page ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:text ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:char_start ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -77,79 +140,88 @@ hmd:Chunk a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^CHK:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
             owl:onProperty hmd:chunk_id ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:concept_ids ],
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section_path ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:concept_ids_expanded ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:concept_ids ],
+            owl:onProperty hmd:section ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:char_end ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:chunk_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:integer ;
-            owl:onProperty hmd:char_end ],
+            owl:onProperty hmd:same_as_chunk_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:bbox ],
+            owl:onProperty hmd:degraded ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:section ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:text ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:char_end ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:sort_order ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:float ;
             owl:onProperty hmd:bbox ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:page ],
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:asset_summary ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:modality ] ;
+            owl:allValuesFrom hmd:ModalityChannelEnum ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:text ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:char_end ] ;
     skos:definition "文档切片，检索与抽取的基本单位。 保留 section 与 bbox 是硬要求：provenance 要能把研究员的视线引到原文那一段。" ;
     skos:inScheme hmd:fact .
 
 hmd:Clique a owl:Class ;
     rdfs:label "Clique" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minCardinality 1 ;
+            owl:maxCardinality 1 ;
             owl:onProperty hmd:concept_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:members ],
-        [ a owl:Restriction ;
             owl:minCardinality 0 ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
             owl:onProperty hmd:primary_xref ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:conflict_flags ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:primary_xref ],
+            owl:onProperty hmd:built_by_justification ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:members ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:members ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:built_by_justification ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:MappingJustificationEnum ;
             owl:onProperty hmd:built_by_justification ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:conflict_flags ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:concept_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:built_by_justification ],
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:primary_xref ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:concept_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:MappingJustificationEnum ;
-            owl:onProperty hmd:built_by_justification ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:primary_xref ] ;
+            owl:onProperty hmd:concept_id ] ;
     skos:definition "等价团：一组通过 exact_match 互相连通的外部 ID 集合，对应唯一一个内部概念。 建团用连通分量算法，冲突（同团内出现两个来自同一权威源的不同 ID）进人工队列。" ;
     skos:inScheme hmd:concept .
 
@@ -157,55 +229,34 @@ hmd:Concept a owl:Class ;
     rdfs:label "Concept" ;
     rdfs:subClassOf [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:created_in_release ],
+            owl:onProperty hmd:preferred_label_zh ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
+            owl:maxCardinality 1 ;
             owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:preferred_label_en ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:equivalent_xrefs ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:definition ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:boolean ;
-            owl:onProperty hmd:is_obsolete ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:created_in_release ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:is_obsolete ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:is_obsolete ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:primary_xref ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:primary_xref ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:concept_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:definition ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:preferred_label_zh ],
         [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:modified_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:preferred_label_en ],
+        [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:parents ],
+            owl:onProperty hmd:license_tier ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:definition ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:parents ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:equivalent_xrefs ],
@@ -213,71 +264,92 @@ hmd:Concept a owl:Class ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:primary_xref ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:is_obsolete ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:definition ],
+        [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:concept_id ],
+            owl:onProperty hmd:equivalent_xrefs ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:preferred_label_zh ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:entity_type ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:replaced_by ],
         [ a owl:Restriction ;
             owl:allValuesFrom hmd:EntityTypeEnum ;
             owl:onProperty hmd:entity_type ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
+            owl:minCardinality 1 ;
             owl:onProperty hmd:concept_id ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:entity_type ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:modified_in_release ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:license_tier ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:parents ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:consider ],
         [ a owl:Restriction ;
-            owl:allValuesFrom hmd:LicenseTierEnum ;
-            owl:onProperty hmd:license_tier ],
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:is_obsolete ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:preferred_label_en ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:preferred_label_en ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:parents ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:modified_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:entity_type ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:created_in_release ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:modified_in_release ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:replaced_by ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:preferred_label_zh ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:replaced_by ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:replaced_by ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:category ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:entity_type ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:category ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:preferred_label_en ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:modified_in_release ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:modified_in_release ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:preferred_label_zh ],
+            owl:onProperty hmd:definition ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:consider ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:preferred_label_en ] ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:replaced_by ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LicenseTierEnum ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:replaced_by ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:category ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:category ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:boolean ;
+            owl:onProperty hmd:is_obsolete ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:concept_id ] ;
     owl:hasKey ( hmd:primary_xref ) ;
     skos:definition "一个生物医药概念的唯一锚点。所有别名、外部 ID、抽取事实、索引条目都挂在这个 ID 上。 ID 单调递增、永不复用；废弃走 replaced_by / consider 而不是删除。" ;
     skos:exactMatch skos:Concept ;
@@ -286,11 +358,17 @@ hmd:Concept a owl:Class ;
 hmd:Document a owl:Class ;
     rdfs:label "Document" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:title ],
-        [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:labels ],
+            owl:onProperty hmd:source_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:retrieved_on ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:source_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:language ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -298,127 +376,106 @@ hmd:Document a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
             owl:onProperty hmd:doc_id ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:source_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:external_id ],
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:license_tier ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:language ],
+            owl:onProperty hmd:labels ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:published_on ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:title ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:title ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:date ;
             owl:onProperty hmd:published_on ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:dateTime ;
-            owl:onProperty hmd:retrieved_on ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:doc_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
+            owl:minCardinality 0 ;
             owl:onProperty hmd:external_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:published_on ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:DocTypeEnum ;
-            owl:onProperty hmd:doc_type ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:doc_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:LanguageEnum ;
-            owl:onProperty hmd:language ],
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:labels ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:language ],
+            owl:onProperty hmd:published_on ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:external_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:retrieved_on ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:license_tier ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:language ],
+        [ a owl:Restriction ;
             owl:minCardinality 1 ;
-            owl:onProperty hmd:doc_type ],
+            owl:onProperty hmd:doc_id ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:doc_type ],
+            owl:onProperty hmd:source_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:title ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:dateTime ;
+            owl:onProperty hmd:retrieved_on ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LanguageEnum ;
+            owl:onProperty hmd:language ],
         [ a owl:Restriction ;
             owl:allValuesFrom hmd:LicenseTierEnum ;
             owl:onProperty hmd:license_tier ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:source_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:retrieved_on ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:title ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:title ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:retrieved_on ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:published_on ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:source_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
             owl:onProperty hmd:external_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:labels ],
+            owl:allValuesFrom hmd:DocTypeEnum ;
+            owl:onProperty hmd:doc_type ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:doc_type ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:license_tier ] ;
+            owl:onProperty hmd:doc_type ] ;
     skos:definition "语料中的一篇文档。PoC 语料为 PubMed/PMC、ClinicalTrials.gov、专利。" ;
     skos:inScheme hmd:fact .
 
 hmd:DocumentLabel a owl:Class ;
     rdfs:label "DocumentLabel" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom xsd:float ;
-            owl:onProperty hmd:confidence ],
-        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:confidence ],
+            owl:onProperty hmd:label_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:matched_keywords ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:doc_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:justification ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom [ a rdfs:Datatype ;
-                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
-                                owl:onDatatype xsd:string ;
-                                owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
-            owl:onProperty hmd:doc_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:matched_keywords ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:review_status ],
         [ a owl:Restriction ;
-            owl:allValuesFrom hmd:TaxonomyDimensionEnum ;
-            owl:onProperty hmd:dimension ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:MappingJustificationEnum ;
-            owl:onProperty hmd:justification ],
-        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:dimension ],
         [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:justification ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:TaxonomyDimensionEnum ;
+            owl:onProperty hmd:dimension ],
+        [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:confidence ],
+            owl:onProperty hmd:dimension ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -426,148 +483,188 @@ hmd:DocumentLabel a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^HMDT:[A-Z_]+:[a-z0-9_]+$" ] ) ] ) ] ;
             owl:onProperty hmd:label_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:dimension ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:label_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:review_status ],
-        [ a owl:Restriction ;
             owl:allValuesFrom hmd:ReviewStatusEnum ;
             owl:onProperty hmd:review_status ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:label_id ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:MappingJustificationEnum ;
             owl:onProperty hmd:justification ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:doc_id ] ;
-    skos:definition "一篇文档上的一条标引结果，带置信度与依据。" ;
-    skos:inScheme hmd:taxonomy .
-
-hmd:Fact a owl:Class ;
-    rdfs:label "Fact" ;
-    rdfs:subClassOf [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:object_value ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:object_unit ],
+            owl:onProperty hmd:confidence ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:review_status ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:PredicateEnum ;
-            owl:onProperty hmd:predicate ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:subject_label ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:ModalityChannelEnum ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:fact_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:Evidence ;
-            owl:onProperty hmd:evidence ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:object_label ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:extractor_version ],
+            owl:onProperty hmd:justification ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:float ;
             owl:onProperty hmd:confidence ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:subject_label ],
+            owl:onProperty hmd:matched_keywords ],
         [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:subject_id ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:doc_id ] ;
+    skos:definition "一篇文档上的一条标引结果，带置信度与依据。" ;
+    skos:inScheme hmd:taxonomy .
+
+hmd:DocumentSection a owl:Class ;
+    rdfs:label "DocumentSection" ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:section_title ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:heading_source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:end_page ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^SEC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:onProperty hmd:section_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section_path ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:extractor_id ],
+            owl:onProperty hmd:summary ],
         [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:start_page ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:section_title ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:HeadingSourceEnum ;
+            owl:onProperty hmd:heading_source ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:section_level ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:section_path ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:summary ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:float [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:float ;
+                                owl:withRestrictions ( [ xsd:minInclusive 0e+00 ] ) ] [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:float ;
+                                owl:withRestrictions ( [ xsd:maxInclusive 1e+00 ] ) ] ) ] ;
+            owl:onProperty hmd:heading_confidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:sort_order ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:sort_order ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:section_path ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:section_level ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section_level ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:end_page ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^SEC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:onProperty hmd:parent_section_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:heading_confidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:start_page ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:heading_confidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:section_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:parent_section_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:end_page ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section_title ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:heading_source ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:sort_order ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:start_page ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:parent_section_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:summary ] ;
+    skos:definition "语义树的一个节点。文档不是切片的扁平袋子，而是有层级的 —— 检索命中的是碎片， 但研究员要看的是碎片所在的完整章节（Citationware：引用优先）。 section_path 是导航主键：碎片靠它找回兄弟节点与父章节，无需重新解析原文。" ;
+    skos:inScheme hmd:fact .
+
+hmd:Fact a owl:Class ;
+    rdfs:label "Fact" ;
+    rdfs:subClassOf [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:object_unit ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:predicate ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:subject_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:object_value ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:confidence ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:fact_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:ReviewStatusEnum ;
-            owl:onProperty hmd:review_status ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:extractor_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:extractor_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:confidence ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:created_in_release ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:qualifiers ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:object_label ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
             owl:onProperty hmd:object_id ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:object_value ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:evidence ],
-        [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:subject_label ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:extractor_version ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:object_value ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:created_in_release ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:object_unit ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:qualifiers ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:review_status ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -575,32 +672,134 @@ hmd:Fact a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^HMDF:\\d{9}$" ] ) ] ) ] ;
             owl:onProperty hmd:fact_id ],
         [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:extractor_version ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ModalityChannelEnum ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:extractor_version ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:qualifiers ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ReviewStatusEnum ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:extractor_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:subject_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:evidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:float ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:object_unit ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:fact_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:PredicateEnum ;
+            owl:onProperty hmd:predicate ],
+        [ a owl:Restriction ;
             owl:minCardinality 1 ;
             owl:onProperty hmd:predicate ],
         [ a owl:Restriction ;
             owl:allValuesFrom hmd:LicenseTierEnum ;
             owl:onProperty hmd:license_tier ],
         [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:subject_label ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:object_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:object_value ],
+        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:extractor_version ],
+            owl:onProperty hmd:predicate ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:extractor_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:object_label ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:object_label ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:fact_id ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:object_id ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:review_status ],
+            owl:onProperty hmd:object_label ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:subject_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:object_id ],
+            owl:onProperty hmd:subject_label ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:created_in_release ],
+            owl:onProperty hmd:qualifiers ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:object_label ] ;
+            owl:allValuesFrom hmd:Evidence ;
+            owl:onProperty hmd:evidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:extractor_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:object_value ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:object_unit ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:subject_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:extractor_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:subject_id ] ;
     skos:definition "一条结构化事实三元组，带语句级溯源。 RDF 落地形态是 RDF-star：<< :s :p :o >> prov:wasDerivedFrom :chunk 。" ;
     skos:inScheme hmd:fact .
 
@@ -611,31 +810,19 @@ hmd:Hierarchy a owl:Class ;
             owl:onProperty hmd:predicate ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:parent_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:parent_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:child_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:source_version ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:child_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:child_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:source_version ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
             owl:onProperty hmd:predicate ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
+            owl:onProperty hmd:parent_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:child_id ],
         [ a owl:Restriction ;
             owl:allValuesFrom hmd:PredicateEnum ;
             owl:onProperty hmd:predicate ],
@@ -644,12 +831,24 @@ hmd:Hierarchy a owl:Class ;
             owl:onProperty hmd:source ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:source_version ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:source ],
         [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:parent_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:child_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:child_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
             owl:onProperty hmd:parent_id ] ;
     skos:definition "概念层级边。检索时的子树扩展依赖这张表 （查 NSCLC 要能召回 MET ex14 skipping 肺腺癌）。" ;
     skos:inScheme hmd:concept .
@@ -657,71 +856,29 @@ hmd:Hierarchy a owl:Class ;
 hmd:Mapping a owl:Class ;
     rdfs:label "Mapping" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:source_version ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:object_id ],
-        [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:source ],
+            owl:onProperty hmd:object_label ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:predicate_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_date ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:object_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:predicate_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:predicate_id ],
+            owl:onProperty hmd:subject_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:LicenseTierEnum ;
-            owl:onProperty hmd:license_tier ],
+            owl:onProperty hmd:confidence ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:object_label ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:source_version ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:author_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:source ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:confidence ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:mapping_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:object_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:float ;
-            owl:onProperty hmd:confidence ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:subject_label ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:mapping_justification ],
-        [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:source_version ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:subject_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:subject_label ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:subject_label ],
+            owl:onProperty hmd:review_status ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -729,58 +886,37 @@ hmd:Mapping a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^HMDM:\\d{9}$" ] ) ] ) ] ;
             owl:onProperty hmd:mapping_id ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:mapping_id ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:license_tier ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:mapping_date ],
+            owl:onProperty hmd:subject_label ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:mapping_tool ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:MappingJustificationEnum ;
-            owl:onProperty hmd:mapping_justification ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:source ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
             owl:onProperty hmd:mapping_tool ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:subject_id ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:mapping_date ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:confidence ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:date ;
-            owl:onProperty hmd:mapping_date ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
+            owl:allValuesFrom hmd:MappingJustificationEnum ;
             owl:onProperty hmd:mapping_justification ],
         [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:object_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:subject_label ],
+        [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:author_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:review_status ],
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:subject_label ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:object_label ],
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:source ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:review_status ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:author_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:PredicateEnum ;
+            owl:minCardinality 1 ;
             owl:onProperty hmd:predicate_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
@@ -789,11 +925,74 @@ hmd:Mapping a owl:Class ;
             owl:allValuesFrom hmd:ReviewStatusEnum ;
             owl:onProperty hmd:review_status ],
         [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_tool ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:PredicateEnum ;
+            owl:onProperty hmd:predicate_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:subject_id ],
+        [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:author_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:author_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:mapping_justification ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
             owl:onProperty hmd:object_label ],
         [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:float ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:mapping_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
-            owl:onProperty hmd:subject_id ] ;
+            owl:onProperty hmd:object_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_justification ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:object_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:mapping_date ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:date ;
+            owl:onProperty hmd:mapping_date ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LicenseTierEnum ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source ] ;
     skos:definition "SSSOM 映射记录。外采数据（UMLS / DrugBank / 智慧芽 / 医药魔方） 一律通过此表挂靠到内部 CURIE，而非替代内部 ID（设计决策 D9）。 这让底座保持供应商中立：停订阅只失去一组 xref，内部 ID 与历史报告不受影响。" ;
     skos:exactMatch <https://w3id.org/sssom/Mapping> ;
     skos:inScheme hmd:concept .
@@ -801,77 +1000,47 @@ hmd:Mapping a owl:Class ;
 hmd:Provenance a owl:Class ;
     rdfs:label "Provenance" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:char_end ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:doc_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:float ;
-            owl:onProperty hmd:bbox ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:LicenseTierEnum ;
             owl:onProperty hmd:license_tier ],
         [ a owl:Restriction ;
-            owl:allValuesFrom hmd:ModalityChannelEnum ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:char_start ],
-        [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:section ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:doc_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:retrieval_channel ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:integer ;
-            owl:onProperty hmd:rank_before_rerank ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:rank_before_rerank ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:RetrievalChannelEnum ;
-            owl:onProperty hmd:retrieval_channel ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
             owl:onProperty hmd:page ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:license_tier ],
+            owl:onProperty hmd:char_end ],
         [ a owl:Restriction ;
-            owl:allValuesFrom [ a rdfs:Datatype ;
-                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
-                                owl:onDatatype xsd:string ;
-                                owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:chunk_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:char_end ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:char_start ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:char_end ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
             owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:section ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:chunk_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:char_end ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:section ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:chunk_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:bbox ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:char_start ],
+            owl:allValuesFrom hmd:RetrievalChannelEnum ;
+            owl:onProperty hmd:retrieval_channel ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -879,79 +1048,85 @@ hmd:Provenance a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^CHK:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
             owl:onProperty hmd:chunk_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:rank_before_rerank ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
+            owl:allValuesFrom xsd:integer ;
             owl:onProperty hmd:page ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
             owl:onProperty hmd:retrieval_channel ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:page ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:bbox ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:rank_before_rerank ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:float ;
+            owl:onProperty hmd:bbox ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ModalityChannelEnum ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+            owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:rank_before_rerank ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:integer ;
             owl:onProperty hmd:char_start ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:license_tier ],
+            owl:onProperty hmd:modality ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
+            owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:section ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:integer ;
-            owl:onProperty hmd:char_end ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:char_start ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:integer ;
-            owl:onProperty hmd:page ] ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:rank_before_rerank ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:retrieval_channel ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LicenseTierEnum ;
+            owl:onProperty hmd:license_tier ] ;
     skos:definition "面向 agent 返回体的溯源块（设计决策 D6），是 tool 返回体的一等公民。" ;
     skos:inScheme hmd:fact .
 
 hmd:Synonym a owl:Class ;
     rdfs:label "Synonym" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:valid_from ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:source ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:valid_to ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:alias_type ],
-        [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:alias_raw ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:lang ],
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source ],
         [ a owl:Restriction ;
-            owl:allValuesFrom hmd:ReviewStatusEnum ;
-            owl:onProperty hmd:review_status ],
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:alias_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:date ;
+            owl:onProperty hmd:valid_to ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:review_status ],
+            owl:onProperty hmd:source_version ],
         [ a owl:Restriction ;
-            owl:allValuesFrom hmd:LanguageEnum ;
-            owl:onProperty hmd:lang ],
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:alias_norm ],
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
-            owl:onProperty hmd:alias_id ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:boolean ;
-            owl:onProperty hmd:is_ambiguous ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:LicenseTierEnum ;
-            owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:alias_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:source ],
+            owl:onProperty hmd:scope ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -959,56 +1134,98 @@ hmd:Synonym a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^HMDA:\\d{9}$" ] ) ] ) ] ;
             owl:onProperty hmd:alias_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:source_version ],
+            owl:allValuesFrom xsd:boolean ;
+            owl:onProperty hmd:is_ambiguous ],
         [ a owl:Restriction ;
-            owl:minCardinality 1 ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:valid_to ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:alias_type ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:scope ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:alias_norm ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:valid_to ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
             owl:onProperty hmd:alias_raw ],
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
-            owl:onProperty hmd:source ],
+            owl:onProperty hmd:alias_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:valid_from ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:is_ambiguous ],
+            owl:allValuesFrom hmd:LicenseTierEnum ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:lang ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:SynonymScopeEnum ;
+            owl:onProperty hmd:scope ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:alias_raw ],
         [ a owl:Restriction ;
             owl:allValuesFrom hmd:AliasTypeEnum ;
             owl:onProperty hmd:alias_type ],
         [ a owl:Restriction ;
+            owl:allValuesFrom xsd:date ;
+            owl:onProperty hmd:valid_from ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:lang ],
+        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:source_version ],
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
             owl:onProperty hmd:alias_norm ],
         [ a owl:Restriction ;
-            owl:allValuesFrom hmd:SynonymScopeEnum ;
-            owl:onProperty hmd:scope ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:date ;
-            owl:onProperty hmd:valid_to ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:concept_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:alias_type ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:confidence ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:scope ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:date ;
-            owl:onProperty hmd:valid_from ],
-        [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:concept_id ],
         [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:is_ambiguous ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LanguageEnum ;
+            owl:onProperty hmd:lang ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:confidence ],
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:is_ambiguous ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:alias_type ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:float [ a rdfs:Datatype ;
@@ -1019,54 +1236,45 @@ hmd:Synonym a owl:Class ;
             owl:onProperty hmd:confidence ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:alias_raw ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:valid_to ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:source_version ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:is_ambiguous ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:alias_norm ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:alias_norm ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:license_tier ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:concept_id ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
             owl:onProperty hmd:review_status ],
         [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:scope ],
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:valid_from ],
         [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:lang ] ;
+            owl:allValuesFrom hmd:ReviewStatusEnum ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:confidence ] ;
     skos:definition "别名条目。scope 必填 —— 检索扩展行为完全由 scope 驱动（D2）。 is_ambiguous 为真时，该别名不得直接单选，必须走上下文消歧（D3）。" ;
     skos:inScheme hmd:concept .
 
 hmd:TaxonomyLabel a owl:Class ;
     rdfs:label "TaxonomyLabel" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
+            owl:minCardinality 0 ;
             owl:onProperty hmd:taxonomy_version ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:keywords_zh ],
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
             owl:onProperty hmd:label_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:dimension ],
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:keywords_zh ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:definition ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:keywords_en ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:label_zh ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:label_en ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -1074,65 +1282,56 @@ hmd:TaxonomyLabel a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^HMDT:[A-Z_]+:[a-z0-9_]+$" ] ) ] ) ] ;
             owl:onProperty hmd:label_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:definition ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:taxonomy_version ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:parent_label ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:label_zh ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:label_zh ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:definition ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:taxonomy_version ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:definition ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:keywords_en ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom hmd:TaxonomyDimensionEnum ;
+            owl:minCardinality 1 ;
             owl:onProperty hmd:dimension ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:parent_label ],
         [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:label_en ],
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:taxonomy_version ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:keywords_zh ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:taxonomy_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
             owl:onProperty hmd:label_en ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:label_id ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:label_zh ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:label_en ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:parent_label ],
+            owl:onProperty hmd:definition ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:keywords_en ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:keywords_zh ],
+            owl:onProperty hmd:parent_label ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:label_en ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:dimension ] ;
+            owl:onProperty hmd:dimension ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:label_zh ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:parent_label ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:label_zh ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:TaxonomyDimensionEnum ;
+            owl:onProperty hmd:dimension ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:definition ] ;
     skos:definition "一个标引标签。多标签体系，一篇文档可命中多个维度的多个标签。" ;
     skos:exactMatch skos:Concept ;
     skos:inScheme hmd:taxonomy .
@@ -1364,11 +1563,11 @@ skos:narrowMatch a owl:Class ;
 hmd:Evidence a owl:Class ;
     rdfs:label "Evidence" ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:title ],
+            owl:allValuesFrom hmd:ModalityChannelEnum ;
+            owl:onProperty hmd:modality ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:chunk_id ],
+            owl:onProperty hmd:doc_id ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -1379,50 +1578,23 @@ hmd:Evidence a owl:Class ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:modality ],
         [ a owl:Restriction ;
-            owl:allValuesFrom hmd:ModalityChannelEnum ;
-            owl:onProperty hmd:modality ],
-        [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:modality ],
+            owl:onProperty hmd:title ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:char_start ],
-        [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:chunk_id ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:char_start ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:page ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:page ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:quote ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:float ;
-            owl:onProperty hmd:bbox ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:section ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
-            owl:onProperty hmd:char_end ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:integer ;
-            owl:onProperty hmd:page ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:integer ;
+            owl:minCardinality 0 ;
             owl:onProperty hmd:char_start ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:section ],
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:title ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:bbox ],
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:section ],
         [ a owl:Restriction ;
             owl:allValuesFrom [ a rdfs:Datatype ;
                     owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
@@ -1430,34 +1602,91 @@ hmd:Evidence a owl:Class ;
                                 owl:withRestrictions ( [ xsd:pattern "^CHK:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
             owl:onProperty hmd:chunk_id ],
         [ a owl:Restriction ;
-            owl:minCardinality 0 ;
+            owl:allValuesFrom xsd:float ;
+            owl:onProperty hmd:bbox ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
             owl:onProperty hmd:char_end ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
-            owl:onProperty hmd:quote ],
+            owl:onProperty hmd:page ],
         [ a owl:Restriction ;
-            owl:minCardinality 1 ;
-            owl:onProperty hmd:doc_id ],
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:title ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:integer ;
             owl:onProperty hmd:char_end ],
         [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:section ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom xsd:string ;
-            owl:onProperty hmd:title ],
-        [ a owl:Restriction ;
-            owl:minCardinality 0 ;
-            owl:onProperty hmd:title ],
-        [ a owl:Restriction ;
-            owl:maxCardinality 1 ;
+            owl:minCardinality 1 ;
             owl:onProperty hmd:doc_id ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
-            owl:onProperty hmd:quote ] ;
+            owl:onProperty hmd:section ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:section ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:char_end ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:page ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:quote ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:char_start ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:char_start ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:quote ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:chunk_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:bbox ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:chunk_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:page ] ;
     skos:definition "事实的出处。一条事实可有多条证据，多证据支持会提升 confidence。" ;
     skos:inScheme hmd:fact .
+
+<https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#HEADING_REGEX> a owl:Class ;
+    rdfs:label "HEADING_REGEX" ;
+    rdfs:subClassOf hmd:HeadingSourceEnum ;
+    skos:definition "正文行形态匹配（编号前缀、全大写、字号跃变）" .
+
+<https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#LLM_REFINE> a owl:Class ;
+    rdfs:label "LLM_REFINE" ;
+    rdfs:subClassOf hmd:HeadingSourceEnum ;
+    skos:definition "过肥叶节点经 LLM 细分后补出的中间层级" .
+
+<https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#SYNTHETIC> a owl:Class ;
+    rdfs:label "SYNTHETIC" ;
+    rdfs:subClassOf hmd:HeadingSourceEnum ;
+    skos:definition "系统合成的占位层级，用于补齐跳级（H1 直接到 H3）" .
+
+<https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#TOC_EXACT> a owl:Class ;
+    rdfs:label "TOC_EXACT" ;
+    rdfs:subClassOf hmd:HeadingSourceEnum ;
+    skos:definition "PDF 内嵌目录精确命中，最可信" .
+
+<https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#TOC_FUZZY> a owl:Class ;
+    rdfs:label "TOC_FUZZY" ;
+    rdfs:subClassOf hmd:HeadingSourceEnum ;
+    skos:definition "目录项与正文行模糊匹配（页码偏移、断行）" .
+
+<https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#VLM_SCAN> a owl:Class ;
+    rdfs:label "VLM_SCAN" ;
+    rdfs:subClassOf hmd:HeadingSourceEnum ;
+    skos:definition "视觉模型识别的版面标题，用于扫描件与无目录 PDF" .
 
 <https://w3id.org/asliva/biomed-ontology/LanguageEnum#en> a owl:Class ;
     rdfs:label "en" ;
@@ -1561,6 +1790,21 @@ hmd:Evidence a owl:Class ;
     rdfs:label "VECTOR" ;
     rdfs:subClassOf hmd:NormalizationStageEnum ;
     skos:definition "向量召回" .
+
+<https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#DOCUMENT> a owl:Class ;
+    rdfs:label "DOCUMENT" ;
+    rdfs:subClassOf hmd:RestoreScopeEnum ;
+    skos:definition "整篇文档，通常超出 agent 上下文预算" .
+
+<https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#SECTION> a owl:Class ;
+    rdfs:label "SECTION" ;
+    rdfs:subClassOf hmd:RestoreScopeEnum ;
+    skos:definition "所属章节全文，默认档" .
+
+<https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#SIBLINGS> a owl:Class ;
+    rdfs:label "SIBLINGS" ;
+    rdfs:subClassOf hmd:RestoreScopeEnum ;
+    skos:definition "同级相邻章节，用于对照组与终点的横向比较" .
 
 <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#BM25> a owl:Class ;
     rdfs:label "BM25" ;
@@ -1697,6 +1941,11 @@ hmd:Evidence a owl:Class ;
     rdfs:subClassOf hmd:TaxonomyDimensionEnum ;
     skos:definition "技术主题（耐药机制/联用策略/生物标志物）" .
 
+hmd:asset_keywords a owl:DatatypeProperty ;
+    rdfs:label "asset_keywords" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:fact .
+
 hmd:category a owl:DatatypeProperty ;
     rdfs:label "category" ;
     rdfs:range xsd:anyURI ;
@@ -1723,6 +1972,11 @@ hmd:consider a owl:DatatypeProperty ;
     rdfs:range xsd:anyURI ;
     skos:definition "废弃概念的候选替代（非唯一，需人工判断）" ;
     skos:inScheme hmd:concept .
+
+hmd:degraded a owl:DatatypeProperty ;
+    rdfs:label "degraded" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:fact .
 
 hmd:equivalent_xrefs a owl:DatatypeProperty ;
     rdfs:label "equivalent_xrefs" ;
@@ -1803,6 +2057,15 @@ hmd:qualifiers a owl:DatatypeProperty ;
     rdfs:subClassOf hmd:MappingJustificationEnum ;
     skos:definition "来源未声明依据" .
 
+hmd:RestoreScopeEnum a owl:Class ;
+    rdfs:label "RestoreScopeEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#SECTION> <https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#SIBLINGS> <https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#DOCUMENT> ) ;
+    skos:definition "引用还原的范围。碎片能证明\"有这句话\"，但证明不了\"在什么语境下说的\"， 而临床结论的语境（哪一组、哪个终点、哪次随访）恰恰决定它是否成立。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#DOCUMENT>,
+        <https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#SECTION>,
+        <https://w3id.org/asliva/biomed-ontology/RestoreScopeEnum#SIBLINGS> .
+
 hmd:alias_id a owl:DatatypeProperty ;
     rdfs:label "alias_id" ;
     rdfs:range [ a rdfs:Datatype ;
@@ -1827,6 +2090,18 @@ hmd:alias_type a owl:ObjectProperty ;
     rdfs:range hmd:AliasTypeEnum ;
     skos:inScheme hmd:concept .
 
+hmd:asset_path a owl:DatatypeProperty ;
+    rdfs:label "asset_path" ;
+    rdfs:range xsd:string ;
+    skos:definition "表格 HTML / 图像 PNG 的仓库相对路径。 绝不由文档内容拼接得出（路径穿越），一律由 doc_id + 内容哈希生成。" ;
+    skos:inScheme hmd:fact .
+
+hmd:asset_summary a owl:DatatypeProperty ;
+    rdfs:label "asset_summary" ;
+    rdfs:range xsd:string ;
+    skos:definition "视觉模型对表格/图像的文本摘要，使视觉内容可被文本查询命中。" ;
+    skos:inScheme hmd:fact .
+
 hmd:author_id a owl:DatatypeProperty ;
     rdfs:label "author_id" ;
     rdfs:range xsd:string ;
@@ -1845,6 +2120,11 @@ hmd:child_id a owl:DatatypeProperty ;
 hmd:doc_type a owl:ObjectProperty ;
     rdfs:label "doc_type" ;
     rdfs:range hmd:DocTypeEnum ;
+    skos:inScheme hmd:fact .
+
+hmd:end_page a owl:DatatypeProperty ;
+    rdfs:label "end_page" ;
+    rdfs:range xsd:integer ;
     skos:inScheme hmd:fact .
 
 hmd:entity_type a owl:ObjectProperty ;
@@ -1873,6 +2153,21 @@ hmd:fact_id a owl:DatatypeProperty ;
             owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
                         owl:onDatatype xsd:string ;
                         owl:withRestrictions ( [ xsd:pattern "^HMDF:\\d{9}$" ] ) ] ) ] ;
+    skos:inScheme hmd:fact .
+
+hmd:heading_confidence a owl:DatatypeProperty ;
+    rdfs:label "heading_confidence" ;
+    rdfs:range [ a rdfs:Datatype ;
+            owl:intersectionOf ( xsd:float [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:float ;
+                        owl:withRestrictions ( [ xsd:minInclusive 0e+00 ] ) ] [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:float ;
+                        owl:withRestrictions ( [ xsd:maxInclusive 1e+00 ] ) ] ) ] ;
+    skos:inScheme hmd:fact .
+
+hmd:heading_source a owl:ObjectProperty ;
+    rdfs:label "heading_source" ;
+    rdfs:range hmd:HeadingSourceEnum ;
     skos:inScheme hmd:fact .
 
 hmd:is_ambiguous a owl:DatatypeProperty ;
@@ -1961,6 +2256,14 @@ hmd:parent_label a owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     skos:inScheme hmd:taxonomy .
 
+hmd:parent_section_id a owl:DatatypeProperty ;
+    rdfs:label "parent_section_id" ;
+    rdfs:range [ a rdfs:Datatype ;
+            owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:string ;
+                        owl:withRestrictions ( [ xsd:pattern "^SEC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+    skos:inScheme hmd:fact .
+
 hmd:predicate_id a owl:ObjectProperty ;
     rdfs:label "predicate_id" ;
     rdfs:range hmd:PredicateEnum ;
@@ -2009,13 +2312,42 @@ hmd:retrieved_on a owl:DatatypeProperty ;
     rdfs:range xsd:dateTime ;
     skos:inScheme hmd:fact .
 
+hmd:same_as_chunk_id a owl:DatatypeProperty ;
+    rdfs:label "same_as_chunk_id" ;
+    rdfs:range [ a rdfs:Datatype ;
+            owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:string ;
+                        owl:withRestrictions ( [ xsd:pattern "^CHK:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+    skos:inScheme hmd:fact .
+
 hmd:scope a owl:ObjectProperty ;
     rdfs:label "scope" ;
     rdfs:range hmd:SynonymScopeEnum ;
     skos:inScheme hmd:concept .
 
+hmd:section_level a owl:DatatypeProperty ;
+    rdfs:label "section_level" ;
+    rdfs:range xsd:integer ;
+    skos:definition "1-based 层级深度。跳级会被 SYNTHETIC 层补齐，保证树无断层。" ;
+    skos:inScheme hmd:fact .
+
+hmd:section_title a owl:DatatypeProperty ;
+    rdfs:label "section_title" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:fact .
+
 hmd:source_id a owl:DatatypeProperty ;
     rdfs:label "source_id" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:fact .
+
+hmd:start_page a owl:DatatypeProperty ;
+    rdfs:label "start_page" ;
+    rdfs:range xsd:integer ;
+    skos:inScheme hmd:fact .
+
+hmd:summary a owl:DatatypeProperty ;
+    rdfs:label "summary" ;
     rdfs:range xsd:string ;
     skos:inScheme hmd:fact .
 
@@ -2128,6 +2460,26 @@ hmd:predicate a owl:ObjectProperty ;
     rdfs:range hmd:PredicateEnum ;
     skos:inScheme hmd:concept .
 
+hmd:section_id a owl:DatatypeProperty ;
+    rdfs:label "section_id" ;
+    rdfs:range [ a rdfs:Datatype ;
+            owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:string ;
+                        owl:withRestrictions ( [ xsd:pattern "^SEC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+    skos:inScheme hmd:fact .
+
+hmd:section_path a owl:DatatypeProperty ;
+    rdfs:label "section_path" ;
+    rdfs:range xsd:string ;
+    skos:definition "层级路径，如 \"Results / Efficacy / ORR\"。检索结果的面包屑与还原主键。" ;
+    skos:inScheme hmd:fact .
+
+hmd:sort_order a owl:DatatypeProperty ;
+    rdfs:label "sort_order" ;
+    rdfs:range xsd:integer ;
+    skos:definition "同层内的阅读顺序。还原完整章节时按它重组，不依赖字典序。" ;
+    skos:inScheme hmd:fact .
+
 hmd:subject_id a owl:DatatypeProperty ;
     rdfs:label "subject_id" ;
     rdfs:range xsd:anyURI ;
@@ -2156,6 +2508,18 @@ hmd:primary_xref a owl:DatatypeProperty ;
     rdfs:label "primary_xref" ;
     rdfs:range xsd:anyURI ;
     skos:inScheme hmd:concept .
+
+hmd:HeadingSourceEnum a owl:Class ;
+    rdfs:label "HeadingSourceEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#TOC_EXACT> <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#TOC_FUZZY> <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#HEADING_REGEX> <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#VLM_SCAN> <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#LLM_REFINE> <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#SYNTHETIC> ) ;
+    skos:definition "章节标题的判定来源。语义树的层级不是从文档里\"读\"出来的，是多源候选竞争后 \"判\"出来的 —— 记录判据才能回答\"这一级标题凭什么定成 H2\"， 也才能在解析质量出问题时定位到是哪一路候选失准。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#HEADING_REGEX>,
+        <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#LLM_REFINE>,
+        <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#SYNTHETIC>,
+        <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#TOC_EXACT>,
+        <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#TOC_FUZZY>,
+        <https://w3id.org/asliva/biomed-ontology/HeadingSourceEnum#VLM_SCAN> .
 
 hmd:SignalTypeEnum a owl:Class ;
     rdfs:label "SignalTypeEnum" ;
@@ -2331,14 +2695,6 @@ hmd:MappingJustificationEnum a owl:Class ;
         <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching>,
         <https://w3id.org/semapv/vocab/UnspecifiedMatching> .
 
-hmd:doc_id a owl:DatatypeProperty ;
-    rdfs:label "doc_id" ;
-    rdfs:range [ a rdfs:Datatype ;
-            owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
-                        owl:onDatatype xsd:string ;
-                        owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
-    skos:inScheme hmd:fact .
-
 hmd:PredicateEnum a owl:Class ;
     rdfs:label "PredicateEnum" ;
     owl:unionOf ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch <https://w3id.org/biolink/vocab/subclass_of> <https://w3id.org/biolink/vocab/affects> <https://w3id.org/biolink/vocab/treats> <https://w3id.org/biolink/vocab/has_target> <https://w3id.org/biolink/vocab/biomarker_for> <https://w3id.org/biolink/vocab/has_adverse_event> <https://w3id.org/biolink/vocab/studied_to_treat> ) ;
@@ -2355,6 +2711,14 @@ hmd:PredicateEnum a owl:Class ;
         <https://w3id.org/biolink/vocab/studied_to_treat>,
         <https://w3id.org/biolink/vocab/subclass_of>,
         <https://w3id.org/biolink/vocab/treats> .
+
+hmd:doc_id a owl:DatatypeProperty ;
+    rdfs:label "doc_id" ;
+    rdfs:range [ a rdfs:Datatype ;
+            owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:string ;
+                        owl:withRestrictions ( [ xsd:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ) ] ) ] ;
+    skos:inScheme hmd:fact .
 
 hmd:license_tier a owl:ObjectProperty ;
     rdfs:label "license_tier" ;

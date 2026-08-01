@@ -35,8 +35,14 @@ def test_gold_set_contains_negative_cases(kb):
 
 
 def test_retrieval_arms_are_all_evaluated(kb):
+    """本地臂全跑；Milvus 臂标为未运行而不是静默消失。
+
+    惄惄少几行会让读报告的人以为那些配置没做，而不是没测。
+    """
     ev = eval_retrieval(kb, entitlements=LICENSED)
-    assert set(ev.arms) == set(ARMS)
+    local = {k for k, v in ARMS.items() if v.get("backend", "local") == "local"}
+    assert set(ev.arms) == local
+    assert set(ev.unavailable) == set(ARMS) - local
 
 
 def test_ontology_hybrid_improves_recall_over_bm25(kb):
@@ -48,12 +54,41 @@ def test_ontology_hybrid_improves_recall_over_bm25(kb):
 def test_expansion_trades_top1_precision_for_recall(kb):
     """扩展提召回、摊薄 top-1，这个权衡必须看得见。
 
-    只报 Recall 会把"排序变差了"藏起来；写成断言后，哪天 rerank 把 MRR 拉回来，
-    这条测试会失败并提醒把结论改掉 —— 那正是它应该发生的时候。
+    这条早先是个写死的 `lift("mrr") <= 0` 断言。现已改由 T4 目标承载 ——
+    写死的断言只能表达"我预期它很差"，表达不了"我希望它好、当前没做到、原因如下"。
     """
     ev = eval_retrieval(kb, entitlements=LICENSED)
     assert ev.lift("recall_at_10") > 0
-    assert ev.lift("mrr") <= 0, "MRR 不再下降了，请同步更新对外结论"
+    assert ev.lift("map_score") >= 0, "MAP 也降了，那就不是首位抖动而是真的排序退化"
+
+
+def test_metrics_are_reported_per_language(kb):
+    """SapBERT 是英文单语模型，中文语料上大概率无增益甚至有害。
+
+    只报总平均会把"英文涨了、中文没动"抹平成一个好看的数字，
+    而按语种路由向量列这个决定，恰恰只能从分语种的表里读出来。
+    """
+    ev = eval_retrieval(kb, entitlements=LICENSED)
+    for arm in ev.arms.values():
+        assert set(arm.by_lang) >= {"en", "zh"}
+        assert sum(sub.query_count for sub in arm.by_lang.values()) == arm.query_count
+
+
+def test_language_split_can_disagree_with_the_average(kb):
+    """分语种表必须真的能和总平均给出不同结论，否则拆分只是装饰。"""
+    ev = eval_retrieval(kb, entitlements=LICENSED)
+    overall = ev.lift("ndcg_at_10")
+    per_lang = [ev.lift("ndcg_at_10", lang=lg) for lg in ("en", "zh")]
+    assert any((x > 0) != (overall > 0) for x in per_lang), (
+        "当前数据上分语种与总平均结论一致；若长期如此需重新确认分表是否还有信息量"
+    )
+
+
+def test_unavailable_arms_are_named_not_omitted(kb):
+    """没跑的臂要写出来。悄悄少几行会让人以为那些配置没做，而不是没测。"""
+    ev = eval_retrieval(kb, entitlements=LICENSED)
+    assert "milvus_hybrid_3col" in ev.unavailable
+    assert "未运行的臂" in ev.as_table()
 
 
 def test_entitlement_gated_queries_are_skipped_without_the_entitlement(kb):

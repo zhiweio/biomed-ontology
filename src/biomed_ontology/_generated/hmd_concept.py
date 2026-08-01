@@ -412,6 +412,54 @@ class RetrievalChannelEnum(str, Enum):
     """
 
 
+class RestoreScopeEnum(str, Enum):
+    """
+    引用还原的范围。碎片能证明"有这句话"，但证明不了"在什么语境下说的"， 而临床结论的语境（哪一组、哪个终点、哪次随访）恰恰决定它是否成立。
+    """
+    SECTION = "SECTION"
+    """
+    所属章节全文，默认档
+    """
+    SIBLINGS = "SIBLINGS"
+    """
+    同级相邻章节，用于对照组与终点的横向比较
+    """
+    DOCUMENT = "DOCUMENT"
+    """
+    整篇文档，通常超出 agent 上下文预算
+    """
+
+
+class HeadingSourceEnum(str, Enum):
+    """
+    章节标题的判定来源。语义树的层级不是从文档里"读"出来的，是多源候选竞争后 "判"出来的 —— 记录判据才能回答"这一级标题凭什么定成 H2"， 也才能在解析质量出问题时定位到是哪一路候选失准。
+    """
+    TOC_EXACT = "TOC_EXACT"
+    """
+    PDF 内嵌目录精确命中，最可信
+    """
+    TOC_FUZZY = "TOC_FUZZY"
+    """
+    目录项与正文行模糊匹配（页码偏移、断行）
+    """
+    HEADING_REGEX = "HEADING_REGEX"
+    """
+    正文行形态匹配（编号前缀、全大写、字号跃变）
+    """
+    VLM_SCAN = "VLM_SCAN"
+    """
+    视觉模型识别的版面标题，用于扫描件与无目录 PDF
+    """
+    LLM_REFINE = "LLM_REFINE"
+    """
+    过肥叶节点经 LLM 细分后补出的中间层级
+    """
+    SYNTHETIC = "SYNTHETIC"
+    """
+    系统合成的占位层级，用于补齐跳级（H1 直接到 H3）
+    """
+
+
 class NormalizationStageEnum(str, Enum):
     """
     归一化级联的阶段枚举（设计决策 D7 的执行点）。 每一级的代价与可信度都不同，记录命中在哪一级才能优化级联本身。

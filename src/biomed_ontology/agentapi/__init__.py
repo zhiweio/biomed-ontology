@@ -22,6 +22,7 @@ from typing import Any
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
+from biomed_ontology.agentapi.citation import build_evidence_tree
 from biomed_ontology.licensing import tier_rank
 from biomed_ontology.observability import (
     ObservabilityHub,
@@ -31,7 +32,8 @@ from biomed_ontology.observability import (
 from biomed_ontology.observability.contracts import ContractValidator, LicenseGate
 from biomed_ontology.ontology.rdf import SPARQL_TEMPLATES, curie_to_iri
 from biomed_ontology.pipeline import KnowledgeBase
-from biomed_ontology.search import HybridSearcher
+from biomed_ontology.search import OPEN_RANK, HybridSearcher
+from biomed_ontology.search.backends import LicenseScope
 
 __all__ = ["TOOL_SPECS", "AgentApi", "Feedback", "ToolError"]
 
@@ -117,6 +119,12 @@ TOOL_SPECS: list[dict[str, str]] = [
         "request": "FeedbackRequest",
         "response": "FeedbackResponse",
         "summary": "回写判定结果，驱动本体演进闭环",
+    },
+    {
+        "name": "restore_context",
+        "request": "RestoreRequest",
+        "response": "RestoreResponse",
+        "summary": "碎片 → 原文：还原所在章节全文、面包屑与原始页码",
     },
 ]
 
@@ -442,7 +450,13 @@ class AgentApi:
                 (h.license_tier for h in hits), key=tier_rank, default=LicenseTierEnum.TIER_0
             )
             return (
-                {"results": [_hit_json(h) for h in hits], "total": len(hits)},
+                {
+                    "results": [_hit_json(h) for h in hits],
+                    "total": len(hits),
+                    # 扁平列表里同一文档的 5 个碎片看着像 5 条独立证据，
+                    # 实际可能全出自同一段 —— 证据树消除这种数量错觉。
+                    "evidence_tree": build_evidence_tree(self.kb, hits),
+                },
                 filtered,
                 max_returned,
             )
@@ -791,6 +805,77 @@ class AgentApi:
             handler,
             agent_id=agent_id,
             session_id=None,
+            entitlements=entitlements,
+            trace_id=trace_id,
+        )
+
+    # ------------------------------------------------------------ 11 引用还原
+
+    def restore_context(
+        self,
+        chunk_id: str,
+        *,
+        restore_scope: str = "SECTION",
+        max_chars: int = 8000,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+        entitlements: frozenset[str] = frozenset(),
+        trace_id: str | None = None,
+    ) -> dict[str, Any]:
+        payload = {
+            "chunk_id": chunk_id,
+            "restore_scope": restore_scope,
+            "max_chars": max_chars,
+        }
+
+        def handler(ctx: TraceContext):
+            from biomed_ontology.agentapi.citation import restore_context as _restore
+
+            scope = LicenseScope(
+                max_rank=tier_rank(LicenseTierEnum.TIER_3),
+                open_rank=OPEN_RANK,
+                entitled_sources=entitlements,
+            )
+            try:
+                restored = _restore(
+                    self.kb,
+                    chunk_id,
+                    scope=restore_scope,
+                    max_chars=max_chars,
+                    # 复用检索那一个谓词。这里另写一份判断就会出现
+                    # "检索看不到但还原看得到"的越权。
+                    permits=scope.permits,
+                )
+            except KeyError as exc:
+                raise ToolError(str(exc), code="NOT_FOUND") from exc
+            except PermissionError as exc:
+                raise ToolError(str(exc), code="LICENSE_DENIED") from exc
+
+            with ctx.span("restore_context", chunk_id=chunk_id, scope=str(restore_scope)):
+                pass
+            return (
+                {
+                    "doc_id": restored.doc_id,
+                    "section_id": restored.section_id,
+                    "section_path": restored.section_path,
+                    "breadcrumb": restored.breadcrumb,
+                    "full_text": restored.full_text,
+                    "page_start": restored.page_start,
+                    "page_end": restored.page_end,
+                    "sibling_paths": restored.sibling_paths,
+                    "truncated": restored.truncated,
+                    "restored_chunk_ids": restored.restored_chunk_ids,
+                },
+                0,
+                restored.license_tier,
+            )
+
+        return self._invoke(
+            "restore_context",
+            payload,
+            handler,
+            agent_id=agent_id,
+            session_id=session_id,
             entitlements=entitlements,
             trace_id=trace_id,
         )

@@ -404,6 +404,54 @@ class RetrievalChannelEnum(str, Enum):
     """
 
 
+class RestoreScopeEnum(str, Enum):
+    """
+    引用还原的范围。碎片能证明"有这句话"，但证明不了"在什么语境下说的"， 而临床结论的语境（哪一组、哪个终点、哪次随访）恰恰决定它是否成立。
+    """
+    SECTION = "SECTION"
+    """
+    所属章节全文，默认档
+    """
+    SIBLINGS = "SIBLINGS"
+    """
+    同级相邻章节，用于对照组与终点的横向比较
+    """
+    DOCUMENT = "DOCUMENT"
+    """
+    整篇文档，通常超出 agent 上下文预算
+    """
+
+
+class HeadingSourceEnum(str, Enum):
+    """
+    章节标题的判定来源。语义树的层级不是从文档里"读"出来的，是多源候选竞争后 "判"出来的 —— 记录判据才能回答"这一级标题凭什么定成 H2"， 也才能在解析质量出问题时定位到是哪一路候选失准。
+    """
+    TOC_EXACT = "TOC_EXACT"
+    """
+    PDF 内嵌目录精确命中，最可信
+    """
+    TOC_FUZZY = "TOC_FUZZY"
+    """
+    目录项与正文行模糊匹配（页码偏移、断行）
+    """
+    HEADING_REGEX = "HEADING_REGEX"
+    """
+    正文行形态匹配（编号前缀、全大写、字号跃变）
+    """
+    VLM_SCAN = "VLM_SCAN"
+    """
+    视觉模型识别的版面标题，用于扫描件与无目录 PDF
+    """
+    LLM_REFINE = "LLM_REFINE"
+    """
+    过肥叶节点经 LLM 细分后补出的中间层级
+    """
+    SYNTHETIC = "SYNTHETIC"
+    """
+    系统合成的占位层级，用于补齐跳级（H1 直接到 H3）
+    """
+
+
 class NormalizationStageEnum(str, Enum):
     """
     归一化级联的阶段枚举（设计决策 D7 的执行点）。 每一级的代价与可信度都不同，记录命中在哪一级才能优化级联本身。
@@ -697,7 +745,11 @@ class Document(ConfiguredBaseModel):
                                       'name': 'source_id',
                                       'required': True}}})
 
-    doc_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Chunk', 'Evidence', 'Provenance']} })
+    doc_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
+                       'DocumentSection',
+                       'Chunk',
+                       'Evidence',
+                       'Provenance']} })
     source_id: str = Field(default=..., description="""必须是 registry 中已注册的源，否则许可元数据缺失。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
     external_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
     title: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Evidence']} })
@@ -728,6 +780,80 @@ class Document(ConfiguredBaseModel):
         return v
 
 
+class DocumentSection(ConfiguredBaseModel):
+    """
+    语义树的一个节点。文档不是切片的扁平袋子，而是有层级的 —— 检索命中的是碎片， 但研究员要看的是碎片所在的完整章节（Citationware：引用优先）。 section_path 是导航主键：碎片靠它找回兄弟节点与父章节，无需重新解析原文。
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/fact',
+         'slot_usage': {'doc_id': {'name': 'doc_id', 'required': True},
+                        'heading_source': {'description': '该层级的判定来源。与 '
+                                                          'heading_confidence '
+                                                          '一起构成决策记录， 同时写入 '
+                                                          'TraceContext.record_decision，使"层级怎么定的"可审计。',
+                                           'name': 'heading_source'},
+                        'section_id': {'identifier': True,
+                                       'name': 'section_id',
+                                       'required': True},
+                        'section_level': {'name': 'section_level', 'required': True},
+                        'section_path': {'name': 'section_path', 'required': True}}})
+
+    section_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection', 'Chunk']} })
+    doc_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
+                       'DocumentSection',
+                       'Chunk',
+                       'Evidence',
+                       'Provenance']} })
+    parent_section_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+    section_path: str = Field(default=..., description="""层级路径，如 \"Results / Efficacy / ORR\"。检索结果的面包屑与还原主键。""", json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection', 'Chunk']} })
+    section_title: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+    section_level: int = Field(default=..., description="""1-based 层级深度。跳级会被 SYNTHETIC 层补齐，保证树无断层。""", json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+    sort_order: Optional[int] = Field(default=None, description="""同层内的阅读顺序。还原完整章节时按它重组，不依赖字典序。""", json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection', 'Chunk']} })
+    start_page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+    end_page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+    summary: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+    heading_source: Optional[HeadingSourceEnum] = Field(default=None, description="""该层级的判定来源。与 heading_confidence 一起构成决策记录， 同时写入 TraceContext.record_decision，使\"层级怎么定的\"可审计。""", json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+    heading_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection']} })
+
+    @field_validator('section_id')
+    def pattern_section_id(cls, v):
+        pattern=re.compile(r"^SEC:[A-Za-z0-9._:-]+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid section_id format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid section_id format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+    @field_validator('doc_id')
+    def pattern_doc_id(cls, v):
+        pattern=re.compile(r"^DOC:[A-Za-z0-9._:-]+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid doc_id format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid doc_id format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+    @field_validator('parent_section_id')
+    def pattern_parent_section_id(cls, v):
+        pattern=re.compile(r"^SEC:[A-Za-z0-9._:-]+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid parent_section_id format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid parent_section_id format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+
 class Chunk(ConfiguredBaseModel):
     """
     文档切片，检索与抽取的基本单位。 保留 section 与 bbox 是硬要求：provenance 要能把研究员的视线引到原文那一段。
@@ -742,12 +868,26 @@ class Chunk(ConfiguredBaseModel):
                                                                 'concept_ids 分开存是为了让"查 '
                                                                 'NSCLC 召回肺腺癌"不污染精确匹配。',
                                                  'name': 'concept_ids_expanded'},
+                        'degraded': {'description': '产出该切片时缺失的能力（如 formula / bbox / '
+                                                    'ocr）。 一路透传到 '
+                                                    'agent：与其让下游以为拿到了完整信息，不如显式声明这次少了什么。',
+                                     'name': 'degraded'},
                         'doc_id': {'name': 'doc_id', 'required': True},
+                        'same_as_chunk_id': {'description': '指向内容等价的属主切片。同一段正文可能同时归属多个叶节点（如跨章节的表格说明）， '
+                                                            '去重后只保留一份，其余以此引用属主，避免同一证据在结果里重复占位。',
+                                             'name': 'same_as_chunk_id'},
                         'text': {'name': 'text', 'required': True}}})
 
     chunk_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
-    doc_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Chunk', 'Evidence', 'Provenance']} })
+    doc_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
+                       'DocumentSection',
+                       'Chunk',
+                       'Evidence',
+                       'Provenance']} })
     section: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
+    section_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection', 'Chunk']} })
+    section_path: Optional[str] = Field(default=None, description="""层级路径，如 \"Results / Efficacy / ORR\"。检索结果的面包屑与还原主键。""", json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection', 'Chunk']} })
+    sort_order: Optional[int] = Field(default=None, description="""同层内的阅读顺序。还原完整章节时按它重组，不依赖字典序。""", json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection', 'Chunk']} })
     char_start: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
     char_end: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
     page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
@@ -756,6 +896,11 @@ class Chunk(ConfiguredBaseModel):
     modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance']} })
     concept_ids: Optional[list[str]] = Field(default=None, description="""直接归一化命中的概念，用于精确过滤。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
     concept_ids_expanded: Optional[list[str]] = Field(default=None, description="""含本体子树扩展的概念集合，用于召回。 与 concept_ids 分开存是为了让\"查 NSCLC 召回肺腺癌\"不污染精确匹配。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
+    same_as_chunk_id: Optional[str] = Field(default=None, description="""指向内容等价的属主切片。同一段正文可能同时归属多个叶节点（如跨章节的表格说明）， 去重后只保留一份，其余以此引用属主，避免同一证据在结果里重复占位。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
+    asset_path: Optional[str] = Field(default=None, description="""表格 HTML / 图像 PNG 的仓库相对路径。 绝不由文档内容拼接得出（路径穿越），一律由 doc_id + 内容哈希生成。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
+    asset_summary: Optional[str] = Field(default=None, description="""视觉模型对表格/图像的文本摘要，使视觉内容可被文本查询命中。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
+    asset_keywords: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
+    degraded: Optional[list[str]] = Field(default=None, description="""产出该切片时缺失的能力（如 formula / bbox / ocr）。 一路透传到 agent：与其让下游以为拿到了完整信息，不如显式声明这次少了什么。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
 
     @field_validator('chunk_id')
     def pattern_chunk_id(cls, v):
@@ -780,6 +925,32 @@ class Chunk(ConfiguredBaseModel):
                     raise ValueError(err_msg)
         elif isinstance(v, str) and not pattern.match(v):
             err_msg = f"Invalid doc_id format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+    @field_validator('section_id')
+    def pattern_section_id(cls, v):
+        pattern=re.compile(r"^SEC:[A-Za-z0-9._:-]+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid section_id format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid section_id format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+    @field_validator('same_as_chunk_id')
+    def pattern_same_as_chunk_id(cls, v):
+        pattern=re.compile(r"^CHK:[A-Za-z0-9._:-]+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid same_as_chunk_id format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid same_as_chunk_id format: {v}"
             raise ValueError(err_msg)
         return v
 
@@ -852,7 +1023,11 @@ class Evidence(ConfiguredBaseModel):
                         'doc_id': {'name': 'doc_id', 'required': True}}})
 
     chunk_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
-    doc_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Chunk', 'Evidence', 'Provenance']} })
+    doc_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
+                       'DocumentSection',
+                       'Chunk',
+                       'Evidence',
+                       'Provenance']} })
     section: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
     char_start: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
     char_end: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
@@ -895,7 +1070,11 @@ class Provenance(ConfiguredBaseModel):
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/fact'})
 
-    doc_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Chunk', 'Evidence', 'Provenance']} })
+    doc_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
+                       'DocumentSection',
+                       'Chunk',
+                       'Evidence',
+                       'Provenance']} })
     chunk_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
     section: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
     char_start: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
@@ -1072,6 +1251,7 @@ Mapping.model_rebuild()
 Hierarchy.model_rebuild()
 Clique.model_rebuild()
 Document.model_rebuild()
+DocumentSection.model_rebuild()
 Chunk.model_rebuild()
 Fact.model_rebuild()
 Evidence.model_rebuild()
