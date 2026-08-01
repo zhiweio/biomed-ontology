@@ -1,0 +1,95 @@
+id: https://w3id.org/asliva/biomed-ontology/taxonomy
+name: hmd_taxonomy
+title: HMD Document Indexing Taxonomy
+description: >-
+  文档标引分类体系（L4，对标智慧芽"数据标引分类"）。
+
+  标签体系纳入本体管理而不是散落在分类器代码里：
+  标签会随业务演进增删，若只存在于模型权重中，历史标引结果就无法解释也无法回溯重标。
+license: Proprietary
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hmd: https://w3id.org/asliva/biomed-ontology/
+  skos: http://www.w3.org/2004/02/skos/core#
+
+default_prefix: hmd
+default_range: string
+
+imports:
+  - linkml:types
+  - hmd_fact
+
+classes:
+  TaxonomyLabel:
+    description: 一个标引标签。多标签体系，一篇文档可命中多个维度的多个标签。
+    class_uri: skos:Concept
+    slots:
+      - label_id
+      - dimension
+      - label_en
+      - label_zh
+      - definition
+      - parent_label
+      - keywords_en
+      - keywords_zh
+      - taxonomy_version
+    slot_usage:
+      label_id:
+        identifier: true
+        required: true
+      dimension:
+        required: true
+      label_en:
+        required: true
+
+  DocumentLabel:
+    description: 一篇文档上的一条标引结果，带置信度与依据。
+    slots:
+      - doc_id
+      - label_id
+      - dimension
+      - confidence
+      - justification
+      - matched_keywords
+      - review_status
+
+slots:
+  label_id:
+    range: string
+    pattern: "^HMDT:[A-Z_]+:[a-z0-9_]+$"
+    description: "形如 HMDT:EVIDENCE_TYPE:phase_3_rct，维度段可读，便于人工审校。"
+  dimension:
+    range: TaxonomyDimensionEnum
+    description: 标引维度。多维正交而非单一树，一篇文档在每个维度上独立打标。
+  label_en:
+    range: string
+  label_zh:
+    range: string
+  parent_label:
+    range: string
+  keywords_en:
+    range: string
+    multivalued: true
+    description: 规则命中关键词。规则先行、模型兜底，规则命中的部分天然可解释。
+  keywords_zh:
+    range: string
+    multivalued: true
+  taxonomy_version:
+    range: SemanticVersion
+  matched_keywords:
+    range: string
+    multivalued: true
+
+enums:
+  TaxonomyDimensionEnum:
+    description: >-
+      标引维度。设成正交多维而非单一分类树，是因为"综述 / III 期 / 耐药机制 / 小分子"
+      这四件事互不蕴含，压进一棵树会逼出笛卡尔积式的标签爆炸。
+    permissible_values:
+      DOC_TYPE: { description: 文档类型 }
+      RD_STAGE: { description: 研发阶段（发现/临床前/I-III期/上市后） }
+      EVIDENCE_TYPE: { description: 证据类型（RCT/单臂/回顾性/体外/动物） }
+      TECH_TOPIC: { description: 技术主题（耐药机制/联用策略/生物标志物） }
+      PATENT_DIM: { description: 专利维度（化合物/用途/晶型/工艺） }
+

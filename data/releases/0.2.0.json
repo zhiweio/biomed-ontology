@@ -1,0 +1,195 @@
+{
+  "release_id": "0.2.0",
+  "base_release_id": "0.1.0",
+  "approved": true,
+  "quality_passed": true,
+  "quality_blocking": [],
+  "impact": {
+    "concepts_touched": 2,
+    "concepts_with_descendants": 3,
+    "chunks_affected": 8,
+    "docs_affected": 3,
+    "new_nodes": 4,
+    "reindex_required": true
+  },
+  "changeset": {
+    "release_id": "0.2.0",
+    "base_release_id": "0.1.0",
+    "created_at": "2026-08-01T06:18:33.231543+00:00",
+    "ops": [
+      {
+        "op": "create synonym",
+        "about": "HMD:SUB:0000001",
+        "old_value": null,
+        "new_value": "沃利替尼",
+        "qualifier": "exact",
+        "signal_id": "HMDS:642173353",
+        "rationale": "人工负反馈直接指明了期望概念"
+      },
+      {
+        "op": "create edge",
+        "about": "HMD:DIS:0000001",
+        "old_value": null,
+        "new_value": "HMD:TGT:0000001",
+        "qualifier": "hmd:related_to",
+        "signal_id": "HMDS:859628497",
+        "rationale": "在 3 篇文档同现但无事实边"
+      },
+      {
+        "op": "create node",
+        "about": "NEW:HMDS:145783806",
+        "old_value": null,
+        "new_value": "ABT-869",
+        "qualifier": null,
+        "signal_id": "HMDS:145783806",
+        "rationale": "1 次未命中，无可挂靠概念，待人工确认实体类型"
+      },
+      {
+        "op": "create node",
+        "about": "NEW:HMDS:042763618",
+        "old_value": null,
+        "new_value": "BTK",
+        "qualifier": null,
+        "signal_id": "HMDS:042763618",
+        "rationale": "1 次未命中，无可挂靠概念，待人工确认实体类型"
+      },
+      {
+        "op": "create node",
+        "about": "NEW:HMDS:218354941",
+        "old_value": null,
+        "new_value": "Zanubrutinib",
+        "qualifier": null,
+        "signal_id": "HMDS:218354941",
+        "rationale": "1 次未命中，无可挂靠概念，待人工确认实体类型"
+      },
+      {
+        "op": "create node",
+        "about": "NEW:HMDS:276984178",
+        "old_value": null,
+        "new_value": "泽布替尼",
+        "qualifier": null,
+        "signal_id": "HMDS:276984178",
+        "rationale": "1 次未命中，无可挂靠概念，待人工确认实体类型"
+      }
+    ],
+    "signals": [
+      {
+        "signal_id": "HMDS:566798271",
+        "signal_type": "multi_source_conflict",
+        "payload": "HMD:SUB:0000001|in_clinical_trial_for|PFS",
+        "occurrences": 2,
+        "first_seen_trace": null,
+        "example_traces": [],
+        "signal_status": "RELEASED",
+        "priority": "P0",
+        "detected_in_release": "0.1.0",
+        "evidence": {
+          "values": [
+            5.5,
+            6.8
+          ],
+          "sources": [
+            "DOC:PMID.32821245"
+          ]
+        }
+      },
+      {
+        "signal_id": "HMDS:642173353",
+        "signal_type": "negative_feedback",
+        "payload": "WRONG_CONCEPT:HMD:TGT:0000001",
+        "occurrences": 1,
+        "first_seen_trace": "t9",
+        "example_traces": [
+          "t9"
+        ],
+        "signal_status": "RELEASED",
+        "priority": "P0",
+        "detected_in_release": "0.1.0",
+        "evidence": {
+          "verdict": "WRONG_CONCEPT",
+          "expected_concept_id": "HMD:SUB:0000001",
+          "offending_concept_id": "HMD:TGT:0000001",
+          "free_text": "沃利替尼"
+        }
+      },
+      {
+        "signal_id": "HMDS:859628497",
+        "signal_type": "cooccurrence_anomaly",
+        "payload": "HMD:DIS:0000001~HMD:TGT:0000001",
+        "occurrences": 3,
+        "first_seen_trace": null,
+        "example_traces": [],
+        "signal_status": "RELEASED",
+        "priority": "P1",
+        "detected_in_release": "0.1.0",
+        "evidence": {
+          "docs": [
+            "DOC:CNIPA.CN105461695A",
+            "DOC:PATSNAP.PS-2023-00417",
+            "DOC:PMID.32821245"
+          ],
+          "labels": [
+            "non-small cell lung carcinoma",
+            "MET proto-oncogene, receptor tyrosine kinase"
+          ]
+        }
+      },
+      {
+        "signal_id": "HMDS:145783806",
+        "signal_type": "unmapped_span",
+        "payload": "ABT-869",
+        "occurrences": 1,
+        "first_seen_trace": "2bd3ef06d72944478586ac1bf1dc86d8",
+        "example_traces": [
+          "2bd3ef06d72944478586ac1bf1dc86d8"
+        ],
+        "signal_status": "RELEASED",
+        "priority": "P2",
+        "detected_in_release": "0.1.0",
+        "evidence": {}
+      },
+      {
+        "signal_id": "HMDS:042763618",
+        "signal_type": "unmapped_span",
+        "payload": "BTK",
+        "occurrences": 1,
+        "first_seen_trace": "2bd3ef06d72944478586ac1bf1dc86d8",
+        "example_traces": [
+          "2bd3ef06d72944478586ac1bf1dc86d8"
+        ],
+        "signal_status": "RELEASED",
+        "priority": "P2",
+        "detected_in_release": "0.1.0",
+        "evidence": {}
+      },
+      {
+        "signal_id": "HMDS:218354941",
+        "signal_type": "unmapped_span",
+        "payload": "Zanubrutinib",
+        "occurrences": 1,
+        "first_seen_trace": "2bd3ef06d72944478586ac1bf1dc86d8",
+        "example_traces": [
+          "2bd3ef06d72944478586ac1bf1dc86d8"
+        ],
+        "signal_status": "RELEASED",
+        "priority": "P2",
+        "detected_in_release": "0.1.0",
+        "evidence": {}
+      },
+      {
+        "signal_id": "HMDS:276984178",
+        "signal_type": "unmapped_span",
+        "payload": "泽布替尼",
+        "occurrences": 1,
+        "first_seen_trace": "2bd3ef06d72944478586ac1bf1dc86d8",
+        "example_traces": [
+          "2bd3ef06d72944478586ac1bf1dc86d8"
+        ],
+        "signal_status": "RELEASED",
+        "priority": "P2",
+        "detected_in_release": "0.1.0",
+        "evidence": {}
+      }
+    ]
+  }
+}

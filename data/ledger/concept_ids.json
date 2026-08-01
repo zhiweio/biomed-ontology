@@ -1,0 +1,346 @@
+{
+  "release": "0.1.0",
+  "counters": {
+    "DIS": 11,
+    "SUB": 9,
+    "TGT": 8
+  },
+  "allocations": [
+    {
+      "concept_id": "HMD:DIS:0000001",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:nsclc"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000002",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:lung_adenocarcinoma"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000003",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:lung_cancer"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000004",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:prcc"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000005",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:mcrc"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000006",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:colorectal_cancer"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000007",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:net"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000008",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:itp"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000009",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:waiha"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000010",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:gastric_cancer"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000011",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:lymphoma"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000001",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:savolitinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000002",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:fruquintinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000003",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:surufatinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000004",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:sovleplenib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000005",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:amdizalisib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000006",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:capmatinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000007",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:tepotinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000008",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:regorafenib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000009",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:trifluridine_tipiracil"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000001",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:MET"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000002",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:FLT1"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000003",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:KDR"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000004",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:FLT4"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000005",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:FGFR1"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000006",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:CSF1R"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000007",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:SYK"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000008",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:PIK3CD"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+# 文档标引分类体系（L4，对标智慧芽"数据标引分类"）。
+#
+# 标签体系纳入本体管理而非写死在分类器里：标签会随业务演进增删，
+# 若只存在于模型权重中，历史标引结果既不可解释也无法回溯重标。
+#
+# keywords 是规则通道的命中词；规则先行、模型兜底 ——
+# 规则命中的部分天然可解释，能直接告诉审校同事"因为出现了 X 所以打了这个标签"。
+
+taxonomy_version: "0.1.0"
+
+labels:
+  # ---------------- 研发阶段 ----------------
+  - label_id: HMDT:RD_STAGE:discovery
+    dimension: RD_STAGE
+    label_en: Discovery
+    label_zh: 药物发现
+    keywords_en: [hit identification, lead optimization, screening, SAR, in vitro]
+    keywords_zh: [苗头化合物, 先导化合物, 构效关系, 高通量筛选]
+
+  - label_id: HMDT:RD_STAGE:preclinical
+    dimension: RD_STAGE
+    label_en: Preclinical
+    label_zh: 临床前
+    keywords_en: [xenograft, PDX, mouse model, pharmacokinetics, toxicology, in vivo]
+    keywords_zh: [异种移植, 动物模型, 药代动力学, 毒理]
+
+  - label_id: HMDT:RD_STAGE:phase_1
+    dimension: RD_STAGE
+    label_en: Phase I
+    label_zh: I 期
+    keywords_en: [phase 1, phase I, dose escalation, MTD, first-in-human, RP2D]
+    keywords_zh: [I期, 剂量爬坡, 最大耐受剂量, 首次人体]
+
+  - label_id: HMDT:RD_STAGE:phase_2
+    dimension: RD_STAGE
+    label_en: Phase II
+    label_zh: II 期
+    keywords_en: [phase 2, phase II, single-arm, expansion cohort]
+    keywords_zh: [II期, 单臂, 扩展队列]
+
+  - label_id: HMDT:RD_STAGE:phase_3
+    dimension: RD_STAGE
+    label_en: Phase III
+    label_zh: III 期
+    keywords_en: [phase 3, phase III, randomized, double-blind, placebo-controlled]
+    keywords_zh: [III期, 随机, 双盲, 安慰剂对照]
+
+  - label_id: HMDT:RD_STAGE:post_marketing
+    dimension: RD_STAGE
+    label_en: Post-marketing
+    label_zh: 上市后
+    keywords_en: [real-world, post-marketing, pharmacovigilance, registry study]
+    keywords_zh: [真实世界, 上市后, 药物警戒]
+
+  # ---------------- 证据类型 ----------------
+  - label_id: HMDT:EVIDENCE_TYPE:rct
+    dimension: EVIDENCE_TYPE
+    label_en: Randomized controlled trial
+    label_zh: 随机对照试验
+    keywords_en: [randomized controlled, randomised controlled, 1:1 randomization, hazard ratio]
+    keywords_zh: [随机对照, 风险比]
+
+  - label_id: HMDT:EVIDENCE_TYPE:single_arm
+    dimension: EVIDENCE_TYPE
+    label_en: Single-arm study
+    label_zh: 单臂研究
+    keywords_en: [single-arm, open-label single arm, objective response rate]
+    keywords_zh: [单臂, 客观缓解率]
+
+  - label_id: HMDT:EVIDENCE_TYPE:retrospective
+    dimension: EVIDENCE_TYPE
+    label_en: Retrospective study
+    label_zh: 回顾性研究
+    keywords_en: [retrospective, chart review, cohort analysis]
+    keywords_zh: [回顾性, 病历回顾]
+
+  - label_id: HMDT:EVIDENCE_TYPE:preclinical_evidence
+    dimension: EVIDENCE_TYPE
+    label_en: Preclinical evidence
+    label_zh: 临床前证据
+    keywords_en: [cell line, IC50, enzymatic assay, tumor growth inhibition]
+    keywords_zh: [细胞系, 半数抑制浓度, 酶活实验]
+
+  - label_id: HMDT:EVIDENCE_TYPE:review
+    dimension: EVIDENCE_TYPE
+    label_en: Review
+    label_zh: 综述
+    keywords_en: [systematic review, meta-analysis, we review, this review]
+    keywords_zh: [系统综述, 荟萃分析, 本文综述]
+
+  # ---------------- 技术主题 ----------------
+  - label_id: HMDT:TECH_TOPIC:resistance
+    dimension: TECH_TOPIC
+    label_en: Resistance mechanism
+    label_zh: 耐药机制
+    keywords_en: [acquired resistance, bypass activation, secondary mutation, refractory]
+    keywords_zh: [获得性耐药, 旁路激活, 继发突变, 难治]
+
+  - label_id: HMDT:TECH_TOPIC:combination
+    dimension: TECH_TOPIC
+    label_en: Combination strategy
+    label_zh: 联用策略
+    keywords_en: [in combination with, combination therapy, plus, doublet, synergy]
+    keywords_zh: [联合, 联用, 协同]
+
+  - label_id: HMDT:TECH_TOPIC:biomarker
+    dimension: TECH_TOPIC
+    label_en: Biomarker
+    label_zh: 生物标志物
+    keywords_en: [biomarker, patient selection, ctDNA, companion diagnostic, expression level]
+    keywords_zh: [生物标志物, 患者筛选, 伴随诊断]
+
+  - label_id: HMDT:TECH_TOPIC:safety
+    dimension: TECH_TOPIC
+    label_en: Safety and tolerability
+    label_zh: 安全性
+    keywords_en: [adverse event, grade 3, tolerability, dose reduction, discontinuation]
+    keywords_zh: [不良事件, 3级, 耐受性, 减量, 停药]
+
+  - label_id: HMDT:TECH_TOPIC:pk_pd
+    dimension: TECH_TOPIC
+    label_en: PK/PD
+    label_zh: 药代药效
+    keywords_en: [Cmax, AUC, half-life, steady state, exposure-response]
+    keywords_zh: [峰浓度, 半衰期, 稳态, 暴露量]
+
+  # ---------------- 专利维度 ----------------
+  - label_id: HMDT:PATENT_DIM:composition_of_matter
+    dimension: PATENT_DIM
+    label_en: Composition of matter
+    label_zh: 化合物专利
+    keywords_en: [compound of formula, novel compound, pharmaceutically acceptable salt]
+    keywords_zh: [通式化合物, 药学上可接受的盐]
+
+  - label_id: HMDT:PATENT_DIM:method_of_use
+    dimension: PATENT_DIM
+    label_en: Method of use
+    label_zh: 用途专利
+    keywords_en: [method of treating, use in the manufacture, therapeutic use]
+    keywords_zh: [治疗方法, 制药用途]
+
+  - label_id: HMDT:PATENT_DIM:crystal_form
+    dimension: PATENT_DIM
+    label_en: Crystal form
+    label_zh: 晶型专利
+    keywords_en: [crystalline form, polymorph, XRPD, X-ray powder diffraction]
+    keywords_zh: [晶型, 多晶型, 粉末衍射]

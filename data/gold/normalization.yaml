@@ -1,0 +1,79 @@
+# 归一化 gold set：别名 → 期望概念。
+#
+# 分层抽样而非随机：三类实体的失败模式完全不同（药物靠代号、
+# 靶点靠缩写歧义、疾病靠中英文与上下位），混在一个总准确率里看不出是哪层塌了。
+#
+# expect: null 表示"期望不匹配"——这类负样本是防止召回被调过头的唯一手段。
+version: "0.1.0"
+cases:
+  # ---------------- SUBSTANCE ----------------
+  - { text: "savolitinib", expect: "HMD:SUB:0000001", entity_type: SUBSTANCE }
+  - { text: "沃利替尼", expect: "HMD:SUB:0000001", entity_type: SUBSTANCE }
+  - { text: "AZD6094", expect: "HMD:SUB:0000001", entity_type: SUBSTANCE }
+  - { text: "HMPL-504", expect: "HMD:SUB:0000001", entity_type: SUBSTANCE }
+  - { text: "沃瑞沙", expect: "HMD:SUB:0000001", entity_type: SUBSTANCE }
+  - { text: "AZD-6094", expect: "HMD:SUB:0000001", entity_type: SUBSTANCE }
+  - { text: "fruquintinib", expect: "HMD:SUB:0000002", entity_type: SUBSTANCE }
+  - { text: "呋喹替尼", expect: "HMD:SUB:0000002", entity_type: SUBSTANCE }
+  - { text: "HMPL-013", expect: "HMD:SUB:0000002", entity_type: SUBSTANCE }
+  - { text: "爱优特", expect: "HMD:SUB:0000002", entity_type: SUBSTANCE }
+  - { text: "surufatinib", expect: "HMD:SUB:0000003", entity_type: SUBSTANCE }
+  - { text: "索凡替尼", expect: "HMD:SUB:0000003", entity_type: SUBSTANCE }
+  - { text: "HMPL-012", expect: "HMD:SUB:0000003", entity_type: SUBSTANCE }
+  - { text: "sulfatinib", expect: "HMD:SUB:0000003", entity_type: SUBSTANCE }
+  - { text: "capmatinib", expect: "HMD:SUB:0000006", entity_type: SUBSTANCE }
+  - { text: "tepotinib", expect: "HMD:SUB:0000007", entity_type: SUBSTANCE }
+  - { text: "regorafenib", expect: "HMD:SUB:0000008", entity_type: SUBSTANCE }
+  - { text: "瑞戈非尼", expect: "HMD:SUB:0000008", entity_type: SUBSTANCE }
+  - { text: "aspirin", expect: null, entity_type: SUBSTANCE }
+  - { text: "XYZ-9999", expect: null, entity_type: SUBSTANCE }
+
+  # ---------------- TARGET ----------------
+  - { text: "MET", expect: "HMD:TGT:0000001", entity_type: TARGET }
+  - { text: "c-Met", expect: "HMD:TGT:0000001", entity_type: TARGET }
+  - { text: "HGFR", expect: "HMD:TGT:0000001", entity_type: TARGET }
+  - { text: "间质上皮转化因子", expect: "HMD:TGT:0000001", entity_type: TARGET }
+  - { text: "KDR", expect: "HMD:TGT:0000003", entity_type: TARGET }
+  - { text: "VEGFR2", expect: "HMD:TGT:0000003", entity_type: TARGET }
+  - { text: "VEGFR-2", expect: "HMD:TGT:0000003", entity_type: TARGET }
+  - { text: "血管内皮生长因子受体 2", expect: "HMD:TGT:0000003", entity_type: TARGET }
+  - { text: "CSF1R", expect: "HMD:TGT:0000006", entity_type: TARGET }
+  - { text: "SYK", expect: "HMD:TGT:0000007", entity_type: TARGET }
+  - { text: "脾酪氨酸激酶", expect: "HMD:TGT:0000007", entity_type: TARGET }
+  - { text: "PIK3CD", expect: "HMD:TGT:0000008", entity_type: TARGET }
+  - { text: "EGFR", expect: null, entity_type: TARGET }
+  - { text: "BTK", expect: null, entity_type: TARGET }
+
+  # ---------------- DISEASE ----------------
+  - { text: "NSCLC", expect: "HMD:DIS:0000001", entity_type: DISEASE }
+  - { text: "非小细胞肺癌", expect: "HMD:DIS:0000001", entity_type: DISEASE }
+  - { text: "non-small cell lung cancer", expect: "HMD:DIS:0000001", entity_type: DISEASE }
+  - { text: "肺腺癌", expect: "HMD:DIS:0000002", entity_type: DISEASE }
+  - { text: "lung adenocarcinoma", expect: "HMD:DIS:0000002", entity_type: DISEASE }
+  - { text: "肺癌", expect: "HMD:DIS:0000003", entity_type: DISEASE }
+  - { text: "mCRC", expect: "HMD:DIS:0000005", entity_type: DISEASE }
+  - { text: "转移性结直肠癌", expect: "HMD:DIS:0000005", entity_type: DISEASE }
+  - { text: "结直肠癌", expect: "HMD:DIS:0000006", entity_type: DISEASE }
+  - { text: "神经内分泌瘤", expect: "HMD:DIS:0000007", entity_type: DISEASE }
+  - { text: "NET", expect: "HMD:DIS:0000007", entity_type: DISEASE }
+  - { text: "ITP", expect: "HMD:DIS:0000008", entity_type: DISEASE }
+  - { text: "免疫性血小板减少症", expect: "HMD:DIS:0000008", entity_type: DISEASE }
+  - { text: "胃癌", expect: "HMD:DIS:0000010", entity_type: DISEASE }
+  - { text: "diabetes mellitus", expect: null, entity_type: DISEASE }
+  - { text: "阿尔茨海默病", expect: null, entity_type: DISEASE }
+
+# 上下文消歧样本单列：它们只有带 context 才有唯一正确答案，
+# 混进上面的表会让"无上下文准确率"被污染。
+ambiguous_cases:
+  - text: "MET"
+    context: "MET exon 14 skipping mutation in NSCLC patients"
+    expect: "HMD:TGT:0000001"
+  - text: "MET"
+    context: "8 MET of moderate exercise, metabolic equivalent of task"
+    expect: null
+  - text: "MET"
+    context: "dietary MET intake, methionine amino acid residue homocysteine"
+    expect: null
+  - text: "NET"
+    context: "神经内分泌瘤 neuroendocrine tumor 患者接受索凡替尼治疗"
+    expect: "HMD:DIS:0000007"

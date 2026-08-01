@@ -1,0 +1,235 @@
+id: https://w3id.org/asliva/biomed-ontology/obs
+name: hmd_obs
+title: HMD Observability Model
+description: >-
+  四支柱可观测模型（L7）：Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)。
+
+  这些表不是日志，是数据资产：它们既支撑排障，也是演进闭环(L8)的唯一信号来源。
+  埋点与 L3/L4/L5 同步实现而非后置补 —— 后置补埋点必然漏掉决策中间态，
+  而中间态恰恰是"为什么给出这个答案"的答案。
+license: Proprietary
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hmd: https://w3id.org/asliva/biomed-ontology/
+  prov: http://www.w3.org/ns/prov#
+
+default_prefix: hmd
+default_range: string
+
+imports:
+  - linkml:types
+  - hmd_fact
+
+classes:
+  ToolIoRecord:
+    description: >-
+      I/O 支柱（WHAT）：每次 tool 调用的完整输入输出。
+      全量留存的价值在于可重放与可审计；契约校验结果同表存放，违约即可告警。
+    slots:
+      - trace_id
+      - span_id
+      - ts
+      - tool_name
+      - tool_version
+      - ontology_release_id
+      - agent_id
+      - session_id
+      - input_json
+      - output_json
+      - latency_ms
+      - status
+      - error_message
+      - contract_valid
+      - contract_errors
+      - license_filtered_count
+      - caller_entitlements
+    slot_usage:
+      trace_id:
+        required: true
+      tool_name:
+        required: true
+      ontology_release_id:
+        required: true
+        description: 不 pin release 就无法重放。这是 Replay 一致性验收项的前提。
+
+  DecisionRecord:
+    description: >-
+      State 支柱（WHY）：一次决策的前后状态与候选集。
+      只记结果不记候选，就无法回答"为什么没选那个" —— 而这才是排障时真正要问的问题。
+    slots:
+      - trace_id
+      - span_id
+      - step_seq
+      - stage
+      - state_before
+      - state_after
+      - candidates
+      - chosen
+      - justification
+      - rule_id
+      - model_id
+      - confidence
+      - elapsed_ms
+    slot_usage:
+      trace_id:
+        required: true
+      step_seq:
+        required: true
+      stage:
+        required: true
+      justification:
+        required: true
+        description: 必填。无依据的决策不可解释，直接违反"决策可解释率 100%"验收项。
+
+  Candidate:
+    description: 决策过程中的一个候选项。保留 score 与 channel 才能做通道级归因。
+    slots:
+      - candidate_id
+      - label
+      - score
+      - channel
+      - stage
+
+  Signal:
+    description: >-
+      演进闭环的信号（L8）。
+      priority_score = 影响 query 数 × 影响文档数，审校队列按它排序 ——
+      本体缺口的价值不均等，按影响面排序才能让有限的审校人力用在刀刃上。
+    slots:
+      - signal_id
+      - signal_type
+      - payload
+      - first_seen
+      - last_seen
+      - freq
+      - impacted_queries
+      - impacted_docs
+      - priority_score
+      - signal_status
+      - linked_trace_ids
+    slot_usage:
+      signal_id:
+        identifier: true
+        required: true
+      signal_type:
+        required: true
+
+  QualityMetric:
+    description: >-
+      Metrics 支柱（WHEN）的一条质量指标观测。
+      与 release 绑定，才能算出"较上版下降多少"这个发版守门的判据。
+    slots:
+      - metric_name
+      - metric_value
+      - ontology_release_id
+      - ts
+      - metric_dimension
+      - sample_size
+      - threshold
+      - passed
+
+slots:
+  trace_id:
+    range: string
+    description: 随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。
+  span_id:
+    range: string
+  ts:
+    range: datetime
+  tool_name:
+    range: string
+  tool_version:
+    range: string
+  ontology_release_id:
+    range: SemanticVersion
+  agent_id:
+    range: string
+  session_id:
+    range: string
+  input_json:
+    range: string
+  output_json:
+    range: string
+  latency_ms:
+    range: float
+  status:
+    range: string
+  error_message:
+    range: string
+  contract_valid:
+    range: boolean
+  contract_errors:
+    range: string
+    multivalued: true
+  license_filtered_count:
+    range: integer
+    description: 因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。
+  caller_entitlements:
+    range: string
+    multivalued: true
+  step_seq:
+    range: integer
+  stage:
+    range: string
+  state_before:
+    range: string
+  state_after:
+    range: string
+  candidates:
+    range: Candidate
+    multivalued: true
+    inlined_as_list: true
+  chosen:
+    range: string
+  rule_id:
+    range: string
+  model_id:
+    range: string
+  elapsed_ms:
+    range: float
+  candidate_id:
+    range: string
+  label:
+    range: string
+  score:
+    range: float
+  channel:
+    range: string
+  signal_id:
+    range: string
+    pattern: "^HMDS:\\d{9}$"
+  signal_type:
+    range: SignalTypeEnum
+  payload:
+    range: string
+  first_seen:
+    range: datetime
+  last_seen:
+    range: datetime
+  freq:
+    range: integer
+  impacted_queries:
+    range: integer
+  impacted_docs:
+    range: integer
+  priority_score:
+    range: float
+  signal_status:
+    range: SignalStatusEnum
+  linked_trace_ids:
+    range: string
+    multivalued: true
+  metric_name:
+    range: string
+  metric_value:
+    range: float
+  metric_dimension:
+    range: string
+    description: 指标的切片维度（实体类型 / 语言 / 模态）。不分维度的总体准确率会掩盖局部崩塌。
+  sample_size:
+    range: integer
+  threshold:
+    range: float
+  passed:
+    range: boolean

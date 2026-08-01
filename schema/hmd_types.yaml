@@ -1,0 +1,308 @@
+id: https://w3id.org/asliva/biomed-ontology/types
+name: hmd_types
+title: HMD Shared Types and Enumerations
+description: >-
+  共享枚举与类型定义。所有其他 schema 模块从此处 import。
+  枚举值一经发布不得删除或改名，只能新增或标记 deprecated ——
+  下游索引、可观测埋点与历史报告均依赖枚举的稳定性。
+license: Proprietary
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hmd: https://w3id.org/asliva/biomed-ontology/
+  biolink: https://w3id.org/biolink/vocab/
+  skos: http://www.w3.org/2004/02/skos/core#
+  semapv: https://w3id.org/semapv/vocab/
+  oio: http://www.geneontology.org/formats/oboInOwl#
+  xsd: http://www.w3.org/2001/XMLSchema#
+
+default_prefix: hmd
+default_range: string
+
+imports:
+  - linkml:types
+
+# 跨模块共用的槽位定义在此，避免各模块各自定义同名槽位后语义漂移。
+slots:
+  justification:
+    range: MappingJustificationEnum
+    description: 决策依据。术语映射、标引、归一化共用同一套词表（设计决策 D7）。
+
+types:
+  ConceptCurie:
+    typeof: uriorcurie
+    uri: xsd:anyURI
+    repr: str
+    description: 内部概念 CURIE，形如 HMD:SUB:0000042
+    pattern: '^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\d{7}$'
+
+  ExternalCurie:
+    typeof: uriorcurie
+    uri: xsd:anyURI
+    repr: str
+    description: 外部本体 CURIE，形如 MONDO:0005233。prefix 必须在 Bioregistry 中可解析
+    pattern: '^[A-Za-z][A-Za-z0-9._-]*:\S+$'
+
+  SemanticVersion:
+    typeof: string
+    uri: xsd:string
+    description: 语义化版本号
+    pattern: '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$'
+
+enums:
+  EntityTypeEnum:
+    description: >-
+      本次 scope 内的实体类型。每个类型对应一个 HMD ID 命名空间段。
+      AE（不良事件）依赖 MedDRA 采购，PoC 阶段为空占位。
+    permissible_values:
+      TARGET:
+        description: 靶点 / 基因 / 蛋白
+        meaning: biolink:GeneOrGeneProduct
+        annotations:
+          id_segment: TGT
+      SUBSTANCE:
+        description: 药物 / 物质
+        meaning: biolink:ChemicalEntity
+        annotations:
+          id_segment: SUB
+      DISEASE:
+        description: 适应症 / 疾病
+        meaning: biolink:Disease
+        annotations:
+          id_segment: DIS
+      MECHANISM:
+        description: 作用机制 MoA
+        meaning: biolink:MolecularActivity
+        annotations:
+          id_segment: MOA
+      MODALITY:
+        description: 药物模态（小分子 / 单抗 / ADC / 细胞治疗 等）
+        annotations:
+          id_segment: MOD
+      TRIAL:
+        description: 临床试验
+        meaning: biolink:ClinicalTrial
+        annotations:
+          id_segment: TRL
+      BIOMARKER:
+        description: 生物标志物 / 基因变异
+        meaning: biolink:BiologicalEntity
+        annotations:
+          id_segment: BMK
+      ADVERSE_EVENT:
+        description: 不良事件（依赖 MedDRA 采购，Track B）
+        annotations:
+          id_segment: AE
+
+  SynonymScopeEnum:
+    description: >-
+      别名范围，直接决定检索行为（设计决策 D2）。
+      把 related 当作等价会摧毁精确率，因此 scope 是必填字段而非可选标注。
+    permissible_values:
+      EXACT:
+        description: 完全等价。全权重扩展 + 写入索引
+        meaning: oio:hasExactSynonym
+        annotations:
+          expansion_weight: 1.0
+          indexed: true
+      NARROW:
+        description: 更窄的说法。降权 0.8 扩展 + 写入索引
+        meaning: oio:hasNarrowSynonym
+        annotations:
+          expansion_weight: 0.8
+          indexed: true
+      BROAD:
+        description: 更宽的说法。默认不扩展、不入索引，避免召回泛化
+        meaning: oio:hasBroadSynonym
+        annotations:
+          expansion_weight: 0.0
+          indexed: false
+      RELATED:
+        description: 相关但不等价。永不扩展，仅作 rerank 特征
+        meaning: oio:hasRelatedSynonym
+        annotations:
+          expansion_weight: 0.0
+          indexed: false
+
+  AliasTypeEnum:
+    description: 别名的来源性质，用于消歧打分与审校优先级排序
+    permissible_values:
+      INN: { description: 国际非专利药品名称 }
+      BRAND: { description: 商品名 }
+      INTERNAL_CODE: { description: 企业内部研发代号，如 HMPL-504 }
+      PARTNER_CODE: { description: 合作方研发代号，如 AZD6094 }
+      RESEARCH_CODE: { description: 通用研究代号 }
+      ABBREV: { description: 缩写，歧义高发区 }
+      SYMBOL: { description: 基因/蛋白符号 }
+      CHEMICAL_NAME: { description: 化学名 }
+      TRANSLATION: { description: 翻译名（中文层主力类型） }
+      MISSPELLING: { description: 常见拼写错误，只入索引不对外展示 }
+      LEGACY: { description: 历史废弃名称 }
+
+  LanguageEnum:
+    description: 别名语言。中英必须互通，拉丁名用于化学与物种
+    permissible_values:
+      en: { description: English }
+      zh: { description: 简体中文 }
+      la: { description: Latin }
+
+  LicenseTierEnum:
+    description: >-
+      许可分层（设计决策 D10），借鉴 UMLS SAB license category 机制。
+      tier 决定 RDF named graph 隔离策略、查询重写、导出闸门与训练语料准入。
+    permissible_values:
+      TIER_0:
+        description: 完全开放（MONDO / HGNC / UNII / Wikidata）。无限制
+        annotations:
+          exportable: true
+          trainable: true
+      TIER_1:
+        description: 署名或同源共享（ChEMBL CC-BY-SA、DrugCentral）。分发需标注，衍生物受限
+        annotations:
+          exportable: true
+          trainable: false
+      TIER_2:
+        description: 需订阅、内部可用（UMLS 受限源、DrugBank）。不可外泄原文
+        annotations:
+          exportable: false
+          trainable: false
+      TIER_3:
+        description: 严格受限（MedDRA、智慧芽 / 医药魔方原始记录）。仅授权用户可见
+        annotations:
+          exportable: false
+          trainable: false
+
+  ReviewStatusEnum:
+    description: >-
+      审校状态。LLM 与规则生成的内容一律以 PENDING 入库，
+      未经人工审校不得进入 agent 返回体（设计决策 D5）。
+    permissible_values:
+      PENDING: { description: 待审校，默认不参与对外返回 }
+      APPROVED: { description: 人工审校通过 }
+      REJECTED: { description: 审校驳回，保留用于负样本训练 }
+      AUTO_TRUSTED: { description: 来自权威源，免审校 }
+
+  MappingJustificationEnum:
+    description: >-
+      映射与决策的依据词表（设计决策 D7）。
+      semapv 为标准词表，hmd: 前缀为本项目扩展。
+    permissible_values:
+      LexicalMatching:
+        meaning: semapv:LexicalMatching
+        description: 词形匹配
+      CompositeMatching:
+        meaning: semapv:CompositeMatching
+        description: 组合匹配
+      ManualMappingCuration:
+        meaning: semapv:ManualMappingCuration
+        description: 人工审校
+      MappingChaining:
+        meaning: semapv:MappingChaining
+        description: 映射链传递（A=B, B=C 推出 A=C）
+      UnspecifiedMatching:
+        meaning: semapv:UnspecifiedMatching
+        description: 来源未声明依据
+      SemanticSimilarityThresholdMatching:
+        meaning: semapv:SemanticSimilarityThresholdMatching
+        description: 向量相似度过阈
+      OntologyDescendantExpansion:
+        description: 本体子树扩展（hmd 扩展，需记录 depth）
+      LLMDisambiguation:
+        description: LLM 上下文消歧（hmd 扩展，需记录 model 与 context）
+
+  PredicateEnum:
+    description: >-
+      关系谓词，取 Biolink Model 子集。
+      不自造谓词 —— 与 Biolink 对齐才能让外采数据与开源图谱无损融合。
+    permissible_values:
+      exact_match:
+        meaning: skos:exactMatch
+        description: 概念等价，用于构建 clique
+      close_match:
+        meaning: skos:closeMatch
+      broad_match:
+        meaning: skos:broadMatch
+      narrow_match:
+        meaning: skos:narrowMatch
+      subclass_of:
+        meaning: biolink:subclass_of
+      inhibits:
+        meaning: biolink:affects
+        description: 抑制。属性 qualifier 记录方向与强度
+      treats:
+        meaning: biolink:treats
+      has_target:
+        meaning: biolink:has_target
+      biomarker_for:
+        meaning: biolink:biomarker_for
+      has_adverse_event:
+        meaning: biolink:has_adverse_event
+      in_clinical_trial_for:
+        meaning: biolink:studied_to_treat
+
+  DocTypeEnum:
+    description: 文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。
+    permissible_values:
+      JOURNAL_ARTICLE: { description: 期刊论文 }
+      PREPRINT: { description: 预印本 }
+      CONFERENCE_ABSTRACT: { description: 会议摘要（ASCO/ESMO，管线情报的高时效来源） }
+      CLINICAL_TRIAL_RECORD: { description: 临床试验登记记录 }
+      PATENT: { description: 专利 }
+      REGULATORY_DOCUMENT: { description: 监管文件（NMPA/FDA 审评） }
+      LABEL: { description: 药品说明书 }
+      INTERNAL_REPORT: { description: 企业内部报告，PoC 不涉及 }
+
+  ModalityChannelEnum:
+    description: >-
+      抽取通道。三模态各自的错误模式不同，混在一起就无法分模态评估准确率，
+      也无法定位是解析失败还是抽取失败。
+    permissible_values:
+      TEXT: { description: 正文文本 }
+      TABLE: { description: 表格（视觉模型还原结构后逐单元格对齐本体） }
+      IMAGE: { description: 图像（KM 曲线、剂量-反应、通路图） }
+      STRUCTURE: { description: 化学结构图（OCSR） }
+      METADATA: { description: 文档元数据字段 }
+
+  RetrievalChannelEnum:
+    description: 召回通道。融合前必须留存，否则无法归因是哪一路把结果带进来的。
+    permissible_values:
+      BM25: { description: 词法召回 }
+      DENSE: { description: 向量召回 }
+      GRAPH: { description: 图查询召回 }
+      FUSED: { description: RRF 融合后的结果 }
+
+  NormalizationStageEnum:
+    description: >-
+      归一化级联的阶段枚举（设计决策 D7 的执行点）。
+      每一级的代价与可信度都不同，记录命中在哪一级才能优化级联本身。
+    permissible_values:
+      DICTIONARY: { description: 精确词典匹配，最快最可信 }
+      RULE: { description: 规则模糊匹配（代号变体、词形） }
+      VECTOR: { description: 向量召回 }
+      LLM: { description: LLM 上下文消歧，仅在候选分差小于阈值时触发 }
+      ABSTAIN: { description: 放弃，产出 unmapped 信号 }
+
+  SignalTypeEnum:
+    description: >-
+      演进闭环的信号类型（L8）。
+      信号来自真实使用，比人工巡检更能反映本体的实际缺口。
+    permissible_values:
+      unmapped_span: { description: 有实体形态但归一化失败的片段 }
+      low_confidence_normalization: { description: 归一化成功但置信度低 }
+      ambiguous_unstable: { description: 同一别名在不同上下文反复给出不同概念 }
+      zero_result_query: { description: 零结果查询 }
+      expansion_miss: { description: 扩展词集未覆盖用户实际点击的文档 }
+      negative_feedback: { description: agent 或用户回传的负反馈 }
+      cooccurrence_anomaly: { description: 共现异常，提示缺失关系 }
+      multi_source_conflict: { description: 多源事实冲突，Track B 接入后成为主力信号 }
+
+  SignalStatusEnum:
+    description: 信号的处理状态，审校队列按此流转。
+    permissible_values:
+      NEW: { description: 新浮现 }
+      TRIAGED: { description: 已定级 }
+      CANDIDATE_GENERATED: { description: 已生成候选变更 }
+      CURATED: { description: 已审校，产出 KGCL }
+      RELEASED: { description: 已随 release 发版 }
+      DISMISSED: { description: 判定无需处理 }
+

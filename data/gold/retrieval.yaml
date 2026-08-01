@@ -1,0 +1,71 @@
+# 检索 gold set：query → 相关片段的分级判定。
+#
+# 键用 `doc_id#section` 而不是 chunk_id：chunk_id 是内容哈希，
+# 改一个字就全部失效，且人工审校时完全不可读。
+#
+# 用分级相关（2=高度相关 / 1=部分相关）而不是二值：
+# 本体增强的收益主要体现在"把同义与下位表述也召回来"，
+# 二值判定会把这部分收益抹平，评测就看不出该不该做本体。
+version: "0.1.0"
+queries:
+  - id: Q1
+    text: "沃利替尼 治疗 肺癌 疗效"
+    intent: 中文别名 + 上位疾病，考察跨语言与层级扩展
+    relevant:
+      "DOC:PMID.32821245#Abstract": 2
+      "DOC:PMID.32821245#Results": 2
+      "DOC:PMID.32821245#table:T1": 2
+      "DOC:CNIPA.CN105461695A#Description": 1
+
+  - id: Q2
+    text: "MET inhibitor pulmonary sarcomatoid carcinoma"
+    intent: 英文靶点 + 罕见亚型
+    relevant:
+      "DOC:PMID.32821245#Abstract": 2
+      "DOC:PMID.32821245#Results": 2
+      "DOC:PMID.32821245#image:F2": 1
+
+  - id: Q3
+    text: "呋喹替尼 三线 结直肠癌 总生存期"
+    intent: 中文药名 + 结构化指标，考察表格召回
+    relevant:
+      "DOC:PMID.30006302#table:T2": 2
+      "DOC:PMID.30006302#Abstract": 2
+      "DOC:PMID.30006302#Results": 2
+
+  - id: Q4
+    text: "VEGFR2 抑制剂 抗血管生成"
+    intent: 靶点别名（KDR/VEGFR2）→ 药物，考察别名归一
+    relevant:
+      "DOC:PMID.30006302#Abstract": 2
+      "DOC:PMID.30006302#Results": 1
+      "DOC:CTGOV.NCT02807415#BriefSummary": 1
+
+  - id: Q5
+    text: "neuroendocrine tumor clinical trial surufatinib"
+    intent: 英文疾病 + 试验记录
+    relevant:
+      "DOC:CTGOV.NCT02807415#BriefSummary": 2
+      "DOC:CTGOV.NCT02807415#Outcomes": 1
+
+  - id: Q6
+    text: "晶型 专利 MET 抑制剂"
+    intent: 中文专利文本，考察 doc_type 与中文抽取
+    relevant:
+      "DOC:CNIPA.CN105461695A#Claims": 2
+      "DOC:CNIPA.CN105461695A#Description": 2
+
+  - id: Q7
+    text: "lung cancer targeted therapy"
+    intent: 宽泛上位词，考察层级扩展是否过度召回
+    relevant:
+      "DOC:PMID.32821245#Abstract": 1
+      "DOC:PMID.32821245#Results": 1
+      "DOC:CNIPA.CN105461695A#Description": 1
+
+  - id: Q8
+    text: "savolitinib acquired resistance competitive landscape"
+    intent: 商业源专有内容，无凭据时应召回为空
+    requires_entitlement: MOCK_LICENSED
+    relevant:
+      "DOC:PATSNAP.PS-2023-00417#Summary": 2

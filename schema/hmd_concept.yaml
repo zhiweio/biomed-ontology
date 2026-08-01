@@ -1,0 +1,328 @@
+id: https://w3id.org/asliva/biomed-ontology/concept
+name: hmd_concept
+title: HMD Concept and Alias Model
+description: >-
+  术语层核心模型（L1）。
+  概念的主键是内部 CURIE 而非外部 ID（设计决策 D1）——
+  外部本体的 obsolete / merge 是常态，用外部 ID 当主键会让下游索引与历史报告一起崩。
+license: Proprietary
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hmd: https://w3id.org/asliva/biomed-ontology/
+  biolink: https://w3id.org/biolink/vocab/
+  skos: http://www.w3.org/2004/02/skos/core#
+  sssom: https://w3id.org/sssom/
+  oio: http://www.geneontology.org/formats/oboInOwl#
+  dcterms: http://purl.org/dc/terms/
+  prov: http://www.w3.org/ns/prov#
+
+default_prefix: hmd
+default_range: string
+
+imports:
+  - linkml:types
+  - hmd_types
+
+classes:
+  Concept:
+    description: >-
+      一个生物医药概念的唯一锚点。所有别名、外部 ID、抽取事实、索引条目都挂在这个 ID 上。
+      ID 单调递增、永不复用；废弃走 replaced_by / consider 而不是删除。
+    class_uri: skos:Concept
+    slots:
+      - concept_id
+      - entity_type
+      - category
+      - preferred_label_en
+      - preferred_label_zh
+      - definition
+      - primary_xref
+      - equivalent_xrefs
+      - parents
+      - is_obsolete
+      - replaced_by
+      - consider
+      - license_tier
+      - created_in_release
+      - modified_in_release
+    slot_usage:
+      concept_id:
+        identifier: true
+        required: true
+      entity_type:
+        required: true
+      preferred_label_en:
+        required: true
+      primary_xref:
+        description: >-
+          等价团的代表 ID，选取规则见 ontology/clique.py。
+          仅作展示与回溯用途，不是主键。
+    unique_keys:
+      primary_xref_unique:
+        description: 一个外部 ID 不能同时是两个概念的主 xref，否则说明等价团合并有误
+        unique_key_slots:
+          - primary_xref
+
+  Synonym:
+    description: >-
+      别名条目。scope 必填 —— 检索扩展行为完全由 scope 驱动（D2）。
+      is_ambiguous 为真时，该别名不得直接单选，必须走上下文消歧（D3）。
+    slots:
+      - alias_id
+      - concept_id
+      - alias_raw
+      - alias_norm
+      - lang
+      - scope
+      - alias_type
+      - source
+      - source_version
+      - confidence
+      - is_ambiguous
+      - review_status
+      - license_tier
+      - valid_from
+      - valid_to
+    slot_usage:
+      alias_id:
+        identifier: true
+        required: true
+      concept_id:
+        required: true
+      alias_raw:
+        required: true
+      alias_norm:
+        required: true
+        description: >-
+          归一化形式：小写、去连字符与空白、希腊字母转写、全角转半角。
+          词典精确匹配走这一列，alias_raw 只用于展示与溯源。
+      lang:
+        required: true
+      scope:
+        required: true
+      confidence:
+        range: float
+        minimum_value: 0.0
+        maximum_value: 1.0
+
+  Mapping:
+    description: >-
+      SSSOM 映射记录。外采数据（UMLS / DrugBank / 智慧芽 / 医药魔方）
+      一律通过此表挂靠到内部 CURIE，而非替代内部 ID（设计决策 D9）。
+      这让底座保持供应商中立：停订阅只失去一组 xref，内部 ID 与历史报告不受影响。
+    class_uri: sssom:Mapping
+    slots:
+      - mapping_id
+      - subject_id
+      - subject_label
+      - predicate_id
+      - object_id
+      - object_label
+      - mapping_justification
+      - mapping_tool
+      - confidence
+      - author_id
+      - mapping_date
+      - source
+      - source_version
+      - license_tier
+      - review_status
+    slot_usage:
+      mapping_id:
+        identifier: true
+      subject_id:
+        required: true
+        description: 内部 HMD CURIE 或外部 CURIE（建团阶段两端都可能是外部 ID）
+      predicate_id:
+        required: true
+      object_id:
+        required: true
+      mapping_justification:
+        required: true
+
+  Hierarchy:
+    description: >-
+      概念层级边。检索时的子树扩展依赖这张表
+      （查 NSCLC 要能召回 MET ex14 skipping 肺腺癌）。
+    slots:
+      - child_id
+      - parent_id
+      - predicate
+      - source
+      - source_version
+    slot_usage:
+      child_id:
+        required: true
+      parent_id:
+        required: true
+
+  Clique:
+    description: >-
+      等价团：一组通过 exact_match 互相连通的外部 ID 集合，对应唯一一个内部概念。
+      建团用连通分量算法，冲突（同团内出现两个来自同一权威源的不同 ID）进人工队列。
+    slots:
+      - concept_id
+      - members
+      - primary_xref
+      - conflict_flags
+      - built_by_justification
+    slot_usage:
+      concept_id:
+        identifier: true
+      members:
+        required: true
+
+slots:
+  concept_id:
+    description: 内部概念 CURIE
+    range: ConceptCurie
+    slot_uri: skos:notation
+
+  alias_id:
+    description: >-
+      别名条目的稳定 ID。可观测埋点回传的就是这个 ID ——
+      归因排障时要能从一条错误结论定位到具体哪一行别名（Demo 场景 4）。
+    range: string
+    pattern: '^HMDA:\d{9}$'
+
+  mapping_id:
+    range: string
+    pattern: '^HMDM:\d{9}$'
+
+  entity_type:
+    range: EntityTypeEnum
+
+  category:
+    description: Biolink Model 类别，用于与外部图谱对齐
+    range: uriorcurie
+    multivalued: true
+
+  preferred_label_en:
+    description: 英文首选标签
+    slot_uri: skos:prefLabel
+
+  preferred_label_zh:
+    description: >-
+      中文首选标签。中文层是自建增量（D5）——
+      开放许可源的中文覆盖不足，LLM 生成的候选必须人工审校后才能升为 preferred。
+    slot_uri: skos:prefLabel
+
+  definition:
+    slot_uri: skos:definition
+
+  primary_xref:
+    range: ExternalCurie
+
+  equivalent_xrefs:
+    description: 等价团其余成员，含外采数据的 vendor ID
+    range: ExternalCurie
+    multivalued: true
+    slot_uri: skos:exactMatch
+
+  parents:
+    range: ConceptCurie
+    multivalued: true
+
+  is_obsolete:
+    range: boolean
+    ifabsent: 'false'
+
+  replaced_by:
+    description: 废弃概念的唯一继任者
+    range: ConceptCurie
+    slot_uri: oio:replacedBy
+
+  consider:
+    description: 废弃概念的候选替代（非唯一，需人工判断）
+    range: ConceptCurie
+    multivalued: true
+    slot_uri: oio:consider
+
+  created_in_release:
+    range: SemanticVersion
+
+  modified_in_release:
+    range: SemanticVersion
+
+  alias_raw:
+    description: 原始写法，保留大小写、连字符与空白
+
+  alias_norm:
+    description: 归一化写法，词典匹配键
+
+  lang:
+    range: LanguageEnum
+
+  scope:
+    range: SynonymScopeEnum
+
+  alias_type:
+    range: AliasTypeEnum
+
+  is_ambiguous:
+    description: 该别名映射到多个概念，禁止直接单选
+    range: boolean
+    ifabsent: 'false'
+
+  source:
+    description: 数据源标识，必须在 source registry 中注册
+    required: true
+
+  source_version:
+    description: 源快照版本。缺此字段无法做离线可重放构建
+
+  license_tier:
+    range: LicenseTierEnum
+    ifabsent: LicenseTierEnum(TIER_0)
+
+  review_status:
+    range: ReviewStatusEnum
+    ifabsent: ReviewStatusEnum(PENDING)
+
+  confidence:
+    range: float
+
+  valid_from:
+    range: date
+
+  valid_to:
+    description: 为空表示当前有效
+    range: date
+
+  subject_id:
+    range: ExternalCurie
+  subject_label:
+    range: string
+  predicate_id:
+    range: PredicateEnum
+  object_id:
+    range: ExternalCurie
+  object_label:
+    range: string
+  mapping_justification:
+    range: MappingJustificationEnum
+  mapping_tool:
+    range: string
+  author_id:
+    range: string
+  mapping_date:
+    range: date
+
+  child_id:
+    range: ConceptCurie
+  parent_id:
+    range: ConceptCurie
+  predicate:
+    range: PredicateEnum
+
+  members:
+    range: ExternalCurie
+    multivalued: true
+
+  conflict_flags:
+    description: 建团冲突说明，非空即需人工介入
+    multivalued: true
+
+  built_by_justification:
+    range: MappingJustificationEnum

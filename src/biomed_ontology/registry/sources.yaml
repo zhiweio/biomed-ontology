@@ -1,0 +1,395 @@
+# 数据源注册表 —— L0 层的单一事实来源。
+#
+# 每个源必须声明 license_tier，因为 tier 决定四件事：
+#   1. RDF named graph 隔离策略
+#   2. 查询重写时对调用方的可见性
+#   3. 导出闸门是否放行
+#   4. 是否准入模型训练语料
+#
+# 新增源必须走 PR 审校 —— 许可判断错误会直接变成合规事故。
+
+registry_version: "0.1.0"
+
+sources:
+  # ---------------------------------------------------------------- Track A：开放许可
+  # PoC 全部依赖这一轨，用于验证方法论与工程闭环。
+
+  - id: HGNC
+    name: HUGO Gene Nomenclature Committee
+    track: A
+    license_id: CC0-1.0
+    license_tier: TIER_0
+    homepage: https://www.genenames.org
+    bioregistry_prefix: hgnc
+    entity_types: [TARGET]
+    role: authoritative          # 基因符号与别名的权威源，等价团建团优先取它做 primary_xref
+    download:
+      url: https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt
+      format: tsv
+
+  - id: UNIPROT
+    name: UniProt Knowledgebase
+    track: A
+    license_id: CC-BY-4.0
+    license_tier: TIER_0
+    homepage: https://www.uniprot.org
+    bioregistry_prefix: uniprot
+    entity_types: [TARGET]
+    role: authoritative
+    download:
+      url: https://rest.uniprot.org/uniprotkb/stream
+      format: tsv
+      notes: 按 organism_id:9606 过滤，只取人类
+
+  - id: NCBIGENE
+    name: NCBI Gene
+    track: A
+    license_id: public-domain
+    license_tier: TIER_0
+    homepage: https://www.ncbi.nlm.nih.gov/gene
+    bioregistry_prefix: ncbigene
+    entity_types: [TARGET]
+    role: supporting
+    download:
+      url: https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz
+      format: tsv_gz
+
+  - id: MONDO
+    name: Mondo Disease Ontology
+    track: A
+    license_id: CC-BY-4.0
+    license_tier: TIER_0
+    homepage: https://mondo.monarchinitiative.org
+    bioregistry_prefix: mondo
+    entity_types: [DISEASE]
+    role: authoritative          # 疾病层级与跨库映射的主干；本身就是等价团思路的产物
+    download:
+      url: http://purl.obolibrary.org/obo/mondo.owl
+      format: owl
+
+  - id: NCIT
+    name: NCI Thesaurus
+    track: A
+    license_id: public-domain
+    license_tier: TIER_0
+    homepage: https://ncithesaurus.nci.nih.gov
+    bioregistry_prefix: ncit
+    entity_types: [DISEASE, SUBSTANCE, MECHANISM, MODALITY]
+    role: supporting
+    # 疾病层级让位给 MONDO，但 MoA 与 Modality 在开放许可里找不到更好的主干。
+    authoritative_for: [MECHANISM, MODALITY]
+    download:
+      url: https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.OWL.zip
+      format: owl_zip
+
+  - id: ONCOTREE
+    name: OncoTree
+    track: A
+    license_id: custom-academic
+    license_tier: TIER_1
+    homepage: https://oncotree.mskcc.org
+    bioregistry_prefix: oncotree
+    entity_types: [DISEASE]
+    role: supporting
+    notes: MSKCC 自定义许可，商业用途需确认。保守起见列 TIER_1
+    download:
+      url: https://oncotree.mskcc.org/api/tumorTypes
+      format: json
+
+  - id: HP
+    name: Human Phenotype Ontology
+    track: A
+    license_id: custom-hpo
+    license_tier: TIER_1
+    homepage: https://hpo.jax.org
+    bioregistry_prefix: hp
+    entity_types: [DISEASE, BIOMARKER]
+    role: supporting
+    notes: HPO 自定义许可，商业使用需注册。列 TIER_1 以触发导出闸门检查
+    download:
+      url: http://purl.obolibrary.org/obo/hp.owl
+      format: owl
+
+  - id: CHEBI
+    name: Chemical Entities of Biological Interest
+    track: A
+    license_id: CC-BY-4.0
+    license_tier: TIER_0
+    homepage: https://www.ebi.ac.uk/chebi
+    bioregistry_prefix: chebi
+    entity_types: [SUBSTANCE, MECHANISM]
+    role: supporting
+    download:
+      url: http://purl.obolibrary.org/obo/chebi.owl
+      format: owl
+
+  - id: PUBCHEM
+    name: PubChem Compound
+    track: A
+    license_id: public-domain
+    license_tier: TIER_0
+    homepage: https://pubchem.ncbi.nlm.nih.gov
+    bioregistry_prefix: pubchem.compound
+    entity_types: [SUBSTANCE]
+    role: supporting
+    download:
+      url: https://pubchem.ncbi.nlm.nih.gov/rest/pug
+      format: json
+
+  - id: UNII
+    name: FDA Global Substance Registration System (UNII)
+    track: A
+    license_id: public-domain
+    license_tier: TIER_0
+    homepage: https://gsrs.ncats.nih.gov
+    bioregistry_prefix: unii
+    entity_types: [SUBSTANCE]
+    role: authoritative
+    notes: >-
+      药物主干选它而非 ChEMBL —— UNII 是 public domain，ChEMBL 是 CC-BY-SA
+      （share-alike 会污染衍生物的分发条件）。
+    download:
+      url: https://precision.fda.gov/uniisearch/archive/latest/UNII_Data.zip
+      format: tsv_zip
+
+  - id: DRUGCENTRAL
+    name: DrugCentral
+    track: A
+    license_id: CC-BY-SA-4.0
+    license_tier: TIER_1
+    homepage: https://drugcentral.org
+    bioregistry_prefix: drugcentral
+    entity_types: [SUBSTANCE, MECHANISM]
+    role: supporting
+    notes: share-alike。可用于内部检索，衍生数据对外分发需同源共享
+    download:
+      url: https://unmtid-shinyapps.net/download/drugcentral.dump.sql.gz
+      format: sql_gz
+
+  - id: CHEMBL
+    name: ChEMBL
+    track: A
+    license_id: CC-BY-SA-3.0
+    license_tier: TIER_1
+    homepage: https://www.ebi.ac.uk/chembl
+    bioregistry_prefix: chembl.compound
+    entity_types: [SUBSTANCE, MECHANISM]
+    role: validation             # 降级为校验源，不做主干，规避 share-alike 传染
+    download:
+      url: https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest
+      format: sqlite_gz
+
+  - id: OPENTARGETS
+    name: Open Targets Platform
+    track: A
+    license_id: CC0-1.0
+    license_tier: TIER_0
+    homepage: https://platform.opentargets.org
+    entity_types: [TARGET, DISEASE, SUBSTANCE]
+    role: supporting
+    notes: 靶点-疾病关联证据，事实层的开放对照组
+    download:
+      url: https://ftp.ebi.ac.uk/pub/databases/opentargets/platform/latest/output
+      format: parquet
+
+  - id: CIVIC
+    name: Clinical Interpretation of Variants in Cancer
+    track: A
+    license_id: CC0-1.0
+    license_tier: TIER_0
+    homepage: https://civicdb.org
+    entity_types: [BIOMARKER, TARGET, DISEASE, SUBSTANCE]
+    role: authoritative
+    authoritative_for: [BIOMARKER]
+    notes: >-
+      肿瘤体细胞变异的开放权威源（MET ex14 skipping、扩增等），CC0 无许可负担。
+      商业替代 OncoKB 许可受限，非必要不引入。
+    download:
+      url: https://civicdb.org/downloads/nightly/nightly-VariantSummaries.tsv
+      format: tsv
+
+  - id: SO
+    name: Sequence Ontology
+    track: A
+    license_id: CC-BY-4.0
+    license_tier: TIER_0
+    homepage: http://www.sequenceontology.org
+    bioregistry_prefix: so
+    entity_types: [BIOMARKER]
+    role: supporting
+    notes: 变异类型的受控词表（frameshift / splice_site_variant 等），供 CIViC 变异归类
+    download:
+      url: http://purl.obolibrary.org/obo/so.owl
+      format: owl
+
+  - id: CLINICALTRIALS
+    name: ClinicalTrials.gov
+    track: A
+    license_id: public-domain
+    license_tier: TIER_0
+    homepage: https://clinicaltrials.gov
+    bioregistry_prefix: clinicaltrials
+    entity_types: [TRIAL, SUBSTANCE, DISEASE]
+    role: authoritative
+    download:
+      url: https://clinicaltrials.gov/api/v2/studies
+      format: json
+
+  - id: PUBMED
+    name: PubMed / PMC
+    track: A
+    license_id: mixed
+    license_tier: TIER_1
+    homepage: https://pubmed.ncbi.nlm.nih.gov
+    bioregistry_prefix: pubmed
+    entity_types: []
+    role: corpus
+    notes: >-
+      元数据 public domain；PMC 全文按篇的 license 各异（OA subset 内也有 CC-BY-NC）。
+      按篇记录 article_license，不可整体当 TIER_0 处理。
+    download:
+      url: https://ftp.ncbi.nlm.nih.gov/pubmed/baseline
+      format: xml_gz
+
+  - id: MESH
+    name: Medical Subject Headings
+    track: A
+    license_id: public-domain
+    license_tier: TIER_0
+    homepage: https://meshb.nlm.nih.gov
+    bioregistry_prefix: mesh
+    entity_types: [DISEASE, SUBSTANCE]
+    role: supporting
+    notes: 含 MSH CHI 中文映射，是开放许可下少数的中文来源
+    download:
+      url: https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc2025.gz
+      format: xml_gz
+
+  - id: WIKIDATA
+    name: Wikidata
+    track: A
+    license_id: CC0-1.0
+    license_tier: TIER_0
+    homepage: https://www.wikidata.org
+    bioregistry_prefix: wikidata
+    entity_types: [SUBSTANCE, DISEASE, TARGET]
+    role: chinese_layer          # 中文别名的主力开放源
+    download:
+      url: https://query.wikidata.org/sparql
+      format: sparql
+
+  - id: NMPA
+    name: 国家药品监督管理局
+    track: A
+    license_id: gov-public
+    license_tier: TIER_1
+    homepage: https://www.nmpa.gov.cn
+    entity_types: [SUBSTANCE]
+    role: chinese_layer
+    notes: 中文商品名与通用名的权威来源。抓取需遵守站点条款，仅作内部使用
+
+  - id: CDE
+    name: 国家药品监督管理局药品审评中心
+    track: A
+    license_id: gov-public
+    license_tier: TIER_1
+    homepage: https://www.cde.org.cn
+    entity_types: [SUBSTANCE, TRIAL]
+    role: chinese_layer
+
+  # ---------------------------------------------------------------- Track B：采购词表
+  # PoC 阶段全部 enabled=false，仅占位。
+  # 插槽必须在 PoC 期就建好并用 mock 源验证，否则采购到位时要返工整条管线。
+
+  - id: UMLS
+    name: Unified Medical Language System
+    track: B
+    enabled: false
+    license_id: umls-license
+    license_tier: TIER_2
+    homepage: https://www.nlm.nih.gov/research/umls
+    bioregistry_prefix: umls
+    entity_types: [DISEASE, SUBSTANCE, TARGET, BIOMARKER]
+    role: authoritative
+    requires_credentials: true
+    procurement_priority: 1
+    notes: >-
+      性价比最高的采购项：一次性拿到跨词表聚合（MRCONSO）、关系（MRREL）、
+      语义类型（MRSTY）与部分中文源。
+      注意 UMLS 内部本身按 SAB 分 license category 0/1/2/3 ——
+      接入时必须逐 SAB 映射到我们的 tier，不能整体当 TIER_2。
+      CUI 作为 xref 挂靠，不做主键（CUI 会随版本变动）。
+
+  - id: PATSNAP
+    name: 智慧芽 Synapse / 开放平台
+    track: B
+    enabled: false
+    license_id: commercial-subscription
+    license_tier: TIER_3
+    homepage: https://open.zhihuiya.com
+    entity_types: [SUBSTANCE, TARGET, DISEASE, TRIAL]
+    role: fact_seed
+    requires_credentials: true
+    procurement_priority: 2
+    notes: >-
+      全球管线、机构、交易、专利-药物关联。作为事实层 seed 与交叉校验源。
+      合同需确认两点：(a) 归一化后能否进内部知识库 (b) 能否作为 agent 检索结果返回。
+      这两条直接决定事实层能否融合供应商数据。
+
+  - id: PHARMCUBE
+    name: 医药魔方
+    track: B
+    enabled: false
+    license_id: commercial-subscription
+    license_tier: TIER_3
+    homepage: https://www.pharmcube.com
+    entity_types: [SUBSTANCE, TRIAL, DISEASE]
+    role: fact_seed
+    requires_credentials: true
+    procurement_priority: 2
+    notes: 中国注册/审评/中标数据与中文术语，中文层的重要补强
+
+  - id: DRUGBANK
+    name: DrugBank
+    track: B
+    enabled: false
+    license_id: drugbank-commercial
+    license_tier: TIER_2
+    homepage: https://go.drugbank.com
+    bioregistry_prefix: drugbank
+    entity_types: [SUBSTANCE, TARGET]
+    role: supporting
+    requires_credentials: true
+    procurement_priority: 3
+    notes: 药物别名、靶点、DDI、ATC
+
+  - id: MEDDRA
+    name: MedDRA
+    track: B
+    enabled: false
+    license_id: meddra-subscription
+    license_tier: TIER_3
+    homepage: https://www.meddra.org
+    bioregistry_prefix: meddra
+    entity_types: [ADVERSE_EVENT]
+    role: authoritative
+    requires_credentials: true
+    procurement_priority: 4
+    notes: >-
+      SOC/HLGT/HLT/PT/LLT 五级 + 官方中文。许可最严 ——
+      PT/LLT 术语不得暴露给无 subscription 的消费方，导出闸门必须逐条拦截。
+      仅当不良事件成为刚需时采购。
+
+  # ---------------------------------------------------------------- 许可插槽验证用
+  - id: MOCK_LICENSED
+    name: Mock Licensed Source (许可插槽验证)
+    track: B
+    enabled: true
+    license_id: mock-restricted
+    license_tier: TIER_3
+    entity_types: [DISEASE]
+    role: validation
+    notes: >-
+      拿开放数据伪装成 TIER_3 受限源，用于在采购到位前跑通
+      named graph 隔离 → 查询重写 → 导出闸门 → 泄漏检测 的完整链路。
+      生产环境必须禁用。

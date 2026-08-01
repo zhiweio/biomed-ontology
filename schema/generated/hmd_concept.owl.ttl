@@ -1,0 +1,1420 @@
+@prefix biolink: <https://w3id.org/biolink/vocab/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix hmd: <https://w3id.org/asliva/biomed-ontology/> .
+@prefix linkml: <https://w3id.org/linkml/> .
+@prefix oio: <http://www.geneontology.org/formats/oboInOwl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix sssom: <https://w3id.org/sssom/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+hmd:Clique a owl:Class ;
+    rdfs:label "Clique" ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:built_by_justification ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:conflict_flags ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:MappingJustificationEnum ;
+            owl:onProperty hmd:built_by_justification ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:conflict_flags ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:built_by_justification ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:members ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:members ] ;
+    skos:definition "等价团：一组通过 exact_match 互相连通的外部 ID 集合，对应唯一一个内部概念。 建团用连通分量算法，冲突（同团内出现两个来自同一权威源的不同 ID）进人工队列。" ;
+    skos:inScheme hmd:concept .
+
+hmd:Concept a owl:Class ;
+    rdfs:label "Concept" ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:preferred_label_en ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:equivalent_xrefs ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LicenseTierEnum ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:parents ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:modified_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:preferred_label_zh ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:modified_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:definition ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:equivalent_xrefs ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:category ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:is_obsolete ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:entity_type ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:replaced_by ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:is_obsolete ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:primary_xref ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:replaced_by ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:consider ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:definition ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:preferred_label_en ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:consider ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:created_in_release ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:preferred_label_zh ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:entity_type ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:definition ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:preferred_label_zh ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:category ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:preferred_label_en ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:boolean ;
+            owl:onProperty hmd:is_obsolete ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:parents ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:EntityTypeEnum ;
+            owl:onProperty hmd:entity_type ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:modified_in_release ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:replaced_by ] ;
+    owl:hasKey ( hmd:primary_xref ) ;
+    skos:definition "一个生物医药概念的唯一锚点。所有别名、外部 ID、抽取事实、索引条目都挂在这个 ID 上。 ID 单调递增、永不复用；废弃走 replaced_by / consider 而不是删除。" ;
+    skos:exactMatch skos:Concept ;
+    skos:inScheme hmd:concept .
+
+hmd:Hierarchy a owl:Class ;
+    rdfs:label "Hierarchy" ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:predicate ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:PredicateEnum ;
+            owl:onProperty hmd:predicate ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:predicate ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:child_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:child_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:child_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:parent_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:parent_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:parent_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source ] ;
+    skos:definition "概念层级边。检索时的子树扩展依赖这张表 （查 NSCLC 要能召回 MET ex14 skipping 肺腺癌）。" ;
+    skos:inScheme hmd:concept .
+
+hmd:Mapping a owl:Class ;
+    rdfs:label "Mapping" ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ReviewStatusEnum ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:object_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:object_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_date ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:subject_label ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:MappingJustificationEnum ;
+            owl:onProperty hmd:mapping_justification ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:subject_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:mapping_tool ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:object_label ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:subject_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:mapping_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:subject_label ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:author_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:subject_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:object_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:mapping_justification ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:float ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:predicate_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:date ;
+            owl:onProperty hmd:mapping_date ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:mapping_date ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:mapping_tool ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:predicate_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:author_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:subject_label ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_justification ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:mapping_tool ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^HMDM:\\d{9}$" ] ) ] ) ] ;
+            owl:onProperty hmd:mapping_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LicenseTierEnum ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:object_label ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:PredicateEnum ;
+            owl:onProperty hmd:predicate_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:author_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:object_label ] ;
+    skos:definition "SSSOM 映射记录。外采数据（UMLS / DrugBank / 智慧芽 / 医药魔方） 一律通过此表挂靠到内部 CURIE，而非替代内部 ID（设计决策 D9）。 这让底座保持供应商中立：停订阅只失去一组 xref，内部 ID 与历史报告不受影响。" ;
+    skos:exactMatch sssom:Mapping ;
+    skos:inScheme hmd:concept .
+
+hmd:Synonym a owl:Class ;
+    rdfs:label "Synonym" ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LanguageEnum ;
+            owl:onProperty hmd:lang ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:alias_raw ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:alias_raw ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:valid_to ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:alias_raw ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ReviewStatusEnum ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:lang ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:string ;
+                                owl:withRestrictions ( [ xsd:pattern "^HMDA:\\d{9}$" ] ) ] ) ] ;
+            owl:onProperty hmd:alias_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:is_ambiguous ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:alias_norm ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:SynonymScopeEnum ;
+            owl:onProperty hmd:scope ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:AliasTypeEnum ;
+            owl:onProperty hmd:alias_type ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:alias_type ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:lang ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:date ;
+            owl:onProperty hmd:valid_from ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:boolean ;
+            owl:onProperty hmd:is_ambiguous ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:license_tier ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:alias_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:is_ambiguous ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom [ a rdfs:Datatype ;
+                    owl:intersectionOf ( xsd:float [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:float ;
+                                owl:withRestrictions ( [ xsd:minInclusive 0e+00 ] ) ] [ a rdfs:Datatype ;
+                                owl:onDatatype xsd:float ;
+                                owl:withRestrictions ( [ xsd:maxInclusive 1e+00 ] ) ] ) ] ;
+            owl:onProperty hmd:confidence ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:scope ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:scope ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:alias_type ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:date ;
+            owl:onProperty hmd:valid_to ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:source_version ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:concept_id ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:alias_norm ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:alias_norm ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:valid_to ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:valid_from ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:valid_from ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:review_status ],
+        [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:alias_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:LicenseTierEnum ;
+            owl:onProperty hmd:license_tier ] ;
+    skos:definition "别名条目。scope 必填 —— 检索扩展行为完全由 scope 驱动（D2）。 is_ambiguous 为真时，该别名不得直接单选，必须走上下文消歧（D3）。" ;
+    skos:inScheme hmd:concept .
+
+hmd:concept.owl.ttl a owl:Ontology ;
+    rdfs:label "hmd_concept" ;
+    dcterms:license "Proprietary" ;
+    dcterms:title "HMD Concept and Alias Model" ;
+    skos:definition "术语层核心模型（L1）。 概念的主键是内部 CURIE 而非外部 ID（设计决策 D1）—— 外部本体的 obsolete / merge 是常态，用外部 ID 当主键会让下游索引与历史报告一起崩。" .
+
+hmd:justification a owl:ObjectProperty ;
+    rdfs:label "justification" ;
+    rdfs:range hmd:MappingJustificationEnum ;
+    skos:definition "决策依据。术语映射、标引、归一化共用同一套词表（设计决策 D7）。" ;
+    skos:inScheme hmd:types .
+
+oio:hasBroadSynonym a owl:Class ;
+    rdfs:label "BROAD" ;
+    rdfs:subClassOf hmd:SynonymScopeEnum ;
+    skos:definition "更宽的说法。默认不扩展、不入索引，避免召回泛化" ;
+    hmd:expansion_weight 0e+00 ;
+    hmd:indexed false .
+
+oio:hasExactSynonym a owl:Class ;
+    rdfs:label "EXACT" ;
+    rdfs:subClassOf hmd:SynonymScopeEnum ;
+    skos:definition "完全等价。全权重扩展 + 写入索引" ;
+    hmd:expansion_weight 1e+00 ;
+    hmd:indexed true .
+
+oio:hasNarrowSynonym a owl:Class ;
+    rdfs:label "NARROW" ;
+    rdfs:subClassOf hmd:SynonymScopeEnum ;
+    skos:definition "更窄的说法。降权 0.8 扩展 + 写入索引" ;
+    hmd:expansion_weight 8e-01 ;
+    hmd:indexed true .
+
+oio:hasRelatedSynonym a owl:Class ;
+    rdfs:label "RELATED" ;
+    rdfs:subClassOf hmd:SynonymScopeEnum ;
+    skos:definition "相关但不等价。永不扩展，仅作 rerank 特征" ;
+    hmd:expansion_weight 0e+00 ;
+    hmd:indexed false .
+
+skos:broadMatch a owl:Class ;
+    rdfs:label "broad_match" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+skos:closeMatch a owl:Class ;
+    rdfs:label "close_match" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+skos:exactMatch a owl:Class ;
+    rdfs:label "exact_match" ;
+    rdfs:subClassOf hmd:PredicateEnum ;
+    skos:definition "概念等价，用于构建 clique" .
+
+skos:narrowMatch a owl:Class ;
+    rdfs:label "narrow_match" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+biolink:BiologicalEntity a owl:Class ;
+    rdfs:label "BIOMARKER" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "生物标志物 / 基因变异" ;
+    hmd:id_segment "BMK" .
+
+biolink:ChemicalEntity a owl:Class ;
+    rdfs:label "SUBSTANCE" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "药物 / 物质" ;
+    hmd:id_segment "SUB" .
+
+biolink:ClinicalTrial a owl:Class ;
+    rdfs:label "TRIAL" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "临床试验" ;
+    hmd:id_segment "TRL" .
+
+biolink:Disease a owl:Class ;
+    rdfs:label "DISEASE" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "适应症 / 疾病" ;
+    hmd:id_segment "DIS" .
+
+biolink:GeneOrGeneProduct a owl:Class ;
+    rdfs:label "TARGET" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "靶点 / 基因 / 蛋白" ;
+    hmd:id_segment "TGT" .
+
+biolink:MolecularActivity a owl:Class ;
+    rdfs:label "MECHANISM" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "作用机制 MoA" ;
+    hmd:id_segment "MOA" .
+
+biolink:affects a owl:Class ;
+    rdfs:label "inhibits" ;
+    rdfs:subClassOf hmd:PredicateEnum ;
+    skos:definition "抑制。属性 qualifier 记录方向与强度" .
+
+biolink:biomarker_for a owl:Class ;
+    rdfs:label "biomarker_for" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+biolink:has_adverse_event a owl:Class ;
+    rdfs:label "has_adverse_event" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+biolink:has_target a owl:Class ;
+    rdfs:label "has_target" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+biolink:studied_to_treat a owl:Class ;
+    rdfs:label "in_clinical_trial_for" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+biolink:subclass_of a owl:Class ;
+    rdfs:label "subclass_of" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+biolink:treats a owl:Class ;
+    rdfs:label "treats" ;
+    rdfs:subClassOf hmd:PredicateEnum .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#ABBREV> a owl:Class ;
+    rdfs:label "ABBREV" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "缩写，歧义高发区" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#BRAND> a owl:Class ;
+    rdfs:label "BRAND" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "商品名" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#CHEMICAL_NAME> a owl:Class ;
+    rdfs:label "CHEMICAL_NAME" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "化学名" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INN> a owl:Class ;
+    rdfs:label "INN" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "国际非专利药品名称" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INTERNAL_CODE> a owl:Class ;
+    rdfs:label "INTERNAL_CODE" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "企业内部研发代号，如 HMPL-504" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#LEGACY> a owl:Class ;
+    rdfs:label "LEGACY" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "历史废弃名称" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#MISSPELLING> a owl:Class ;
+    rdfs:label "MISSPELLING" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "常见拼写错误，只入索引不对外展示" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#PARTNER_CODE> a owl:Class ;
+    rdfs:label "PARTNER_CODE" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "合作方研发代号，如 AZD6094" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#RESEARCH_CODE> a owl:Class ;
+    rdfs:label "RESEARCH_CODE" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "通用研究代号" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#SYMBOL> a owl:Class ;
+    rdfs:label "SYMBOL" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "基因/蛋白符号" .
+
+<https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#TRANSLATION> a owl:Class ;
+    rdfs:label "TRANSLATION" ;
+    rdfs:subClassOf hmd:AliasTypeEnum ;
+    skos:definition "翻译名（中文层主力类型）" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> a owl:Class ;
+    rdfs:label "CLINICAL_TRIAL_RECORD" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "临床试验登记记录" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> a owl:Class ;
+    rdfs:label "CONFERENCE_ABSTRACT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "会议摘要（ASCO/ESMO，管线情报的高时效来源）" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> a owl:Class ;
+    rdfs:label "INTERNAL_REPORT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "企业内部报告，PoC 不涉及" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> a owl:Class ;
+    rdfs:label "JOURNAL_ARTICLE" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "期刊论文" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> a owl:Class ;
+    rdfs:label "LABEL" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "药品说明书" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> a owl:Class ;
+    rdfs:label "PATENT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "专利" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> a owl:Class ;
+    rdfs:label "PREPRINT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "预印本" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> a owl:Class ;
+    rdfs:label "REGULATORY_DOCUMENT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "监管文件（NMPA/FDA 审评）" .
+
+<https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#ADVERSE_EVENT> a owl:Class ;
+    rdfs:label "ADVERSE_EVENT" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "不良事件（依赖 MedDRA 采购，Track B）" ;
+    hmd:id_segment "AE" .
+
+<https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#MODALITY> a owl:Class ;
+    rdfs:label "MODALITY" ;
+    rdfs:subClassOf hmd:EntityTypeEnum ;
+    skos:definition "药物模态（小分子 / 单抗 / ADC / 细胞治疗 等）" ;
+    hmd:id_segment "MOD" .
+
+<https://w3id.org/asliva/biomed-ontology/LanguageEnum#en> a owl:Class ;
+    rdfs:label "en" ;
+    rdfs:subClassOf hmd:LanguageEnum ;
+    skos:definition "English" .
+
+<https://w3id.org/asliva/biomed-ontology/LanguageEnum#la> a owl:Class ;
+    rdfs:label "la" ;
+    rdfs:subClassOf hmd:LanguageEnum ;
+    skos:definition "Latin" .
+
+<https://w3id.org/asliva/biomed-ontology/LanguageEnum#zh> a owl:Class ;
+    rdfs:label "zh" ;
+    rdfs:subClassOf hmd:LanguageEnum ;
+    skos:definition "简体中文" .
+
+<https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_0> a owl:Class ;
+    rdfs:label "TIER_0" ;
+    rdfs:subClassOf hmd:LicenseTierEnum ;
+    skos:definition "完全开放（MONDO / HGNC / UNII / Wikidata）。无限制" ;
+    hmd:exportable true ;
+    hmd:trainable true .
+
+<https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_1> a owl:Class ;
+    rdfs:label "TIER_1" ;
+    rdfs:subClassOf hmd:LicenseTierEnum ;
+    skos:definition "署名或同源共享（ChEMBL CC-BY-SA、DrugCentral）。分发需标注，衍生物受限" ;
+    hmd:exportable true ;
+    hmd:trainable false .
+
+<https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_2> a owl:Class ;
+    rdfs:label "TIER_2" ;
+    rdfs:subClassOf hmd:LicenseTierEnum ;
+    skos:definition "需订阅、内部可用（UMLS 受限源、DrugBank）。不可外泄原文" ;
+    hmd:exportable false ;
+    hmd:trainable false .
+
+<https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_3> a owl:Class ;
+    rdfs:label "TIER_3" ;
+    rdfs:subClassOf hmd:LicenseTierEnum ;
+    skos:definition "严格受限（MedDRA、智慧芽 / 医药魔方原始记录）。仅授权用户可见" ;
+    hmd:exportable false ;
+    hmd:trainable false .
+
+<https://w3id.org/asliva/biomed-ontology/MappingJustificationEnum#LLMDisambiguation> a owl:Class ;
+    rdfs:label "LLMDisambiguation" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "LLM 上下文消歧（hmd 扩展，需记录 model 与 context）" .
+
+<https://w3id.org/asliva/biomed-ontology/MappingJustificationEnum#OntologyDescendantExpansion> a owl:Class ;
+    rdfs:label "OntologyDescendantExpansion" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "本体子树扩展（hmd 扩展，需记录 depth）" .
+
+<https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#IMAGE> a owl:Class ;
+    rdfs:label "IMAGE" ;
+    rdfs:subClassOf hmd:ModalityChannelEnum ;
+    skos:definition "图像（KM 曲线、剂量-反应、通路图）" .
+
+<https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#METADATA> a owl:Class ;
+    rdfs:label "METADATA" ;
+    rdfs:subClassOf hmd:ModalityChannelEnum ;
+    skos:definition "文档元数据字段" .
+
+<https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE> a owl:Class ;
+    rdfs:label "STRUCTURE" ;
+    rdfs:subClassOf hmd:ModalityChannelEnum ;
+    skos:definition "化学结构图（OCSR）" .
+
+<https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE> a owl:Class ;
+    rdfs:label "TABLE" ;
+    rdfs:subClassOf hmd:ModalityChannelEnum ;
+    skos:definition "表格（视觉模型还原结构后逐单元格对齐本体）" .
+
+<https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> a owl:Class ;
+    rdfs:label "TEXT" ;
+    rdfs:subClassOf hmd:ModalityChannelEnum ;
+    skos:definition "正文文本" .
+
+<https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#ABSTAIN> a owl:Class ;
+    rdfs:label "ABSTAIN" ;
+    rdfs:subClassOf hmd:NormalizationStageEnum ;
+    skos:definition "放弃，产出 unmapped 信号" .
+
+<https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#DICTIONARY> a owl:Class ;
+    rdfs:label "DICTIONARY" ;
+    rdfs:subClassOf hmd:NormalizationStageEnum ;
+    skos:definition "精确词典匹配，最快最可信" .
+
+<https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#LLM> a owl:Class ;
+    rdfs:label "LLM" ;
+    rdfs:subClassOf hmd:NormalizationStageEnum ;
+    skos:definition "LLM 上下文消歧，仅在候选分差小于阈值时触发" .
+
+<https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#RULE> a owl:Class ;
+    rdfs:label "RULE" ;
+    rdfs:subClassOf hmd:NormalizationStageEnum ;
+    skos:definition "规则模糊匹配（代号变体、词形）" .
+
+<https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#VECTOR> a owl:Class ;
+    rdfs:label "VECTOR" ;
+    rdfs:subClassOf hmd:NormalizationStageEnum ;
+    skos:definition "向量召回" .
+
+<https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#BM25> a owl:Class ;
+    rdfs:label "BM25" ;
+    rdfs:subClassOf hmd:RetrievalChannelEnum ;
+    skos:definition "词法召回" .
+
+<https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#DENSE> a owl:Class ;
+    rdfs:label "DENSE" ;
+    rdfs:subClassOf hmd:RetrievalChannelEnum ;
+    skos:definition "向量召回" .
+
+<https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#FUSED> a owl:Class ;
+    rdfs:label "FUSED" ;
+    rdfs:subClassOf hmd:RetrievalChannelEnum ;
+    skos:definition "RRF 融合后的结果" .
+
+<https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#GRAPH> a owl:Class ;
+    rdfs:label "GRAPH" ;
+    rdfs:subClassOf hmd:RetrievalChannelEnum ;
+    skos:definition "图查询召回" .
+
+<https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#APPROVED> a owl:Class ;
+    rdfs:label "APPROVED" ;
+    rdfs:subClassOf hmd:ReviewStatusEnum ;
+    skos:definition "人工审校通过" .
+
+<https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#AUTO_TRUSTED> a owl:Class ;
+    rdfs:label "AUTO_TRUSTED" ;
+    rdfs:subClassOf hmd:ReviewStatusEnum ;
+    skos:definition "来自权威源，免审校" .
+
+<https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#PENDING> a owl:Class ;
+    rdfs:label "PENDING" ;
+    rdfs:subClassOf hmd:ReviewStatusEnum ;
+    skos:definition "待审校，默认不参与对外返回" .
+
+<https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#REJECTED> a owl:Class ;
+    rdfs:label "REJECTED" ;
+    rdfs:subClassOf hmd:ReviewStatusEnum ;
+    skos:definition "审校驳回，保留用于负样本训练" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#CANDIDATE_GENERATED> a owl:Class ;
+    rdfs:label "CANDIDATE_GENERATED" ;
+    rdfs:subClassOf hmd:SignalStatusEnum ;
+    skos:definition "已生成候选变更" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#CURATED> a owl:Class ;
+    rdfs:label "CURATED" ;
+    rdfs:subClassOf hmd:SignalStatusEnum ;
+    skos:definition "已审校，产出 KGCL" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#DISMISSED> a owl:Class ;
+    rdfs:label "DISMISSED" ;
+    rdfs:subClassOf hmd:SignalStatusEnum ;
+    skos:definition "判定无需处理" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#NEW> a owl:Class ;
+    rdfs:label "NEW" ;
+    rdfs:subClassOf hmd:SignalStatusEnum ;
+    skos:definition "新浮现" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#RELEASED> a owl:Class ;
+    rdfs:label "RELEASED" ;
+    rdfs:subClassOf hmd:SignalStatusEnum ;
+    skos:definition "已随 release 发版" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#TRIAGED> a owl:Class ;
+    rdfs:label "TRIAGED" ;
+    rdfs:subClassOf hmd:SignalStatusEnum ;
+    skos:definition "已定级" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#ambiguous_unstable> a owl:Class ;
+    rdfs:label "ambiguous_unstable" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "同一别名在不同上下文反复给出不同概念" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#cooccurrence_anomaly> a owl:Class ;
+    rdfs:label "cooccurrence_anomaly" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "共现异常，提示缺失关系" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#expansion_miss> a owl:Class ;
+    rdfs:label "expansion_miss" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "扩展词集未覆盖用户实际点击的文档" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#low_confidence_normalization> a owl:Class ;
+    rdfs:label "low_confidence_normalization" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "归一化成功但置信度低" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#multi_source_conflict> a owl:Class ;
+    rdfs:label "multi_source_conflict" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "多源事实冲突，Track B 接入后成为主力信号" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#negative_feedback> a owl:Class ;
+    rdfs:label "negative_feedback" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "agent 或用户回传的负反馈" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#unmapped_span> a owl:Class ;
+    rdfs:label "unmapped_span" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "有实体形态但归一化失败的片段" .
+
+<https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#zero_result_query> a owl:Class ;
+    rdfs:label "zero_result_query" ;
+    rdfs:subClassOf hmd:SignalTypeEnum ;
+    skos:definition "零结果查询" .
+
+hmd:category a owl:DatatypeProperty ;
+    rdfs:label "category" ;
+    rdfs:range xsd:anyURI ;
+    skos:definition "Biolink Model 类别，用于与外部图谱对齐" ;
+    skos:inScheme hmd:concept .
+
+hmd:conflict_flags a owl:DatatypeProperty ;
+    rdfs:label "conflict_flags" ;
+    skos:definition "建团冲突说明，非空即需人工介入" ;
+    skos:inScheme hmd:concept .
+
+hmd:consider a owl:DatatypeProperty ;
+    rdfs:label "consider" ;
+    rdfs:range xsd:anyURI ;
+    skos:definition "废弃概念的候选替代（非唯一，需人工判断）" ;
+    skos:inScheme hmd:concept .
+
+hmd:equivalent_xrefs a owl:DatatypeProperty ;
+    rdfs:label "equivalent_xrefs" ;
+    rdfs:range xsd:anyURI ;
+    skos:definition "等价团其余成员，含外采数据的 vendor ID" ;
+    skos:inScheme hmd:concept .
+
+hmd:members a owl:DatatypeProperty ;
+    rdfs:label "members" ;
+    rdfs:range xsd:anyURI ;
+    skos:inScheme hmd:concept .
+
+hmd:parents a owl:DatatypeProperty ;
+    rdfs:label "parents" ;
+    rdfs:range xsd:anyURI ;
+    skos:inScheme hmd:concept .
+
+<https://w3id.org/semapv/vocab/CompositeMatching> a owl:Class ;
+    rdfs:label "CompositeMatching" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "组合匹配" .
+
+<https://w3id.org/semapv/vocab/LexicalMatching> a owl:Class ;
+    rdfs:label "LexicalMatching" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "词形匹配" .
+
+<https://w3id.org/semapv/vocab/ManualMappingCuration> a owl:Class ;
+    rdfs:label "ManualMappingCuration" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "人工审校" .
+
+<https://w3id.org/semapv/vocab/MappingChaining> a owl:Class ;
+    rdfs:label "MappingChaining" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "映射链传递（A=B, B=C 推出 A=C）" .
+
+<https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> a owl:Class ;
+    rdfs:label "SemanticSimilarityThresholdMatching" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "向量相似度过阈" .
+
+<https://w3id.org/semapv/vocab/UnspecifiedMatching> a owl:Class ;
+    rdfs:label "UnspecifiedMatching" ;
+    rdfs:subClassOf hmd:MappingJustificationEnum ;
+    skos:definition "来源未声明依据" .
+
+hmd:alias_id a owl:DatatypeProperty ;
+    rdfs:label "alias_id" ;
+    rdfs:range [ a rdfs:Datatype ;
+            owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:string ;
+                        owl:withRestrictions ( [ xsd:pattern "^HMDA:\\d{9}$" ] ) ] ) ] ;
+    skos:definition "别名条目的稳定 ID。可观测埋点回传的就是这个 ID —— 归因排障时要能从一条错误结论定位到具体哪一行别名（Demo 场景 4）。" ;
+    skos:inScheme hmd:concept .
+
+hmd:alias_norm a owl:DatatypeProperty ;
+    rdfs:label "alias_norm" ;
+    skos:definition "归一化写法，词典匹配键" ;
+    skos:inScheme hmd:concept .
+
+hmd:alias_raw a owl:DatatypeProperty ;
+    rdfs:label "alias_raw" ;
+    skos:definition "原始写法，保留大小写、连字符与空白" ;
+    skos:inScheme hmd:concept .
+
+hmd:alias_type a owl:ObjectProperty ;
+    rdfs:label "alias_type" ;
+    rdfs:range hmd:AliasTypeEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:author_id a owl:DatatypeProperty ;
+    rdfs:label "author_id" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:concept .
+
+hmd:built_by_justification a owl:ObjectProperty ;
+    rdfs:label "built_by_justification" ;
+    rdfs:range hmd:MappingJustificationEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:child_id a owl:DatatypeProperty ;
+    rdfs:label "child_id" ;
+    rdfs:range xsd:anyURI ;
+    skos:inScheme hmd:concept .
+
+hmd:created_in_release a owl:DatatypeProperty ;
+    rdfs:label "created_in_release" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:concept .
+
+hmd:definition a owl:DatatypeProperty ;
+    rdfs:label "definition" ;
+    skos:inScheme hmd:concept .
+
+hmd:entity_type a owl:ObjectProperty ;
+    rdfs:label "entity_type" ;
+    rdfs:range hmd:EntityTypeEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:is_ambiguous a owl:DatatypeProperty ;
+    rdfs:label "is_ambiguous" ;
+    rdfs:range xsd:boolean ;
+    skos:definition "该别名映射到多个概念，禁止直接单选" ;
+    skos:inScheme hmd:concept .
+
+hmd:is_obsolete a owl:DatatypeProperty ;
+    rdfs:label "is_obsolete" ;
+    rdfs:range xsd:boolean ;
+    skos:inScheme hmd:concept .
+
+hmd:lang a owl:ObjectProperty ;
+    rdfs:label "lang" ;
+    rdfs:range hmd:LanguageEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:mapping_date a owl:DatatypeProperty ;
+    rdfs:label "mapping_date" ;
+    rdfs:range xsd:date ;
+    skos:inScheme hmd:concept .
+
+hmd:mapping_id a owl:DatatypeProperty ;
+    rdfs:label "mapping_id" ;
+    rdfs:range [ a rdfs:Datatype ;
+            owl:intersectionOf ( xsd:string [ a rdfs:Datatype ;
+                        owl:onDatatype xsd:string ;
+                        owl:withRestrictions ( [ xsd:pattern "^HMDM:\\d{9}$" ] ) ] ) ] ;
+    skos:inScheme hmd:concept .
+
+hmd:mapping_justification a owl:ObjectProperty ;
+    rdfs:label "mapping_justification" ;
+    rdfs:range hmd:MappingJustificationEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:mapping_tool a owl:DatatypeProperty ;
+    rdfs:label "mapping_tool" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:concept .
+
+hmd:modified_in_release a owl:DatatypeProperty ;
+    rdfs:label "modified_in_release" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:concept .
+
+hmd:object_id a owl:DatatypeProperty ;
+    rdfs:label "object_id" ;
+    rdfs:range xsd:anyURI ;
+    skos:inScheme hmd:concept .
+
+hmd:object_label a owl:DatatypeProperty ;
+    rdfs:label "object_label" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:concept .
+
+hmd:parent_id a owl:DatatypeProperty ;
+    rdfs:label "parent_id" ;
+    rdfs:range xsd:anyURI ;
+    skos:inScheme hmd:concept .
+
+hmd:predicate a owl:ObjectProperty ;
+    rdfs:label "predicate" ;
+    rdfs:range hmd:PredicateEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:predicate_id a owl:ObjectProperty ;
+    rdfs:label "predicate_id" ;
+    rdfs:range hmd:PredicateEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:preferred_label_en a owl:DatatypeProperty ;
+    rdfs:label "preferred_label_en" ;
+    skos:definition "英文首选标签" ;
+    skos:inScheme hmd:concept .
+
+hmd:preferred_label_zh a owl:DatatypeProperty ;
+    rdfs:label "preferred_label_zh" ;
+    skos:definition "中文首选标签。中文层是自建增量（D5）—— 开放许可源的中文覆盖不足，LLM 生成的候选必须人工审校后才能升为 preferred。" ;
+    skos:inScheme hmd:concept .
+
+hmd:replaced_by a owl:DatatypeProperty ;
+    rdfs:label "replaced_by" ;
+    rdfs:range xsd:anyURI ;
+    skos:definition "废弃概念的唯一继任者" ;
+    skos:inScheme hmd:concept .
+
+hmd:scope a owl:ObjectProperty ;
+    rdfs:label "scope" ;
+    rdfs:range hmd:SynonymScopeEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:subject_id a owl:DatatypeProperty ;
+    rdfs:label "subject_id" ;
+    rdfs:range xsd:anyURI ;
+    skos:inScheme hmd:concept .
+
+hmd:subject_label a owl:DatatypeProperty ;
+    rdfs:label "subject_label" ;
+    rdfs:range xsd:string ;
+    skos:inScheme hmd:concept .
+
+hmd:valid_from a owl:DatatypeProperty ;
+    rdfs:label "valid_from" ;
+    rdfs:range xsd:date ;
+    skos:inScheme hmd:concept .
+
+hmd:valid_to a owl:DatatypeProperty ;
+    rdfs:label "valid_to" ;
+    rdfs:range xsd:date ;
+    skos:definition "为空表示当前有效" ;
+    skos:inScheme hmd:concept .
+
+hmd:RetrievalChannelEnum a owl:Class ;
+    rdfs:label "RetrievalChannelEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#BM25> <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#DENSE> <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#GRAPH> <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#FUSED> ) ;
+    skos:definition "召回通道。融合前必须留存，否则无法归因是哪一路把结果带进来的。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#BM25>,
+        <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#DENSE>,
+        <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#FUSED>,
+        <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#GRAPH> .
+
+hmd:LanguageEnum a owl:Class ;
+    rdfs:label "LanguageEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/LanguageEnum#en> <https://w3id.org/asliva/biomed-ontology/LanguageEnum#zh> <https://w3id.org/asliva/biomed-ontology/LanguageEnum#la> ) ;
+    skos:definition "别名语言。中英必须互通，拉丁名用于化学与物种" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/LanguageEnum#en>,
+        <https://w3id.org/asliva/biomed-ontology/LanguageEnum#la>,
+        <https://w3id.org/asliva/biomed-ontology/LanguageEnum#zh> .
+
+hmd:ModalityChannelEnum a owl:Class ;
+    rdfs:label "ModalityChannelEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#IMAGE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#METADATA> ) ;
+    skos:definition "抽取通道。三模态各自的错误模式不同，混在一起就无法分模态评估准确率， 也无法定位是解析失败还是抽取失败。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#IMAGE>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#METADATA>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> .
+
+hmd:NormalizationStageEnum a owl:Class ;
+    rdfs:label "NormalizationStageEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#DICTIONARY> <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#RULE> <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#VECTOR> <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#LLM> <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#ABSTAIN> ) ;
+    skos:definition "归一化级联的阶段枚举（设计决策 D7 的执行点）。 每一级的代价与可信度都不同，记录命中在哪一级才能优化级联本身。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#ABSTAIN>,
+        <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#DICTIONARY>,
+        <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#LLM>,
+        <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#RULE>,
+        <https://w3id.org/asliva/biomed-ontology/NormalizationStageEnum#VECTOR> .
+
+hmd:SignalStatusEnum a owl:Class ;
+    rdfs:label "SignalStatusEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#NEW> <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#TRIAGED> <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#CANDIDATE_GENERATED> <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#CURATED> <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#RELEASED> <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#DISMISSED> ) ;
+    skos:definition "信号的处理状态，审校队列按此流转。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#CANDIDATE_GENERATED>,
+        <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#CURATED>,
+        <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#DISMISSED>,
+        <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#NEW>,
+        <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#RELEASED>,
+        <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#TRIAGED> .
+
+hmd:SynonymScopeEnum a owl:Class ;
+    rdfs:label "SynonymScopeEnum" ;
+    owl:unionOf ( oio:hasExactSynonym oio:hasNarrowSynonym oio:hasBroadSynonym oio:hasRelatedSynonym ) ;
+    skos:definition "别名范围，直接决定检索行为（设计决策 D2）。 把 related 当作等价会摧毁精确率，因此 scope 是必填字段而非可选标注。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values oio:hasBroadSynonym,
+        oio:hasExactSynonym,
+        oio:hasNarrowSynonym,
+        oio:hasRelatedSynonym .
+
+hmd:confidence a owl:DatatypeProperty ;
+    rdfs:label "confidence" ;
+    rdfs:range xsd:float ;
+    skos:inScheme hmd:concept .
+
+hmd:review_status a owl:ObjectProperty ;
+    rdfs:label "review_status" ;
+    rdfs:range hmd:ReviewStatusEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:ReviewStatusEnum a owl:Class ;
+    rdfs:label "ReviewStatusEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#PENDING> <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#APPROVED> <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#REJECTED> <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#AUTO_TRUSTED> ) ;
+    skos:definition "审校状态。LLM 与规则生成的内容一律以 PENDING 入库， 未经人工审校不得进入 agent 返回体（设计决策 D5）。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#APPROVED>,
+        <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#AUTO_TRUSTED>,
+        <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#PENDING>,
+        <https://w3id.org/asliva/biomed-ontology/ReviewStatusEnum#REJECTED> .
+
+hmd:primary_xref a owl:DatatypeProperty ;
+    rdfs:label "primary_xref" ;
+    rdfs:range xsd:anyURI ;
+    skos:inScheme hmd:concept .
+
+hmd:DocTypeEnum a owl:Class ;
+    rdfs:label "DocTypeEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> ) ;
+    skos:definition "文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> .
+
+hmd:LicenseTierEnum a owl:Class ;
+    rdfs:label "LicenseTierEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_0> <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_1> <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_2> <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_3> ) ;
+    skos:definition "许可分层（设计决策 D10），借鉴 UMLS SAB license category 机制。 tier 决定 RDF named graph 隔离策略、查询重写、导出闸门与训练语料准入。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_0>,
+        <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_1>,
+        <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_2>,
+        <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_3> .
+
+hmd:SignalTypeEnum a owl:Class ;
+    rdfs:label "SignalTypeEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#unmapped_span> <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#low_confidence_normalization> <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#ambiguous_unstable> <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#zero_result_query> <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#expansion_miss> <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#negative_feedback> <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#cooccurrence_anomaly> <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#multi_source_conflict> ) ;
+    skos:definition "演进闭环的信号类型（L8）。 信号来自真实使用，比人工巡检更能反映本体的实际缺口。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#ambiguous_unstable>,
+        <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#cooccurrence_anomaly>,
+        <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#expansion_miss>,
+        <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#low_confidence_normalization>,
+        <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#multi_source_conflict>,
+        <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#negative_feedback>,
+        <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#unmapped_span>,
+        <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#zero_result_query> .
+
+hmd:concept_id a owl:DatatypeProperty ;
+    rdfs:label "concept_id" ;
+    rdfs:range xsd:anyURI ;
+    skos:definition "内部概念 CURIE" ;
+    skos:inScheme hmd:concept .
+
+hmd:license_tier a owl:ObjectProperty ;
+    rdfs:label "license_tier" ;
+    rdfs:range hmd:LicenseTierEnum ;
+    skos:inScheme hmd:concept .
+
+hmd:source a owl:DatatypeProperty ;
+    rdfs:label "source" ;
+    skos:definition "数据源标识，必须在 source registry 中注册" ;
+    skos:inScheme hmd:concept .
+
+hmd:source_version a owl:DatatypeProperty ;
+    rdfs:label "source_version" ;
+    skos:definition "源快照版本。缺此字段无法做离线可重放构建" ;
+    skos:inScheme hmd:concept .
+
+hmd:EntityTypeEnum a owl:Class ;
+    rdfs:label "EntityTypeEnum" ;
+    owl:unionOf ( biolink:GeneOrGeneProduct biolink:ChemicalEntity biolink:Disease biolink:MolecularActivity <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#MODALITY> biolink:ClinicalTrial biolink:BiologicalEntity <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#ADVERSE_EVENT> ) ;
+    skos:definition "本次 scope 内的实体类型。每个类型对应一个 HMD ID 命名空间段。 AE（不良事件）依赖 MedDRA 采购，PoC 阶段为空占位。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values biolink:BiologicalEntity,
+        biolink:ChemicalEntity,
+        biolink:ClinicalTrial,
+        biolink:Disease,
+        biolink:GeneOrGeneProduct,
+        biolink:MolecularActivity,
+        <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#ADVERSE_EVENT>,
+        <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#MODALITY> .
+
+hmd:AliasTypeEnum a owl:Class ;
+    rdfs:label "AliasTypeEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INN> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#BRAND> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INTERNAL_CODE> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#PARTNER_CODE> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#RESEARCH_CODE> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#ABBREV> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#SYMBOL> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#CHEMICAL_NAME> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#TRANSLATION> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#MISSPELLING> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#LEGACY> ) ;
+    skos:definition "别名的来源性质，用于消歧打分与审校优先级排序" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#ABBREV>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#BRAND>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#CHEMICAL_NAME>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INN>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INTERNAL_CODE>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#LEGACY>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#MISSPELLING>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#PARTNER_CODE>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#RESEARCH_CODE>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#SYMBOL>,
+        <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#TRANSLATION> .
+
+hmd:MappingJustificationEnum a owl:Class ;
+    rdfs:label "MappingJustificationEnum" ;
+    owl:unionOf ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> <https://w3id.org/asliva/biomed-ontology/MappingJustificationEnum#OntologyDescendantExpansion> <https://w3id.org/asliva/biomed-ontology/MappingJustificationEnum#LLMDisambiguation> ) ;
+    skos:definition "映射与决策的依据词表（设计决策 D7）。 semapv 为标准词表，hmd: 前缀为本项目扩展。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/MappingJustificationEnum#LLMDisambiguation>,
+        <https://w3id.org/asliva/biomed-ontology/MappingJustificationEnum#OntologyDescendantExpansion>,
+        <https://w3id.org/semapv/vocab/CompositeMatching>,
+        <https://w3id.org/semapv/vocab/LexicalMatching>,
+        <https://w3id.org/semapv/vocab/ManualMappingCuration>,
+        <https://w3id.org/semapv/vocab/MappingChaining>,
+        <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching>,
+        <https://w3id.org/semapv/vocab/UnspecifiedMatching> .
+
+hmd:PredicateEnum a owl:Class ;
+    rdfs:label "PredicateEnum" ;
+    owl:unionOf ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch biolink:subclass_of biolink:affects biolink:treats biolink:has_target biolink:biomarker_for biolink:has_adverse_event biolink:studied_to_treat ) ;
+    skos:definition "关系谓词，取 Biolink Model 子集。 不自造谓词 —— 与 Biolink 对齐才能让外采数据与开源图谱无损融合。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values skos:broadMatch,
+        skos:closeMatch,
+        skos:exactMatch,
+        skos:narrowMatch,
+        biolink:affects,
+        biolink:biomarker_for,
+        biolink:has_adverse_event,
+        biolink:has_target,
+        biolink:studied_to_treat,
+        biolink:subclass_of,
+        biolink:treats .
+
+xsd:anyURI a rdfs:Datatype ;
+    owl:equivalentClass [ a rdfs:Datatype ;
+            owl:onDatatype xsd:string ;
+            owl:withRestrictions ( [ xsd:pattern "^[A-Za-z][A-Za-z0-9._-]*:\\S+$" ] ) ],
+        [ a rdfs:Datatype ;
+            owl:onDatatype xsd:string ;
+            owl:withRestrictions ( [ xsd:pattern "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$" ] ) ] .
+
+xsd:string a rdfs:Datatype ;
+    owl:equivalentClass [ a rdfs:Datatype ;
+            owl:onDatatype xsd:string ;
+            owl:withRestrictions ( [ xsd:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ) ] .
+
+

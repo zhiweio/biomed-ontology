@@ -1,0 +1,229 @@
+id: https://w3id.org/asliva/biomed-ontology/fact
+name: hmd_fact
+title: HMD Fact and Provenance Model
+description: >-
+  事实层（L4.5）与文档层（L4）模型。
+  仅做实体归一化只是"检索索引"，加上事实层与质量层才叫"数据底座"（设计决策 D12）。
+
+  每条事实必须能定位到原文的具体位置 —— section + char_offset 或 bbox。
+  做不到语句级溯源的事实在药物研发场景没有使用价值：研究员无法核验，就不会采信。
+license: Proprietary
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hmd: https://w3id.org/asliva/biomed-ontology/
+  biolink: https://w3id.org/biolink/vocab/
+  prov: http://www.w3.org/ns/prov#
+  dcterms: http://purl.org/dc/terms/
+
+default_prefix: hmd
+default_range: string
+
+imports:
+  - linkml:types
+  - hmd_concept
+
+classes:
+  Document:
+    description: 语料中的一篇文档。PoC 语料为 PubMed/PMC、ClinicalTrials.gov、专利。
+    slots:
+      - doc_id
+      - source_id
+      - external_id
+      - title
+      - doc_type
+      - published_on
+      - language
+      - license_tier
+      - retrieved_on
+      - labels
+    slot_usage:
+      doc_id:
+        identifier: true
+        required: true
+      source_id:
+        required: true
+        description: 必须是 registry 中已注册的源，否则许可元数据缺失。
+      doc_type:
+        required: true
+
+  Chunk:
+    description: >-
+      文档切片，检索与抽取的基本单位。
+      保留 section 与 bbox 是硬要求：provenance 要能把研究员的视线引到原文那一段。
+    slots:
+      - chunk_id
+      - doc_id
+      - section
+      - char_start
+      - char_end
+      - page
+      - bbox
+      - text
+      - modality
+      - concept_ids
+      - concept_ids_expanded
+    slot_usage:
+      chunk_id:
+        identifier: true
+        required: true
+      doc_id:
+        required: true
+      text:
+        required: true
+      concept_ids:
+        description: 直接归一化命中的概念，用于精确过滤。
+      concept_ids_expanded:
+        description: >-
+          含本体子树扩展的概念集合，用于召回。
+          与 concept_ids 分开存是为了让"查 NSCLC 召回肺腺癌"不污染精确匹配。
+
+  Fact:
+    description: >-
+      一条结构化事实三元组，带语句级溯源。
+      RDF 落地形态是 RDF-star：<< :s :p :o >> prov:wasDerivedFrom :chunk 。
+    slots:
+      - fact_id
+      - subject_id
+      - predicate
+      - object_id
+      - object_value
+      - object_unit
+      - qualifiers
+      - evidence
+      - confidence
+      - extractor_id
+      - extractor_version
+      - review_status
+      - license_tier
+      - created_in_release
+      - modality
+      # 两个 label 随事实一并返回，避免 agent 为了把 CURIE 渲染成人读文本
+      # 而对每条事实再发两次 get_concept。
+      - subject_label
+      - object_label
+    slot_usage:
+      fact_id:
+        identifier: true
+        required: true
+      subject_id:
+        required: true
+        range: ConceptCurie
+        description: 事实的主语必须已归一化到内部 CURIE，外部 ID 一律先挂靠（设计决策 D9）。
+      object_id:
+        range: ConceptCurie
+      predicate:
+        required: true
+      evidence:
+        required: true
+        description: 无证据的事实一律不入库。这是"事实带 provenance 100%"验收项的执行点。
+
+  Evidence:
+    description: 事实的出处。一条事实可有多条证据，多证据支持会提升 confidence。
+    slots:
+      - chunk_id
+      - doc_id
+      - section
+      - char_start
+      - char_end
+      - page
+      - bbox
+      - modality
+      - quote
+      - title
+    slot_usage:
+      chunk_id:
+        required: true
+      doc_id:
+        required: true
+
+  Provenance:
+    description: 面向 agent 返回体的溯源块（设计决策 D6），是 tool 返回体的一等公民。
+    slots:
+      - doc_id
+      - chunk_id
+      - section
+      - char_start
+      - char_end
+      - page
+      - bbox
+      - modality
+      - rank_before_rerank
+      - retrieval_channel
+      - license_tier
+
+slots:
+  doc_id:
+    range: string
+    pattern: "^DOC:[A-Za-z0-9._:-]+$"
+  chunk_id:
+    range: string
+    pattern: "^CHK:[A-Za-z0-9._:-]+$"
+  fact_id:
+    range: string
+    pattern: "^HMDF:\\d{9}$"
+  source_id:
+    range: string
+  external_id:
+    range: ExternalCurie
+  title:
+    range: string
+  doc_type:
+    range: DocTypeEnum
+  published_on:
+    range: date
+  language:
+    range: LanguageEnum
+  retrieved_on:
+    range: datetime
+  labels:
+    range: string
+    multivalued: true
+    description: 标引分类打的多标签，取值来自 taxonomy。
+  section:
+    range: string
+  char_start:
+    range: integer
+  char_end:
+    range: integer
+  page:
+    range: integer
+  bbox:
+    range: float
+    multivalued: true
+    description: "[x0, y0, x1, y1]，页面坐标。表格/图像抽取的溯源靠它定位。"
+  text:
+    range: string
+  quote:
+    range: string
+    description: 支撑该事实的原文片段，供研究员快速核验。
+  modality:
+    range: ModalityChannelEnum
+  concept_ids:
+    range: ConceptCurie
+    multivalued: true
+  concept_ids_expanded:
+    range: ConceptCurie
+    multivalued: true
+  object_value:
+    range: string
+    description: 数值型客体（IC50、ORR、PFS），与 object_id 二选一。
+  object_unit:
+    range: string
+  qualifiers:
+    range: string
+    multivalued: true
+    description: "限定条件，如 line_of_therapy=3L、population=MET_ex14。"
+  evidence:
+    range: Evidence
+    multivalued: true
+    inlined_as_list: true
+  extractor_id:
+    range: string
+  extractor_version:
+    range: string
+  rank_before_rerank:
+    range: integer
+    description: rerank 前的名次。保留它才能判断 rerank 是帮忙还是帮倒忙。
+  retrieval_channel:
+    range: RetrievalChannelEnum

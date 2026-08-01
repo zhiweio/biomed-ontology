@@ -1,0 +1,152 @@
+# PoC 语料样例。字段结构对齐真实 ETL 产物（PubMed/PMC/CTgov/专利），
+# 内容取自公开可查的阿斯利华管线信息，数值经简化，仅用于跑通抽取与质量链路。
+#
+# license_tier 逐篇标注：TIER_0 公开、TIER_2 需订阅、TIER_3 商采。
+# 检索侧的许可过滤必须能在这一层就拿到 tier，否则只能在返回前补查，
+# 那时数据已经离开存储边界了。
+
+corpus_version: "0.1.0"
+
+documents:
+  - doc_id: DOC:PMID.32821245
+    source_id: PUBMED
+    external_id: "32821245"
+    title: "Savolitinib in patients with pulmonary sarcomatoid carcinoma with MET exon 14 skipping alterations"
+    doc_type: JOURNAL_ARTICLE
+    published_on: "2021-08-01"
+    language: en
+    license_tier: TIER_0
+    sections:
+      - name: Abstract
+        page: 1
+        text: >-
+          Savolitinib is a selective MET tyrosine kinase inhibitor. This multicentre,
+          open-label, single-arm phase 2 study evaluated savolitinib in patients with
+          pulmonary sarcomatoid carcinoma and other non-small cell lung cancer harbouring
+          MET exon 14 skipping alterations. Savolitinib inhibits MET phosphorylation at
+          nanomolar concentrations. The objective response rate was assessed by independent
+          review committee.
+      - name: Methods
+        page: 2
+        text: >-
+          Eligible patients received savolitinib 600 mg once daily. MET exon 14 skipping
+          was confirmed centrally by next-generation sequencing. MET exon 14 skipping status
+          predicts response to savolitinib and served as the biomarker for patient selection.
+      - name: Results
+        page: 4
+        text: >-
+          A total of 70 patients were enrolled. Treatment-related adverse events of grade 3
+          or worse occurred in 41 percent of patients, most commonly peripheral oedema.
+          Dose reduction was required in a subset of patients. Savolitinib for the treatment
+          of non-small cell lung cancer showed durable responses.
+    tables:
+      - table_id: T1
+        caption: "Efficacy of savolitinib by population"
+        page: 5
+        bbox: [72.0, 180.0, 523.0, 340.0]
+        header: [Arm, N, ORR, Median PFS, Population]
+        rows:
+          - [Savolitinib, "70", "42.9", "6.8", "PSC and other NSCLC"]
+          - [Savolitinib, "25", "40.0", "5.5", "Previously treated"]
+    images:
+      - image_id: F2
+        caption: "Kaplan-Meier curve of progression-free survival for savolitinib"
+        page: 6
+        bbox: [80.0, 90.0, 500.0, 400.0]
+        kind: km_curve
+        vision_summary: "KM curve showing PFS with median at 6.8 months and 12-month rate of 27 percent"
+        extracted_values:
+          median_pfs: "6.8 months"
+          pfs_rate_12m: "27 %"
+
+  - doc_id: DOC:PMID.30006302
+    source_id: PUBMED
+    external_id: "30006302"
+    title: "Fruquintinib in patients with previously treated metastatic colorectal cancer: the FRESCO randomized clinical trial"
+    doc_type: JOURNAL_ARTICLE
+    published_on: "2018-06-26"
+    language: en
+    license_tier: TIER_0
+    sections:
+      - name: Abstract
+        page: 1
+        text: >-
+          Fruquintinib is a highly selective VEGFR inhibitor. In this randomized,
+          double-blind, placebo-controlled phase 3 trial, fruquintinib was evaluated in
+          metastatic colorectal cancer. Fruquintinib targets VEGFR2 and suppresses tumour
+          angiogenesis. The hazard ratio for overall survival favoured fruquintinib.
+      - name: Results
+        page: 3
+        text: >-
+          Median overall survival was longer with fruquintinib than placebo. Grade 3 or
+          higher adverse events included hypertension and hand-foot syndrome. Fruquintinib
+          for the treatment of colorectal cancer was approved on the basis of this trial.
+    tables:
+      - table_id: T2
+        caption: "FRESCO primary and secondary endpoints"
+        page: 4
+        bbox: [70.0, 200.0, 520.0, 330.0]
+        header: [Arm, N, OS, PFS, DCR]
+        rows:
+          - [Fruquintinib, "278", "9.3", "3.7", "62.2"]
+          - [Placebo, "138", "6.6", "1.8", "12.3"]
+
+  - doc_id: DOC:CTGOV.NCT02807415
+    source_id: CTGOV
+    external_id: NCT02807415
+    title: "A Study of Surufatinib in Patients With Advanced Neuroendocrine Tumors"
+    doc_type: CLINICAL_TRIAL_RECORD
+    published_on: "2016-06-21"
+    language: en
+    license_tier: TIER_0
+    sections:
+      - name: BriefSummary
+        page: 1
+        text: >-
+          Surufatinib is an oral angio-immuno kinase inhibitor. Surufatinib targets VEGFR
+          and CSF1R. This randomized, double-blind, placebo-controlled phase 3 study
+          evaluated surufatinib in advanced neuroendocrine tumors. Surufatinib for the
+          treatment of neuroendocrine tumors is being investigated in this registry study.
+      - name: Outcomes
+        page: 2
+        text: >-
+          The primary endpoint is progression-free survival assessed by blinded independent
+          image review. Adverse event monitoring includes grade 3 hypertension and
+          proteinuria.
+
+  - doc_id: DOC:CNIPA.CN105461695A
+    source_id: CNIPA
+    external_id: CN105461695A
+    title: "一种 MET 激酶抑制剂晶型及其制备方法"
+    doc_type: PATENT
+    published_on: "2016-04-06"
+    language: zh
+    license_tier: TIER_0
+    sections:
+      - name: Claims
+        page: 1
+        text: >-
+          本发明涉及沃利替尼的晶型及其制备方法。所述通式化合物及其药学上可接受的盐可用于制备
+          治疗非小细胞肺癌的药物。该晶型经粉末衍射表征具有特征峰。本发明的化合物抑制 MET 激酶活性。
+      - name: Description
+        page: 3
+        text: >-
+          沃利替尼是一种高选择性 MET 抑制剂，用于治疗非小细胞肺癌。多晶型研究表明该晶型稳定性良好。
+
+  - doc_id: DOC:PATSNAP.PS-2023-00417
+    source_id: MOCK_LICENSED
+    external_id: PS-2023-00417
+    title: "Competitive landscape of MET inhibitors in China (licensed analyst report)"
+    doc_type: INTERNAL_REPORT
+    published_on: "2023-11-02"
+    language: en
+    license_tier: TIER_3
+    sections:
+      - name: Summary
+        page: 1
+        text: >-
+          This licensed report reviews acquired resistance to MET inhibitors and bypass
+          activation mechanisms. Savolitinib was evaluated in EGFR-mutant non-small cell
+          lung cancer with MET amplification. Savolitinib in combination with osimertinib is
+          discussed as a combination therapy. The analyst forecast is proprietary and must
+          not leave the entitled workspace.

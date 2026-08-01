@@ -1,0 +1,125 @@
+# 图投影约束（手写，非 LinkML 生成）。
+#
+# 为什么不用 gen-shacl 的产物：那套 shapes 描述的是 LinkML 实例形状
+# （closed、按 slot URI 命名），而入库的是 SKOS/PROV 投影，两者的谓词根本对不上，
+# 拿去校验只会得到一屏 "Node is closed" 的噪音，等于没校验。
+#
+# 这里只约束投影层真正会出错、且出错后不会立刻报错的那几件事 ——
+# 它们的共同点是：违反了 SPARQL 依然能跑，只是答案会静默变少或变错。
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix hmd:  <https://w3id.org/asliva/biomed-ontology/> .
+@prefix hsh:  <https://w3id.org/asliva/biomed-ontology/shapes/> .
+
+hsh:ConceptShape
+    a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+
+    # 层级边指向概念而非字面量。
+    # 曾经把别名字符串写成 broader 的宾语：查询不报错，但层级扩展会漏召回，
+    # 表现为"这个病名查不全"，几乎不可能被归因到本体上。
+    sh:property [
+        sh:path skos:broader ;
+        sh:nodeKind sh:IRI ;
+        sh:class skos:Concept ;
+        sh:message "skos:broader 的宾语必须是概念 IRI，不能是别名字面量" ;
+    ] ;
+
+    # 每个概念至少一个英文首选标签，且唯一。
+    # 缺标签 → agent 只能把 CURIE 原样吐给用户；多标签 → 同一概念在不同回答里换名字。
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:minCount 1 ;
+        sh:message "概念缺少 skos:prefLabel" ;
+    ] ;
+
+    sh:property [
+        sh:path hmd:licenseTier ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+        sh:message "概念必须有且只有一个合法 license_tier —— 缺失会让许可门禁无从判断" ;
+    ] ;
+
+    sh:property [
+        sh:path hmd:entityType ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "概念必须标注 entity_type" ;
+    ] .
+
+
+hsh:FactShape
+    a sh:NodeShape ;
+    sh:targetClass hmd:Fact ;
+
+    # 无凭据的事实等于无出处的断言。整条链路的价值都建立在"每句话能回到原文"上，
+    # 允许一条例外，agent 就会有一条无法验证的输出路径。
+    sh:property [
+        sh:path prov:wasDerivedFrom ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "事实缺少 prov:wasDerivedFrom 凭据切片" ;
+    ] ;
+
+    sh:property [
+        sh:path hmd:confidence ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:double ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 1.0 ;
+        sh:message "事实置信度缺失或越界" ;
+    ] ;
+
+    sh:property [
+        sh:path hmd:factId ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:pattern "^HMDF:[0-9]{9}$" ;
+        sh:message "fact_id 不合规" ;
+    ] ;
+
+    sh:property [
+        sh:path hmd:licenseTier ;
+        sh:minCount 1 ;
+        sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+        sh:message "事实必须带 license_tier" ;
+    ] ;
+
+    sh:property [
+        sh:path hmd:extractor ;
+        sh:minCount 1 ;
+        sh:message "事实必须记录抽取器 ID —— 否则抽取器换版本后无法定位受影响事实" ;
+    ] .
+
+
+hsh:SynonymShape
+    a sh:NodeShape ;
+    sh:targetClass hmd:Synonym ;
+
+    sh:property [
+        sh:path hmd:ofConcept ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "别名必须且只能挂在一个概念上" ;
+    ] ;
+
+    # alias_norm 是字典匹配的唯一入口，缺了它这条别名在检索侧完全不存在。
+    sh:property [
+        sh:path hmd:aliasNorm ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "别名缺少归一化形式，将无法被字典层命中" ;
+    ] ;
+
+    sh:property [
+        sh:path hmd:scope ;
+        sh:minCount 1 ;
+        sh:in ( "EXACT" "NARROW" "BROAD" "RELATED" ) ;
+        sh:message "别名 scope 非法" ;
+    ] .

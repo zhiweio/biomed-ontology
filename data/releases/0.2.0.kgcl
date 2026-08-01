@@ -1,0 +1,14 @@
+# changeset 0.1.0 -> 0.2.0
+# generated 2026-08-01T06:18:33.231543+00:00
+# [HMDS:642173353] 人工负反馈直接指明了期望概念
+create exact synonym '沃利替尼' for HMD:SUB:0000001
+# [HMDS:859628497] 在 3 篇文档同现但无事实边
+create edge HMD:DIS:0000001 hmd:related_to HMD:TGT:0000001
+# [HMDS:145783806] 1 次未命中，无可挂靠概念，待人工确认实体类型
+create node NEW:HMDS:145783806 'ABT-869'
+# [HMDS:042763618] 1 次未命中，无可挂靠概念，待人工确认实体类型
+create node NEW:HMDS:042763618 'BTK'
+# [HMDS:218354941] 1 次未命中，无可挂靠概念，待人工确认实体类型
+create node NEW:HMDS:218354941 'Zanubrutinib'
+# [HMDS:276984178] 1 次未命中，无可挂靠概念，待人工确认实体类型
+create node NEW:HMDS:276984178 '泽布替尼'

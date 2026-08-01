@@ -1,0 +1,452 @@
+id: https://w3id.org/asliva/biomed-ontology/agentapi
+name: hmd_agentapi
+title: HMD Agent Tool I/O Contract
+description: >-
+  Agent 工具契约（L6）。这份 schema 是底座与 agent 团队之间的接口约定，
+  由它生成 JSON Schema 用于运行时双向校验，也由它生成 MCP tool 描述。
+
+  三条不可协商的约定：
+  1. 每个返回体都带 trace_id 与 ontology_release_id —— 否则无法归因、无法重放、反馈无处挂靠
+  2. 每条结果都带 provenance —— 无出处的结论在药物研发场景不可用
+  3. 每条结果都带 license_tier —— 调用方需要知道哪些内容不可外发
+license: Proprietary
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hmd: https://w3id.org/asliva/biomed-ontology/
+
+default_prefix: hmd
+default_range: string
+
+imports:
+  - linkml:types
+  - hmd_obs
+  - hmd_taxonomy
+
+classes:
+  ToolEnvelope:
+    abstract: true
+    description: >-
+      所有 tool 返回体的公共头。做成抽象基类而非各自定义，
+      是为了让可观测埋点与许可闸门可以统一处理任意 tool 的输出。
+    slots:
+      - trace_id
+      - ontology_release_id
+      - tool_name
+      - tool_version
+      - elapsed_ms
+      - license_tier_max
+      - license_filtered_count
+      - warnings
+    slot_usage:
+      trace_id:
+        required: true
+      ontology_release_id:
+        required: true
+      license_tier_max:
+        required: true
+        description: 本次返回体中出现的最高 tier。调用方据此判断可否外发。
+
+  MatchedConcept:
+    description: 一次归一化命中，记录命中在级联的哪一级以及依据。
+    slots:
+      - concept_id
+      - alias_id
+      - matched_text
+      - char_start
+      - char_end
+      - scope
+      - stage
+      - confidence
+      - justification
+      - preferred_label_en
+      - preferred_label_zh
+      - entity_type
+      - is_ambiguous
+      - alternatives
+      - rationale
+    slot_usage:
+      concept_id:
+        required: true
+      stage:
+        required: true
+        range: NormalizationStageEnum
+
+  ConceptAlternative:
+    description: 消歧未确定时返回的备选。宁可返回 top-k + 置信度，也不猜一个（设计决策 D3）。
+    slots:
+      - concept_id
+      - preferred_label_en
+      - confidence
+
+  NormalizeRequest:
+    description: 文本 → CURIE。
+    slots:
+      - text
+      - entity_types
+      - context
+      - top_k
+      - min_confidence
+      - allow_llm
+      - detect_spans
+    slot_usage:
+      text:
+        required: true
+
+  NormalizeResponse:
+    is_a: ToolEnvelope
+    slots:
+      - matched_concepts
+      - unmapped_spans
+      - llm_invoked
+
+  ExpandRequest:
+    description: 概念 → 扩展词集。
+    slots:
+      - concept_id
+      - max_depth
+      - include_descendants
+      - min_weight
+      - languages
+      - top_k
+    slot_usage:
+      concept_id:
+        required: true
+
+  ExpandResponse:
+    is_a: ToolEnvelope
+    slots:
+      - concept_id
+      - expansion_terms
+      - expansion_size
+      - concept_detail
+
+  ConceptDetail:
+    description: >-
+      get_concept 的详情块。包含 children 而非只有 parents：
+      agent 做层级扩展时需要向下看，只给父链会逼它再发一轮查询。
+    slots:
+      - entity_type
+      - preferred_label_en
+      - preferred_label_zh
+      - definition
+      - parents
+      - children
+      - license_tier
+      - review_status
+
+  ExpansionTermOut:
+    description: 一个扩展词及其权重。权重来自 scope 与本体距离（设计决策 D2）。
+    slots:
+      - term
+      - weight
+      - concept_id
+      - alias_id
+      - scope
+      - depth
+      - lang
+      - shared_targets
+
+  SearchRequest:
+    description: 本体增强混合检索。
+    slots:
+      - query
+      - top_k
+      - entity_types
+      - doc_types
+      - labels
+      - use_expansion
+      - channels
+      - max_tier
+      - date_from
+      - date_to
+    slot_usage:
+      query:
+        required: true
+
+  SearchResponse:
+    is_a: ToolEnvelope
+    slots:
+      - matched_concepts
+      - expansion_size
+      - results
+      - total
+
+  SearchHit:
+    description: 一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件。
+    slots:
+      - chunk_id
+      - doc_id
+      - title
+      - snippet
+      - score
+      - rank
+      - rank_before_rerank
+      - retrieval_channel
+      - concept_ids
+      - provenance
+      - license_tier
+      - section
+      - page
+      - labels
+      - explain
+
+  SparqlRequest:
+    description: >-
+      受控 SPARQL。只接受模板名而非任意查询串 —— 开放任意 SPARQL
+      等于把许可重写这道防线交给调用方自觉遵守。
+    slots:
+      - sparql_template
+      - bindings
+    slot_usage:
+      sparql_template:
+        required: true
+
+  SparqlResponse:
+    is_a: ToolEnvelope
+    slots:
+      - rows
+      - total
+
+  LandscapeRequest:
+    description: 管线矩阵：靶点 × 适应症 × 在研药物。
+    slots:
+      - target_id
+      - disease_id
+
+  LandscapeResponse:
+    is_a: ToolEnvelope
+    slots:
+      - landscape_rows
+      - total
+
+  LandscapeRow:
+    slots:
+      - target_id
+      - target_label
+      - disease_id
+      - disease_label
+      - substances
+      - license_tier
+
+  LandscapeEntry:
+    slots:
+      - concept_id
+      - label
+      - stage
+      - license_tier
+
+  FactsRequest:
+    description: 按 s/p/o 查抽取事实。
+    slots:
+      - subject_id
+      - predicate
+      - object_id
+      - min_confidence
+      - include_pending
+      - include_evidence
+      - top_k
+
+  FactsResponse:
+    is_a: ToolEnvelope
+    slots:
+      - facts
+      - total
+
+  FeedbackRequest:
+    description: >-
+      以 trace_id 为主键的反馈。这是演进闭环的入口，
+      也是 agent 接入的前置条件 —— 不回传 feedback，闭环就断了。
+    slots:
+      - trace_id
+      - verdict
+      - reason
+      - expected_concept_id
+      - offending_concept_id
+      - free_text
+      - query
+    slot_usage:
+      trace_id:
+        required: true
+      verdict:
+        required: true
+
+  FeedbackResponse:
+    is_a: ToolEnvelope
+    slots:
+      - accepted
+      - signal_id
+
+slots:
+  license_tier_max:
+    range: LicenseTierEnum
+  warnings:
+    range: string
+    multivalued: true
+  matched_text:
+    range: string
+  alternatives:
+    range: ConceptAlternative
+    multivalued: true
+    inlined_as_list: true
+  entity_types:
+    range: EntityTypeEnum
+    multivalued: true
+  context:
+    range: string
+    description: 上下文文本，消歧阶段用它匹配 context_cues。
+  top_k:
+    range: integer
+    minimum_value: 1
+  min_confidence:
+    range: float
+    minimum_value: 0.0
+    maximum_value: 1.0
+  allow_llm:
+    range: boolean
+    description: 调用方可关闭 LLM 消歧以换取确定性与低延迟。
+  matched_concepts:
+    range: MatchedConcept
+    multivalued: true
+    inlined_as_list: true
+  unmapped_spans:
+    range: string
+    multivalued: true
+    description: 有实体形态但未能归一化的片段，直接产出 unmapped_span 信号。
+  max_depth:
+    range: integer
+  include_descendants:
+    range: boolean
+  min_weight:
+    range: float
+  languages:
+    range: LanguageEnum
+    multivalued: true
+  expansion_terms:
+    range: ExpansionTermOut
+    multivalued: true
+    inlined_as_list: true
+  expansion_size:
+    range: integer
+  term:
+    range: string
+  weight:
+    range: float
+  depth:
+    range: integer
+  query:
+    range: string
+  doc_types:
+    range: DocTypeEnum
+    multivalued: true
+  use_expansion:
+    range: boolean
+  date_from:
+    range: date
+  date_to:
+    range: date
+  results:
+    range: SearchHit
+    multivalued: true
+    inlined_as_list: true
+  snippet:
+    range: string
+  rank:
+    range: integer
+  provenance:
+    range: Provenance
+    inlined: true
+  facts:
+    range: Fact
+    multivalued: true
+    inlined_as_list: true
+  include_pending:
+    range: boolean
+    description: 低置信度事实默认不返回；开关放给调用方，但默认关闭。
+  verdict:
+    range: FeedbackVerdictEnum
+  reason:
+    range: string
+  expected_concept_id:
+    range: ConceptCurie
+  offending_concept_id:
+    range: ConceptCurie
+  free_text:
+    range: string
+  accepted:
+    range: boolean
+  detect_spans:
+    range: boolean
+    description: 关闭后只解析单个术语，不做文档级 span 检测。
+  llm_invoked:
+    range: boolean
+  channels:
+    range: RetrievalChannelEnum
+    multivalued: true
+  max_tier:
+    range: LicenseTierEnum
+    description: 调用方主动设定的 tier 上限，用于在外发场景下自我约束。
+  total:
+    range: integer
+  concept_detail:
+    range: ConceptDetail
+    inlined: true
+  children:
+    range: ConceptCurie
+    multivalued: true
+  lang:
+    range: LanguageEnum
+  shared_targets:
+    range: ConceptCurie
+    multivalued: true
+    description: find_analogous 中两个资产共享的靶点，是相似度成立的依据。
+  include_evidence:
+    range: boolean
+  sparql_template:
+    range: string
+  bindings:
+    range: string
+    multivalued: true
+  rows:
+    range: string
+    multivalued: true
+  landscape_rows:
+    range: LandscapeRow
+    multivalued: true
+    inlined_as_list: true
+  target_id:
+    range: ConceptCurie
+  target_label:
+    range: string
+  disease_id:
+    range: ConceptCurie
+  disease_label:
+    range: string
+  substances:
+    range: LandscapeEntry
+    multivalued: true
+    inlined_as_list: true
+  label:
+    range: string
+  stage:
+    range: string
+  explain:
+    range: string
+    description: 融合排序的可解释串，形如 RRF(bm25#1 + graph#2)。
+  rationale:
+    range: string
+    description: >-
+      归一化为何选中该概念的人读说明。消歧场景下这是审校同事
+      唯一能直接判断对错的字段。
+
+enums:
+  FeedbackVerdictEnum:
+    description: 反馈判定。区分错误类型才能路由到不同的信号类型与审校队列。
+    permissible_values:
+      CORRECT: { description: 结果正确 }
+      WRONG_CONCEPT: { description: 归一化到了错误概念 }
+      MISSING_ALIAS: { description: 别名未收录导致漏召回 }
+      MISSING_DOCUMENT: { description: 应召回的文档未出现 }
+      IRRELEVANT_RESULT: { description: 返回了不相关结果 }
+      WRONG_FACT: { description: 抽取事实有误 }
+      MISSING_PROVENANCE: { description: 溯源缺失或指向错误位置 }

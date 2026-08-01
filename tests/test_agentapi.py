@@ -1,0 +1,203 @@
+"""混合检索与 10 个 agent tool。
+
+许可相关的断言集中在这里：tool 层是唯一的对外面，
+门禁在别处漏一点还有机会被拦住，在这里漏就是直接出库。
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
+from biomed_ontology.agentapi import TOOL_SPECS
+from biomed_ontology.search import HybridSearcher, rrf_fuse
+
+LICENSED = frozenset({"MOCK_LICENSED"})
+SAVOLITINIB = "HMD:SUB:0000001"
+
+
+@pytest.fixture(scope="session")
+def searcher(kb):
+    return HybridSearcher(kb)
+
+
+# ------------------------------------------------------------------ 检索
+
+
+def test_rrf_rewards_agreement_across_channels():
+    """两路都排前列的文档要压过单路第一名 —— 这正是 RRF 的用处。"""
+    bm25 = RetrievalChannelEnum.BM25
+    dense = RetrievalChannelEnum.DENSE
+    fused = rrf_fuse({bm25: [("X", 9.0), ("C", 1.0)], dense: [("C", 0.9), ("Y", 0.8)]})
+    assert fused[0][0] == "C"
+    # 名次而非分数：X 的 BM25 分数高出一个量级也赢不了两路共识。
+    assert fused[0][2] == {"BM25": 2, "DENSE": 1}
+
+
+def test_alias_query_matches_documents_written_differently(kb, searcher, ctx):
+    """用代号查也要召回只写了中文名的文档 —— 这是语义层最直接的收益。"""
+    hits, _ = searcher.search("AZD6094", ctx=ctx, top_k=10)
+    assert any(SAVOLITINIB in kb.chunk(h.chunk_id).concept_ids for h in hits)
+
+
+def test_hierarchy_expansion_reaches_narrower_concepts(kb, searcher, ctx):
+    """查"肺癌"要能召回只提到 NSCLC 的文档，且该文档不含"肺癌"字面量。"""
+    hits, _ = searcher.search("肺癌", ctx=ctx, top_k=10)
+    non_literal = [h for h in hits if "肺癌" not in kb.chunk(h.chunk_id).text]
+    assert non_literal, "层级扩展未带来任何非字面量命中"
+
+
+def test_expansion_off_is_strictly_more_literal(kb, searcher, ctx):
+    off, _ = searcher.search("肺癌", ctx=ctx, top_k=10, expand=False)
+    on, _ = searcher.search("肺癌", ctx=ctx, top_k=10, expand=True)
+    assert {h.chunk_id for h in on} >= {h.chunk_id for h in off}
+
+
+def test_search_hides_commercial_source_without_entitlement(kb, searcher, ctx):
+    hits, _ = searcher.search(
+        "patent landscape savolitinib", ctx=ctx, top_k=10, entitlements=frozenset()
+    )
+    assert all(not h.doc_id.startswith("DOC:PATSNAP") for h in hits)
+    paid, _ = searcher.search(
+        "patent landscape savolitinib", ctx=ctx, top_k=10, entitlements=LICENSED
+    )
+    assert len(paid) >= len(hits)
+
+
+def test_max_tier_caps_results_below_entitlement(kb, searcher, ctx):
+    """持有凭据也要能主动降级 —— 对外汇报场景下不能带出商业内容。"""
+    hits, _ = searcher.search(
+        "savolitinib",
+        ctx=ctx,
+        top_k=10,
+        entitlements=LICENSED,
+        max_tier=LicenseTierEnum.TIER_0,
+    )
+    assert all(kb.doc_tier(h.doc_id) is LicenseTierEnum.TIER_0 for h in hits)
+
+
+# ------------------------------------------------------------------ agent tool
+
+
+def test_every_declared_tool_is_dispatchable(api):
+    for spec in TOOL_SPECS:
+        assert hasattr(api, spec["name"]), f"{spec['name']} 已声明但未实现"
+
+
+@pytest.mark.parametrize(
+    "name,kwargs",
+    [
+        ("normalize_entity", {"text": "沃利替尼"}),
+        ("resolve_alias", {"alias": "AZD6094"}),
+        ("expand_concept", {"concept_id": "HMD:DIS:0000003"}),
+        ("get_concept", {"concept_id": SAVOLITINIB}),
+        ("search_documents", {"query": "savolitinib NSCLC"}),
+        ("get_facts", {"subject_id": SAVOLITINIB}),
+        ("sparql_query", {"template": "concept_aliases", "bindings": {"concept_uri": SAVOLITINIB}}),
+        ("get_landscape", {}),
+        ("find_analogous", {"concept_id": SAVOLITINIB}),
+        ("submit_feedback", {"verdict": "WRONG_CONCEPT", "source_trace_id": "t-1"}),
+    ],
+)
+def test_tool_responses_satisfy_the_contract(api, name, kwargs):
+    """契约违规必须是硬失败。
+
+    agent 侧是拿 schema 生成代码的，返回体多一个字段少一个字段，
+    对面就是运行时炸开 —— 而且炸在别人的系统里。
+    """
+    env = getattr(api, name)(**kwargs)
+    assert env["warnings"] == [], f"{name}: {env['warnings']}"
+    assert env["trace_id"]
+    assert env["ontology_release_id"]
+
+
+def test_every_response_carries_a_trace_id_that_resolves(api):
+    env = api.search_documents(query="savolitinib")
+    spans, _, io = api.hub.by_trace(env["trace_id"])
+    assert io is not None
+    assert spans, "trace 里没有任何 span，等于没埋点"
+
+
+def test_get_facts_filters_by_license_and_reports_the_count(api):
+    free = api.get_facts(subject_id=SAVOLITINIB)
+    paid = api.get_facts(subject_id=SAVOLITINIB, entitlements=LICENSED)
+    assert free["license_filtered_count"] >= 1
+    assert paid["license_filtered_count"] == 0
+    assert len(paid["facts"]) > len(free["facts"])
+    assert free["license_tier_max"] == "TIER_0"
+
+
+def test_landscape_keeps_public_entries_in_a_row_that_also_has_paid_ones(api):
+    """按条目过滤而不是按行过滤。
+
+    行内混进一条 TIER_3 就把整行藏掉，等于用许可控制做信息删减 ——
+    公开信息本来就该看得见。
+    """
+    free = api.get_landscape()
+    paid = api.get_landscape(entitlements=LICENSED)
+    assert len(free["landscape_rows"]) == len(paid["landscape_rows"])
+    assert free["license_filtered_count"] >= 1
+
+
+def test_facts_never_leak_a_paid_source_without_entitlement(api, kb):
+    env = api.get_facts(subject_id=SAVOLITINIB)
+    for f in env["facts"]:
+        for ev in f["evidence"]:
+            assert kb.doc_tier(ev["doc_id"]) is LicenseTierEnum.TIER_0
+
+
+def _failed(env) -> bool:
+    """工具层把错误放回包里而不抛出去。
+
+    抛异常会把 agent 的循环直接打断；放回包里它才能改参数重试，
+    而且这次失败同样留下了 trace 与 IO 记录。
+    """
+    return env["warnings"] != []
+
+
+def test_sparql_rejects_injection(api):
+    env = api.sparql_query(template="concept_aliases", bindings={"concept_uri": "x> } DROP ALL #"})
+    assert _failed(env)
+    assert not env.get("rows")
+
+
+def test_sparql_requires_every_placeholder(api):
+    env = api.sparql_query(template="concept_aliases", bindings={})
+    assert any("MISSING_BINDING" in w for w in env["warnings"])
+
+
+def test_sparql_rejects_unknown_template(api):
+    """只能跑白名单模板。开放任意 SPARQL 等于把三元组库直接暴露给模型。"""
+    env = api.sparql_query(template="不存在的模板", bindings={})
+    assert _failed(env)
+
+
+def test_pipeline_matrix_joins_across_named_graphs(api):
+    """事实在各源图里、标签在种子图里，单个 GRAPH 块 join 不到。"""
+    env = api.sparql_query(template="pipeline_matrix", bindings={})
+    assert env["warnings"] == []
+    assert env["rows"], "跨图 join 返回空集"
+
+
+def test_feedback_is_persisted_and_linked_to_a_trace(api):
+    src = api.search_documents(query="savolitinib")
+    env = api.submit_feedback(
+        verdict="WRONG_CONCEPT",
+        source_trace_id=src["trace_id"],
+        offending_concept_id=SAVOLITINIB,
+        expected_concept_id="HMD:SUB:0000002",
+        free_text="召回错了",
+    )
+    assert env["warnings"] == []
+    assert api.feedback_log
+    assert api.feedback_log[-1].trace_id == src["trace_id"]
+
+
+def test_unknown_concept_reports_an_error_rather_than_an_empty_success(api):
+    """查不到要明说查不到。
+
+    静默返回空结果会让 agent 把"本体里没有这个概念"读成"这个概念没有属性"。
+    """
+    env = api.get_concept(concept_id="HMD:SUB:9999999")
+    assert _failed(env)

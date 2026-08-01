@@ -1,0 +1,123 @@
+# 靶点种子切片。
+#
+# 基因符号本身就是稳定键，loader 按 symbol 直接对 HGNC 快照解析，
+# 因此这里的 xref_hints 可信度高于药物那份。
+
+seed_version: "0.1.0"
+entity_type: TARGET
+
+concepts:
+  - key: MET
+    preferred_label_en: MET proto-oncogene, receptor tyrosine kinase
+    preferred_label_zh: MET 原癌基因受体酪氨酸激酶
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: MET }
+      UNIPROT: { by: gene_name, value: MET, organism: "9606" }
+      NCBIGENE: { by: symbol, value: MET }
+    aliases:
+      - { raw: MET,     lang: en, scope: EXACT,   type: SYMBOL, source: HGNC }
+      - { raw: c-Met,   lang: en, scope: EXACT,   type: SYMBOL, source: HGNC }
+      - { raw: c-MET,   lang: en, scope: EXACT,   type: SYMBOL, source: HGNC }
+      - { raw: HGFR,    lang: en, scope: EXACT,   type: ABBREV, source: HGNC }
+      - { raw: AUTS9,   lang: en, scope: EXACT,   type: LEGACY, source: HGNC }
+      - { raw: RCCP2,   lang: en, scope: EXACT,   type: LEGACY, source: HGNC }
+      - { raw: 间质上皮转化因子, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+      - { raw: 肝细胞生长因子受体, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+      # 通路名比基因更宽 —— 标 BROAD，默认不参与扩展。
+      - { raw: HGF/MET pathway, lang: en, scope: BROAD, type: ABBREV, source: SEED_INTERNAL }
+
+  - key: FLT1
+    preferred_label_en: fms related receptor tyrosine kinase 1
+    preferred_label_zh: 血管内皮生长因子受体 1
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: FLT1 }
+      UNIPROT: { by: gene_name, value: FLT1, organism: "9606" }
+    aliases:
+      - { raw: FLT1,   lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: VEGFR1, lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: VEGFR-1, lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: FLT,    lang: en, scope: EXACT, type: LEGACY, source: HGNC }
+      - { raw: 血管内皮生长因子受体1, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+
+  - key: KDR
+    preferred_label_en: kinase insert domain receptor
+    preferred_label_zh: 血管内皮生长因子受体 2
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: KDR }
+      UNIPROT: { by: gene_name, value: KDR, organism: "9606" }
+    aliases:
+      - { raw: KDR,     lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: VEGFR2,  lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: VEGFR-2, lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: FLK1,    lang: en, scope: EXACT, type: LEGACY, source: HGNC }
+      - { raw: CD309,   lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: 血管内皮生长因子受体2, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+
+  - key: FLT4
+    preferred_label_en: fms related receptor tyrosine kinase 4
+    preferred_label_zh: 血管内皮生长因子受体 3
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: FLT4 }
+    aliases:
+      - { raw: FLT4,    lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: VEGFR3,  lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: VEGFR-3, lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: 血管内皮生长因子受体3, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+
+  - key: FGFR1
+    preferred_label_en: fibroblast growth factor receptor 1
+    preferred_label_zh: 成纤维细胞生长因子受体 1
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: FGFR1 }
+    aliases:
+      - { raw: FGFR1,  lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: CD331,  lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: FLT2,   lang: en, scope: EXACT, type: LEGACY, source: HGNC }
+      - { raw: 成纤维细胞生长因子受体1, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+
+  - key: CSF1R
+    preferred_label_en: colony stimulating factor 1 receptor
+    preferred_label_zh: 集落刺激因子 1 受体
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: CSF1R }
+    aliases:
+      - { raw: CSF1R,   lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: CSF-1R,  lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: CD115,   lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: FMS,     lang: en, scope: EXACT, type: LEGACY, source: HGNC }
+      - { raw: 集落刺激因子1受体, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+
+  - key: SYK
+    preferred_label_en: spleen associated tyrosine kinase
+    preferred_label_zh: 脾酪氨酸激酶
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: SYK }
+    aliases:
+      - { raw: SYK, lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: Syk, lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: p72-Syk, lang: en, scope: EXACT, type: LEGACY, source: HGNC }
+      - { raw: 脾酪氨酸激酶, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+
+  - key: PIK3CD
+    preferred_label_en: phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit delta
+    preferred_label_zh: 磷脂酰肌醇 3-激酶催化亚基 δ
+    verified: false
+    xref_hints:
+      HGNC: { by: symbol, value: PIK3CD }
+    aliases:
+      # 希腊字母写法必须与英文转写归一到同一个键，靠 normalize_alias 保证。
+      - { raw: PIK3CD,      lang: en, scope: EXACT, type: SYMBOL, source: HGNC }
+      - { raw: PI3Kδ,       lang: en, scope: EXACT, type: ABBREV, source: SEED_INTERNAL }
+      - { raw: PI3K-delta,  lang: en, scope: EXACT, type: ABBREV, source: SEED_INTERNAL }
+      - { raw: PI3Kdelta,   lang: en, scope: EXACT, type: ABBREV, source: SEED_INTERNAL }
+      - { raw: p110delta,   lang: en, scope: EXACT, type: ABBREV, source: HGNC }
+      - { raw: 磷脂酰肌醇3激酶δ, lang: zh, scope: EXACT, type: TRANSLATION, source: SEED_INTERNAL }
+      # PI3K 是家族，比 PIK3CD 宽。标 EXACT 会让查 PI3Kδ 抑制剂召回全部 PI3K 文献。
+      - { raw: PI3K,        lang: en, scope: BROAD, type: ABBREV, source: SEED_INTERNAL }
