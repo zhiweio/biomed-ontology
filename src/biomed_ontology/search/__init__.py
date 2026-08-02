@@ -82,6 +82,7 @@ class SearchHit:
     snippet: str = ""
     page: int = 1
     modality: str = ""
+    figure_type: str = ""
     license_tier: LicenseTierEnum = LicenseTierEnum.TIER_0
     matched_concepts: list[str] = field(default_factory=list)
     labels: list[str] = field(default_factory=list)
@@ -231,6 +232,7 @@ class HybridSearcher:
         labels: list[str] | None = None,
         vector_fields: tuple[str, ...] = (),
         modalities: tuple[str, ...] = (),
+        figure_types: tuple[str, ...] = (),
         candidate_k: int | None = None,
         reranker: Reranker | None = None,
         rewrite: bool | None = None,
@@ -268,6 +270,7 @@ class HybridSearcher:
             channels=channels,
             vector_fields=vector_fields,
             modalities=modalities,
+            figure_types=figure_types,
             lexical_query=lexical_query,
             dense_queries=dense_queries,
         )
@@ -293,6 +296,14 @@ class HybridSearcher:
                 # 放在截断之前，否则会连带把 top_k 也砍薄。
                 wanted = set(modalities)
                 fused = [f for f in fused if self._chunks[f[0]].modality.value in wanted]
+            if figure_types:
+                # 与 modalities 同一道闸、同一条理由：图型是布尔条件，不是偏好。
+                wanted_ft = set(figure_types)
+                fused = [
+                    f
+                    for f in fused
+                    if (getattr(self._chunks[f[0]], "figure_type", "") or "") in wanted_ft
+                ]
             pool = [self._to_hit(key, score, ranks) for key, score, ranks in fused[:pool_k]]
             hits = self._rerank(query, pool, reranker)[:top_k]
             sp.set(
@@ -379,20 +390,22 @@ class HybridSearcher:
         return sorted(pool, key=lambda h: (-(h.rerank_score or 0.0), h.rank_before_rerank or 0))
 
     def _graph_allowed(self, request: RetrievalRequest) -> set[str]:
-        """图通道自己的许可、标签与模态过滤，走与后端**同一组**条件。
+        """图通道自己的许可、标签、模态与图型过滤，走与后端**同一组**条件。
 
         图通道的候选来自内存概念倒排而非后端索引，若不在此复用 `scope.permits`，
-        它就会成为绕过许可隔离的旁路；modality 同理 —— 少过滤一条通道，
-        "只看图"就会漏出一批文本切片，而调用方无从分辨是哪一路放进来的。
+        它就会成为绕过许可隔离的旁路；modality / figure_type 同理 ——
+        少过滤一条通道，"只看 CT"就会漏出一批柱状图，而调用方无从分辨是哪一路放进来的。
         """
         wanted = set(request.labels)
         modalities = set(request.modalities)
+        figure_types = set(request.figure_types)
         return {
             m.chunk_id
             for m in self._meta.values()
             if request.scope.permits(m.license_rank, m.source_id)
             and (not wanted or wanted & set(m.labels))
             and (not modalities or m.modality in modalities)
+            and (not figure_types or m.figure_type in figure_types)
         }
 
     def _graph_channel(
@@ -478,6 +491,7 @@ class HybridSearcher:
             snippet=ch.text[:300],
             page=ch.page,
             modality=ch.modality.value,
+            figure_type=getattr(ch, "figure_type", "") or "",
             license_tier=doc.license_tier if doc else LicenseTierEnum.TIER_0,
             matched_concepts=list(ch.concept_ids),
             labels=list(ch.labels),

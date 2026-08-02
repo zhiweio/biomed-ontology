@@ -71,9 +71,27 @@ def backend() -> LocalBackend:
     )
     b.add(
         ChunkMeta(
-            "CHK:img", "DOC:1", "PUBMED", tier_rank(LicenseTierEnum.TIER_0), ("efficacy",), "IMAGE"
+            "CHK:img",
+            "DOC:1",
+            "PUBMED",
+            tier_rank(LicenseTierEnum.TIER_0),
+            ("efficacy",),
+            "IMAGE",
+            "CHART",
         ),
         "Kaplan-Meier curve of progression-free survival for savolitinib",
+    )
+    b.add(
+        ChunkMeta(
+            "CHK:ct",
+            "DOC:1",
+            "PUBMED",
+            tier_rank(LicenseTierEnum.TIER_0),
+            ("efficacy",),
+            "IMAGE",
+            "RADIOLOGY",
+        ),
+        "chest CT scan showing a pulmonary nodule",
     )
     b.build()
     return b
@@ -130,7 +148,8 @@ def test_modality_filter_keeps_only_that_modality(backend: LocalBackend):
     result = backend.retrieve(
         RetrievalRequest(query="savolitinib survival", scope=scope(), modalities=("IMAGE",))
     )
-    assert _ids(result) == {"CHK:img"}
+    assert _ids(result) <= {"CHK:img", "CHK:ct"}
+    assert _ids(result)  # 至少命中一张图，否则"只剩图"是空集也能过
 
 
 def test_without_the_filter_the_same_query_also_returns_text(backend: LocalBackend):
@@ -157,3 +176,32 @@ def test_modality_filter_cannot_unlock_a_paid_chunk(backend: LocalBackend):
         RetrievalRequest(query="competitive landscape", scope=scope(), modalities=("TEXT",))
     )
     assert "CHK:paid" not in _ids(result)
+
+
+# -------------------------------------------------------------- 图型过滤
+
+
+def test_figure_type_narrows_further_than_modality_alone(backend: LocalBackend):
+    """`modalities=[IMAGE]` 保证是图；`figure_types` 保证是那一类图。
+
+    直接测候选集而不是检索命中：BM25 对"CT"本来就不会召回 Kaplan-Meier，
+    那会让"模态下放行两张、图型下只放一张"这件事看不见。
+    """
+    by_modality, _ = backend.allow_list(
+        RetrievalRequest(query="x", scope=scope(), modalities=("IMAGE",))
+    )
+    by_type, _ = backend.allow_list(
+        RetrievalRequest(
+            query="x", scope=scope(), modalities=("IMAGE",), figure_types=("RADIOLOGY",)
+        )
+    )
+    assert by_modality == {"CHK:img", "CHK:ct"}
+    assert by_type == {"CHK:ct"}
+
+
+def test_figure_type_filter_does_not_inflate_the_license_filtered_count(backend: LocalBackend):
+    """与模态同一条纪律：调用方自己的筛选条件不得混进许可计数。"""
+    result = backend.retrieve(
+        RetrievalRequest(query="chest CT", scope=scope(), figure_types=("RADIOLOGY",))
+    )
+    assert result.filtered_count == 1  # 仅 CHK:paid

@@ -85,6 +85,6 @@ def test_readme_carries_the_knowhere_attribution(readme):
 
 
 def test_readme_flags_the_pending_license_reviews(readme):
-    """MinerU 与 PyMuPDF 的义务尚未核实。README 不得把它说成已经清楚。"""
-    assert "MinerU" in readme and "PyMuPDF" in readme
+    """MinerU / PyMuPDF / BiomedCLIP 的义务尚未核实。README 不得把它说成已经清楚。"""
+    assert "MinerU" in readme and "PyMuPDF" in readme and "BiomedCLIP" in readme
     assert "待法务核实" in readme

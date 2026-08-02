@@ -51,6 +51,10 @@ vector = [
     "qwen-vl-utils>=0.0.14",
     "av>=15.0.0",
     "torchvision>=0.20.0",
+    # BiomedCLIP 第五列（dense_visual_bio）与图型零样本分类。
+    # 模型卡实测环境是 transformers==4.35.2；与本仓库锁定的 >=4.57 已在加载路径上
+    # 验证兼容（HFTextEncoder 走本地 BiomedBERT，不经 open_clip 的在线解析）。
+    "open_clip_torch>=2.23.0",
 ]
 # 版面解析。pymupdf 为 AGPL-3.0/商业双授权，对外服务前需法务确认（见 NOTICE）。
 parse = [

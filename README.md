@@ -20,11 +20,11 @@ uv run hmd eval      # 检索消融 + 指标目标达成情况
 uv run hmd serve     # 起 REST + MCP 服务
 ```
 
-`make check` = ruff + 全量测试，共 **481 条测试**（476 passed + 5 xfailed）。
-那 5 条 xfail 不是"暂时跳过"，而是**当前证伪不了的产品承诺**：本体增强的召回提升、
-以及别名一致性 demo D1。全部标了 `strict=True` —— 一旦重新成立就会立刻炸掉，
+`make check` = ruff + 全量测试，共 **517 条测试**（516 passed + 1 xfailed）。
+那 1 条 xfail 不是"暂时跳过"，而是**当前证伪不了的产品承诺**：T1 本体增强召回
+相对提升 ≥ 10%。标了 `strict=True` —— 一旦重新成立就会立刻炸掉，
 逼人回来删标记，而不是让"曾经声称过的能力"无声地留在文档里。原因见下面的检索评测一节。
-其中 9 条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
+其中若干条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
 **这批测试长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
 `hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。
 
@@ -36,7 +36,7 @@ uv run hmd index --embedder multimodal-bio --recreate \
     --figure-typer biomedclip                               # 588 切片 / 5 向量列，MPS 约 3m34s
 uv run hmd eval --milvus --embedder multimodal-bio \
     --reranker bge-reranker-v2-m3 \
-    --entitlements MOCK_LICENSED                            # 十八臂消融（9 本地 + 9 Milvus）
+    --entitlements MOCK_LICENSED                            # 十九臂消融（9 本地 + 10 Milvus）
 make milvus-down
 ```
 
@@ -335,10 +335,10 @@ gold 的键是 `doc_id#section`，section 名来自解析结果，凭记忆写�
 **不接受"调低阈值"或"删掉构造样本"这两种修法。** 前者是让要求迁就实现；
 后者是删掉唯一一批本体臂打不过 BM25 的证据 —— 那 8 条恰恰是最该留的。
 
-另有 8 个 Milvus 臂（lexical / general / biomed / 2col / 3col / 4col / visual-only /
-ontology+milvus）。后端不可达时它们被标记为**未运行**并在报告中列名，
-**绝不回落到本地后端** —— 回落会让报告里的"Milvus 三列混合"其实是本地 TF-IDF 跑的，
-这种错误一旦进了采购决策文档就再也追不回来。
+另有 10 个 Milvus 臂（lexical / general / biomed / 2col / 3col / 4col / 5col /
+visual-only / visual-bio-only / ontology+milvus）。后端不可达时它们被标记为**未运行**
+并在报告中列名，**绝不回落到本地后端** —— 回落会让报告里的"Milvus 三列混合"
+其实是本地 TF-IDF 跑的，这种错误一旦进了采购决策文档就再也追不回来。
 
 ### 交叉编码器精排（bge-reranker-v2-m3）
 
@@ -527,12 +527,50 @@ SapBERT 那一列的教训（n=8 时 +0.104，n=28 时缩到 +0.008，少一个�
 
 两条边界必须一起说：
 
-- **过滤保证模态，不保证正确。** 上面那个 CT 查询加了 `modalities=[IMAGE]` 后
-  首位是 0.427 的「Top 30 PT 信号强度」图 —— 是图，但不是 CT。
-  过滤把答案的搜索空间缩小了，没有提升空间内的排序质量。
+- **过滤保证模态，不保证图型。** `modalities=[IMAGE]` 只保证返回的是图。
+  图型是下一节的事 —— 它落成另一个标量字段，同一套下推。
 - **模态过滤不计入 `license_filtered_count`。** 那个计数是许可边界的证据，
   混进模态过滤就再也说不清"少的那几条是没权限还是不想要"。
   两个后端在这一点上逐字对齐，有测试守着。
+
+### 图型路由与第五列：BiomedCLIP
+
+模态过滤解决了"我要看图"，没解决"我要看那一类图"。
+`figure_type` 落成 Milvus 标量字段（与 `modality` 同性质），索引期用 BiomedCLIP
+零样本打上，caption 关键词作兜底。当前 44 张带资产切片的分布：
+
+| RADIOLOGY | MICROSCOPY | GROSS_PATHOLOGY | CHART | DIAGRAM | TABLE_IMAGE | OTHER |
+|---|---|---|---|---|---|---|
+| 8 | 6 | 1 | 14 | 9 | 5 | 1 |
+
+CT 查询加 `figure_types=["RADIOLOGY"]` 之后，两列视觉通道的前三名都是放射影像；
+不加这个条件时，生医视觉列会把一张 Kaplan-Meier 曲线顶到第一（0.682）——
+它认得"医学图像"，却分不清你要的是哪一类。布尔条件比调分数干净。
+
+`--embedder multimodal-bio` = 四列之上再加 **BiomedCLIP**（MIT 权重，
+经 ModelScope 获取），落成第五列 `dense_visual_bio`（512 维，COSINE / HNSW）。
+两列并存而非替换：Qwen3-VL 强在图中文字与图表结构（CHART / DIAGRAM），
+BiomedCLIP 的训练集 PMC-15M 与本仓库的 PMC 插图分布几乎重合，
+主场是真实影像与病理（RADIOLOGY / MICROSCOPY）。
+
+图像意图 n=12，两列各自只看图：
+
+| 臂 | Recall@10 | P@5 | nDCG@10 | MRR |
+|---|---|---|---|---|
+| 视觉列（Qwen3-VL） | **0.944** | **0.417** | **0.863** | **0.875** |
+| 生医视觉列（BiomedCLIP） | 0.889 | 0.317 | 0.602 | 0.487 |
+
+五列 − 四列的净值（混排场景，n=37）：**全部 −0.006 / en −0.009 / zh +0.000**。
+在已有通用视觉列之上，生医列这一轮**没有带来可分辨的增益** ——
+语料仍是文献插图而不是临床 DICOM，BiomedCLIP 的分布优势用不上。
+净值按既有减法口径如实报；下一轮要接 MedImageInsight，前提是有真实临床影像
+（已在 `registry/sources.yaml` 登记为 `CLINICAL_IMAGING` 待接入插槽，本轮不写代码）。
+
+权重是 MIT，但模型卡另有一句独立于许可证的用途声明：
+"Any deployed use case --- commercial or otherwise --- is currently out of scope"。
+登记在 `licensing.COMPONENTS["biomedclip"]`，`review=pending` 时加载会抛
+`LicenseViolation`；本地试用须显式设 `HMD_ACCEPT_UNCLEARED_COMPONENTS=true`。
+与 PyMuPDF 的 AGPL 同一处置，详见 [NOTICE](NOTICE)。
 
 ### 指标目标与豁免机制
 
@@ -545,25 +583,25 @@ SapBERT 那一列的教训（n=8 时 +0.104，n=28 时缩到 +0.008，少一个�
 
 | 目标 | 结果 |
 |---|---|
-| T1 Recall@10 相对提升 ≥ 10% | ❌ **−5.2%，已豁免**（成因见上：本体只经 GRAPH 一个通道，该通道净值 −0.018） |
-| T2 nDCG@10 不劣化 | ❌ **−0.015，已豁免**（同源） |
-| T3 P@5 不劣化 | ❌ **−0.029，已豁免**（同源） |
-| T4 MRR 不劣化 | ✅ 达成 **+0.017** —— 曾是 −0.125 且带豁免，现已撤销 |
+| T1 Recall@10 相对提升 ≥ 10% | ❌ **+0.8%，已豁免**（方向已翻转，增益未达门槛；配对检验不显著） |
+| T2 nDCG@10 不劣化 | ✅ 达成 **+0.006** —— 曾是 −0.015 且带豁免，现已撤销 |
+| T3 P@5 不劣化 | ✅ 达成 **+0.000**（恰好持平）—— 曾是 −0.029 且带豁免，现已撤销 |
+| T4 MRR 不劣化 | ✅ 达成 **+0.004** —— 曾是 −0.125 且带豁免，现已撤销 |
 | T5 引用忠实度 = 1.000 | ✅ 达成 —— **且这条不接受豁免** |
 
-T1–T3 的豁免这一版全部重写过。上一版把责任推给标注覆盖，
-那条理由现在不成立了（judged@10 = 1.000），所以新豁免直接写明
+T1 的豁免这一版重写过：上一版把责任推给"GRAPH 是哈希随机采样"，
+那条机制缺陷已经修掉（见消融阶梯 ①→②），但 +0.8% 仍远低于 +10% 门槛，
+且全部配对检验的 CI 跨零。新豁免直接写明
 **"不接受调低阈值，也不接受删掉那 8 条构造样本"** ——
-后者恰恰是唯一一批本体臂打不过 BM25 的证据，删掉它等于把问题藏起来。
-复审时点写的是"检索侧完成 GRAPH 通道权重与查询改写两项改造后重测"，
-在那之前对外只可引用"真实文献子集 +5.4%"，不可引用总均值。
+后者恰恰是唯一一批本体臂打不过 BM25 的证据。
+复审时点写的是"gold 扩到 150+ 条、且概念覆盖率达到可测水平后重测"，
+在那之前对外只可引用"中文 query 上 nDCG +0.064"，不可引用总均值，
+且必须同时给出 CI 与 p 值。
 
-T4 走完了整条路径：写死的 `<= 0` 断言 → 未达成 + 署名豁免 → 达成 + 撤销豁免。
+T2 / T3 / T4 都走完了整条路径：未达成 + 署名豁免 → 达成 + 撤销豁免。
 反向绊线同样存在：**目标已达成却还挂着豁免，测试也会失败** ——
 那意味着对外结论仍在引用一条过期的免责说明。
-另有测试断言豁免正文中引用的数字与当前实测一致，防止理由写完就腐烂；
-以及一条守着"T4 别连着豁免一起被删掉"——
-一条曾经红过、后来转绿的目标最容易在清理时被顺手删除。
+另有测试断言豁免正文中引用的数字与当前实测一致，防止理由写完就腐烂。
 
 **T5 为什么不可豁免**：召回差只是找不到，用户知道自己没拿到答案；
 引用不忠实是把一个看似有据的错误答案递出去，用户没有识别它的手段。
@@ -605,6 +643,7 @@ uv run hmd serve --port 8000
 | 2 | 医药魔方 | TIER_3 | 中国注册审评数据与中文术语 |
 | 3 | DrugBank | TIER_2 | 药物别名、靶点、DDI、ATC |
 | 4 | MedDRA | TIER_3 | 不良事件五级 + 官方中文。许可最严，导出闸门须逐条拦截 |
+| — | CLINICAL_IMAGING | TIER_3 | 临床影像语料（DICOM / PACS）。MedImageInsight 的接入前置条件；卡在 DUA / 伦理审批，不是预算，故无采购优先级 |
 
 许可分层贯穿全链路：无凭据时商业源内容在**事实、检索、SPARQL、还原**四处同时不可见。
 `hmd demo --id D6`（前三处）与 `--id D7`（还原）对此各有断言。
@@ -619,8 +658,9 @@ uv run hmd serve --port 8000
 | `src/biomed_ontology/registry/` | 数据源注册表 + 许可分层 |
 | `src/biomed_ontology/ontology/` | 等价团构建、ID 分配、发版、RDF |
 | `src/biomed_ontology/parse/` | PDF → 语义树（衍生自 knowhere，见 NOTICE） |
-| `src/biomed_ontology/embed/` | BGE-M3 + SapBERT + Qwen3-VL，四向量列 |
-| `src/biomed_ontology/search/` | 三通道检索 + RRF + 模态过滤 + Milvus 后端 |
+| `src/biomed_ontology/embed/` | BGE-M3 + SapBERT + Qwen3-VL + BiomedCLIP，五向量列 |
+| `src/biomed_ontology/rerank/` | bge-reranker-v2-m3 交叉编码器精排 |
+| `src/biomed_ontology/search/` | 三通道检索 + 带权 RRF + 模态/图型过滤 + Milvus 后端 |
 | `src/biomed_ontology/agentapi/` | 11 个 agent 工具 + Citationware |
 | `src/biomed_ontology/observability/` | 四支柱埋点与契约校验 |
 | `src/biomed_ontology/evolution/` | 信号挖掘 → KGCL → 发版守门 |
@@ -647,9 +687,11 @@ uv run hmd serve --port 8000
 [Ontos-AI/knowhere](https://github.com/Ontos-AI/knowhere)（Apache License 2.0），
 已按 Apache 2.0 §4(b) 标注全部修改。
 
-**MinerU 与 PyMuPDF 两项许可义务待法务核实**，登记在 `licensing.COMPONENTS`，
-`review` 为 `pending` 时启用相关后端会直接抛 `LicenseViolation` ——
-义务只写进文档没人会读，写成闸门才绕不过去。
+**MinerU、PyMuPDF、BiomedCLIP 三项许可义务待法务核实**，登记在
+`licensing.COMPONENTS`，`review` 为 `pending` 时启用相关组件会直接抛
+`LicenseViolation` —— 义务只写进文档没人会读，写成闸门才绕不过去。
+BiomedCLIP 的权重是 MIT，但模型卡另有"任何部署用途均超出适用范围"的用途限定，
+许可证不等于放行。
 
 完整出处、修改说明与许可分析见 [NOTICE](NOTICE)。
 
