@@ -1,4 +1,4 @@
-"""6 个演示场景。
+"""8 个演示场景。
 
 每个场景都直接调 agent tool 而不是内部函数 —— 演示的是"agent 能拿到什么"，
 用内部函数演示会得出一个 agent 实际上够不着的结论。
@@ -316,6 +316,63 @@ def demo_citation_restore(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
     return r
 
 
+# ---------------------------------------------------------------- D8 看图通道
+
+
+def demo_modality_channel(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+    r = DemoResult(
+        "D8",
+        "看图通道",
+        "「我要看那张生存曲线」是一类独立意图：混排时正文会赢过图，按模态过滤才拿得到",
+    )
+    query = "Kaplan-Meier overall survival curve"
+    total_images = sum(1 for c in kb.chunks if c.modality.value == "IMAGE")
+
+    mixed = api.search_documents(query, top_k=10)["results"]
+    seen = [h["modality"] for h in mixed]
+    share = total_images / len(kb.chunks)
+    r.lines.append(f"语料 {len(kb.chunks)} 片中图像切片 {total_images} 片（{share:.1%}）")
+    r.lines.append(f"不过滤时前十模态构成：{dict(sorted(_tally(seen).items()))}")
+    for h in mixed[:3]:
+        r.lines.append(
+            f"  [{h['modality']:<5}] {h['doc_id']}#{h.get('section')} :: {h['snippet'][:44]}"
+        )
+
+    only = api.search_documents(query, top_k=10, modalities=["IMAGE"])["results"]
+    r.lines.append(f"modalities=[IMAGE] 时命中 {len(only)} 条，全部为图：")
+    for h in only[:5]:
+        r.lines.append(f"  [{h['modality']:<5}] {h['doc_id']} p{h['page']} :: {h['snippet'][:44]}")
+
+    # 过滤真的把埋在混排下面的图捞了上来，而不只是把已有的图留下。
+    surfaced = {h["chunk_id"] for h in only} - {h["chunk_id"] for h in mixed}
+    r.lines.append(f"其中 {len(surfaced)} 条在不过滤时进不了前十")
+
+    # 过滤是候选阶段的条件，不是许可豁免：受限文档在两种模式下同样不可见。
+    q_paid = "acquired resistance competitive landscape"
+    leaked = [
+        h
+        for h in api.search_documents(q_paid, top_k=10, modalities=["TEXT"])["results"]
+        if h["license_tier"] != LicenseTierEnum.TIER_0.value
+    ]
+    r.lines.append(f"无凭据 + modalities=[TEXT] 时命中受限文档 {len(leaked)} 条（应为 0）")
+
+    r.passed = (
+        bool(only)
+        and all(h["modality"] == "IMAGE" for h in only)
+        and any(h["modality"] != "IMAGE" for h in mixed)
+        and bool(surfaced)
+        and not leaked
+    )
+    return r
+
+
+def _tally(values: list[str]) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for v in values:
+        out[v] = out.get(v, 0) + 1
+    return out
+
+
 DEMOS: dict[str, Callable[[KnowledgeBase, AgentApi], DemoResult]] = {
     "D1": demo_alias_consistency,
     "D2": demo_hierarchy_expansion,
@@ -324,6 +381,7 @@ DEMOS: dict[str, Callable[[KnowledgeBase, AgentApi], DemoResult]] = {
     "D5": demo_evolution_loop,
     "D6": demo_facts_and_license,
     "D7": demo_citation_restore,
+    "D8": demo_modality_channel,
 }
 
 

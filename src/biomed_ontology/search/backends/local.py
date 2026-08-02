@@ -133,11 +133,15 @@ class LocalBackend:
         self.dense.build()
 
     def allow_list(self, request: RetrievalRequest) -> tuple[set[str], int]:
-        """许可与标签过滤在**候选生成阶段**介入，而非返回前裁剪。
+        """许可、标签与模态过滤在**候选生成阶段**介入，而非返回前裁剪。
 
         后者会让"总命中数"这类统计量泄漏无权数据的存在性。
+
+        只有许可挡掉的才计入 `filtered`：标签与模态是调用方自己下的条件，
+        把它们混进这个计数会让"你无权查看"和"你自己筛掉的"变成同一个数字。
         """
         wanted = set(request.labels)
+        modalities = set(request.modalities)
         allowed: set[str] = set()
         filtered = 0
         for meta in self._meta.values():
@@ -145,6 +149,8 @@ class LocalBackend:
                 filtered += 1
                 continue
             if wanted and not wanted & set(meta.labels):
+                continue
+            if modalities and meta.modality not in modalities:
                 continue
             allowed.add(meta.chunk_id)
         return allowed, filtered

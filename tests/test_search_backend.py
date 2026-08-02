@@ -60,12 +60,20 @@ def test_caller_tier_cap_overrides_entitlement():
 def backend() -> LocalBackend:
     b = LocalBackend()
     b.add(
-        ChunkMeta("CHK:open", "DOC:1", "PUBMED", tier_rank(LicenseTierEnum.TIER_0), ("efficacy",)),
+        ChunkMeta(
+            "CHK:open", "DOC:1", "PUBMED", tier_rank(LicenseTierEnum.TIER_0), ("efficacy",), "TEXT"
+        ),
         "savolitinib MET exon 14 skipping ORR",
     )
     b.add(
-        ChunkMeta("CHK:paid", "DOC:2", "MOCK_LICENSED", PAID, ("efficacy",)),
+        ChunkMeta("CHK:paid", "DOC:2", "MOCK_LICENSED", PAID, ("efficacy",), "TEXT"),
         "savolitinib MET exon 14 skipping competitive landscape",
+    )
+    b.add(
+        ChunkMeta(
+            "CHK:img", "DOC:1", "PUBMED", tier_rank(LicenseTierEnum.TIER_0), ("efficacy",), "IMAGE"
+        ),
+        "Kaplan-Meier curve of progression-free survival for savolitinib",
     )
     b.build()
     return b
@@ -113,3 +121,39 @@ def test_channels_are_independently_selectable(backend: LocalBackend):
         RetrievalRequest(query="savolitinib", scope=scope(), channels=(RetrievalChannelEnum.BM25,))
     )
     assert set(result.channels) == {RetrievalChannelEnum.BM25}
+
+
+# -------------------------------------------------------------- 模态过滤
+
+
+def test_modality_filter_keeps_only_that_modality(backend: LocalBackend):
+    result = backend.retrieve(
+        RetrievalRequest(query="savolitinib survival", scope=scope(), modalities=("IMAGE",))
+    )
+    assert _ids(result) == {"CHK:img"}
+
+
+def test_without_the_filter_the_same_query_also_returns_text(backend: LocalBackend):
+    """对照组。只断言"过滤后只剩图"是不够的 —— 一个把文本全丢掉的实现同样满足。"""
+    result = backend.retrieve(RetrievalRequest(query="savolitinib survival", scope=scope()))
+    assert _ids(result) >= {"CHK:img", "CHK:open"}
+
+
+def test_modality_filter_does_not_inflate_the_license_filtered_count(backend: LocalBackend):
+    """模态是调用方自己下的条件，不是"你无权查看"。
+
+    混进 `filtered_count` 会让这个数字在两种完全不同的含义之间摇摆，
+    而它是无权调用方判断"库里到底有没有"的唯一线索。
+    """
+    result = backend.retrieve(
+        RetrievalRequest(query="savolitinib", scope=scope(), modalities=("IMAGE",))
+    )
+    assert result.filtered_count == 1  # 仅 CHK:paid，与不加模态条件时一致
+
+
+def test_modality_filter_cannot_unlock_a_paid_chunk(backend: LocalBackend):
+    """过滤条件是收窄，不是旁路。许可谓词仍然先行。"""
+    result = backend.retrieve(
+        RetrievalRequest(query="competitive landscape", scope=scope(), modalities=("TEXT",))
+    )
+    assert "CHK:paid" not in _ids(result)

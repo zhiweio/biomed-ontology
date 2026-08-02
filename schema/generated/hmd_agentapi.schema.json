@@ -2467,7 +2467,7 @@
         },
         "SearchHit": {
             "additionalProperties": false,
-            "description": "\u4e00\u6761\u68c0\u7d22\u7ed3\u679c\u3002provenance \u4e0e rank_before_rerank \u662f\u6392\u969c\u7684\u5fc5\u8981\u6761\u4ef6\u3002",
+            "description": "\u4e00\u6761\u68c0\u7d22\u7ed3\u679c\u3002provenance \u4e0e rank_before_rerank \u662f\u6392\u969c\u7684\u5fc5\u8981\u6761\u4ef6\uff1b modality \u5219\u662f SearchRequest.modalities \u7684\u5bf9\u4fa7 \u2014\u2014 \u4e00\u4e2a\u8fc7\u6ee4\u6761\u4ef6\u5982\u679c\u5728\u8fd4\u56de\u4f53\u91cc\u67e5\u4e0d\u5230\u5bf9\u5e94\u5b57\u6bb5\uff0c\u8c03\u7528\u65b9\u5c31\u65e0\u4ece\u9a8c\u8bc1\u5b83\u5230\u5e95\u751f\u6548\u6ca1\u6709\u3002",
             "properties": {
                 "chunk_id": {
                     "pattern": "^CHK:[A-Za-z0-9._:-]+$",
@@ -2512,6 +2512,9 @@
                 },
                 "license_tier": {
                     "$ref": "#/$defs/LicenseTierEnum"
+                },
+                "modality": {
+                    "$ref": "#/$defs/ModalityChannelEnum"
                 },
                 "page": {
                     "type": [
@@ -2631,6 +2634,16 @@
                 "max_tier": {
                     "$ref": "#/$defs/LicenseTierEnum",
                     "description": "\u8c03\u7528\u65b9\u4e3b\u52a8\u8bbe\u5b9a\u7684 tier \u4e0a\u9650\uff0c\u7528\u4e8e\u5728\u5916\u53d1\u573a\u666f\u4e0b\u81ea\u6211\u7ea6\u675f\u3002"
+                },
+                "modalities": {
+                    "description": "\u53ea\u4fdd\u7559\u8fd9\u4e9b\u6a21\u6001\u7684\u547d\u4e2d\u3002\"\u6211\u8981\u770b\u90a3\u5f20\u56fe\"\u662f\u4e00\u7c7b\u72ec\u7acb\u610f\u56fe\uff0c \u800c\u6587\u672c-\u6587\u672c\u76f8\u4f3c\u5ea6\u7cfb\u7edf\u6027\u9ad8\u4e8e\u6587\u672c-\u56fe\u50cf \u2014\u2014 \u6df7\u6392\u65f6\u4e00\u6bb5\u628a\u56fe\u8bb2\u6e05\u695a\u7684\u6b63\u6587 \u603b\u4f1a\u6392\u5728\u56fe\u672c\u8eab\u524d\u9762\u3002\u6ca1\u6709\u8fd9\u4e2a\u69fd\u4f4d\uff0c\u8be5\u610f\u56fe\u5c31\u6ca1\u6709\u4efb\u4f55\u901a\u9053\u53ef\u8d70\u3002",
+                    "items": {
+                        "$ref": "#/$defs/ModalityChannelEnum"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
                 },
                 "query": {
                     "type": "string"

@@ -11,7 +11,7 @@ import math
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import yaml
 
@@ -95,6 +95,31 @@ ARMS: dict[str, dict[str, Any]] = {
         "vector_fields": ("sparse_lexical", "dense_general", "dense_biomed"),
         "label": "Milvus 三列混合",
     },
+    "milvus_hybrid_4col": {
+        "channels": (RetrievalChannelEnum.BM25, RetrievalChannelEnum.DENSE),
+        "expand": False,
+        "backend": "milvus",
+        "vector_fields": (
+            "sparse_lexical",
+            "dense_general",
+            "dense_biomed",
+            "dense_visual",
+        ),
+        "label": "Milvus 四列混合",
+    },
+    # 「我要看那张图」专用臂：只查视觉列，且只允许图像切片进候选。
+    # `modality_intent` 让它**只在图像意图的 query 上评分** ——
+    # 拿它去跑"呋喹替尼三线结直肠癌总生存期"只会得到一个 0.000，
+    # 那个数字不回答任何问题，却会被当成"视觉列没用"转述出去。
+    "milvus_visual_only": {
+        "channels": (RetrievalChannelEnum.DENSE,),
+        "expand": False,
+        "backend": "milvus",
+        "vector_fields": ("dense_visual",),
+        "modalities": ("IMAGE",),
+        "modality_intent": "IMAGE",
+        "label": "Milvus 视觉列（只看图）",
+    },
     "ontology_hybrid_milvus": {
         "channels": (
             RetrievalChannelEnum.BM25,
@@ -111,6 +136,9 @@ ARMS: dict[str, dict[str, Any]] = {
 # SapBERT 的净值 = 三列混合 − 双列混合。两臂唯一差别就是那一列，
 # 差值之外没有别的解释，这是整套消融里唯一能支撑采购决策的数字。
 SAPBERT_DELTA = ("milvus_hybrid_3col", "milvus_hybrid_2col")
+# 同样的减法用在视觉列上：四列 − 三列。回答的是"混排场景下多这一列值不值"，
+# 与 `milvus_visual_only` 回答的"只要图时它够不够准"是两个问题，不能互相顶替。
+VISUAL_DELTA = ("milvus_hybrid_4col", "milvus_hybrid_3col")
 
 
 def _has_sapbert(name: str | None) -> bool:
@@ -224,6 +252,11 @@ class ArmResult:
     # 一律按“不相关”计入分母，召回会塌下来 —— 塌的是标注覆盖，不是检索质量。
     # 这一列就是用来分辨这两者的：它低，上面那些指标就只是下界。
     judged_at_10: float = 1.0
+    # Recall@10 在这份 gold 上的天花板：mean(min(10, |rel|) / |rel|)。
+    # 判定粒度是章节，一节动辄十几片，相关集比十个格子大得多 ——
+    # 此时 Recall@10 就算检索器完美也到不了 1.0。
+    # 不把这个数摆出来，0.42 会被读成"漏了 58%"，而其中大半是格子不够放。
+    recall_ceiling: float = 1.0
     latency_p50_ms: float = 0.0
     latency_p95_ms: float = 0.0
     query_count: int = 0
@@ -263,9 +296,15 @@ class RetrievalEval:
             result = result.by_lang[lang]
         return float(getattr(result, metric))
 
-    def delta(self, metric: str = "recall_at_10", *, lang: str | None = None) -> float:
-        """SapBERT 净值：三列 − 双列，绝对差而非比例。"""
-        hi, lo = SAPBERT_DELTA
+    def delta(
+        self,
+        metric: str = "recall_at_10",
+        *,
+        lang: str | None = None,
+        pair: tuple[str, str] = SAPBERT_DELTA,
+    ) -> float:
+        """逐列净值：多一列 − 少一列，绝对差而非比例。"""
+        hi, lo = pair
         if hi not in self.arms or lo not in self.arms:
             return float("nan")
         return self._metric(hi, metric, lang) - self._metric(lo, metric, lang)
@@ -290,6 +329,16 @@ class RetrievalEval:
                     "上面的净值只验证链路贯通，不能用于回答“SapBERT 值不值得上”。"
                 )
 
+        vhi, vlo = VISUAL_DELTA
+        if vhi in self.arms and vlo in self.arms:
+            lines.append("\n视觉列净值（四列 − 三列，混排场景）：")
+            for lang in [None, *sorted({lg for a in self.arms.values() for lg in a.by_lang})]:
+                tag = lang or "全部"
+                net = self.delta(lang=lang, pair=VISUAL_DELTA)
+                lines.append(f"  {tag:<6} Recall@10 {net:+.3f}")
+
+        lines.extend(self._subset_note())
+        lines.extend(self._ceiling_note())
         if self.unavailable:
             lines.append("\n未运行的臂（后端不可达，非结果）：")
             lines.extend(f"  {arm:<24} {why}" for arm, why in sorted(self.unavailable.items()))
@@ -311,6 +360,42 @@ class RetrievalEval:
                 "\n  也不能与标注期语料上的历史数字直接相比。要出可比的数，先把 gold 扩到当前语料。"
             )
         return "\n".join(lines)
+
+    def _ceiling_note(self) -> list[str]:
+        """Recall@10 够不到 1.0 时，先说清楚有多少是格子不够放。
+
+        judged@10 说的是"标注覆盖不够"，这一行说的是"相关集比 K 大"——
+        两者都会把 Recall 往下压，成因和处置却完全相反：
+        前者要补标注，后者只能换指标（nDCG@10 的理想序已按 K 截断，不受影响）。
+        混在一起看，会把一份标注齐全的报表继续当成"标注没做完"。
+        """
+        ceilings = {a.label: a.recall_ceiling for a in self.arms.values()}
+        if not ceilings or min(ceilings.values()) > 0.999:
+            return []
+        rows = [
+            "\nRecall@10 上限（判定粒度=章节，相关集常大于 K，完美检索也到不了 1.0）：",
+            *(f"  {label:<24} {v:.3f}" for label, v in sorted(ceilings.items())),
+            "  ⚠ 上表 Recall@10 应按此上限读。跨臂比较仍然成立（同一份 gold、同一个上限），"
+            "\n    但离 1.0 的那段距离不能直接当成漏检率。nDCG@10 的理想序已按 K 截断，无此问题。",
+        ]
+        return rows
+
+    def _subset_note(self) -> list[str]:
+        """跑了不同 query 子集的臂必须点名，否则同一张表里的两行不可比。
+
+        视觉臂只在图像意图的 query 上评分（那是它唯一回答得了的问题），
+        于是它的 Recall@10 与其余臂算的根本不是同一个平均。
+        少了这行提示，读表的人会直接把两个数放在一起比。
+        """
+        counts = {a.label: a.query_count for a in self.arms.values() if a.query_count}
+        if len(set(counts.values())) <= 1:
+            return []
+        full = max(counts.values())
+        odd = {label: n for label, n in counts.items() if n != full}
+        return [
+            f"\n⚠ 以下臂跑的是 query 子集（其余臂 n={full}），与上表其余行不可横向比较：",
+            *(f"  {label:<24} n={n}" for label, n in sorted(odd.items())),
+        ]
 
     def _block(self, lang: str | None, title: str) -> str:
         cols = f"{'Recall@10':>11}{'P@5':>9}{'nDCG@10':>10}{'MRR':>8}{'MAP':>8}{'P50ms':>8}{'n':>5}"
@@ -336,9 +421,22 @@ def _pad(text: str, width: int) -> str:
     return text + " " * max(1, width - _display_width(text))
 
 
-def _chunk_key_index(kb: KnowledgeBase) -> dict[str, str]:
-    """`doc_id#section` → chunk_id。gold 用稳定键，运行时用哈希键，这里桥接。"""
-    return {f"{c.doc_id}#{c.section}": c.chunk_id for c in kb.chunks}
+def _chunk_key_index(kb: KnowledgeBase) -> dict[str, list[str]]:
+    """`doc_id#section` → 该节的**全部** chunk_id。gold 用稳定键，运行时用哈希键。
+
+    值是列表而非单个 id：一节正文通常被切成多片，早先写成 dict 推导时
+    同一节的后一片直接覆盖前一片 —— 588 个切片只剩 132 个键可寻址，
+    另外 456 片对 gold 完全不可见。标注写得再准也命中不了，
+    而失败形态是"召回莫名其妙地低"，查的人会一路查到检索器上去。
+
+    随之确定的是 gold 的判定粒度：**一节内的全部切片同 grade**。
+    人工审校面对的是章节，不是内容哈希；让标注去追切片边界，
+    等于每改一次切片参数就要重标一遍。
+    """
+    index: dict[str, list[str]] = {}
+    for c in kb.chunks:
+        index.setdefault(f"{c.doc_id}#{c.section}", []).append(c.chunk_id)
+    return index
 
 
 def _dcg(gains: list[float]) -> float:
@@ -353,6 +451,15 @@ def _percentile(values: list[float], pct: float) -> float:
     return ordered[idx]
 
 
+class _Case(NamedTuple):
+    qid: str
+    text: str
+    lang: str
+    rel: dict[str, int]
+    # 该 query 问的是哪个模态。只有专用通道的臂看这一项，其余臂一律全跑。
+    modality_intent: str | None = None
+
+
 @dataclass
 class _QueryScore:
     qid: str
@@ -365,12 +472,14 @@ class _QueryScore:
     elapsed_ms: float
     fidelity: float = 1.0
     judged: float = 1.0
+    ceiling: float = 1.0
 
 
 def _aggregate(arm: str, label: str, scores: list[_QueryScore]) -> ArmResult:
     n = len(scores) or 1
     return ArmResult(
         judged_at_10=sum(s.judged for s in scores) / n,
+        recall_ceiling=sum(s.ceiling for s in scores) / n,
         arm=arm,
         label=label,
         recall_at_10=sum(s.recall for s in scores) / n,
@@ -467,9 +576,11 @@ def eval_retrieval(
             continue
         labels = q.get("relevant") or {}
         dangling.extend(f"{q['id']}:{k}" for k in labels if k not in index)
-        rel = {index[k]: v for k, v in labels.items() if k in index}
+        rel = {cid: v for k, v in labels.items() if k in index for cid in index[k]}
         if rel:
-            cases.append((q["id"], q["text"], q.get("lang", "und"), rel))
+            cases.append(
+                _Case(q["id"], q["text"], q.get("lang", "und"), rel, q.get("modality_intent"))
+            )
 
     if dangling:
         # 标注指向了不存在的切片，多半是切片键变了。静悄悄丢掉的话，
@@ -481,7 +592,7 @@ def eval_retrieval(
 
     # gold 只在这些文档上做过判断。索引里其余文档的命中都是"没人看过"，
     # 按不相关计入分母只会低估召回。
-    judged_ids = {cid for _, _, _, rel in cases for cid in rel}
+    judged_ids = {cid for case in cases for cid in case.rel}
     judged_docs = {c.doc_id for c in kb.chunks if c.chunk_id in judged_ids}
     doc_of = {c.chunk_id: c.doc_id for c in kb.chunks}
 
@@ -494,8 +605,16 @@ def eval_retrieval(
             unavailable[arm] = f"{cfg.get('backend')} 后端未提供"
             continue
 
+        # 专用通道的臂只在对应意图的 query 上评分。把"只看图"的臂放到文本 query 上
+        # 只会得到一串 0.000，那不是测量结果，是问错了问题。
+        intent = cfg.get("modality_intent")
+        selected = [c for c in cases if not intent or c.modality_intent == intent]
+        if not selected:
+            unavailable[arm] = f"gold 里没有 modality_intent={intent} 的 query"
+            continue
+
         scores: list[_QueryScore] = []
-        for qid, text, lang, rel in cases:
+        for qid, text, lang, rel, _ in selected:
             started = time.perf_counter()
             hits, _ = searcher.search(
                 text,
@@ -505,6 +624,7 @@ def eval_retrieval(
                 expand=cfg["expand"],
                 channels=cfg["channels"],
                 vector_fields=tuple(cfg.get("vector_fields", ())),
+                modalities=tuple(cfg.get("modalities", ())),
             )
             elapsed = (time.perf_counter() - started) * 1000
             recall, precision, ndcg, rr, ap = _score_one(
@@ -516,7 +636,19 @@ def eval_retrieval(
                 sum(1 for cid in top if doc_of.get(cid) in judged_docs) / len(top) if top else 1.0
             )
             scores.append(
-                _QueryScore(qid, lang, recall, precision, ndcg, rr, ap, elapsed, fidelity, judged)
+                _QueryScore(
+                    qid,
+                    lang,
+                    recall,
+                    precision,
+                    ndcg,
+                    rr,
+                    ap,
+                    elapsed,
+                    fidelity,
+                    judged,
+                    min(top_k, len(rel)) / len(rel),
+                )
             )
 
         result = _aggregate(arm, cfg["label"], scores)

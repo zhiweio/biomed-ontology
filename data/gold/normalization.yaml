@@ -4,7 +4,10 @@
 # 靶点靠缩写歧义、疾病靠中英文与上下位），混在一个总准确率里看不出是哪层塌了。
 #
 # expect: null 表示"期望不匹配"——这类负样本是防止召回被调过头的唯一手段。
-version: "0.1.0"
+#
+# 0.2.0：随本体同步真实语料一并扩容。新增用例按"一条覆盖一种写法失效模式"挑，
+# 而不是按概念数平铺 —— 同一个概念的五种写法比五个概念的通用名更能测出问题。
+version: "0.2.0"
 cases:
   # ---------------- SUBSTANCE ----------------
   - { text: "savolitinib", expect: "HMD:SUB:0000001", entity_type: SUBSTANCE }
@@ -27,6 +30,42 @@ cases:
   - { text: "瑞戈非尼", expect: "HMD:SUB:0000008", entity_type: SUBSTANCE }
   - { text: "aspirin", expect: null, entity_type: SUBSTANCE }
   - { text: "XYZ-9999", expect: null, entity_type: SUBSTANCE }
+  # 语料同步批次（0.2.0）：9 篇真实文献里出现的药。
+  # 每条都覆盖一种写法失效模式 —— 通用名 / 研发代号 / 英文商品名 / 中文商品名 /
+  # 中文通用名 —— 只测通用名等于只测了最容易的那一种。
+  - { text: "osimertinib", expect: "HMD:SUB:0000010", entity_type: SUBSTANCE }
+  - { text: "AZD9291", expect: "HMD:SUB:0000010", entity_type: SUBSTANCE }
+  - { text: "TAGRISSO", expect: "HMD:SUB:0000010", entity_type: SUBSTANCE }
+  - { text: "泰瑞沙", expect: "HMD:SUB:0000010", entity_type: SUBSTANCE }
+  - { text: "奥希替尼", expect: "HMD:SUB:0000010", entity_type: SUBSTANCE }
+  - { text: "gefitinib", expect: "HMD:SUB:0000011", entity_type: SUBSTANCE }
+  - { text: "易瑞沙", expect: "HMD:SUB:0000011", entity_type: SUBSTANCE }
+  - { text: "lazertinib", expect: "HMD:SUB:0000015", entity_type: SUBSTANCE }
+  - { text: "amivantamab", expect: "HMD:SUB:0000017", entity_type: SUBSTANCE }
+  - { text: "crizotinib", expect: "HMD:SUB:0000018", entity_type: SUBSTANCE }
+  - { text: "克唑替尼", expect: "HMD:SUB:0000018", entity_type: SUBSTANCE }
+  - { text: "lorlatinib", expect: "HMD:SUB:0000022", entity_type: SUBSTANCE }
+  - { text: "bevacizumab", expect: "HMD:SUB:0000028", entity_type: SUBSTANCE }
+  - { text: "安维汀", expect: "HMD:SUB:0000028", entity_type: SUBSTANCE }
+  # XL092 走的是代号变体生成（XL-092 / XL 092 同归一）。
+  - { text: "XL092", expect: "HMD:SUB:0000031", entity_type: SUBSTANCE }
+  - { text: "pembrolizumab", expect: "HMD:SUB:0000032", entity_type: SUBSTANCE }
+  - { text: "可瑞达", expect: "HMD:SUB:0000032", entity_type: SUBSTANCE }
+  - { text: "tislelizumab", expect: "HMD:SUB:0000037", entity_type: SUBSTANCE }
+  - { text: "BGB-A317", expect: "HMD:SUB:0000037", entity_type: SUBSTANCE }
+  - { text: "camrelizumab", expect: "HMD:SUB:0000038", entity_type: SUBSTANCE }
+  # 种子里写的是 SHR-1210，这条测的是去掉连字符后的生成变体。
+  - { text: "SHR1210", expect: "HMD:SUB:0000038", entity_type: SUBSTANCE }
+  # 剂型必须分开：nab-paclitaxel 与紫杉醇是两个概念，混判会把剂量学一起搞错。
+  - { text: "nab-paclitaxel", expect: "HMD:SUB:0000040", entity_type: SUBSTANCE }
+  - { text: "paclitaxel", expect: "HMD:SUB:0000041", entity_type: SUBSTANCE }
+  - { text: "CPT-11", expect: "HMD:SUB:0000043", entity_type: SUBSTANCE }
+  # 近音负例：sorafenib 是真实存在但本切片未收录的药，正确行为是弃权。
+  # 目前它被 L2 向量级以 0.57 判成 regorafenib —— 两者都是 -afenib 类抗血管生成 TKI，
+  # 编辑距离近而适应症不同，是本领域最典型的一类误判。
+  # 这条现在是**红的**，留在 gold 里是为了让这个缺陷有名字、有位置、跑一次报一次；
+  # 挑一批一定过的负例凑数，等于把这类错误从报告里抹掉。
+  - { text: "sorafenib", expect: null, entity_type: SUBSTANCE }
 
   # ---------------- TARGET ----------------
   - { text: "MET", expect: "HMD:TGT:0000001", entity_type: TARGET }
@@ -41,8 +80,30 @@ cases:
   - { text: "SYK", expect: "HMD:TGT:0000007", entity_type: TARGET }
   - { text: "脾酪氨酸激酶", expect: "HMD:TGT:0000007", entity_type: TARGET }
   - { text: "PIK3CD", expect: "HMD:TGT:0000008", entity_type: TARGET }
-  - { text: "EGFR", expect: null, entity_type: TARGET }
   - { text: "BTK", expect: null, entity_type: TARGET }
+  # 语料同步批次（0.2.0）。EGFR 此前是负例（"本体里没有"），现已收录 ——
+  # 负例转正例是本体扩容的正常结果，但必须在 gold 里显式改掉：
+  # 留着旧的 expect: null，测试会红，而红的原因看起来像归一化坏了。
+  - { text: "EGFR", expect: "HMD:TGT:0000009", entity_type: TARGET }
+  - { text: "表皮生长因子受体", expect: "HMD:TGT:0000009", entity_type: TARGET }
+  - { text: "HER2", expect: "HMD:TGT:0000010", entity_type: TARGET }
+  - { text: "ERBB2", expect: "HMD:TGT:0000010", entity_type: TARGET }
+  - { text: "ALK", expect: "HMD:TGT:0000011", entity_type: TARGET }
+  - { text: "ROS1", expect: "HMD:TGT:0000012", entity_type: TARGET }
+  - { text: "KRAS", expect: "HMD:TGT:0000013", entity_type: TARGET }
+  - { text: "BRAF", expect: "HMD:TGT:0000014", entity_type: TARGET }
+  - { text: "MEK1", expect: "HMD:TGT:0000016", entity_type: TARGET }
+  - { text: "PI3Kα", expect: "HMD:TGT:0000017", entity_type: TARGET }
+  - { text: "PD-L1", expect: "HMD:TGT:0000018", entity_type: TARGET }
+  - { text: "程序性死亡配体1", expect: "HMD:TGT:0000018", entity_type: TARGET }
+  - { text: "PD-1", expect: "HMD:TGT:0000019", entity_type: TARGET }
+  - { text: "CD279", expect: "HMD:TGT:0000019", entity_type: TARGET }
+  - { text: "CTLA-4", expect: "HMD:TGT:0000020", entity_type: TARGET }
+  - { text: "VEGF", expect: "HMD:TGT:0000021", entity_type: TARGET }
+  # PI3K 现在同时挂在 PIK3CD 与 PIK3CA 上（都标 BROAD）。
+  # 期望弃权而不是二选一 —— 这条守的是设计决策 D2：家族名不参与归一化。
+  - { text: "PI3K", expect: null, entity_type: TARGET }
+  - { text: "JAK2", expect: null, entity_type: TARGET }
 
   # ---------------- DISEASE ----------------
   - { text: "NSCLC", expect: "HMD:DIS:0000001", entity_type: DISEASE }
@@ -61,6 +122,23 @@ cases:
   - { text: "胃癌", expect: "HMD:DIS:0000010", entity_type: DISEASE }
   - { text: "diabetes mellitus", expect: null, entity_type: DISEASE }
   - { text: "阿尔茨海默病", expect: null, entity_type: DISEASE }
+  # 语料同步批次（0.2.0）。
+  - { text: "SCLC", expect: "HMD:DIS:0000012", entity_type: DISEASE }
+  - { text: "小细胞肺癌", expect: "HMD:DIS:0000012", entity_type: DISEASE }
+  - { text: "PDAC", expect: "HMD:DIS:0000014", entity_type: DISEASE }
+  - { text: "胰腺导管腺癌", expect: "HMD:DIS:0000014", entity_type: DISEASE }
+  # pNET / testicular NET 与裸 NET 必须分得开：三者只差一个前缀，
+  # 而 NET 本身已经是登记在册的歧义别名，混判会顺着歧义链一路错下去。
+  - { text: "pNET", expect: "HMD:DIS:0000015", entity_type: DISEASE }
+  - { text: "testicular NET", expect: "HMD:DIS:0000016", entity_type: DISEASE }
+  - { text: "CNS metastases", expect: "HMD:DIS:0000017", entity_type: DISEASE }
+  - { text: "brain metastasis", expect: "HMD:DIS:0000018", entity_type: DISEASE }
+  - { text: "脑转移", expect: "HMD:DIS:0000018", entity_type: DISEASE }
+  - { text: "leptomeningeal metastasis", expect: "HMD:DIS:0000019", entity_type: DISEASE }
+  - { text: "脑膜转移", expect: "HMD:DIS:0000019", entity_type: DISEASE }
+  - { text: "nephrotic syndrome", expect: "HMD:DIS:0000020", entity_type: DISEASE }
+  - { text: "肾病综合征", expect: "HMD:DIS:0000020", entity_type: DISEASE }
+  - { text: "肝细胞癌", expect: null, entity_type: DISEASE }
 
 # 上下文消歧样本单列：它们只有带 context 才有唯一正确答案，
 # 混进上面的表会让"无上下文准确率"被污染。

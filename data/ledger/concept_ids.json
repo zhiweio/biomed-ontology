@@ -1,9 +1,9 @@
 {
   "release": "0.1.0",
   "counters": {
-    "DIS": 11,
-    "SUB": 9,
-    "TGT": 8
+    "DIS": 20,
+    "SUB": 43,
+    "TGT": 21
   },
   "allocations": [
     {
@@ -139,6 +139,114 @@
       "consider": []
     },
     {
+      "concept_id": "HMD:DIS:0000012",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:sclc"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000013",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:pancreatic_cancer"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000014",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:pdac"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000015",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:pnet"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000016",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:testicular_net"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000017",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:cns_metastasis"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000018",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:brain_metastasis"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000019",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:leptomeningeal_metastasis"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:DIS:0000020",
+      "entity_type": "DISEASE",
+      "members": [
+        "seedkey:disease:nephrotic_syndrome"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
       "concept_id": "HMD:SUB:0000001",
       "entity_type": "SUBSTANCE",
       "members": [
@@ -247,6 +355,414 @@
       "consider": []
     },
     {
+      "concept_id": "HMD:SUB:0000010",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:osimertinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000011",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:gefitinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000012",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:erlotinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000013",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:afatinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000014",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:dacomitinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000015",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:lazertinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000016",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:poziotinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000017",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:amivantamab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000018",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:crizotinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000019",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:alectinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000020",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:ceritinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000021",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:brigatinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000022",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:lorlatinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000023",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:entrectinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000024",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:repotrectinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000025",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:dabrafenib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000026",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:trametinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000027",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:cobimetinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000028",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:bevacizumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000029",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:ramucirumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000030",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:sunitinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000031",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:zanzalintinib"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000032",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:pembrolizumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000033",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:nivolumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000034",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:ipilimumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000035",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:atezolizumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000036",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:durvalumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000037",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:tislelizumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000038",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:camrelizumab"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000039",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:gemcitabine"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000040",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:nab_paclitaxel"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000041",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:paclitaxel"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000042",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:oxaliplatin"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:SUB:0000043",
+      "entity_type": "SUBSTANCE",
+      "members": [
+        "seedkey:substance:irinotecan"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
       "concept_id": "HMD:TGT:0000001",
       "entity_type": "TARGET",
       "members": [
@@ -335,6 +851,162 @@
       "entity_type": "TARGET",
       "members": [
         "seedkey:target:PIK3CD"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000009",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:EGFR"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000010",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:ERBB2"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000011",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:ALK"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000012",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:ROS1"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000013",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:KRAS"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000014",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:BRAF"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000015",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:RET"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000016",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:MAP2K1"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000017",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:PIK3CA"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000018",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:CD274"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000019",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:PDCD1"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000020",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:CTLA4"
+      ],
+      "created_in_release": "0.1.0",
+      "modified_in_release": "0.1.0",
+      "is_obsolete": false,
+      "replaced_by": null,
+      "consider": []
+    },
+    {
+      "concept_id": "HMD:TGT:0000021",
+      "entity_type": "TARGET",
+      "members": [
+        "seedkey:target:VEGFA"
       ],
       "created_in_release": "0.1.0",
       "modified_in_release": "0.1.0",

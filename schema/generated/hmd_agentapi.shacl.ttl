@@ -1223,9 +1223,18 @@ hmd:SearchRequest a sh:NodeShape ;
     rdfs:comment "本体增强混合检索。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:in ( <https://w3id.org/biolink/vocab/GeneOrGeneProduct> <https://w3id.org/biolink/vocab/ChemicalEntity> <https://w3id.org/biolink/vocab/Disease> <https://w3id.org/biolink/vocab/MolecularActivity> "MODALITY" <https://w3id.org/biolink/vocab/ClinicalTrial> <https://w3id.org/biolink/vocab/BiologicalEntity> "ADVERSE_EVENT" ) ;
+    sh:property [ sh:description "只保留这些模态的命中。\"我要看那张图\"是一类独立意图， 而文本-文本相似度系统性高于文本-图像 —— 混排时一段把图讲清楚的正文 总会排在图本身前面。没有这个槽位，该意图就没有任何通道可走。" ;
+            sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
+            sh:order 7 ;
+            sh:path hmd:modalities ],
+        [ sh:in ( <https://w3id.org/biolink/vocab/GeneOrGeneProduct> <https://w3id.org/biolink/vocab/ChemicalEntity> <https://w3id.org/biolink/vocab/Disease> <https://w3id.org/biolink/vocab/MolecularActivity> "MODALITY" <https://w3id.org/biolink/vocab/ClinicalTrial> <https://w3id.org/biolink/vocab/BiologicalEntity> "ADVERSE_EVENT" ) ;
             sh:order 2 ;
             sh:path hmd:entity_types ],
+        [ sh:datatype xsd:date ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 10 ;
+            sh:path hmd:date_to ],
         [ sh:datatype xsd:boolean ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -1234,11 +1243,6 @@ hmd:SearchRequest a sh:NodeShape ;
         [ sh:in ( "BM25" "DENSE" "GRAPH" "FUSED" ) ;
             sh:order 6 ;
             sh:path hmd:channels ],
-        [ sh:datatype xsd:date ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:date_to ],
         [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
             sh:minInclusive 1 ;
@@ -1259,16 +1263,16 @@ hmd:SearchRequest a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 4 ;
             sh:path hmd:labels ],
-        [ sh:description "调用方主动设定的 tier 上限，用于在外发场景下自我约束。" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:order 7 ;
-            sh:path hmd:max_tier ],
         [ sh:datatype xsd:date ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:date_from ],
+        [ sh:description "调用方主动设定的 tier 上限，用于在外发场景下自我约束。" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
             sh:order 8 ;
-            sh:path hmd:date_from ] ;
+            sh:path hmd:max_tier ] ;
     sh:targetClass hmd:SearchRequest .
 
 hmd:SearchResponse a sh:NodeShape ;
@@ -2311,7 +2315,7 @@ hmd:Provenance a sh:NodeShape ;
     sh:targetClass hmd:Provenance .
 
 hmd:SearchHit a sh:NodeShape ;
-    rdfs:comment "一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件。" ;
+    rdfs:comment "一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件； modality 则是 SearchRequest.modalities 的对侧 —— 一个过滤条件如果在返回体里查不到对应字段，调用方就无从验证它到底生效没有。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [ sh:datatype xsd:integer ;
@@ -2319,6 +2323,16 @@ hmd:SearchHit a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 12 ;
             sh:path hmd:page ],
+        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
+            sh:maxCount 1 ;
+            sh:order 14 ;
+            sh:path hmd:modality ],
+        [ sh:datatype xsd:string ;
+            sh:description "融合排序的可解释串，形如 RRF(bm25#1 + graph#2)。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 15 ;
+            sh:path hmd:explain ],
         [ sh:defaultValue "TIER_0" ;
             sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
             sh:maxCount 1 ;
@@ -2329,12 +2343,6 @@ hmd:SearchHit a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 4 ;
             sh:path hmd:score ],
-        [ sh:datatype xsd:string ;
-            sh:description "融合排序的可解释串，形如 RRF(bm25#1 + graph#2)。" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 14 ;
-            sh:path hmd:explain ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;

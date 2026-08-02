@@ -58,6 +58,7 @@ class SearchHit:
     section: str | None = None
     snippet: str = ""
     page: int = 1
+    modality: str = ""
     license_tier: LicenseTierEnum = LicenseTierEnum.TIER_0
     matched_concepts: list[str] = field(default_factory=list)
     labels: list[str] = field(default_factory=list)
@@ -117,6 +118,7 @@ class HybridSearcher:
             # 文档元数据缺失时按最高密级处理：宁可挡掉也不能默认放行。
             license_rank=tier_rank(doc.license_tier) if doc else tier_rank(LicenseTierEnum.TIER_3),
             labels=tuple(chunk.labels),
+            modality=chunk.modality.value,
         )
 
     def chunk_meta(self, chunk_id: str) -> ChunkMeta | None:
@@ -149,6 +151,7 @@ class HybridSearcher:
         ),
         labels: list[str] | None = None,
         vector_fields: tuple[str, ...] = (),
+        modalities: tuple[str, ...] = (),
     ) -> tuple[list[SearchHit], int]:
         ent = entitlements if entitlements is not None else ctx.entitlements
         scope = LicenseScope(
@@ -161,6 +164,7 @@ class HybridSearcher:
             labels=tuple(labels or ()),
             channels=channels,
             vector_fields=vector_fields,
+            modalities=modalities,
         )
 
         with ctx.span(
@@ -177,6 +181,13 @@ class HybridSearcher:
                 results[RetrievalChannelEnum.GRAPH] = graph_hits[: top_k * 3]
 
             fused = rrf_fuse(results)
+            if modalities:
+                # 主过滤已经下推到各后端（本地走 allow_list，Milvus 走标量表达式），
+                # 这里是最后一道闸：`SearchBackend` 是个 Protocol，
+                # 一个忽略 modalities 的实现不该让"只看图"悄悄退化成混排。
+                # 放在截断之前，否则会连带把 top_k 也砍薄。
+                wanted = set(modalities)
+                fused = [f for f in fused if self._chunks[f[0]].modality.value in wanted]
             hits = [self._to_hit(key, score, ranks) for key, score, ranks in fused[:top_k]]
             sp.set(
                 **{
@@ -188,17 +199,20 @@ class HybridSearcher:
         return hits, filtered
 
     def _graph_allowed(self, request: RetrievalRequest) -> set[str]:
-        """图通道自己的许可过滤，走与后端**同一个**谓词。
+        """图通道自己的许可、标签与模态过滤，走与后端**同一组**条件。
 
         图通道的候选来自内存概念倒排而非后端索引，若不在此复用 `scope.permits`，
-        它就会成为绕过许可隔离的旁路。
+        它就会成为绕过许可隔离的旁路；modality 同理 —— 少过滤一条通道，
+        "只看图"就会漏出一批文本切片，而调用方无从分辨是哪一路放进来的。
         """
         wanted = set(request.labels)
+        modalities = set(request.modalities)
         return {
             m.chunk_id
             for m in self._meta.values()
             if request.scope.permits(m.license_rank, m.source_id)
             and (not wanted or wanted & set(m.labels))
+            and (not modalities or m.modality in modalities)
         }
 
     def _graph_channel(
@@ -249,6 +263,7 @@ class HybridSearcher:
             section=ch.section,
             snippet=ch.text[:300],
             page=ch.page,
+            modality=ch.modality.value,
             license_tier=doc.license_tier if doc else LicenseTierEnum.TIER_0,
             matched_concepts=list(ch.concept_ids),
             labels=list(ch.labels),

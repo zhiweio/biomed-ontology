@@ -15,31 +15,36 @@
 uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --extra service
 
 uv run hmd kb        # 构建知识库并打印统计
-uv run hmd demo      # 跑 7 个演示场景（全部自带断言，不是打印）
+uv run hmd demo      # 跑 8 个演示场景（全部自带断言，不是打印）
 uv run hmd eval      # 检索消融 + 指标目标达成情况
 uv run hmd serve     # 起 REST + MCP 服务
 ```
 
-`make check` = ruff + 全量测试，共 **469 条测试**（464 passed + 5 xfailed）。
+`make check` = ruff + 全量测试，共 **481 条测试**（476 passed + 5 xfailed）。
 那 5 条 xfail 不是"暂时跳过"，而是**当前证伪不了的产品承诺**：本体增强的召回提升、
 以及别名一致性 demo D1。全部标了 `strict=True` —— 一旦重新成立就会立刻炸掉，
 逼人回来删标记，而不是让"曾经声称过的能力"无声地留在文档里。原因见下面的检索评测一节。
-其中 7 条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
-**这 7 条长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
+其中 9 条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
+**这批测试长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
 `hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。
 
 ### 可选：Milvus
 
 ```bash
-make milvus-up                                  # docker compose，standalone 单机版
-uv run hmd index --embedder fake --recreate     # 写入切片；fake 嵌入器不下载模型
-uv run hmd eval --milvus --entitlements MOCK_LICENSED   # 九臂消融（3 本地 + 6 Milvus）
+make milvus-up                                              # docker compose，standalone 单机版
+uv run hmd index --embedder multimodal --recreate           # 写入 588 切片 / 4 向量列，MPS 约 2m43s
+uv run hmd eval --milvus --embedder multimodal \
+    --entitlements MOCK_LICENSED                            # 十一臂消融（3 本地 + 8 Milvus）
 make milvus-down
 ```
 
-`--embedder` 可选 `fake` / `bge-m3` / `sapbert` / `dual`。
-默认 `fake` 是有意为之：CI 不应该下载 GB 级权重，
-而确定性哈希向量足以验证**索引、过滤、融合**这些真正容易出错的部分。
+`--embedder` 可选 `fake` / `bge-m3` / `sapbert` / `qwen3-vl` / `dual` / `multimodal`。
+索引与评测必须用同一个 —— 集合 description 里盖了 `embedder=` 戳记，对不上直接退出。
+
+`fake` 是确定性哈希向量，够验证**索引、过滤、融合**这些真正容易出错的部分，
+CI 因此不必下载 GB 级权重。但它必须显式加 `--allow-fake` 才跑得起来：
+一个假嵌入器产出的报表和真报表长得一模一样，多打一个开关是为了让"这不是模型结论"
+在命令行历史里留痕。
 
 ### 模型权重从哪来
 
@@ -89,7 +94,7 @@ L1 术语层        Concept / Synonym / Xref(SSSOM) / Hierarchy → RDF named gr
 L2 语义层        LinkML schema（Biolink 子集）→ OWL + SHACL + JSON Schema + Pydantic
 L3 归一化        文本 → 唯一 CURIE（词典 → 规则 → 向量 → LLM 消歧）
 L4 语料治理      文档标引分类 + 三模态抽取（文本/表格/图像）→ 结构化事实 + provenance
-L5 检索/查询     BM25 ⊕ dense ⊕ 图通道 → RRF 融合；Milvus 三向量列；SPARQL 图查询
+L5 检索/查询     BM25 ⊕ dense ⊕ 图通道 → RRF 融合；Milvus 四向量列 + 模态过滤；SPARQL 图查询
 L6 Agent 接口    MCP + REST（11 个工具），返回体内建 provenance + trace_id + license_tier
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
 L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release → Impact → 回归守门
@@ -102,7 +107,7 @@ flowchart LR
     V --> KB[(KnowledgeBase)]
     ONT[LinkML schema] -->|gen-pydantic| KB
     KB --> S[search<br/>BM25 ⊕ dense ⊕ graph]
-    KB --> M[(Milvus<br/>3 向量列)]
+    KB --> M[(Milvus<br/>4 向量列)]
     M --> S
     S --> API[AgentApi<br/>11 tools]
     API --> REST[REST /v1/*]
@@ -174,10 +179,12 @@ uv run hmd demo --id D7
 ```
 ✓ [D7] 引用优先：碎片 → 原文
    检索命中 5 条，聚成 3 篇文档：
-     DOC:CTGOV.NCT02807415 碎片 2 个 → 章节 2 处：BriefSummary、Outcomes
-     DOC:PMID.32821245     碎片 2 个 → 章节 2 处：Abstract、table:T1
+     DOC:CTGOV.NCT02807415 碎片 1 个 → 章节 1 处：BriefSummary
+     DOC:PMC12133497       碎片 3 个 → 章节 2 处：Introduction、Discussion
+     DOC:PMC13193915       碎片 1 个 → 章节 1 处：Introduction
    还原 CHK:txt.361514dd1b：A Study of Surufatinib … / BriefSummary p1-1，
-        300 字碎片 → 312 字全节（截断=False）
+        300 字碎片 → 312 字全节（共 1 个碎片，截断=False）
+   同级章节可继续查阅：Outcomes
    限长 60 字时：truncated=True，实际返回 60 字
    受限文档 DOC:PATSNAP.PS-2023-00417：无凭据还原 0 字（LICENSE_DENIED） /
         有凭据还原 354 字
@@ -204,42 +211,93 @@ uv run hmd demo --id D7
 
 ---
 
+## 归一化评测
+
+`hmd eval` 先跑归一化再跑检索。本体层已按语料同步扩到
+**84 个概念**（43 药 / 21 靶点 / 20 疾病），全部带双语别名、`xref_hints` 与
+`verified: false` 标记 —— 收录范围是"9 篇真实文献正文里出现的主要实体"，
+不是"gold query 会问到的实体"。后者会让归一化评测变成自证。
+
+```
+归一化准确率 99.1%  (105/106)
+  DISEASE      100.0%  (30/30)
+  SUBSTANCE     97.8%  (44/45)
+  TARGET       100.0%  (31/31)
+  消歧           100.0%  (4/4)
+    ✗ 'sorafenib' 期望 None 实得 HMD:SUB:0000008
+```
+
+**那一条红的是故意留的。** sorafenib 是真实存在但本语料未收录的药，正确行为是弃权；
+实际被向量级以 0.57 判成了 regorafenib —— 两者都是 `-afenib` 类抗血管生成 TKI，
+编辑距离近而适应症完全不同，是本领域最典型的一类误判。
+挑一批一定过的负例凑数，等于把这类错误从报告里抹掉。
+
 ## 检索评测
 
 `uv run hmd eval --entitlements MOCK_LICENSED`
 
-> **这些数字是下界，不是测量值。**
-> 语料已扩到 14 篇文档 / 588 切片（其中 9 篇真实 CC-BY 文献），而 gold 只标注了早期
-> 5 篇手写文档上的 21 条判定。前十里只有 **24%–29%** 的命中被人判定过，
-> 其余一律按"不相关"计入分母。评测输出会自行打出这条警告。
-> 因此下表**不能**与标注期（13 切片）的历史数字相比 —— 那时同一套 gold 覆盖近乎 100%。
-> 要拿到可比、可对外引用的数，先把 gold 扩到当前语料。
+gold set 覆盖**全部 14 篇文档 / 28 条 query**（en 19 / zh 9，含 3 条图像意图），
+**judged@10 = 1.000** —— 前十里每一条命中都被判定过。
+因此下面的数字是测量值，不再是下界。这一点值得单独说：上一版 README 里那句
+"这些数字是下界"曾是真的（judged@10 只有 0.238），它现在被删掉不是因为结论变好看了，
+而是因为**造成它的原因被消除了**，而消除之后结论反而更难看。
 
-**全部 query（n=8）**
+> **但 Recall@10 的上限是 0.800，不是 1.000。**
+> gold 的判定粒度是章节：一节内全部切片同 grade，于是 `|relevant|` 常常大于 K=10。
+> 完美检索也拿不到 1.0。`hmd eval` 会把这个上限单独打一行 ——
+> 它和 judged@10 是两回事，且处置完全相反：judged 低要补标注，上限低只能换指标
+> （nDCG@10 的理想序已按 K 截断，不受影响）。混在一起看，
+> 会把一份标注齐全的报表继续当成"标注没做完"。
+
+gold 的键是 `doc_id#section`，section 名来自解析结果，凭记忆写必然拼错。
+`scripts/dump_sections.py` 把每篇的真实 section 清单打出来供照抄
+（`--grep MET` 可按正文关键词筛）；写错的键会被 `eval_retrieval` 的 dangling 检查拦下，
+整份评测拒绝出数 —— 不是跳过那一条，因为一条静默失效的判定会让分母悄悄变小。
+
+**全部 query（n=28）**
 
 | 臂 | Recall@10 | P@5 | nDCG@10 | MRR | MAP | judged@10 |
 |---|---|---|---|---|---|---|
-| 纯 BM25（无本体） | **0.604** | **0.275** | **0.629** | **0.792** | 0.521 | 0.263 |
-| 纯向量（无本体） | 0.448 | 0.200 | 0.502 | 0.750 | 0.385 | 0.287 |
-| 本体增强混合 | 0.417 | 0.175 | 0.453 | 0.580 | 0.341 | 0.238 |
+| 纯 BM25（无本体） | **0.335** | **0.314** | **0.402** | 0.626 | **0.246** | 1.000 |
+| 纯向量（无本体） | 0.285 | 0.286 | 0.376 | 0.582 | 0.230 | 1.000 |
+| 本体增强混合 | 0.317 | 0.286 | 0.387 | **0.643** | 0.225 | 1.000 |
 
 **分语种** —— 只报总平均会把结论抹平：
 
 | 臂 | en Recall | en nDCG | zh Recall | zh nDCG |
 |---|---|---|---|---|
-| 纯 BM25 | 0.458 | 0.573 | **0.750** | **0.684** |
-| 纯向量 | 0.458 | 0.573 | 0.438 | 0.432 |
-| 本体增强混合 | 0.458 | 0.484 | 0.375 | 0.423 |
+| 纯 BM25 | 0.310 | **0.413** | **0.388** | **0.380** |
+| 纯向量 | 0.298 | 0.400 | 0.259 | 0.323 |
+| 本体增强混合 | **0.324** | 0.404 | 0.302 | 0.353 |
 
-本体增强臂当前**全面落后于纯 BM25**（Recall 相对 -31.0%），且它的 judged@10 最低（0.238）——
-两件事同源：扩展把更多真实文献顶进前十，而那些文档 gold 一条都没标。
-抽查证实被罚掉的是真内容：query "MET inhibitor pulmonary sarcomatoid carcinoma"
-的第 1、2、5 名都是 MET 通路综述里的对题段落，全部计为 miss。
-在判定覆盖回到可比水平之前，这既不能算作"本体层没用"，也不能算作"本体层有用"。
+本体增强臂的 Recall 相对提升是 **-5.2%**（目标 +10%）。这一版能把差额拆开：
 
-另有 6 个 Milvus 臂（lexical / general / biomed / 2col / 3col / ontology+milvus）。
-后端不可达时它们被标记为**未运行**并在报告中列名，**绝不回落到本地后端** ——
-回落会让报告里的"Milvus 三列混合"其实是本地 TF-IDF 跑的，
+| 通道组合 | Recall@10 | nDCG@10 |
+|---|---|---|
+| 纯 BM25 | 0.335 | 0.402 |
+| BM25 + DENSE（不含图通道，不开层级扩展） | 0.333 | 0.411 |
+| BM25 + DENSE（不含图通道，**开**层级扩展） | 0.333 | 0.411 |
+| BM25 + DENSE + GRAPH（不开层级扩展） | 0.315 | 0.386 |
+| 本体增强混合 = 三通道 + 层级扩展（现行配置） | 0.317 | 0.387 |
+
+三条结论：**(a)** 本体今天只经由 GRAPH 一个通道起作用，而该通道净值 **-0.018**；
+**(b)** `expand`（层级扩展）对总分的贡献是 **+0.002** —— 它只在 GRAPH 内部展开下位概念，
+从不改写 BM25/DENSE 的查询串，所以"本体增强"这个臂名今天名不副实；
+**(c)** 剩下的差额来自 DENSE 通道本身，与本体无关。
+
+按语料来源拆，符号是反的：**真实文献 20 条 +5.4%，早期手写构造 8 条 -16.4%**，
+总均值为负全部由后者贡献。构造文档每篇只有 1–5 个单切片章节，`|relevant|` 是 1–4，
+挤掉一个名次就掉 0.25–0.50；而那些 query 本来就是照着文档正文写的，
+BM25 第一名命中，任何重排都只会让它变差。
+
+**不接受"调低阈值"或"删掉构造样本"这两种修法。** 前者是让要求迁就实现；
+后者是删掉唯一一批本体臂打不过 BM25 的证据 —— 那 8 条恰恰是最该留的。
+真正的修法在检索侧：GRAPH 通道在 84 个概念下几乎每个切片都能挂上，判别力已经稀释，
+却仍以整通道权重参与 RRF；且要让层级扩展真的作用到词法/向量通道，而不是只在图里打转。
+
+另有 8 个 Milvus 臂（lexical / general / biomed / 2col / 3col / 4col / visual-only /
+ontology+milvus）。后端不可达时它们被标记为**未运行**并在报告中列名，
+**绝不回落到本地后端** —— 回落会让报告里的"Milvus 三列混合"其实是本地 TF-IDF 跑的，
 这种错误一旦进了采购决策文档就再也追不回来。
 
 ### SapBERT 值多少召回
@@ -247,25 +305,32 @@ uv run hmd demo --id D7
 问题是"要不要为生医专用塔多付一列存储和一次前向"，
 所以答案必须是个减法：**三列混合 − 双列混合**，两臂唯一差别就是那一列。
 
-真模型（`--embedder dual`，BGE-M3 + SapBERT，n=8）：
+真模型（BGE-M3 + SapBERT + Qwen3-VL，n=28）：
 
-| | Recall@10 净值 |
-|---|---|
-| 全部 | **+0.104** |
-| 仅 en | **+0.125** |
-| 仅 zh | **+0.083** |
+| | Recall@10 净值 | 上一版（n=8） |
+|---|---|---|
+| 全部 | **+0.008** | +0.104 |
+| 仅 en | **+0.019** | +0.125 |
+| 仅 zh | **−0.014** | +0.083 |
 
-结论：**这一列值得上**。方向也和先验一致 —— 英文增益明显大于中文
-（SapBERT 是 UMLS 英文同义词对训练的单语模型）。
-但先验里"中文可能有害、届时需按语种路由向量列"那一支**没有兑现**：
-zh 实测 +0.083，是正的，因此不做按语种路由。
+**这张表最重要的一列是右边那列。** 模型没换、列没换、减法定义没换 ——
+变的只是 gold 从 8 条扩到 28 条。于是 +0.104 缩到 +0.008（少一个数量级），
+zh 从 +0.083 翻成 −0.014。原来那个"值得上"的结论，是 8 条 query 撑出来的。
 
-⚠️ 同一组指标在 `--embedder fake` 下是 **−0.042 / −0.083 / ±0.000** —— **符号相反**。
+按现在的数读：**en 仍是正的、zh 已经是负的**，方向与先验一致
+（SapBERT 是 UMLS 英文同义词对训练的单语模型）。上一版据此写下的
+"不做按语种路由"现在**失去了依据** —— 但也不足以反过来支持路由：
+zh 只有 9 条 query，−0.014 落在抖动范围内。
+正确的表述是"这一列在中文上没有证据表明有用"，而不是"有害"。
+决策待 gold 的中文侧扩到可判定的规模后再做。
+
+⚠️ 同一组指标在 `--embedder fake` 下是 **−0.042 / −0.083 / ±0.000** —— 符号与英文侧相反。
 fake 的"生医稠密"列根本不是 SapBERT，只是确定性哈希。
 所以 `hmd eval` 的输出会在标题上标注 `embedder=`，
-并在非 `sapbert` / `dual` 时追加一行显式免责 —— 假嵌入器的数字不得被当成模型结论。
+并在非 `sapbert` / `dual` / `multimodal` 时追加一行显式免责 ——
+假嵌入器的数字不得被当成模型结论。
 
-代价：真模型下单查询 P50 从 ~0.2ms 升到 ~107ms（Apple Silicon MPS）/ ~250ms（CPU）。
+代价：真模型下单查询 P50 从 ~0.6ms（本地 BM25）升到 ~160ms（Milvus + MPS 编码）。
 
 ### 第四列：Qwen3-VL 视觉融合
 
@@ -288,7 +353,11 @@ fake 的"生医稠密"列根本不是 SapBERT，只是确定性哈希。
 - 参考文献 / 署名 / 利益冲突 / 缩写表等**包装纸章节不进检索**（588 vs 未过滤的 695 切片）。
   它们和查询词汇高度重合，却永远不是答案。
 
-实测（14 篇文档 / 588 切片 / 44 张图，索引全量 2m53s，MPS）：
+实测（14 篇文档 / 588 切片，索引全量 2m43s，MPS）。
+先把口径说清楚，因为这里有两个数容易被当成同一个：
+**图像切片 37 片**（modality=IMAGE），**带渲染资产的切片 44 片**（36 图 + 8 表）。
+视觉列对这 44 片编码像素，其余切片编码文字。上一版 README 里的"44 张图"是错的 ——
+它把 8 张表算成了图。
 
 | 查询 | 视觉列首位 | 分数 |
 |---|---|---|
@@ -298,11 +367,64 @@ fake 的"生医稠密"列根本不是 SapBERT，只是确定性哈希。
 结论要说全：**视觉列确实能把图排到第一，但存在模态间隙**。
 文本-文本相似度系统性高于文本-图像，所以当语料里有一段把图讲得很清楚的正文时，
 正文会赢。这不一定是错的（那段正文可能确实更好），
-但"我要看那张图"这类意图目前没有专门通道，需要按 modality 过滤才拿得到。
+但"我要看那张图"是另一类意图，得靠下一节的模态过滤才拿得到。
+
+四列 − 三列的净值（混排场景，n=28）：**全部 +0.053 / en −0.010 / zh +0.186**。
+中文增益远大于英文，与 SapBERT 那一列正好相反 ——
+图像里的文字标注和坐标轴多为英文，中文 query 在纯文本通道上本来就吃亏，
+视觉列等于给它补了一条绕过语言的路。
 
 `hmd index` / `hmd eval` 拒绝 `fake` 嵌入器（除非显式 `--allow-fake`），
 且集合的 description 里盖了 `embedder=` 戳记，
 索引与评测用的模型对不上时直接退出 —— 上面那个符号相反的教训只需要吃一次。
+
+### 模态通道：「我就要看图」
+
+模态间隙不是靠调分数补的。文本-文本相似度系统性高于文本-图像，
+想让图浮上来就得引入一个说不清的跨模态偏置项；
+而"我要看那张生存曲线"本来就是个**布尔条件**，不是偏好。
+所以它落成过滤：契约里的 `modalities` 槽 → `AgentApi.search_documents` →
+`RetrievalRequest` → 两个后端各自执行（Milvus 下推成 `modality in [...]`，
+本地后端在候选集上过滤），GRAPH 通道的产物也走同一道过滤。
+
+```python
+api.search_documents(query="Kaplan-Meier overall survival curve", modalities=["IMAGE"])
+```
+
+`SearchHit` 随之带回 `modality` 字段 —— 不回传的话，调用方无从验证过滤真的生效了。
+
+```bash
+uv run hmd demo --id D8
+```
+
+```
+✓ [D8] 看图通道
+   语料 588 片中图像切片 37 片（6.3%）
+   不过滤时前十模态构成：{'IMAGE': 2, 'TEXT': 8}
+   modalities=[IMAGE] 时命中 5 条，全部为图：
+     [IMAGE] DOC:PMID.32821245  p6 :: Kaplan-Meier curve of progression-free survival
+     [IMAGE] DOC:PMC13116735    p6 :: Figure 2. Overall survival probability over time
+     [IMAGE] DOC:PMC13052964    p4 :: Figure 2. Distribution of AEs over time
+     … 另 2 条
+   其中 3 条在不过滤时进不了前十
+   无凭据 + modalities=[TEXT] 时命中受限文档 0 条（应为 0）
+```
+
+评测侧新增 `milvus_visual_only` 臂（只看 `dense_visual` + `IMAGE`）。
+它只跑 gold 里标了 `modality_intent: IMAGE` 的 3 条 query ——
+把它放到全部 28 条上跑没有意义：其余 25 条要的根本不是图，
+一个只返回图的臂在那些 query 上必然是 0，均值会被稀释成一个看不出所以然的数。
+`hmd eval` 因此会在表下**显式标出哪些臂跑的是子集**（`n=3` vs `n=28`），
+防止有人把 0.889 和上面那些 0.3 横着比。
+
+两条边界必须一起说：
+
+- **过滤保证模态，不保证正确。** 上面那个 CT 查询加了 `modalities=[IMAGE]` 后
+  首位是 0.427 的「Top 30 PT 信号强度」图 —— 是图，但不是 CT。
+  过滤把答案的搜索空间缩小了，没有提升空间内的排序质量。
+- **模态过滤不计入 `license_filtered_count`。** 那个计数是许可边界的证据，
+  混进模态过滤就再也说不清"少的那几条是没权限还是不想要"。
+  两个后端在这一点上逐字对齐，有测试守着。
 
 ### 指标目标与豁免机制
 
@@ -315,15 +437,25 @@ fake 的"生医稠密"列根本不是 SapBERT，只是确定性哈希。
 
 | 目标 | 结果 |
 |---|---|
-| T1 Recall@10 相对提升 ≥ 10% | ✅ 达成 **+12.8%** |
-| T2 nDCG@10 不劣化 | ❌ **−0.002，已豁免**（逐 query 归因：两条 query 的等级次序错位，非召回噪声） |
-| T3 P@5 不劣化 | ✅ 达成 ±0.000 |
-| T4 MRR 不劣化 | ❌ **−0.125，已豁免**（Q1/Q2 首位命中各掉一名，8 条 query 样本上 MRR 抖动极大） |
+| T1 Recall@10 相对提升 ≥ 10% | ❌ **−5.2%，已豁免**（成因见上：本体只经 GRAPH 一个通道，该通道净值 −0.018） |
+| T2 nDCG@10 不劣化 | ❌ **−0.015，已豁免**（同源） |
+| T3 P@5 不劣化 | ❌ **−0.029，已豁免**（同源） |
+| T4 MRR 不劣化 | ✅ 达成 **+0.017** —— 曾是 −0.125 且带豁免，现已撤销 |
 | T5 引用忠实度 = 1.000 | ✅ 达成 —— **且这条不接受豁免** |
 
+T1–T3 的豁免这一版全部重写过。上一版把责任推给标注覆盖，
+那条理由现在不成立了（judged@10 = 1.000），所以新豁免直接写明
+**"不接受调低阈值，也不接受删掉那 8 条构造样本"** ——
+后者恰恰是唯一一批本体臂打不过 BM25 的证据，删掉它等于把问题藏起来。
+复审时点写的是"检索侧完成 GRAPH 通道权重与查询改写两项改造后重测"，
+在那之前对外只可引用"真实文献子集 +5.4%"，不可引用总均值。
+
+T4 走完了整条路径：写死的 `<= 0` 断言 → 未达成 + 署名豁免 → 达成 + 撤销豁免。
 反向绊线同样存在：**目标已达成却还挂着豁免，测试也会失败** ——
 那意味着对外结论仍在引用一条过期的免责说明。
-另有测试断言豁免正文中引用的数字与当前实测一致，防止理由写完就腐烂。
+另有测试断言豁免正文中引用的数字与当前实测一致，防止理由写完就腐烂；
+以及一条守着"T4 别连着豁免一起被删掉"——
+一条曾经红过、后来转绿的目标最容易在清理时被顺手删除。
 
 **T5 为什么不可豁免**：召回差只是找不到，用户知道自己没拿到答案；
 引用不忠实是把一个看似有据的错误答案递出去，用户没有识别它的手段。
@@ -379,8 +511,8 @@ uv run hmd serve --port 8000
 | `src/biomed_ontology/registry/` | 数据源注册表 + 许可分层 |
 | `src/biomed_ontology/ontology/` | 等价团构建、ID 分配、发版、RDF |
 | `src/biomed_ontology/parse/` | PDF → 语义树（衍生自 knowhere，见 NOTICE） |
-| `src/biomed_ontology/embed/` | BGE-M3 + SapBERT 双塔，三向量列 |
-| `src/biomed_ontology/search/` | 三通道检索 + RRF + Milvus 后端 |
+| `src/biomed_ontology/embed/` | BGE-M3 + SapBERT + Qwen3-VL，四向量列 |
+| `src/biomed_ontology/search/` | 三通道检索 + RRF + 模态过滤 + Milvus 后端 |
 | `src/biomed_ontology/agentapi/` | 11 个 agent 工具 + Citationware |
 | `src/biomed_ontology/observability/` | 四支柱埋点与契约校验 |
 | `src/biomed_ontology/evolution/` | 信号挖掘 → KGCL → 发版守门 |

@@ -34,6 +34,22 @@ def test_gold_set_contains_negative_cases(kb):
     assert any(c.get("expect") is None for c in gold["cases"])
 
 
+def test_gold_keys_address_every_chunk_in_the_section(kb):
+    """gold 的键是章节级的，必须映射到该节的**全部**切片。
+
+    早先这里是个 dict 推导，同一节的后一片直接覆盖前一片 ——
+    588 片里只有 132 片对 gold 可寻址，另外 456 片无论标得多准都命中不了。
+    失败形态是"召回莫名其妙地低"，而查的人会一路查到检索器上去。
+    """
+    from biomed_ontology.eval import _chunk_key_index
+
+    index = _chunk_key_index(kb)
+    assert sum(len(v) for v in index.values()) == len(kb.chunks)
+    assert any(len(v) > 1 for v in index.values()), (
+        "语料里已经没有多切片章节了，这条守卫失去意义 —— 要么切片策略变了，要么语料退化了"
+    )
+
+
 def test_retrieval_arms_are_all_evaluated(kb):
     """本地臂全跑；Milvus 臂标为未运行而不是静默消失。
 
@@ -47,9 +63,12 @@ def test_retrieval_arms_are_all_evaluated(kb):
 
 @pytest.mark.xfail(
     strict=True,
-    reason="语料扩到 588 切片而 gold 仍只覆盖早期 5 篇（judged@10=0.238），"
-    "未判定命中按不相关计入，本体臂被罚得最狠。见 targets.yaml T1 豁免。"
-    "标注补齐后本条应自动转绿 —— strict=True 保证那时不会被无声跳过。",
+    reason="gold 已覆盖全部 14 篇、judged@10=1.000，标注覆盖不再是理由："
+    "0.335 → 0.317（-5.2%）就是本体臂当前的真实水平。"
+    "成因在检索侧：本体今天只经由 GRAPH 一个通道参与融合，该通道净值 -0.018；"
+    "84 个概念下几乎每个切片都能挂上，判别力稀释了却仍按整通道权重进 RRF。"
+    "见 targets.yaml T1 豁免。检索侧改造后本条应自动转绿 —— "
+    "strict=True 保证那时不会被无声跳过。",
 )
 def test_ontology_hybrid_improves_recall_over_bm25(kb):
     """本体增强的核心承诺就是召回 —— 这条掉了整个方案的价值主张就没了。"""
@@ -86,8 +105,10 @@ def test_metrics_are_reported_per_language(kb):
 
 @pytest.mark.xfail(
     strict=True,
-    reason="当前 en 与 zh 的 nDCG 提升同为负，与总平均同号。"
-    "这不代表分表没信息量，而是标注覆盖塌了之后两个语种被同一种方式罚分。",
+    reason="当前 nDCG 提升三个口径同为负：总 -0.015 / en -0.009 / zh -0.027，符号一致。"
+    "这不代表分表没信息量 —— 同一份数据里 Recall 的 en 是 +0.014、zh 是 -0.086，"
+    "分表在那个指标上照样给出了总平均给不出的结论。"
+    "只是 nDCG 这一项上，GRAPH 通道的稀释对两个语种是同向的。",
 )
 def test_language_split_can_disagree_with_the_average(kb):
     """分语种表必须真的能和总平均给出不同结论，否则拆分只是装饰。"""

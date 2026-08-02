@@ -244,7 +244,13 @@ class MilvusBackend:
             channels.setdefault(channel, [])
             channels[channel] = _merge_best(channels[channel], scored)
 
-        return BackendResult(channels=channels, filtered_count=self._filtered_count(request, expr))
+        # 计数只按许可谓词算，不带 labels / modality：后两者是调用方自己下的条件。
+        # 混进来会让 `license_filtered_count` 在"你无权查看"与"你自己筛掉的"之间摇摆，
+        # 而本地后端算的一直是前者 —— 两个后端对同一字段给出不同含义是最坏的情形。
+        return BackendResult(
+            channels=channels,
+            filtered_count=self._filtered_count(request, self._license_expr(request)),
+        )
 
     def restore_section(
         self, doc_id: str, section_id: str, request: RetrievalRequest
@@ -265,12 +271,21 @@ class MilvusBackend:
 
     # ----------------------------------------------------------------- 内部
 
+    def _license_expr(self, request: RetrievalRequest) -> str:
+        return request.scope.milvus_expr(known_sources=self.known_sources)
+
     def _filter(self, request: RetrievalRequest) -> str:
-        expr = request.scope.milvus_expr(known_sources=self.known_sources)
+        expr = self._license_expr(request)
         if request.labels:
             allow = ", ".join(f'"{lbl}"' for lbl in request.labels if _plain(lbl))
             if allow:
                 expr = f"{expr} and ARRAY_CONTAINS_ANY(labels, [{allow}])"
+        if request.modalities:
+            # 下推而非取回后再筛：模态过滤后候选可能只剩几十条，
+            # 在库外筛意味着 limit 先砍在混排结果上，图根本进不了这一批。
+            mods = ", ".join(f'"{m}"' for m in request.modalities if _plain(m))
+            if mods:
+                expr = f"{expr} and modality in [{mods}]"
         return expr
 
     def _filtered_count(self, request: RetrievalRequest, expr: str) -> int:

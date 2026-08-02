@@ -782,7 +782,7 @@ class Chunk(ConfiguredBaseModel):
     page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'SearchHit', 'EvidenceChunk']} })
     bbox: Optional[list[float]] = Field(default=None, description="""[x0, y0, x1, y1]，页面坐标。表格/图像抽取的溯源靠它定位。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
     text: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'NormalizeRequest']} })
-    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance']} })
+    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance', 'SearchHit']} })
     concept_ids: Optional[list[str]] = Field(default=None, description="""直接归一化命中的概念，用于精确过滤。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'SearchHit']} })
     concept_ids_expanded: Optional[list[str]] = Field(default=None, description="""含本体子树扩展的概念集合，用于召回。 与 concept_ids 分开存是为了让\"查 NSCLC 召回肺腺癌\"不污染精确匹配。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
     same_as_chunk_id: Optional[str] = Field(default=None, description="""指向内容等价的属主切片。同一段正文可能同时归属多个叶节点（如跨章节的表格说明）， 去重后只保留一份，其余以此引用属主，避免同一证据在结果里重复占位。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk']} })
@@ -883,7 +883,7 @@ class Fact(ConfiguredBaseModel):
                        'LandscapeEntry'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     created_in_release: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Concept']} })
-    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance']} })
+    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance', 'SearchHit']} })
     subject_label: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Mapping']} })
     object_label: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Mapping']} })
 
@@ -929,7 +929,7 @@ class Evidence(ConfiguredBaseModel):
     char_end: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'MatchedConcept']} })
     page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'SearchHit', 'EvidenceChunk']} })
     bbox: Optional[list[float]] = Field(default=None, description="""[x0, y0, x1, y1]，页面坐标。表格/图像抽取的溯源靠它定位。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
-    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance']} })
+    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance', 'SearchHit']} })
     quote: Optional[str] = Field(default=None, description="""支撑该事实的原文片段，供研究员快速核验。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Evidence']} })
     title: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'Evidence', 'SearchHit', 'EvidenceDoc']} })
 
@@ -986,7 +986,7 @@ class Provenance(ConfiguredBaseModel):
     char_end: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'MatchedConcept']} })
     page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'SearchHit', 'EvidenceChunk']} })
     bbox: Optional[list[float]] = Field(default=None, description="""[x0, y0, x1, y1]，页面坐标。表格/图像抽取的溯源靠它定位。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance']} })
-    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance']} })
+    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance', 'SearchHit']} })
     rank_before_rerank: Optional[int] = Field(default=None, description="""rerank 前的名次。保留它才能判断 rerank 是帮忙还是帮倒忙。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Provenance', 'SearchHit']} })
     retrieval_channel: Optional[RetrievalChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Provenance', 'SearchHit', 'EvidenceChunk']} })
     license_tier: Optional[LicenseTierEnum] = Field(default=LicenseTierEnum.TIER_0, json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
@@ -1812,6 +1812,7 @@ class SearchRequest(ConfiguredBaseModel):
     labels: Optional[list[str]] = Field(default=None, description="""标引分类打的多标签，取值来自 taxonomy。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'SearchRequest', 'SearchHit']} })
     use_expansion: Optional[bool] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
     channels: Optional[list[RetrievalChannelEnum]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
+    modalities: Optional[list[ModalityChannelEnum]] = Field(default=None, description="""只保留这些模态的命中。\"我要看那张图\"是一类独立意图， 而文本-文本相似度系统性高于文本-图像 —— 混排时一段把图讲清楚的正文 总会排在图本身前面。没有这个槽位，该意图就没有任何通道可走。""", json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
     max_tier: Optional[LicenseTierEnum] = Field(default=None, description="""调用方主动设定的 tier 上限，用于在外发场景下自我约束。""", json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
     date_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
     date_to: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
@@ -1843,7 +1844,7 @@ class SearchResponse(ToolEnvelope):
 
 class SearchHit(ConfiguredBaseModel):
     """
-    一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件。
+    一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件； modality 则是 SearchRequest.modalities 的对侧 —— 一个过滤条件如果在返回体里查不到对应字段，调用方就无从验证它到底生效没有。
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
 
@@ -1885,6 +1886,7 @@ class SearchHit(ConfiguredBaseModel):
     section: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'SearchHit']} })
     page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'SearchHit', 'EvidenceChunk']} })
     labels: Optional[list[str]] = Field(default=None, description="""标引分类打的多标签，取值来自 taxonomy。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'SearchRequest', 'SearchHit']} })
+    modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance', 'SearchHit']} })
     explain: Optional[str] = Field(default=None, description="""融合排序的可解释串，形如 RRF(bm25#1 + graph#2)。""", json_schema_extra = { "linkml_meta": {'domain_of': ['SearchHit']} })
 
     @field_validator('chunk_id')

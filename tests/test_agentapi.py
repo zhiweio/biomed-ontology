@@ -119,6 +119,24 @@ def test_every_response_carries_a_trace_id_that_resolves(api):
     assert spans, "trace 里没有任何 span，等于没埋点"
 
 
+def test_modality_filter_passes_the_contract_and_narrows_to_that_modality(api):
+    """`modalities` 是契约内的槽位，不是绕过 additionalProperties 的旁路。
+
+    生成的 JSON Schema 是 `additionalProperties: false`：
+    没有这个槽位，带它的 payload 会直接被判 CONTRACT_VIOLATION。
+    """
+    env = api.search_documents(query="Kaplan-Meier survival curve", modalities=["IMAGE"])
+    assert env["warnings"] == []
+    assert env["results"], "过滤后一条都没有，无法证明过滤生效还是查询本身召不回"
+    assert {h["modality"] for h in env["results"]} == {"IMAGE"}
+
+
+def test_the_same_query_without_the_filter_is_not_image_only(api):
+    """对照组：不加过滤时正文会挤进来 —— 这正是需要专门通道的原因。"""
+    env = api.search_documents(query="Kaplan-Meier survival curve")
+    assert {h["modality"] for h in env["results"]} != {"IMAGE"}
+
+
 def test_get_facts_filters_by_license_and_reports_the_count(api):
     free = api.get_facts(subject_id=SAVOLITINIB)
     paid = api.get_facts(subject_id=SAVOLITINIB, entitlements=LICENSED)

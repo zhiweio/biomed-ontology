@@ -75,13 +75,14 @@ def _safe_source(source_id: str) -> str:
 
 @dataclass(frozen=True)
 class ChunkMeta:
-    """后端做许可与标签过滤所需的最小元数据，不含正文。"""
+    """后端做许可、标签与模态过滤所需的最小元数据，不含正文。"""
 
     chunk_id: str
     doc_id: str
     source_id: str
     license_rank: int
     labels: tuple[str, ...] = ()
+    modality: str = ""
 
 
 @dataclass(frozen=True)
@@ -96,6 +97,11 @@ class RetrievalRequest:
     )
     # 逐向量列消融用（P13）。空元组表示后端默认全开；本地后端无向量列，忽略此项。
     vector_fields: tuple[str, ...] = ()
+    # 只保留这些模态的候选。空元组 = 不限模态。
+    #
+    # 这是过滤而不是加权：文本-文本相似度系统性高于文本-图像，靠调分数让图浮上来
+    # 需要一个说不清的跨模态偏置项，而"我要看那张图"本来就是个布尔条件。
+    modalities: tuple[str, ...] = ()
 
 
 @dataclass

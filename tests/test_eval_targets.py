@@ -41,12 +41,16 @@ def test_no_stale_waivers(outcomes):
     assert not stale, render_outcomes(outcomes)
 
 
-def test_the_known_mrr_regression_is_waived_not_deleted(outcomes):
-    """MRR 那条曾是写死的 `<= 0` 断言。它现在必须以"未达成 + 带理由"的形态存在。"""
+def test_the_recovered_mrr_target_kept_its_seat(outcomes):
+    """T4 走完了"写死断言 → 未达成+豁免 → 达成+撤销豁免"的整条路径。
+
+    它现在守的是最后一步：目标本身**没有随豁免一起被删掉**。
+    一条曾经红过、后来转绿的目标最容易在清理时被顺手删除 ——
+    删了之后它再退回去也没人知道，而这正是当初设立豁免机制要防的事。
+    """
     t4 = next(o for o in outcomes if o.target.id == "T4")
-    assert not t4.met, "MRR 回升了，请撤销 T4 的豁免并同步更新对外结论"
-    assert t4.waived
-    assert "样本量" in t4.target.waiver
+    assert t4.met, "MRR 又退回去了：这次要重新写豁免，不是删目标"
+    assert not t4.waived, "已达成还挂着豁免，对外结论会继续引用过期的免责说明"
 
 
 def test_waiver_text_quotes_the_current_numbers(outcomes):
@@ -70,10 +74,14 @@ def test_waiver_text_quotes_the_current_numbers(outcomes):
 @pytest.mark.xfail(
     strict=True,
     reason="T1 当前只能靠豁免过关，核心承诺未被证明。"
-    "直接原因是标注覆盖：语料扩到 588 切片 / 14 篇文档，gold 仍只有 21 条判定、"
-    "全部落在早期 5 篇手写文档上，本体臂 judged@10=0.238。"
+    "标注覆盖已经不是理由了 —— gold 扩到全部 14 篇 / 28 条 query 后 judged@10=1.000，"
+    "0.335 → 0.317（-5.2%）是干净的测量值。"
+    "消融显示本体今天只经由 GRAPH 一个通道起作用，而该通道净值 -0.018；"
+    "`expand` 只在图内部展开下位概念、从不改写词法/向量查询串，对总分贡献 +0.002。"
+    "按子集拆：真实文献 20 条 +5.4%，早期构造 8 条 -16.4%，总均值为负全由后者贡献。"
     "这条守卫的存在意义就是不让「核心承诺被豁免」这件事悄悄发生 —— "
-    "标成 xfail(strict) 是记账，不是消音：gold 补齐、T1 真达成后它会立刻转绿并要求删掉本标记。",
+    "标成 xfail(strict) 是记账，不是消音："
+    "检索侧改造完成、T1 真达成后它会立刻转绿并要求删掉本标记。",
 )
 def test_recall_target_is_actually_met(outcomes):
     """不能全靠豁免过关 —— 核心承诺必须是真达成的。"""

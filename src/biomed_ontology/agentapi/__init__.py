@@ -419,6 +419,7 @@ class AgentApi:
         expand: bool = True,
         channels: list[str] | None = None,
         labels: list[str] | None = None,
+        modalities: list[str] | None = None,
         max_tier: str = "TIER_3",
         agent_id: str | None = None,
         session_id: str | None = None,
@@ -431,6 +432,7 @@ class AgentApi:
             "use_expansion": expand,
             "channels": channels or [],
             "labels": labels or [],
+            "modalities": modalities or [],
             "max_tier": max_tier,
         }
 
@@ -445,6 +447,7 @@ class AgentApi:
                 expand=expand,
                 channels=chans,
                 labels=labels,
+                modalities=tuple(modalities or ()),
             )
             max_returned = max(
                 (h.license_tier for h in hits), key=tier_rank, default=LicenseTierEnum.TIER_0
@@ -916,6 +919,7 @@ def _hit_json(h: Any) -> dict[str, Any]:
         "license_tier": h.license_tier.value,
         "concept_ids": h.matched_concepts,
         "labels": h.labels,
+        "modality": h.modality,
         "explain": h.explain,
     }
 

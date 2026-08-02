@@ -1414,6 +1414,9 @@ hmd:SearchRequest a owl:Class ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:use_expansion ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:modalities ],
+        [ a owl:Restriction ;
             owl:allValuesFrom hmd:DocTypeEnum ;
             owl:onProperty hmd:doc_types ],
         [ a owl:Restriction ;
@@ -1446,6 +1449,9 @@ hmd:SearchRequest a owl:Class ;
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
             owl:onProperty hmd:query ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ModalityChannelEnum ;
+            owl:onProperty hmd:modalities ],
         [ a owl:Restriction ;
             owl:allValuesFrom hmd:LicenseTierEnum ;
             owl:onProperty hmd:max_tier ] ;
@@ -3563,6 +3569,9 @@ hmd:SearchHit a owl:Class ;
             owl:onProperty hmd:page ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
+            owl:onProperty hmd:modality ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
             owl:onProperty hmd:snippet ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
@@ -3579,6 +3588,9 @@ hmd:SearchHit a owl:Class ;
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:page ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:modality ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:explain ],
@@ -3621,6 +3633,9 @@ hmd:SearchHit a owl:Class ;
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:doc_id ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ModalityChannelEnum ;
+            owl:onProperty hmd:modality ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:license_tier ],
@@ -3660,7 +3675,7 @@ hmd:SearchHit a owl:Class ;
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:integer ;
             owl:onProperty hmd:rank ] ;
-    skos:definition "一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件。" ;
+    skos:definition "一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件； modality 则是 SearchRequest.modalities 的对侧 —— 一个过滤条件如果在返回体里查不到对应字段，调用方就无从验证它到底生效没有。" ;
     skos:inScheme hmd:agentapi .
 
 <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#CANDIDATE_GENERATED> a owl:Class ;
@@ -3897,6 +3912,12 @@ hmd:members a owl:DatatypeProperty ;
     rdfs:label "members" ;
     rdfs:range xsd:anyURI ;
     skos:inScheme hmd:concept .
+
+hmd:modalities a owl:ObjectProperty ;
+    rdfs:label "modalities" ;
+    rdfs:range hmd:ModalityChannelEnum ;
+    skos:definition "只保留这些模态的命中。\"我要看那张图\"是一类独立意图， 而文本-文本相似度系统性高于文本-图像 —— 混排时一段把图讲清楚的正文 总会排在图本身前面。没有这个槽位，该意图就没有任何通道可走。" ;
+    skos:inScheme hmd:agentapi .
 
 hmd:qualifiers a owl:DatatypeProperty ;
     rdfs:label "qualifiers" ;
@@ -5153,17 +5174,6 @@ hmd:LanguageEnum a owl:Class ;
         <https://w3id.org/asliva/biomed-ontology/LanguageEnum#la>,
         <https://w3id.org/asliva/biomed-ontology/LanguageEnum#zh> .
 
-hmd:ModalityChannelEnum a owl:Class ;
-    rdfs:label "ModalityChannelEnum" ;
-    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#IMAGE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#METADATA> ) ;
-    skos:definition "抽取通道。三模态各自的错误模式不同，混在一起就无法分模态评估准确率， 也无法定位是解析失败还是抽取失败。" ;
-    skos:inScheme hmd:types ;
-    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#IMAGE>,
-        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#METADATA>,
-        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE>,
-        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE>,
-        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> .
-
 hmd:RetrievalChannelEnum a owl:Class ;
     rdfs:label "RetrievalChannelEnum" ;
     owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#BM25> <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#DENSE> <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#GRAPH> <https://w3id.org/asliva/biomed-ontology/RetrievalChannelEnum#FUSED> ) ;
@@ -5220,11 +5230,6 @@ hmd:char_end a owl:DatatypeProperty ;
 hmd:char_start a owl:DatatypeProperty ;
     rdfs:label "char_start" ;
     rdfs:range xsd:integer ;
-    skos:inScheme hmd:fact .
-
-hmd:modality a owl:ObjectProperty ;
-    rdfs:label "modality" ;
-    rdfs:range hmd:ModalityChannelEnum ;
     skos:inScheme hmd:fact .
 
 hmd:preferred_label_en a owl:DatatypeProperty ;
@@ -5288,6 +5293,17 @@ hmd:AliasTypeEnum a owl:Class ;
         <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#SYMBOL>,
         <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#TRANSLATION> .
 
+hmd:ModalityChannelEnum a owl:Class ;
+    rdfs:label "ModalityChannelEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#IMAGE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE> <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#METADATA> ) ;
+    skos:definition "抽取通道。三模态各自的错误模式不同，混在一起就无法分模态评估准确率， 也无法定位是解析失败还是抽取失败。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#IMAGE>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#METADATA>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE>,
+        <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> .
+
 hmd:EntityTypeEnum a owl:Class ;
     rdfs:label "EntityTypeEnum" ;
     owl:unionOf ( <https://w3id.org/biolink/vocab/GeneOrGeneProduct> <https://w3id.org/biolink/vocab/ChemicalEntity> <https://w3id.org/biolink/vocab/Disease> <https://w3id.org/biolink/vocab/MolecularActivity> <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#MODALITY> <https://w3id.org/biolink/vocab/ClinicalTrial> <https://w3id.org/biolink/vocab/BiologicalEntity> <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#ADVERSE_EVENT> ) ;
@@ -5301,6 +5317,11 @@ hmd:EntityTypeEnum a owl:Class ;
         <https://w3id.org/biolink/vocab/MolecularActivity>,
         <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#ADVERSE_EVENT>,
         <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#MODALITY> .
+
+hmd:modality a owl:ObjectProperty ;
+    rdfs:label "modality" ;
+    rdfs:range hmd:ModalityChannelEnum ;
+    skos:inScheme hmd:fact .
 
 hmd:page a owl:DatatypeProperty ;
     rdfs:label "page" ;

@@ -157,6 +157,7 @@ classes:
       - labels
       - use_expansion
       - channels
+      - modalities
       - max_tier
       - date_from
       - date_to
@@ -174,7 +175,10 @@ classes:
       - evidence_tree
 
   SearchHit:
-    description: 一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件。
+    description: >-
+      一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件；
+      modality 则是 SearchRequest.modalities 的对侧 ——
+      一个过滤条件如果在返回体里查不到对应字段，调用方就无从验证它到底生效没有。
     slots:
       - chunk_id
       - doc_id
@@ -190,6 +194,7 @@ classes:
       - section
       - page
       - labels
+      - modality
       - explain
 
   EvidenceDoc:
@@ -436,6 +441,13 @@ slots:
   channels:
     range: RetrievalChannelEnum
     multivalued: true
+  modalities:
+    range: ModalityChannelEnum
+    multivalued: true
+    description: >-
+      只保留这些模态的命中。"我要看那张图"是一类独立意图，
+      而文本-文本相似度系统性高于文本-图像 —— 混排时一段把图讲清楚的正文
+      总会排在图本身前面。没有这个槽位，该意图就没有任何通道可走。
   max_tier:
     range: LicenseTierEnum
     description: 调用方主动设定的 tier 上限，用于在外发场景下自我约束。
