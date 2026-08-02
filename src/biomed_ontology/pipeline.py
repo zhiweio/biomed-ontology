@@ -35,6 +35,8 @@ DEFAULT_RELEASE = "0.1.0"
 # 内部构建产物的归属源。术语层来自 SEED_INTERNAL，
 # 语料与事实各自归属其原始源，因此许可边界在图这一级就成立。
 _SEED_SOURCE = "SEED_INTERNAL"
+# 种子断言的类型化链接另立一源，于是它在图 URI 上就和术语层、事实层分得开。
+_SEED_LINKS_SOURCE = "SEED_LINKS"
 
 
 @dataclass
@@ -119,6 +121,11 @@ def build_knowledge_base(
     graph.load_concepts(
         built.concepts, built.synonyms, source_id=_SEED_SOURCE, tier=LicenseTierEnum.TIER_0
     )
+    # 类型化链接单独一个图：谓词与事实层同名，但证据强度完全不同
+    # （事实层每条边挂着 reifier 与出处，种子链接只是一句人工断言）。
+    graph.load_concept_links(
+        built.concepts, source_id=_SEED_LINKS_SOURCE, tier=LicenseTierEnum.TIER_0
+    )
 
     kb = KnowledgeBase(
         release_id=release_id,
@@ -135,7 +142,8 @@ def build_knowledge_base(
         warnings=[
             f"未登记歧义别名：{n} → {ids}" for n, ids in built.unregistered_collisions.items()
         ]
-        + [f"父节点无法解析：{cid} → {ps}" for cid, ps in built.unresolved_parents.items()],
+        + [f"父节点无法解析：{cid} → {ps}" for cid, ps in built.unresolved_parents.items()]
+        + [f"类型化链接无法解析：{cid} → {ls}" for cid, ls in built.unresolved_links.items()],
     )
     if not with_corpus:
         return kb

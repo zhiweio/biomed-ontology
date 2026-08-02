@@ -17,6 +17,7 @@ from biomed_ontology.search.backends.base import (
     BackendResult,
     ChunkMeta,
     RetrievalRequest,
+    merge_best,
 )
 
 __all__ = ["Bm25Index", "DenseIndex", "LocalBackend"]
@@ -142,6 +143,7 @@ class LocalBackend:
         """
         wanted = set(request.labels)
         modalities = set(request.modalities)
+        figure_types = set(request.figure_types)
         allowed: set[str] = set()
         filtered = 0
         for meta in self._meta.values():
@@ -152,6 +154,8 @@ class LocalBackend:
                 continue
             if modalities and meta.modality not in modalities:
                 continue
+            if figure_types and meta.figure_type not in figure_types:
+                continue
             allowed.add(meta.chunk_id)
         return allowed, filtered
 
@@ -161,10 +165,13 @@ class LocalBackend:
         depth = request.top_k * 3
         if RetrievalChannelEnum.BM25 in request.channels:
             out.channels[RetrievalChannelEnum.BM25] = self.bm25.search(
-                request.query, allowed=allowed, top_k=depth
+                request.lexical_text(), allowed=allowed, top_k=depth
             )
         if RetrievalChannelEnum.DENSE in request.channels:
-            out.channels[RetrievalChannelEnum.DENSE] = self.dense.search(
-                request.query, allowed=allowed, top_k=depth
-            )
+            # multi-query：原串与各改写串分别检索，逐 chunk 取最高分。
+            # 拼成一句再编码会把语义拉向扩展词的质心，那正是要避开的查询漂移。
+            merged: list[tuple[str, float]] = []
+            for text in request.dense_texts():
+                merged = merge_best(merged, self.dense.search(text, allowed=allowed, top_k=depth))
+            out.channels[RetrievalChannelEnum.DENSE] = merged[:depth]
         return out

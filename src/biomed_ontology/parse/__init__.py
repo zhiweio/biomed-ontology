@@ -15,7 +15,7 @@ from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJusti
 from biomed_ontology._generated.hmd_fact import DocTypeEnum, LanguageEnum
 from biomed_ontology.config import Settings
 from biomed_ontology.observability import TraceContext, new_trace_id
-from biomed_ontology.parse.assets import AssetRecord
+from biomed_ontology.parse.assets import AssetRecord, asset_dir_name
 from biomed_ontology.parse.emit import ParsedDocument, emit_document
 from biomed_ontology.parse.layout import (
     LayoutBackend,
@@ -51,6 +51,7 @@ __all__ = [
     "VisionCache",
     "VisionProvider",
     "VisionResult",
+    "asset_dir_name",
     "assign_blocks",
     "build_skeleton",
     "build_tree",
@@ -106,7 +107,7 @@ def parse_document(
     ctx: TraceContext | None = None,
 ) -> ParsedDocument:
     ctx = ctx or TraceContext(trace_id=new_trace_id(), ontology_release_id="0.1.0")
-    assets = out_dir or Path("data/assets") / doc_id.replace(":", "_").replace("/", "_")
+    assets = out_dir or Path("data/assets") / asset_dir_name(doc_id)
     backend = get_layout_backend(layout, config=config)
 
     if not backend.supports(path):

@@ -11,7 +11,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-__all__ = ["AssetRecord", "RenderedAsset", "render_regions", "safe_asset_name"]
+__all__ = [
+    "AssetRecord",
+    "RenderedAsset",
+    "asset_dir_name",
+    "render_regions",
+    "resolve_asset",
+    "safe_asset_name",
+]
 
 _UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 _DOTS = re.compile(r"\.{2,}")
@@ -42,6 +49,35 @@ class AssetRecord:
     @property
     def extracted(self) -> dict[str, str]:
         return dict(getattr(self.vision, "extracted", {}) or {})
+
+
+def asset_dir_name(doc_id: str) -> str:
+    """doc_id → 存放该文档资产的目录名。`DOC:PMC12133497` → `DOC_PMC12133497`。
+
+    CURIE 里的冒号在 Windows 上不是合法文件名字符，落盘时必须换掉。
+    写入方与读取方共用这一个函数，而不是各写一遍同样的 `replace` ——
+    两处各写一遍，就意味着两处可以不一致，而下面 `resolve_asset` 的注释
+    说的正是这种不一致上一次是怎么无声发生的。
+    """
+    return doc_id.replace(":", "_").replace("/", "_")
+
+
+def resolve_asset(root: Path | None, doc_id: Any, rel_path: Any) -> str | None:
+    """`data/assets` + doc_id + 切片里的相对路径 → 本机绝对路径。图不在就返回 None。
+
+    doc_id 是这条路径里不可省的一段。切片存的是 `images/p0002_r000.png`，
+    对**每篇文档**都是这个名字 —— 它相对的是 `render_regions` 的 `out_dir`，
+    也就是 `data/assets/<doc_id>/`，不是 `data/assets/`。
+
+    单独抽出来是因为漏掉 doc_id 这件事已经发生过一次，而且**无声**：
+    读不到图时视觉列会退化成编码 caption 文本，照样产出一个像模像样的向量，
+    于是"这一列到底看没看过像素"在指标上完全看不出来。
+    有且只有一处拼路径，那次错误就只可能犯在一个地方。
+    """
+    if not rel_path or not doc_id or root is None:
+        return None
+    path = root / asset_dir_name(str(doc_id)) / str(rel_path)
+    return str(path) if path.is_file() else None
 
 
 def safe_asset_name(stem: str, suffix: str) -> str:

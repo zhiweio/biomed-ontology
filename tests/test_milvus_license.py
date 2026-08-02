@@ -11,7 +11,7 @@ import os
 import pytest
 
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
-from biomed_ontology.embed import FakeEmbedder
+from biomed_ontology.embed import VECTOR_FIELDS, FakeEmbedder
 from biomed_ontology.search.backends.base import LicenseScope, RetrievalRequest
 from biomed_ontology.search.backends.milvus import MilvusBackend
 
@@ -83,9 +83,28 @@ ROWS = [
         "page": 5,
         "modality": "IMAGE",
         "degraded": "",
+        "figure_type": "CHART",
         "labels": ["EFFICACY"],
         "concept_ids_expanded": ["HMD:SUB.0001"],
         "text": "Figure 1. Savolitinib objective response rate by subgroup.",
+    },
+    # 第二张图，图型不同。只有一张图时"按图型过滤"和"按模态过滤"给出的结果
+    # 完全一样，那样的测试无法分辨图型条件到底有没有被执行。
+    {
+        "chunk_id": "CHK:open3",
+        "doc_id": "DOC:PMC.1",
+        "source_id": "PMC",
+        "license_rank": 0,
+        "section_id": "SEC:4",
+        "section_path": "image:F2",
+        "sort_order": 0,
+        "page": 6,
+        "modality": "IMAGE",
+        "degraded": "",
+        "figure_type": "RADIOLOGY",
+        "labels": ["EFFICACY"],
+        "concept_ids_expanded": ["HMD:SUB.0001"],
+        "text": "Figure 2. Savolitinib objective response rate on baseline CT imaging.",
     },
 ]
 
@@ -217,11 +236,13 @@ def test_filtered_count_is_reported(backend):
 
 
 @requires_milvus
-@pytest.mark.parametrize(
-    "field", ["sparse_lexical", "dense_general", "dense_biomed", "dense_visual"]
-)
+@pytest.mark.parametrize("field", VECTOR_FIELDS)
 def test_each_vector_column_is_independently_queryable(backend, field: str):
-    """四列必须能逐列单独检索，否则逐列消融根本做不出来。"""
+    """五列必须能逐列单独检索，否则逐列消融根本做不出来。
+
+    参数直接取自 `VECTOR_FIELDS` 而不是抄一份清单：抄的那份不会跟着加列，
+    于是新加的列从第一天起就没人测过，而测试还是全绿。
+    """
     result = backend.retrieve(
         RetrievalRequest(query=QUERY, scope=PAID_SCOPE, top_k=5, vector_fields=(field,))
     )
@@ -262,7 +283,32 @@ def test_modality_filter_actually_narrows_what_milvus_returns(backend):
         )
     )
     assert unfiltered >= {"CHK:open1", "CHK:open2"}, "对照组：不加过滤时文本与图都在"
-    assert images == {"CHK:open2"}
+    assert images == {"CHK:open2", "CHK:open3"}
+
+
+@requires_milvus
+def test_figure_type_narrows_further_than_modality_alone(backend):
+    """`modalities=[IMAGE]` 保证返回的是图，不保证是**那类**图。
+
+    README 里那个 "chest CT" 的查询加了模态过滤后首位仍是一张信号强度柱状图 ——
+    这条测的就是补上的那一格：同为 IMAGE 的两张图，按图型能分开。
+    """
+
+    def ids(**kw):
+        result = backend.retrieve(RetrievalRequest(query=QUERY, scope=PAID_SCOPE, top_k=10, **kw))
+        return {cid for hits in result.channels.values() for cid, _ in hits}
+
+    assert ids(modalities=("IMAGE",)) == {"CHK:open2", "CHK:open3"}
+    assert ids(figure_types=("RADIOLOGY",)) == {"CHK:open3"}
+    assert ids(figure_types=("CHART",)) == {"CHK:open2"}
+
+
+def test_figure_type_filter_does_not_displace_the_license_predicate():
+    """新加的过滤条件必须是**追加**而不是替换 —— 少一个 and 就是许可绕过。"""
+    be = MilvusBackend(collection="unused", embedder=FakeEmbedder(), client=object())
+    expr = be._filter(RetrievalRequest(query=QUERY, scope=OPEN_SCOPE, figure_types=("RADIOLOGY",)))
+    assert 'figure_type in ["RADIOLOGY"]' in expr
+    assert "license_rank <= 1" in expr
 
 
 @requires_milvus

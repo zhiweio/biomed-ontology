@@ -5,10 +5,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from biomed_ontology._generated.hmd_concept import EntityTypeEnum, LicenseTierEnum
 from biomed_ontology.licensing import (
+    COMPONENTS,
     LicenseViolation,
     assert_component_cleared,
     assert_exportable,
@@ -117,9 +120,23 @@ def test_track_b_sources_are_slots_not_active(registry):
 
 def test_procurement_slots_ordered_by_priority(registry):
     slots = registry.procurement_slots()
-    priorities = [s.procurement_priority for s in slots]
-    assert priorities == sorted(priorities)
+    ranked = [s.procurement_priority for s in slots if s.procurement_priority is not None]
+    assert ranked == sorted(ranked)
     assert slots[0].id == "UMLS", "UMLS 性价比最高，应排首位"
+
+
+def test_unpriced_slots_sort_after_the_priced_ones(registry):
+    """不是每个插槽都有价签。
+
+    CLINICAL_IMAGING 卡在 DUA 与伦理审批上，不是卡在预算上，
+    给它编一个优先级就等于谎称它和 UMLS 在同一张比价表上。
+    留空是有意的，代价是排序键必须容得下 None —— 这里就是那道绊线。
+    """
+    slots = registry.procurement_slots()
+    unpriced = [i for i, s in enumerate(slots) if s.procurement_priority is None]
+    priced = [i for i, s in enumerate(slots) if s.procurement_priority is not None]
+    assert unpriced, "没有无价签插槽时本测试无意义，删掉它而不是留着空跑"
+    assert min(unpriced) > max(priced), "无价签插槽必须排在有价签的之后"
 
 
 def test_poc_runs_entirely_on_track_a(registry):
@@ -176,3 +193,40 @@ def test_pending_components_are_enumerable_for_legal_review():
     assert {"mineru", "pymupdf"} <= ids
     for c in uncleared_components():
         assert c.obligation, f"{c.component_id} 登记了待核实却没写义务内容"
+
+
+def test_permissive_weights_do_not_clear_a_use_restricted_model():
+    """BiomedCLIP 的权重是 MIT —— 依赖清单上它是全场最干净的一条。
+
+    风险不在许可证里：模型卡另有一句"任何部署用途当前均超出适用范围"。
+    只读 license_id 会得出"MIT，放行"，所以闸门必须拦住它。
+    """
+    with pytest.raises(LicenseViolation, match="尚未经法务结论"):
+        assert_component_cleared("biomedclip")
+
+    ob = COMPONENTS["biomedclip"]
+    assert "MIT" in ob.license_id, "许可证本身要如实记，不能为了触发闸门谎报成受限许可"
+    assert "超出适用范围" in ob.obligation, "拦住它的那句话必须写在义务里，否则法务无从复核"
+
+
+def test_every_pending_obligation_also_appears_in_notice():
+    """闸门和 NOTICE 是同一件事的两面，缺一面就漏一类读者。
+
+    只进闸门：分发方拿不到义务正文，NOTICE 就是不完整的。
+    只进 NOTICE：跑代码的人绕过去也没人拦。
+    两边都要有，而"两边都要有"这件事本身也得有人守着。
+    """
+    notice = (Path(__file__).resolve().parents[1] / "NOTICE").read_text(encoding="utf-8")
+    for c in uncleared_components():
+        assert c.component_id in notice, (
+            f"{c.component_id} 登记为待核实却没写进 NOTICE —— 分发时义务不可见"
+        )
+
+
+def test_clinical_use_prohibition_is_recorded_not_just_the_copyright_terms():
+    """模型卡同时声明未经临床验证。
+
+    这一条和版权无关，却是医学事务唯一会看的那一条 ——
+    丢了它，义务正文就只剩法务视角。
+    """
+    assert "临床" in COMPONENTS["biomedclip"].obligation

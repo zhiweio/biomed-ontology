@@ -1,4 +1,4 @@
-"""混合检索（L5）：BM25 ⊕ 向量 ⊕ 图，RRF 融合后重排。
+"""混合检索（L5）：BM25 ⊕ 向量 ⊕ 图，带权 RRF 融合，可选交叉编码器精排。
 
 本体在这里的价值不是替代 BM25 或向量，而是提供第三条正交通道：
 BM25 找字面、向量找语义、图找"经由概念关系可达"。
@@ -10,19 +10,28 @@ license 过滤在候选生成阶段就介入，而不是返回前裁剪：
 
 词法/向量召回下沉到 `backends/`（本地内存或 Milvus）；
 图通道留在本层，因为它依赖本体规范化器与概念倒排，向量库替不了。
+
+本体经由**两条**路径参与检索，缺一条这个臂就名不副实：
+1. 图通道 —— search-around，从查询概念沿类型化链接走到相关概念；
+2. 查询改写 —— 把概念的别名喂回词法与向量通道。
+早先只有第一条，于是 `expand` 开与不开对总分的差别是 +0.002。
 """
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJustificationEnum
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
+from biomed_ontology.alias import normalize_alias
 from biomed_ontology.corpus import Chunk
 from biomed_ontology.licensing import tier_rank
 from biomed_ontology.observability import Candidate, TraceContext
+from biomed_ontology.ontology.links import LinkIndex
 from biomed_ontology.pipeline import KnowledgeBase
+from biomed_ontology.rerank import Reranker
 from biomed_ontology.search.backends import (
     Bm25Index,
     ChunkMeta,
@@ -34,6 +43,7 @@ from biomed_ontology.search.backends import (
 )
 
 __all__ = [
+    "CHANNEL_WEIGHTS",
     "Bm25Index",
     "DenseIndex",
     "HybridSearcher",
@@ -47,6 +57,19 @@ __all__ = [
 _OPEN_RANK = tier_rank(LicenseTierEnum.TIER_1)
 # 对外别名：还原原文要用同一个公开档阈值，各写一份迟早对不上。
 OPEN_RANK = _OPEN_RANK
+
+# RRF 里各通道的权重。
+#
+# 图通道给 0.5 而不是 1.0：它的候选来自"挂了某个概念"这一个条件，
+# 天然比词法/向量的相似度排序粗。等权参与融合时，它排第 3 的那个切片
+# 与 BM25 排第 3 的那个切片对总分贡献相同 —— 而后者是从 588 片里
+# 按相关性挑出来的，前者可能只是恰好提到了"肺癌"。
+#
+# 0.5 是**先验值，不是调出来的**：在同一份 28 条 gold 上搜权重再拿它报数，
+# 报的就是过拟合。真要定这个值，需要一份独立的开发集。
+CHANNEL_WEIGHTS: dict[RetrievalChannelEnum, float] = {
+    RetrievalChannelEnum.GRAPH: 0.5,
+}
 
 
 @dataclass
@@ -64,22 +87,35 @@ class SearchHit:
     labels: list[str] = field(default_factory=list)
     channel_ranks: dict[str, int] = field(default_factory=dict)
     explain: str = ""
+    # 精排前的融合名次。开了精排还看不到它，就无从判断精排到底动了什么 ——
+    # 一份"名次全变了但说不清为什么"的结果，下游没有复核的手段。
+    rank_before_rerank: int | None = None
+    rerank_score: float | None = None
 
 
 def rrf_fuse(
-    channel_results: dict[RetrievalChannelEnum, list[tuple[str, float]]], *, k: int = 60
+    channel_results: dict[RetrievalChannelEnum, list[tuple[str, float]]],
+    *,
+    k: int = 60,
+    weights: dict[RetrievalChannelEnum, float] | None = None,
 ) -> list[tuple[str, float, dict[str, int]]]:
     """Reciprocal Rank Fusion。
 
     用名次而非分数融合，因为三个通道的分数量纲不可比：
     BM25 是无上界的，余弦在 [0,1]，图通道是跳数衰减。
     强行归一化分数会引入一个谁也说不清的超参，而名次天然可比。
+
+    `weights` 表达的是另一件事：通道之间的**可信度**不同。名次可比不等于
+    可信度相同 —— 一个判别力弱的通道，它的第 1 名也未必比强通道的第 5 名更该信。
+    缺省不带权（全 1.0），与不加这个参数时逐位相同。
     """
+    weights = weights or {}
     acc: dict[str, float] = defaultdict(float)
     ranks: dict[str, dict[str, int]] = defaultdict(dict)
     for channel, results in channel_results.items():
+        weight = weights.get(channel, 1.0)
         for rank, (key, _score) in enumerate(results, start=1):
-            acc[key] += 1.0 / (k + rank)
+            acc[key] += weight / (k + rank)
             ranks[key][channel.value] = rank
     return [
         (key, score, ranks[key])
@@ -109,6 +145,48 @@ class HybridSearcher:
             local.build()
         self.backend: SearchBackend = local if local is not None else backend  # type: ignore[assignment]
 
+        self.links = LinkIndex(kb.concepts)
+        self._concept_idf = self._build_concept_idf()
+        self._concept_norm = self._build_concept_norms()
+
+    def _build_concept_idf(self) -> dict[str, float]:
+        """概念的判别力：log(N / df)，索引期算一次。
+
+        这是图通道能不能用的第一件事。84 个概念挂在 588 个切片上，
+        「肺癌」出现在几百片里、「肾病综合征」只出现在 5 片里 ——
+        不区分这两者，一条归一出「肺癌」的查询会让图通道吐出几百个同分候选，
+        次级排序键落到 chunk_id 上，而 chunk_id 是 SHA-1 前缀。
+        那时候进入 RRF 的前 30 名实际上是**按哈希抽的一个随机样本**，
+        却带着和 BM25 相同的权重。这是本体臂 P@5 掉 0.029 的直接来源。
+
+        下界 0.1：概念挂满全部切片时 IDF 为 0，会把它整条路径的贡献抹成零，
+        连带把从它出发走到的稀有概念也一起抹掉。留一个小正数让路径仍然连通。
+        """
+        total = max(len(self._chunks), 1)
+        return {
+            cid: max(math.log(total / len(chunks)), 0.1)
+            for cid, chunks in self._by_concept.items()
+            if chunks
+        }
+
+    def _build_concept_norms(self) -> dict[str, float]:
+        """每个切片概念向量的模长，用于图通道的余弦归一化。
+
+        这是第二件事，而且单靠 IDF 补不上：IDF 区分的是**概念**，
+        同一个概念的倒排表内部所有切片仍然完全同分。一条只归一出「肺癌」的查询，
+        挂着「肺癌」的两百片依旧并列 —— 哈希排序原地复活。
+
+        分母让"这一片是在讲这个主题"和"这一片顺带提了一句"分开：
+        只挂「肺癌」一个概念的切片，模长小、得分高；同时挂着二十个概念的综述段落，
+        模长大、得分被压下去。这与稠密通道做的是同一件事（余弦相似度），
+        只不过向量空间从字符 3-gram 换成了概念。
+        """
+        norms: dict[str, float] = {}
+        for chunk_id, chunk in self._chunks.items():
+            total = sum(self._concept_idf.get(cid, 0.1) ** 2 for cid in set(chunk.concept_ids))
+            norms[chunk_id] = math.sqrt(total) or 1.0
+        return norms
+
     def _chunk_meta(self, chunk: Chunk) -> ChunkMeta:
         doc = self.kb.document(chunk.doc_id)
         return ChunkMeta(
@@ -119,6 +197,7 @@ class HybridSearcher:
             license_rank=tier_rank(doc.license_tier) if doc else tier_rank(LicenseTierEnum.TIER_3),
             labels=tuple(chunk.labels),
             modality=chunk.modality.value,
+            figure_type=getattr(chunk, "figure_type", "") or "",
         )
 
     def chunk_meta(self, chunk_id: str) -> ChunkMeta | None:
@@ -152,19 +231,45 @@ class HybridSearcher:
         labels: list[str] | None = None,
         vector_fields: tuple[str, ...] = (),
         modalities: tuple[str, ...] = (),
+        candidate_k: int | None = None,
+        reranker: Reranker | None = None,
+        rewrite: bool | None = None,
     ) -> tuple[list[SearchHit], int]:
+        """检索并融合。
+
+        `candidate_k` 是融合候选池的深度，缺省等于 `top_k`（即不加深，
+        与不传这个参数时逐位相同）。开精排时它必须大于 `top_k` ——
+        精排只能重排池子里已有的东西，池子多深就是它的天花板。
+
+        `rewrite` 控制本体改写是否下发给词法/向量通道，缺省跟随 `expand`。
+        拆成两个开关是为了让"图通道用了本体"和"查询串用了本体"能分开消融 ——
+        合成一个开关时，一次改动同时动两处，任何结论都归因不到具体哪一处。
+        """
         ent = entitlements if entitlements is not None else ctx.entitlements
         scope = LicenseScope(
             max_rank=tier_rank(max_tier), open_rank=_OPEN_RANK, entitled_sources=ent
         )
+        pool_k = max(candidate_k or top_k, top_k)
+        do_rewrite = expand if rewrite is None else rewrite
+
+        # None 表示"还没归一化"，空列表表示"归一化过、一个概念也没认出来"。
+        # 两者混用会让图通道在不开改写时被整条跳过 —— 而那正是它该独立起作用的配置。
+        seeds: list[str] | None = None
+        lexical_query, dense_queries = None, ()
+        if do_rewrite and {RetrievalChannelEnum.BM25, RetrievalChannelEnum.DENSE} & set(channels):
+            seeds = self._seed_concepts(query, ctx)
+            lexical_query, dense_queries = self._rewrite_queries(query, seeds)
+
         request = RetrievalRequest(
             query=query,
             scope=scope,
-            top_k=top_k,
+            top_k=pool_k,
             labels=tuple(labels or ()),
             channels=channels,
             vector_fields=vector_fields,
             modalities=modalities,
+            lexical_query=lexical_query,
+            dense_queries=dense_queries,
         )
 
         with ctx.span(
@@ -174,13 +279,13 @@ class HybridSearcher:
             results = dict(result.channels)
             filtered = result.filtered_count
 
-            concept_ids: list[str] = []
+            concept_ids: list[str] = seeds or []
             if RetrievalChannelEnum.GRAPH in channels:
                 allowed = self._graph_allowed(request)
-                graph_hits, concept_ids = self._graph_channel(query, ctx, allowed, expand)
-                results[RetrievalChannelEnum.GRAPH] = graph_hits[: top_k * 3]
+                graph_hits, concept_ids = self._graph_channel(query, ctx, allowed, expand, seeds)
+                results[RetrievalChannelEnum.GRAPH] = graph_hits[: pool_k * 3]
 
-            fused = rrf_fuse(results)
+            fused = rrf_fuse(results, weights=CHANNEL_WEIGHTS)
             if modalities:
                 # 主过滤已经下推到各后端（本地走 allow_list，Milvus 走标量表达式），
                 # 这里是最后一道闸：`SearchBackend` 是个 Protocol，
@@ -188,15 +293,90 @@ class HybridSearcher:
                 # 放在截断之前，否则会连带把 top_k 也砍薄。
                 wanted = set(modalities)
                 fused = [f for f in fused if self._chunks[f[0]].modality.value in wanted]
-            hits = [self._to_hit(key, score, ranks) for key, score, ranks in fused[:top_k]]
+            pool = [self._to_hit(key, score, ranks) for key, score, ranks in fused[:pool_k]]
+            hits = self._rerank(query, pool, reranker)[:top_k]
             sp.set(
                 **{
                     "hmd.hit_count": len(hits),
                     "hmd.license_filtered": filtered,
+                    "hmd.pool_size": len(pool),
+                    "hmd.reranker": getattr(reranker, "name", "") if reranker else "",
                     "ontology.concept_ids": ",".join(concept_ids),
                 }
             )
         return hits, filtered
+
+    def _seed_concepts(self, query: str, ctx: TraceContext) -> list[str]:
+        res = self.kb.normalizer.normalize(query, ctx=ctx, detect=True, min_confidence=0.6)
+        return res.concept_ids
+
+    def _rewrite_queries(
+        self, query: str, seeds: list[str], *, max_terms: int = 8
+    ) -> tuple[str | None, tuple[str, ...]]:
+        """用本体别名改写下发给词法/向量通道的查询串。
+
+        `Normalizer.expand()` 一直能产出带权双语别名集，但此前没有任何调用方
+        把它交给检索后端 —— 它只在图通道内部打转。于是「本体增强」这个臂名
+        对词法与向量两条通道完全不成立，而那两条才是分数的主要来源。
+
+        三条约束，每条都对应一种具体的失败：
+
+        **按 `normalize_alias` 去重。** 别名表里 `AZD-6094` / `AZD 6094` /
+        `AZD6094` 是三行（规则生成的写法变体，为的是让**索引侧**任意写法都能匹配）。
+        原样拼进查询串，BM25 会把这个代号的查询词频算成 3 —— 那不是扩展，
+        是给同一个词投三票。索引侧本来就做了归一，查询侧只需要一种写法。
+
+        **词法拼接、向量取 max。** 词法通道多一个词就多一条命中路径，
+        BM25 自带的 IDF 会压住烂大街的扩展词。向量通道不行：把八个别名
+        拼进一句话，编出来的是这八个词的质心，离原始查询反而更远。
+        所以向量拿到的是 (原串, 改写串) 两条，各自编码后取最高分 ——
+        原串始终在集合里，改写只能加分，不会把语义拽走。
+
+        **`max_terms=8` 封顶。** gold 里 Q7「lung cancer targeted therapy」的
+        intent 写的就是"考察层级扩展是否过度召回"：「肺癌」下面挂着一整棵子树，
+        不设上限会把几十个别名灌进 BM25，原始查询词在其中稀释到不起作用。
+        """
+        if not seeds:
+            return None, ()
+        norm = self.kb.normalizer
+        weighted: dict[str, tuple[float, str]] = {}
+        for cid in seeds:
+            for exp in norm.expand(cid, max_depth=1, min_weight=0.35):
+                key = normalize_alias(exp.term) or exp.term.casefold()
+                if exp.weight > weighted.get(key, (0.0, ""))[0]:
+                    weighted[key] = (exp.weight, exp.term)
+        # 去掉原查询里已有的词：重复出现只会抬高它们的词频，
+        # 那是在给"查询里本来就写了什么"加权，不是在扩展。
+        lowered = query.casefold()
+        ranked = sorted(weighted.values(), key=lambda wt: (-wt[0], wt[1]))
+        terms = [term for _w, term in ranked if term.casefold() not in lowered][:max_terms]
+        if not terms:
+            return None, ()
+        rewritten = f"{query} {' '.join(terms)}"
+        return rewritten, (query, rewritten)
+
+    def _rerank(
+        self, query: str, pool: list[SearchHit], reranker: Reranker | None
+    ) -> list[SearchHit]:
+        """交叉编码器重排候选池。`reranker=None` 时原样返回，一次前向都不做。
+
+        RRF 按名次投票，而名次不表达"有多相关"：三个通道各自的第 3 名进了融合，
+        谁更该排前面 RRF 没有依据。精排补的就是这个依据。
+
+        融合名次记在 `rank_before_rerank` 上而不是丢掉 —— 少了它，
+        "精排把什么从第 23 名拉到了第 2 名"这件事在结果里查不出来。
+        """
+        if reranker is None or not pool:
+            return pool
+        for rank, hit in enumerate(pool, start=1):
+            hit.rank_before_rerank = rank
+        scores = reranker.rescore(query, [h.snippet for h in pool])
+        for hit, score in zip(pool, scores, strict=True):
+            hit.rerank_score = round(float(score), 6)
+            hit.explain = f"{hit.explain} → rerank {score:.3f}"
+        # 次级键取融合名次而不是 chunk_id：精排给出同分时（截断到 512 token 后
+        # 两段看起来一样并不罕见），应当退回融合的判断，而不是退回哈希序。
+        return sorted(pool, key=lambda h: (-(h.rerank_score or 0.0), h.rank_before_rerank or 0))
 
     def _graph_allowed(self, request: RetrievalRequest) -> set[str]:
         """图通道自己的许可、标签与模态过滤，走与后端**同一组**条件。
@@ -216,39 +396,73 @@ class HybridSearcher:
         }
 
     def _graph_channel(
-        self, query: str, ctx: TraceContext, allowed: set[str], expand: bool
+        self,
+        query: str,
+        ctx: TraceContext,
+        allowed: set[str],
+        expand: bool,
+        seeds: list[str] | None = None,
     ) -> tuple[list[tuple[str, float]], list[str]]:
-        """图通道：查询 → 概念 → （层级扩展）→ 挂载了这些概念的 chunk。
+        """图通道：查询 → 概念 → search-around → 挂载了这些概念的 chunk。
 
-        深度衰减 0.8：一层之外的关联仍然有用，但不该盖过字面直击。
+        打分是**概念空间里的 IDF 加权余弦**：查询侧是"种子概念 + 沿链接走到的
+        邻居（带衰减权重）"，文档侧是切片实际挂的概念集合，两边都按概念 IDF 加权，
+        再除以文档向量的模长。与稠密通道同一个数学形式，只是向量空间从
+        字符 3-gram 换成了概念图。
+
+        改造前这里是"直接命中 1.0 / 下位一层 0.8 / 两层 0.64"三个取值取 max。
+        三档离散值在 588 片、84 概念的规模上意味着几百个候选并列同分，
+        次级排序键 `chunk_id` 是 SHA-1 前缀 —— 进入 RRF 的前 30 名
+        实际上是按哈希抽的一个随机样本，却带着与 BM25 相同的融合权重。
+
+        三处同时改才有意义：
+
+        1. **沿类型化链接走，不只沿层级走。** 层级扩展只能在同类实体内部上下走，
+           Q4「VEGFR2 抑制剂」归一到靶点后无处可去 —— KDR 没有下位概念，
+           而打这个靶点的药就在数据里，只是查询期走不通。`LinkIndex` 让它走得通。
+        2. **概念 IDF**（`_build_concept_idf`）区分「肺癌」与「肾病综合征」。
+        3. **文档模长归一**（`_build_concept_norms`）区分"讲这个主题"与"提了一句"。
+           少了这一项，同一个倒排表内部仍然全部并列。
         """
-        norm = self.kb.normalizer
-        res = norm.normalize(query, ctx=ctx, detect=True, min_confidence=0.6)
-        seeds = res.concept_ids
+        if seeds is None:
+            seeds = self._seed_concepts(query, ctx)
+        if not seeds:
+            return [], []
+
+        # 查询侧概念向量：种子权重 1.0，邻居按关系衰减。
+        query_vec: dict[str, float] = {cid: 1.0 for cid in seeds}
+        origin_of: dict[str, str] = {cid: cid for cid in seeds}
+        if expand:
+            for neighbor in self.links.neighbors(seeds, max_hops=2):
+                if neighbor.weight > query_vec.get(neighbor.concept_id, 0.0):
+                    query_vec[neighbor.concept_id] = neighbor.weight
+                    origin_of[neighbor.concept_id] = f"{neighbor.predicate}:{neighbor.concept_id}"
+
         scored: dict[str, float] = defaultdict(float)
-        for cid in seeds:
+        origins: dict[str, tuple[str, float]] = {}
+        for cid, qw in query_vec.items():
+            idf = self._concept_idf.get(cid, 0.1)
+            gain = qw * idf * idf
             for chunk_id in self._by_concept.get(cid, ()):
                 if chunk_id in allowed:
-                    scored[chunk_id] = max(scored[chunk_id], 1.0)
-            if not expand:
-                continue
-            for depth in (1, 2):
-                for desc in norm.descendants(cid, max_depth=depth):
-                    if desc in seeds:
-                        continue
-                    for chunk_id in self._by_concept.get(desc, ()):
-                        if chunk_id in allowed:
-                            scored[chunk_id] = max(scored[chunk_id], 0.8**depth)
+                    scored[chunk_id] += gain
+                    if gain > origins.get(chunk_id, ("", 0.0))[1]:
+                        origins[chunk_id] = (origin_of[cid], gain)
+
+        for chunk_id in scored:
+            scored[chunk_id] /= self._concept_norm.get(chunk_id, 1.0)
         ordered = sorted(scored.items(), key=lambda kv: (-kv[1], kv[0]))
-        if seeds:
-            ctx.record_decision(
-                stage="GRAPH_RETRIEVAL",
-                justification=MappingJustificationEnum.CompositeMatching,
-                chosen=",".join(seeds),
-                candidates=[Candidate(cid, sc, "graph") for cid, sc in ordered[:5]],
-                state_before=query[:120],
-                state_after=f"graph_hits={len(ordered)}",
-            )
+        ctx.record_decision(
+            stage="GRAPH_RETRIEVAL",
+            justification=MappingJustificationEnum.CompositeMatching,
+            chosen=",".join(seeds),
+            candidates=[
+                Candidate(cid, sc, f"graph:{origins.get(cid, ('', 0))[0]}")
+                for cid, sc in ordered[:5]
+            ],
+            state_before=query[:120],
+            state_after=f"graph_hits={len(ordered)}",
+        )
         return ordered, seeds
 
     def _to_hit(self, chunk_id: str, score: float, ranks: dict[str, int]) -> SearchHit:

@@ -52,6 +52,12 @@ services:
     environment:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
+      # 默认上限是 4 个向量列，而本仓库有 5 列（词法稀疏 + 通用/生医稠密 +
+      # 两条视觉列）。不放开的话建表会在第 5 列上直接失败，报错是
+      # "maximum vector field's number should be limited to 4" ——
+      # 与"哪一列多余"毫无关系，很容易被读成 schema 写错了。
+      # 上限本身是 10（Milvus 侧的硬编码），这里取 6 留一列余量。
+      PROXY_MAXVECTORFIELDNUM: "6"
     volumes:
       - ./volumes/milvus:/var/lib/milvus
     healthcheck:

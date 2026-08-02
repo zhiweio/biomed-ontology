@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from biomed_ontology.parse.assets import safe_asset_name
+from biomed_ontology.parse.assets import asset_dir_name, resolve_asset, safe_asset_name
 from biomed_ontology.parse.vision import (
     NullVisionProvider,
     VisionCache,
@@ -176,3 +176,52 @@ def test_asset_names_cannot_escape_the_directory(stem: str):
     assert "/" not in name
     assert ".." not in name
     assert len(name) <= 84
+
+
+# --------------------------------------------------- 资产路径还原（曾经无声地全错）
+
+
+def test_asset_dir_name_strips_the_curie_separator():
+    """CURIE 的冒号在 Windows 上不是合法文件名字符，落盘时必须换掉。"""
+    assert asset_dir_name("DOC:PMC12133497") == "DOC_PMC12133497"
+    assert asset_dir_name("DOC:a/b") == "DOC_a_b"
+
+
+def test_asset_resolution_needs_the_doc_id(tmp_path: Path):
+    """切片里存的 `images/p0002_r000.png` 对每篇文档都是同一个名字。
+
+    少了 doc_id 这一段就永远拼不出真实路径 —— 而且是**无声**的：
+    读不到图时视觉列退化成编码 caption，照样产出一个像模像样的向量，
+    "这一列到底看没看过像素"在任何指标上都看不出来。
+    这正是它在仓库里躺了两个版本没被发现的原因。
+    """
+    doc = "DOC:PMC12133497"
+    rel = "images/p0002_r000.png"
+    target = tmp_path / asset_dir_name(doc) / rel
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"\x89PNG")
+
+    assert resolve_asset(tmp_path, doc, rel) == str(target)
+    # 漏掉 doc_id / 图不存在 / 根目录没配，三种情况都必须是 None 而不是一条假路径
+    assert resolve_asset(tmp_path, None, rel) is None
+    assert resolve_asset(tmp_path, doc, "images/missing.png") is None
+    assert resolve_asset(None, doc, rel) is None
+
+
+def test_every_chunk_claiming_an_asset_can_actually_read_it():
+    """ "有 asset_path" 与 "读得到那张图" 必须是同一件事。
+
+    这条断言在仓库里跑出来过 44 → 0：44 个切片都声明了资产，一张都读不到。
+    多模态列因此从上线起就一直在给图编码 caption 文本，
+    而 README 当时写的是"视觉列对这 44 片编码像素"。
+    """
+    from biomed_ontology.pipeline import DATA_ROOT, build_knowledge_base
+
+    chunks = [c for c in build_knowledge_base().chunks if c.asset_path]
+    unresolved = [
+        c.chunk_id
+        for c in chunks
+        if not resolve_asset(DATA_ROOT / "assets", c.doc_id, c.asset_path)
+    ]
+    assert chunks, "语料里一个带资产的切片都没有，这条断言就形同虚设"
+    assert not unresolved, f"{len(unresolved)}/{len(chunks)} 个切片读不到自己的图：{unresolved[:3]}"

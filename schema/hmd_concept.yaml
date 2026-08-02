@@ -40,6 +40,8 @@ classes:
       - primary_xref
       - equivalent_xrefs
       - parents
+      - has_target
+      - treats
       - is_obsolete
       - replaced_by
       - consider
@@ -221,6 +223,23 @@ slots:
     slot_uri: skos:exactMatch
 
   parents:
+    range: ConceptCurie
+    multivalued: true
+
+  has_target:
+    description: >-
+      药物作用的靶点。与 parents 一样是概念之间的边，但它是**跨实体类型**的：
+      parents 只在同类内部走（疾病→上位疾病），has_target 从 SUBSTANCE 跳到 TARGET。
+      检索期的 search-around 靠的就是这类跨类型跳转 ——
+      「VEGFR2 抑制剂」这种查询要从靶点反向找到药，层级扩展一步也走不到。
+    range: ConceptCurie
+    multivalued: true
+
+  treats:
+    description: >-
+      药物的适应症。同为跨类型边（SUBSTANCE → DISEASE）。
+      与事实层同名谓词的区别在证据强度：这里是种子里的人工断言，
+      事实层那条是从正文抽出来、带 reifier 与出处的。两者落在不同命名图。
     range: ConceptCurie
     multivalued: true
 

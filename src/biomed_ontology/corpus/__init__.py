@@ -124,6 +124,14 @@ class Chunk:
     asset_path: str | None = None
     """图像切片的像素在哪。文本切片为 None —— 多模态列据此决定看图还是读字。"""
 
+    figure_type: str = ""
+    """图型（RADIOLOGY / MICROSCOPY / CHART / ...），由 `parse.figure_type` 打上。
+
+    空串是"未分类"，不是"不是图"—— 后者看 `modality`。这两件事必须分得开：
+    没跑过分类器的库里所有图都是空串，此时按图型过滤会一条都返回不了，
+    那是缺分类不是缺图。
+    """
+
     concept_ids: list[str] = field(default_factory=list)
     concept_ids_expanded: list[str] = field(default_factory=list)
     labels: list[str] = field(default_factory=list)

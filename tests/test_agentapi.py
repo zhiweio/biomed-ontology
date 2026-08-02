@@ -48,10 +48,60 @@ def test_hierarchy_expansion_reaches_narrower_concepts(kb, searcher, ctx):
     assert non_literal, "层级扩展未带来任何非字面量命中"
 
 
-def test_expansion_off_is_strictly_more_literal(kb, searcher, ctx):
+def test_expansion_does_not_dilute_the_seed_concept(kb, searcher, ctx):
+    """扩展会重排结果，但不该把"直接讲这个概念"的切片挤出前十。
+
+    这条断言早先写的是集合包含（开扩展的结果 ⊇ 关扩展的结果）。那在扩展
+    只能往 GRAPH 通道追加低权候选时成立；现在扩展还会改写词法与向量的查询串，
+    重排本来就是它的目的。继续断言包含关系，只能证明"扩展什么也没干"。
+    改成守真正该守的东西：重排之后，直接命中的密度不许下降。
+    """
+    seeds = set(kb.normalizer.normalize("肺癌", ctx=ctx, detect=True).concept_ids)
+    assert seeds, "肺癌未能归一到任何概念，这条测试的前提就不成立"
+
+    def direct(hits) -> int:
+        return sum(1 for h in hits if seeds & set(kb.chunk(h.chunk_id).concept_ids))
+
     off, _ = searcher.search("肺癌", ctx=ctx, top_k=10, expand=False)
     on, _ = searcher.search("肺癌", ctx=ctx, top_k=10, expand=True)
-    assert {h.chunk_id for h in on} >= {h.chunk_id for h in off}
+    assert direct(on) >= direct(off)
+
+
+def test_search_around_reaches_drugs_from_a_disease(kb, searcher, ctx):
+    """类型化链接的核心承诺：从疾病能走到治它的药。
+
+    层级扩展一步也走不到这里 —— 药不是疾病的下位概念，两者是不同的实体类型。
+    这条边一直写在 `data/seed/substances.yaml` 的 `indications` 里，
+    只是此前在 ingest 阶段被丢掉，检索期根本看不到它。
+    """
+    from biomed_ontology._generated.hmd_concept import EntityTypeEnum
+
+    seeds = kb.normalizer.normalize("肺癌", ctx=ctx, detect=True).concept_ids
+    reached = searcher.links.neighbors(seeds, max_hops=2)
+    drugs = [
+        n
+        for n in reached
+        if kb.concept(n.concept_id).entity_type is EntityTypeEnum.SUBSTANCE
+        and n.predicate == "treated_by"
+    ]
+    assert drugs, "从疾病走不到任何药，类型化链接没有进入检索期的邻接表"
+
+
+def test_search_around_will_not_compose_two_cross_type_hops(kb, searcher, ctx):
+    """`has_target ∘ targeted_by` 展开是"共享靶点的竞品"，不是"回答同一个问题"。
+
+    两种关系复合出来的是一个全新的、弱得多的关系，不该继承两段权重的乘积。
+    没有这道闸，84 个概念的图上两跳就能从任意一个药走到几乎所有药 ——
+    图通道会退化成"返回全部切片"，而那正是它此前判别力被稀释的成因之一。
+    """
+    seeds = kb.normalizer.normalize("savolitinib", ctx=ctx, detect=True).concept_ids
+    assert seeds
+    two_hop_typed = [
+        n
+        for n in searcher.links.neighbors(seeds, max_hops=2)
+        if n.hops == 2 and n.predicate in {"has_target", "targeted_by", "treats", "treated_by"}
+    ]
+    assert not two_hop_typed, [n.concept_id for n in two_hop_typed]
 
 
 def test_search_hides_commercial_source_without_entitlement(kb, searcher, ctx):

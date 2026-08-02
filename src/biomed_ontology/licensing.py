@@ -194,6 +194,20 @@ COMPONENTS: dict[str, ComponentObligation] = {
         obligation="保留许可与版权声明，并标注已作出的修改（见 NOTICE）。",
         review="cleared",
     ),
+    # 权重是 MIT，看起来最宽松的一条 —— 但模型卡另有一句独立于许可证的声明：
+    # "Any deployed use case --- commercial or otherwise --- is currently out of scope"。
+    # 许可证给的是版权层面的许可，这句话是发布方对**用途**的限定，两者不互相覆盖。
+    # 只把 MIT 记进来会让这个组件在依赖清单上显得干干净净，而真正的风险在别处。
+    "biomedclip": ComponentObligation(
+        component_id="biomedclip",
+        license_id="MIT（权重）+ 模型卡用途限定",
+        obligation=(
+            "模型卡声明「任何部署用途（无论商用与否）当前均超出适用范围」，"
+            "仅供研究使用；且明确未在临床场景验证，不得用于诊断或治疗决策。"
+            "研究性 PoC 与内部评测不受影响，对外提供服务前须法务与医学事务共同结论。"
+        ),
+        review="pending",
+    ),
 }
 
 

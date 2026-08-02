@@ -24,7 +24,25 @@ __all__ = [
     "LicenseScope",
     "RetrievalRequest",
     "SearchBackend",
+    "merge_best",
 ]
+
+
+def merge_best(
+    existing: list[tuple[str, float]], incoming: list[tuple[str, float]]
+) -> list[tuple[str, float]]:
+    """同一通道下多路结果取每个 chunk 的最高分，再按分排序。
+
+    两处会用到：一个通道横跨多个向量列（Milvus 的三列稠密），
+    以及一个通道横跨多个查询串（本体改写后的 multi-query）。
+    取 max 而非求和，是因为"某一路特别匹配"才是信号，
+    求和会奖励那些对每一路都平庸的候选。
+    """
+    best: dict[str, float] = dict(existing)
+    for cid, score in incoming:
+        if score > best.get(cid, float("-inf")):
+            best[cid] = score
+    return sorted(best.items(), key=lambda kv: -kv[1])
 
 
 @dataclass(frozen=True)
@@ -83,6 +101,8 @@ class ChunkMeta:
     license_rank: int
     labels: tuple[str, ...] = ()
     modality: str = ""
+    # 图型（RADIOLOGY / MICROSCOPY / CHART / ...），未分类为空串。
+    figure_type: str = ""
 
 
 @dataclass(frozen=True)
@@ -102,6 +122,30 @@ class RetrievalRequest:
     # 这是过滤而不是加权：文本-文本相似度系统性高于文本-图像，靠调分数让图浮上来
     # 需要一个说不清的跨模态偏置项，而"我要看那张图"本来就是个布尔条件。
     modalities: tuple[str, ...] = ()
+    # 只保留这些图型的候选。空元组 = 不限图型。
+    #
+    # `modalities=[IMAGE]` 只保证返回的是图，不保证是**那类**图：README 里那个
+    # "chest CT" 的查询加了模态过滤后，首位仍是一张信号强度柱状图。图型是下一格。
+    figure_types: tuple[str, ...] = ()
+
+    # 本体改写后的查询串。两个通道分开传，是因为它们吃扩展词的方式根本不同。
+    #
+    # 词法通道能直接受益于追加同义词：多一个词就多一条命中路径，BM25 自带的
+    # IDF 会压住那些烂大街的扩展词。所以给它一个**拼接**后的长串。
+    #
+    # 稠密通道不行：把八个别名拼进一句话，编出来的是这八个词的质心，
+    # 离原始查询的语义反而更远 —— 这是"查询漂移"，扩展越多漂得越厉害。
+    # 所以给它一**组**串，各自编码后按 `merge_best` 取最高分。
+    #
+    # 两者都留空时，后端一律回落到 `query`，也就是不开改写时的原样行为。
+    lexical_query: str | None = None
+    dense_queries: tuple[str, ...] = ()
+
+    def lexical_text(self) -> str:
+        return self.lexical_query or self.query
+
+    def dense_texts(self) -> tuple[str, ...]:
+        return self.dense_queries or (self.query,)
 
 
 @dataclass

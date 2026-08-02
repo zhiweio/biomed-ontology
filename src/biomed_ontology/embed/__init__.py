@@ -1,14 +1,20 @@
-"""向量化：双塔 + 稀疏词法 + 视觉列，外加一个确定性假实现供 CI。
+"""向量化：双塔 + 稀疏词法 + 两条视觉列，外加一个确定性假实现供 CI。
 
-四路各司其职：
-- `dense_general`  BGE-M3 稠密 1024 维 —— 通用语义，中英都行
-- `sparse_lexical` BGE-M3 词法稀疏 —— 精确术语（"MET exon 14"）不会被语义抹平
-- `dense_biomed`   SapBERT 768 维 —— 生物医药实体对齐，**英文强、中文弱**
-- `dense_visual`   Qwen3-VL-Embedding 2048 维 —— 图表的像素，与文本同一空间
+五路各司其职：
+- `dense_general`     BGE-M3 稠密 1024 维 —— 通用语义，中英都行
+- `sparse_lexical`    BGE-M3 词法稀疏 —— 精确术语（"MET exon 14"）不会被语义抹平
+- `dense_biomed`      SapBERT 768 维 —— 生物医药实体对齐，**英文强、中文弱**
+- `dense_visual`      Qwen3-VL-Embedding 2048 维 —— 通用视觉，强在图中文字与图表语义
+- `dense_visual_bio`  BiomedCLIP 512 维 —— 生医专用视觉，强在真实影像与病理镜检
 
 第三条是 P13 要按语种拆开报告的原因：总平均会把"英文涨了、中文没动"抹平。
-第四条针对文献里最要命的一类信息：疗效曲线、剂量表、瀑布图 ——
+第四、五条针对文献里最要命的一类信息：疗效曲线、剂量表、瀑布图、CT 与病理图 ——
 这些内容在纯文本管线里等于不存在。
+
+**两条视觉列是并存不是替换。** 它们的强项按图型分布：Qwen3-VL 读得懂坐标轴标注
+与图例（CHART / DIAGRAM），BiomedCLIP 的训练集 PMC-15M 就是 PMC OA 的图-caption 对，
+在真实影像与镜检（RADIOLOGY / MICROSCOPY）上是它的主场。哪条更有用取决于问的是哪类图，
+所以留两条并按 `5col − 4col` 的减法各自记账，而不是先验地挑一个。
 
 `FakeEmbedder` 不是占位符，是 CI 的一等公民：真模型要下载 GB 级权重，
 把它拖进测试会让每次跑测试都变成一场赌博。但它**不许出现在对外报数的路径上** ——
@@ -24,9 +30,11 @@ from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = [
+    "BIOMEDCLIP_MODEL_ID",
     "REAL_EMBEDDERS",
     "VECTOR_FIELDS",
     "BiomedEmbedder",
+    "BiomedVisualEmbedder",
     "Embedder",
     "EmbeddingBundle",
     "FakeEmbedder",
@@ -34,9 +42,16 @@ __all__ = [
     "VisualEmbedder",
     "best_device",
     "get_embedder",
+    "load_biomedclip",
 ]
 
-VECTOR_FIELDS = ("dense_general", "sparse_lexical", "dense_biomed", "dense_visual")
+VECTOR_FIELDS = (
+    "dense_general",
+    "sparse_lexical",
+    "dense_biomed",
+    "dense_visual",
+    "dense_visual_bio",
+)
 
 _TOKEN = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]")
 
@@ -57,7 +72,27 @@ _MIRRORS: dict[str, dict[str, str | None]] = {
     },
     # Apache-2.0。Gitee 上没有对应镜像，只能走 ModelScope。
     "Qwen/Qwen3-VL-Embedding-2B": {"modelscope": "Qwen/Qwen3-VL-Embedding-2B", "gitee": None},
+    # 精排（Apache-2.0）。与 bge-m3 同底座，`resolve_model` 这条路两者共用。
+    "BAAI/bge-reranker-v2-m3": {
+        "modelscope": "BAAI/bge-reranker-v2-m3",
+        "gitee": "bge-reranker-v2-m3",
+    },
+    # 生医专用视觉双塔（权重 MIT，但模型卡声明"任何部署用途均超出适用范围"，见 NOTICE）。
+    "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224": {
+        "modelscope": "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+        "gitee": None,
+    },
+    # BiomedCLIP 的文本塔底座（MIT）。权重在 BiomedCLIP 的 checkpoint 里，
+    # 但 `open_clip` 构图时要先 `AutoConfig.from_pretrained` 拿到这个仓库的
+    # config.json —— 取不到就整个模型都建不起来，所以它得单独登记一条。
+    "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract": {
+        "modelscope": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
+        "gitee": None,
+    },
 }
+
+BIOMEDCLIP_MODEL_ID = "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224"
+_BIOMEDCLIP_TEXT_TOWER = "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract"
 
 
 def _local_dir(model_id: str) -> Path:
@@ -147,13 +182,17 @@ def _from_gitee(model_id: str) -> str:
     return str(target)
 
 
-def resolve_model(model_id: str) -> str:
+def resolve_model(model_id: str, *, marker: str = "config.json") -> str:
     """返回可直接喂给 transformers 的本地目录（或仓库 ID）。
 
     顺序：**本地已有 → 选定的 hub → Gitee 兜底**。
 
     本地优先是为了让手工放进 `data/cache/models/models/<仓库名>` 的权重直接生效 ——
     内网里手动拷权重是常态，应该走"放对位置"而不是"改代码"。
+
+    `marker` 是"这个目录里确实有一份模型"的判据文件。默认 `config.json` 覆盖所有
+    transformers 模型；BiomedCLIP 是 `open_clip` 格式，它的仓库里根本没有 config.json，
+    判据写死就会每次都重新下载一份已经在盘上的权重。
 
     兜底只在下载失败时触发，且**会打印实际用了哪个源**：权重来源必须可追溯，
     否则同一份代码在两台机器上可能加载到不同的模型，而报告里看不出来。
@@ -162,7 +201,7 @@ def resolve_model(model_id: str) -> str:
     from biomed_ontology.config import settings
 
     for candidate in _local_candidates(model_id):
-        if (candidate / "config.json").is_file():
+        if (candidate / marker).is_file():
             return str(candidate)
 
     if settings.model_hub == "gitee":
@@ -215,12 +254,18 @@ class FakeEmbedder:
     name = "fake"
 
     def __init__(
-        self, *, general_dim: int = 64, biomed_dim: int = 32, visual_dim: int = 48
+        self,
+        *,
+        general_dim: int = 64,
+        biomed_dim: int = 32,
+        visual_dim: int = 48,
+        visual_bio_dim: int = 40,
     ) -> None:
         self.dims = {
             "dense_general": general_dim,
             "dense_biomed": biomed_dim,
             "dense_visual": visual_dim,
+            "dense_visual_bio": visual_bio_dim,
         }
 
     def encode(
@@ -235,6 +280,11 @@ class FakeEmbedder:
                 # 否则视觉列的接线错了（图没传下来）测试照样全绿。
                 dense_visual=_hash_vector(
                     f"{p or ''}\x00{t}", self.dims["dense_visual"], salt="visual"
+                ),
+                # 两条视觉列用不同的 salt：同一份哈希会让"5 列 − 4 列"
+                # 的净值在 fake 下恒等于零，那个零看起来像结论，其实是接线的影子。
+                dense_visual_bio=_hash_vector(
+                    f"{p or ''}\x00{t}", self.dims["dense_visual_bio"], salt="visual-bio"
                 ),
                 sparse_lexical=_hash_sparse(t),
             )
@@ -430,6 +480,160 @@ def _load_qwen3_vl(path: Path, *, dtype: object) -> Any:
     return module.Qwen3VLEmbedder(model_name_or_path=str(path), torch_dtype=dtype)
 
 
+def load_biomedclip(
+    *, model_id: str = BIOMEDCLIP_MODEL_ID, device: str | None = None
+) -> tuple[Any, Any, Any, str]:
+    """载入 BiomedCLIP，返回 `(model, preprocess, tokenizer, device)`。
+
+    单列出来是因为它有两个使用方：`BiomedVisualEmbedder`（第五列检索）和
+    `parse.figure_type`（零样本图型分类）。同一次前向的两种用法，
+    没有理由各自载一份 800MB 的权重。
+
+    三处不能照抄模型卡的 `create_model_from_pretrained('hf-hub:...')`：
+
+    1. **文本塔的 config 必须先落到本地。** `open_clip` 建图时会
+       `AutoConfig.from_pretrained("microsoft/BiomedNLP-BiomedBERT-...")` 直连 HF，
+       内网上这一句就把整个模型卡死 —— 权重明明已经在盘上。这里把它改写成
+       本地目录，走的还是 `resolve_model` 那套镜像顺序。
+    2. **判据文件是 `open_clip_config.json` 而不是 `config.json`。**
+       BiomedCLIP 的仓库里没有后者。
+    3. **tokenizer 取自 BiomedCLIP 自己的目录**，它随权重下发了一份，
+       与文本塔底座的那份可能不同版本 —— 用错会在 256 的上下文长度上出错。
+    """
+    import json
+
+    from open_clip import create_model_and_transforms
+    from open_clip.factory import _MODEL_CONFIGS
+    from transformers import AutoTokenizer
+
+    from biomed_ontology.config import settings
+    from biomed_ontology.licensing import assert_component_cleared
+
+    # 权重是 MIT，但模型卡另有一句"任何部署用途当前均超出适用范围"。
+    # 闸门装在这里而不是只写进 NOTICE：与 PyMuPDF 的 AGPL 同一处置 ——
+    # 只写进文档的义务，只有写它的人知道。
+    assert_component_cleared("biomedclip", accept_uncleared=settings.accept_uncleared_components)
+
+    path = Path(resolve_model(model_id, marker="open_clip_config.json"))
+    config = json.loads((path / "open_clip_config.json").read_text(encoding="utf-8"))
+    model_cfg = config["model_cfg"]
+
+    tower = resolve_model(_BIOMEDCLIP_TEXT_TOWER)
+    model_cfg["text_cfg"]["hf_model_name"] = tower
+    model_cfg["text_cfg"]["hf_tokenizer_name"] = tower
+    # 键里掺进路径摘要：同一进程里换过权重目录时，缓存住旧配置会静默加载错的塔。
+    # 用摘要而不是路径本身 —— `open_clip` 查表前会把 `/` 换成 `-`，
+    # 直接拿路径当键会查不到自己刚写进去的那一条。
+    key = f"hmd_biomedclip_{hashlib.blake2b(str(path).encode(), digest_size=6).hexdigest()}"
+    _MODEL_CONFIGS[key] = model_cfg
+
+    weights = path / "open_clip_pytorch_model.bin"
+    if not weights.is_file():
+        raise FileNotFoundError(f"{weights} 不存在：BiomedCLIP 权重不完整，请重新下载。")
+
+    model, _, preprocess = create_model_and_transforms(
+        model_name=key,
+        pretrained=str(weights),
+        **{f"image_{k}": v for k, v in config["preprocess_cfg"].items()},
+    )
+    dev = device or best_device()
+    model = model.to(dev).eval()
+    tokenizer = AutoTokenizer.from_pretrained(str(path))
+    return model, preprocess, tokenizer, dev
+
+
+class BiomedVisualEmbedder:
+    """BiomedCLIP-PubMedBERT_256-vit_base_patch16_224：生医专用图文双塔，512 维。
+
+    与 `VisualEmbedder`（Qwen3-VL）**并存而非替换**。选它的理由很具体：
+    它的训练集 PMC-15M 是 PMC OA 的 1500 万图-caption 对，而本仓库的语料正是
+    9 篇 PMC CC-BY 的 PDF —— 训练分布与检索分布几乎重合。Qwen3-VL 是通用模型，
+    强在读图里的文字与图表结构；真实影像与病理镜检是 BiomedCLIP 的主场。
+
+    双塔同空间，所以文本 query 直接检索图像天然成立，不需要中间的 caption。
+
+    **文本切片也要出这一列。** 只给图出、文本留空，会让这一列在混排检索里
+    只能召回图 —— 那不是"多一列生医视觉"，那是一个静默的模态过滤器。
+    BiomedCLIP 的文本塔上下文长度只有 256，长正文会被截断；这是它的固有限制，
+    不是可以靠调参绕开的，所以它只作为第五列参与融合，不单独承担文本检索。
+    """
+
+    name = "biomedclip"
+
+    def __init__(
+        self,
+        *,
+        model_id: str = BIOMEDCLIP_MODEL_ID,
+        device: str | None = None,
+        batch_size: int = 16,
+    ) -> None:
+        import torch
+
+        self._torch = torch
+        self._batch_size = batch_size
+        self._model, self._preprocess, self._tok, self.device = load_biomedclip(
+            model_id=model_id, device=device
+        )
+        # 维度用一次真实前向量出来，而不是读模型属性。
+        # 这个 checkpoint 的文本投影头是 768→640→512 的 Sequential，
+        # `proj.out_features` 直接 AttributeError；换个 checkpoint 又会是别的形状。
+        # 而这个数会被拿去建 Milvus 的列，报错要等到插入时才出现 ——
+        # 量一次就是量这一列实际会产出什么，没有推断环节可以出错。
+        self.dims = {"dense_visual_bio": len(self._encode_batch([" "], [None])[0])}
+
+    def encode(
+        self, texts: list[str], *, images: list[str | None] | None = None
+    ) -> list[EmbeddingBundle]:
+        paths = images or [None] * len(texts)
+        if len(paths) != len(texts):
+            raise ValueError("images 与 texts 长度必须一致")
+
+        out: list[EmbeddingBundle] = []
+        for start in range(0, len(texts), self._batch_size):
+            stop = start + self._batch_size
+            out.extend(
+                EmbeddingBundle(dense_visual_bio=v)
+                for v in self._encode_batch(texts[start:stop], paths[start:stop])
+            )
+        return out
+
+    def _encode_batch(self, texts: list[str], paths: list[str | None]) -> list[list[float]]:
+        """有图走图塔、没图走文本塔，两者落在同一个 512 维空间。
+
+        逐条判断而不是整批二选一：一批里图文混排是常态（语料里图像切片只占 6%），
+        按批切会把一张图和它周围的正文分到不同的编码路径上，还得再拼回来。
+        """
+        torch = self._torch
+        vectors: list[list[float]] = [[] for _ in texts]
+
+        wants_image = [i for i, p in enumerate(paths) if p]
+        if wants_image:
+            from PIL import Image
+
+            pixels = torch.stack(
+                [self._preprocess(Image.open(str(paths[i])).convert("RGB")) for i in wants_image]
+            ).to(self.device)
+            with torch.inference_mode():
+                feats = self._model.encode_image(pixels, normalize=True)
+            for slot, vec in zip(wants_image, feats.float().cpu(), strict=True):
+                vectors[slot] = vec.tolist()
+
+        wants_text = [i for i, p in enumerate(paths) if not p]
+        if wants_text:
+            toks = self._tok(
+                [texts[i] or " " for i in wants_text],
+                padding="max_length",
+                truncation=True,
+                max_length=256,
+                return_tensors="pt",
+            )
+            with torch.inference_mode():
+                feats = self._model.encode_text(toks["input_ids"].to(self.device), normalize=True)
+            for slot, vec in zip(wants_text, feats.float().cpu(), strict=True):
+                vectors[slot] = vec.tolist()
+        return vectors
+
+
 class CompositeEmbedder:
     """把多个 embedder 的产出并成一个 bundle。列缺失就是缺失，不补零。
 
@@ -462,7 +666,15 @@ def _row_to_dict(matrix: object, row: int) -> dict[int, float]:
     return {int(c): float(v) for c, v in zip(coo.col, coo.data, strict=True)}
 
 
-REAL_EMBEDDERS = ("bge-m3", "sapbert", "dual", "qwen3-vl", "multimodal")
+REAL_EMBEDDERS = (
+    "bge-m3",
+    "sapbert",
+    "dual",
+    "qwen3-vl",
+    "biomedclip",
+    "multimodal",
+    "multimodal-bio",
+)
 """可用于对外报数的 embedder。`fake` 不在其中 —— 它的相似度连符号都可能是反的。"""
 
 
@@ -479,6 +691,8 @@ def get_embedder(name: str = "fake", *, device: str | None = None) -> Embedder:
         return BiomedEmbedder(device=device)
     if name == "qwen3-vl":
         return VisualEmbedder(device=device)
+    if name == "biomedclip":
+        return BiomedVisualEmbedder(device=device)
     if name == "dual":
         return CompositeEmbedder(GeneralEmbedder(device=device), BiomedEmbedder(device=device))
     if name == "multimodal":
@@ -486,5 +700,14 @@ def get_embedder(name: str = "fake", *, device: str | None = None) -> Embedder:
             GeneralEmbedder(device=device),
             BiomedEmbedder(device=device),
             VisualEmbedder(device=device),
+        )
+    # `multimodal` 与 `multimodal-bio` 之差恰好是一列。保持这个关系是刻意的：
+    # 视觉净值按 `5col − 4col` 出，两个配置只差一个成员，减法才成立。
+    if name == "multimodal-bio":
+        return CompositeEmbedder(
+            GeneralEmbedder(device=device),
+            BiomedEmbedder(device=device),
+            VisualEmbedder(device=device),
+            BiomedVisualEmbedder(device=device),
         )
     raise ValueError(f"未知 embedder：{name!r}")

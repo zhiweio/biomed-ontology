@@ -22,10 +22,15 @@
 # 覆盖全语料是为了让 judged@10 回到 1.0 —— 未判定的命中按不相关计入分母，
 # 标注跟不上语料时，掉的是标注覆盖率，报表上却显示成检索质量下降。
 #
-# 三条图像意图 query（Q26–Q28）带 `modality_intent: IMAGE`，
-# 视觉专用臂只在它们上面评分。Q28 指向的三张图正文只有 "FIGURE1" 三个字，
-# 纯文本臂在它上面必然接近 0 —— 这不是噪声，正是视觉列要补的那个洞。
-version: "0.2.0"
+# 十二条图像意图 query（Q26–Q37）带 `modality_intent: IMAGE`，
+# 视觉专用臂只在它们上面评分。其中多条指向的图正文只有 "FIGURE1" 三个字，
+# 纯文本臂在它们上面必然接近 0 —— 这不是噪声，正是视觉列要补的那个洞。
+#
+# 图像 query 同样计入全量平均（n=37），所以总表上的每个数都已经把
+# "拿文本检索去回答看图的问题"这部分算进去了。报表另出一张按意图拆分的表：
+# 文本意图 25 条读检索改造的效果，图像意图 12 条读视觉列的效果，
+# 两者混在一个平均里，任何一边的变化都会被另一边稀释掉。
+version: "0.3.0"
 queries:
   # ================================================ 早期构造样本（5 篇）
   - id: Q1
@@ -300,3 +305,106 @@ queries:
       "DOC:PMC13152782#image:IMG:0000": 2
       "DOC:PMC13152782#image:IMG:0001": 1
       "DOC:PMC13152782#image:IMG:0002": 1
+
+  # ---- 0.3.0 扩充：Q26–Q28 三条判不出任何东西。
+  #
+  # README 里 SapBERT 那个教训写得很清楚：n=8 时净值 +0.104，n=28 时缩到 +0.008。
+  # 三条 query 上的视觉净值只会重演同一件事，而且这次会被当成"多模态检索行不行"
+  # 的答案转述出去。下面九条把图像意图扩到 12 条，并且刻意覆盖不同**图型** ——
+  # 生医视觉模型的差异恰恰体现在图型上（BiomedCLIP 强在真实影像与病理，
+  # 通用 VLM 强在图中文字与示意图），一个只有生存曲线的评测集分辨不出这件事。
+  #
+  # 每一条的判定都来自**逐张打开原图人工确认**，不是照着 caption 猜的 ——
+  # 这批图里有一半的 caption 只有 "FIGURE1" 三个字，照 caption 标等于没标。
+  # 图型分布：影像 4 条、病理/细胞学 3 条、示意图 2 条、大体标本 1 条、
+  # 图表 2 条（Q26/Q27 沿用）。
+
+  - id: Q29
+    text: "axial chest CT lung window showing pulmonary nodule marked with an arrow"
+    lang: en
+    intent: 胸部 CT 系列随访。三张都带红箭头标注病灶，caption 只有 "FIGURE1" 之类
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC13201154#image:IMG:0000": 2
+      "DOC:PMC13201154#image:IMG:0002": 2
+      "DOC:PMC13201154#image:IMG:0003": 2
+
+  - id: Q30
+    text: "abdominal contrast enhanced CT and MRI of a hepatic lesion across phases"
+    lang: en
+    intent: 腹部多期增强 + MRI（T2/DWI）。与 Q29 同为"影像"，但部位与序列都不同
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC12133497#image:IMG:0000": 2
+      "DOC:PMC12133497#image:IMG:0002": 2
+
+  - id: Q31
+    text: "whole body PET CT maximum intensity projection with fused axial slices"
+    lang: en
+    intent: 核医学图像。整幅是彩色/伪彩，与灰阶 CT 在视觉特征上差别极大
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC13193915#image:IMG:0002": 2
+      "DOC:PMC13193915#image:IMG:0003": 2
+
+  - id: Q32
+    text: "hematoxylin and eosin stained tumor histology micrograph"
+    lang: en
+    intent: HE 病理。判 1 分的那张是 HE 与 IHC 混排，只有一部分对题
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC13193915#image:IMG:0001": 2
+      "DOC:PMC12133497#image:IMG:0001": 2
+      "DOC:PMC13201154#image:IMG:0001": 1
+
+  - id: Q33
+    text: "immunohistochemistry with brown DAB staining of a tumor marker"
+    lang: en
+    intent: >-
+      IHC。与 Q32 共用两张图但相关度相反 —— 这是刻意的：
+      两条 query 若在同一批图上给出同一个序，说明模型分不出 HE 与 IHC，
+      而这正是生医专用视觉模型该比通用模型强的地方。
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC13201154#image:IMG:0001": 2
+      "DOC:PMC13193915#image:IMG:0001": 2
+      "DOC:PMC12133497#image:IMG:0001": 1
+
+  - id: Q34
+    text: "脑脊液 细胞学 涂片 肿瘤细胞"
+    lang: zh
+    intent: >-
+      细胞学涂片（单个瘤细胞，瑞氏染色）。中文提问 + 无字幕图 ——
+      词法与稠密两条通道在这里都没有任何可用信号，只能靠视觉列。
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC13152782#image:IMG:0001": 2
+
+  - id: Q35
+    text: "CONSORT patient enrollment and randomization flow diagram"
+    lang: en
+    intent: 流程图。三张里两张是真 CONSORT，一张是数据库筛选流程，判 1 分
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC12515981#image:IMG:0000": 2
+      "DOC:PMC13116735#image:IMG:0000": 2
+      "DOC:PMC13052964#image:IMG:0000": 1
+
+  - id: Q36
+    text: "schematic diagram of EGFR TKI mechanism of action and resistance"
+    lang: en
+    intent: >-
+      机制示意图，图中密布文字（药名、突变位点）。这类图通用 VLM 应当占优 ——
+      它读的是图里的字，不是组织形态。留作与 Q29–Q34 的对照。
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC13235695#image:IMG:0002": 2
+      "DOC:PMC12994080#image:IMG:0000": 1
+
+  - id: Q37
+    text: "手术切除 大体标本 照片"
+    lang: zh
+    intent: 大体标本照片（术中拍摄，绿色手术单背景）。与病理切片、影像都不是一类
+    modality_intent: IMAGE
+    relevant:
+      "DOC:PMC13193915#image:IMG:0000": 2

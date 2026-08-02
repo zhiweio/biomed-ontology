@@ -18,21 +18,30 @@ from typing import Any
 
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
 from biomed_ontology.embed import Embedder, FakeEmbedder
+from biomed_ontology.parse.assets import resolve_asset
 from biomed_ontology.search.backends.base import (
     BackendResult,
     ChunkMeta,
     RetrievalRequest,
+    merge_best,
 )
 
 __all__ = ["MilvusBackend", "collection_schema"]
 
 # 列 → 检索通道。稀疏列对应 BM25 通道（两者都是词法匹配），
-# 三条稠密列共用 DENSE 通道但可分别启用，消融靠 vector_fields 控制。
+# 四条稠密列共用 DENSE 通道但可分别启用，消融靠 vector_fields 控制。
 _CHANNEL = {
     "sparse_lexical": RetrievalChannelEnum.BM25,
     "dense_general": RetrievalChannelEnum.DENSE,
     "dense_biomed": RetrievalChannelEnum.DENSE,
     "dense_visual": RetrievalChannelEnum.DENSE,
+    "dense_visual_bio": RetrievalChannelEnum.DENSE,
+}
+
+_HNSW = {
+    "index_type": "HNSW",
+    "metric_type": "COSINE",
+    "params": {"M": 16, "efConstruction": 200},
 }
 
 _METRIC = {
@@ -40,32 +49,25 @@ _METRIC = {
     "dense_general": "COSINE",
     "dense_biomed": "COSINE",
     "dense_visual": "COSINE",
+    "dense_visual_bio": "COSINE",
 }
 
 _INDEX = {
     "sparse_lexical": {"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "IP"},
-    "dense_general": {
-        "index_type": "HNSW",
-        "metric_type": "COSINE",
-        "params": {"M": 16, "efConstruction": 200},
-    },
-    "dense_biomed": {
-        "index_type": "HNSW",
-        "metric_type": "COSINE",
-        "params": {"M": 16, "efConstruction": 200},
-    },
-    "dense_visual": {
-        "index_type": "HNSW",
-        "metric_type": "COSINE",
-        "params": {"M": 16, "efConstruction": 200},
-    },
+    "dense_general": dict(_HNSW),
+    "dense_biomed": dict(_HNSW),
+    "dense_visual": dict(_HNSW),
+    "dense_visual_bio": dict(_HNSW),
 }
 
 DEFAULT_DIMS = {
     "dense_general": 1024,
     "dense_biomed": 768,
     "dense_visual": 2048,
+    "dense_visual_bio": 512,
 }
+
+_DENSE_COLUMNS = ("dense_general", "dense_biomed", "dense_visual", "dense_visual_bio")
 
 
 def collection_schema(
@@ -91,6 +93,10 @@ def collection_schema(
     # 一个只能给出向量得分、拿不出图的命中，在审计场景下不算证据。
     # 给默认值而非必填：绝大多数切片是纯文本，本就没有图。
     schema.add_field("asset_path", DataType.VARCHAR, max_length=512, default_value="")
+    # 图型（RADIOLOGY / MICROSCOPY / CHART / ...）。落成标量而不是靠向量相似度碰运气：
+    # 「我要看那张 CT」是个布尔条件，和 `modality` 同一性质 —— 能下推就不该去猜。
+    # 没打过标的切片是 ""，语义是"未分类"，不是"不是图"。
+    schema.add_field("figure_type", DataType.VARCHAR, max_length=32, default_value="")
     schema.add_field(
         "labels", DataType.ARRAY, element_type=DataType.VARCHAR, max_capacity=32, max_length=64
     )
@@ -103,7 +109,7 @@ def collection_schema(
     )
     schema.add_field("text", DataType.VARCHAR, max_length=8192)
     # 只建 embedder 真的会写的列。向量列不可为空，多建一列的下场是整批 upsert 全挂。
-    for name in ("dense_general", "dense_biomed", "dense_visual"):
+    for name in _DENSE_COLUMNS:
         if name in dims:
             schema.add_field(name, DataType.FLOAT_VECTOR, dim=dims[name])
     if sparse:
@@ -168,16 +174,17 @@ class MilvusBackend:
         for field, spec in _INDEX.items():
             if field in dims or (field == "sparse_lexical" and sparse):
                 index.add_index(field_name=field, **spec)
-        self.client.create_collection(
-            collection_name=self.collection, schema=schema, index_params=index
-        )
+        try:
+            self.client.create_collection(
+                collection_name=self.collection, schema=schema, index_params=index
+            )
+        except Exception as exc:
+            _explain_vector_field_cap(exc, len(dims) + int(sparse))
+            raise
 
-    def _asset(self, rel_path: Any) -> str | None:
+    def _asset(self, rel_path: Any, doc_id: Any = None) -> str | None:
         """切片存的相对路径 → 本机绝对路径。图不在就返回 None（退化成纯文本编码）。"""
-        if not rel_path or self.asset_root is None:
-            return None
-        path = self.asset_root / str(rel_path)
-        return str(path) if path.is_file() else None
+        return resolve_asset(self.asset_root, doc_id, rel_path)
 
     def stamped_embedder(self) -> str:
         """建这张表时用的 embedder 名。集合不存在或没刻名字则返回空串。"""
@@ -203,7 +210,7 @@ class MilvusBackend:
             return 0
         bundles = self.embedder.encode(
             [str(r["text"]) for r in rows],
-            images=[self._asset(r.get("asset_path")) for r in rows],
+            images=[self._asset(r.get("asset_path"), r.get("doc_id")) for r in rows],
         )
         payload = [{**row, **bundle} for row, bundle in zip(rows, bundles, strict=True)]
         self.client.upsert(collection_name=self.collection, data=payload)
@@ -214,35 +221,40 @@ class MilvusBackend:
     # ----------------------------------------------------------------- 检索
 
     def retrieve(self, request: RetrievalRequest) -> BackendResult:
-        fields = request.vector_fields or (
-            "sparse_lexical",
-            "dense_general",
-            "dense_biomed",
-            "dense_visual",
-        )
+        # 默认查集合里真实存在的列。写死一份清单的话，用 4 列建的表遇上
+        # 5 列的默认值就会在一个不存在的字段上搜 —— 报错还算好的，
+        # 更糟的是有人为了让它别报错而把默认值改窄，于是新列悄悄不参与检索了。
+        fields = request.vector_fields or self.vector_fields()
         expr = self._filter(request)
         depth = request.top_k * 3
 
-        bundle = self.embedder.encode([request.query])[0]
+        # 词法串与稠密串可能不同（本体改写后），但去重后一次前向编完 ——
+        # BGE-M3 一次就同时给出稠密与稀疏两种表示，按串分开调是白付一倍算力。
+        lexical_text = request.lexical_text()
+        dense_texts = request.dense_texts()
+        texts = list(dict.fromkeys([lexical_text, *dense_texts]))
+        bundles = dict(zip(texts, self.embedder.encode(texts), strict=True))
         channels: dict[RetrievalChannelEnum, list[tuple[str, float]]] = {}
 
         for field in fields:
-            vector = bundle.get(field)
-            if vector is None:
-                continue  # 该列没算 —— 补零会让"没算"和"算出来是零"分不清
-            hits = self.client.search(
-                collection_name=self.collection,
-                data=[vector],
-                anns_field=field,
-                filter=expr,
-                limit=depth,
-                output_fields=["chunk_id"],
-                search_params={"metric_type": _METRIC[field]},
-            )
-            scored = [(h["entity"]["chunk_id"], float(h["distance"])) for h in hits[0]]
             channel = _CHANNEL[field]
-            channels.setdefault(channel, [])
-            channels[channel] = _merge_best(channels[channel], scored)
+            queries = (lexical_text,) if channel is RetrievalChannelEnum.BM25 else dense_texts
+            for text in queries:
+                vector = bundles[text].get(field)
+                if vector is None:
+                    continue  # 该列没算 —— 补零会让"没算"和"算出来是零"分不清
+                hits = self.client.search(
+                    collection_name=self.collection,
+                    data=[vector],
+                    anns_field=field,
+                    filter=expr,
+                    limit=depth,
+                    output_fields=["chunk_id"],
+                    search_params={"metric_type": _METRIC[field]},
+                )
+                scored = [(h["entity"]["chunk_id"], float(h["distance"])) for h in hits[0]]
+                channels.setdefault(channel, [])
+                channels[channel] = merge_best(channels[channel], scored)
 
         # 计数只按许可谓词算，不带 labels / modality：后两者是调用方自己下的条件。
         # 混进来会让 `license_filtered_count` 在"你无权查看"与"你自己筛掉的"之间摇摆，
@@ -286,6 +298,13 @@ class MilvusBackend:
             mods = ", ".join(f'"{m}"' for m in request.modalities if _plain(m))
             if mods:
                 expr = f"{expr} and modality in [{mods}]"
+        if request.figure_types:
+            # 与 modality 同一条路：`modalities=[IMAGE]` 只保证返回的是图，
+            # 不保证是**那类**图（README 里那个 CT 查询返回了一张信号强度柱状图）。
+            # 图型是缩小这个空间的下一格。
+            kinds = ", ".join(f'"{f}"' for f in request.figure_types if _plain(f))
+            if kinds:
+                expr = f"{expr} and figure_type in [{kinds}]"
         return expr
 
     def _filtered_count(self, request: RetrievalRequest, expr: str) -> int:
@@ -297,6 +316,25 @@ class MilvusBackend:
             collection_name=self.collection, filter=expr, output_fields=["count(*)"]
         )
         return max(0, _count(total) - _count(allowed))
+
+
+def _explain_vector_field_cap(exc: Exception, wanted: int) -> None:
+    """把 Milvus 的向量列数上限翻译成"去改哪个配置"。
+
+    原始报错是 "maximum vector field's number should be limited to 4"，
+    它不说这是**服务端配置**而不是 schema 写错了，于是最省事的"修法"看起来
+    就是砍掉一列 —— 那会让第五列静默消失，而报表上没有任何痕迹。
+    """
+    if "vector field" not in str(exc):
+        return
+    print(
+        f"[milvus] 本次要建 {wanted} 个向量列，超过服务端上限。"
+        "这是 Milvus 的 proxy.maxVectorFieldNum（默认 4，上限 10），不是 schema 的问题。"
+        "docker/milvus-standalone.yml 里已设 PROXY_MAXVECTORFIELDNUM=6，"
+        "请 make milvus-down && make milvus-up 让它生效。"
+        "**不要靠删掉一列来绕过** —— 那一列会从报表上无声消失。",
+        flush=True,
+    )
 
 
 def _count(rows: Any) -> int:
@@ -319,17 +357,6 @@ def _plain(value: str) -> bool:
     return value.replace("_", "").replace("-", "").isalnum()
 
 
-def _merge_best(
-    existing: list[tuple[str, float]], incoming: list[tuple[str, float]]
-) -> list[tuple[str, float]]:
-    """同一通道下多列的结果取每个 chunk 的最高分，再按分排序。"""
-    best: dict[str, float] = dict(existing)
-    for cid, score in incoming:
-        if score > best.get(cid, float("-inf")):
-            best[cid] = score
-    return sorted(best.items(), key=lambda kv: -kv[1])
-
-
 def chunk_to_row(chunk: Any, meta: ChunkMeta, *, degraded: str = "") -> dict[str, Any]:
     return {
         "chunk_id": meta.chunk_id,
@@ -343,6 +370,7 @@ def chunk_to_row(chunk: Any, meta: ChunkMeta, *, degraded: str = "") -> dict[str
         "modality": str(getattr(chunk.modality, "value", chunk.modality)),
         "degraded": degraded,
         "asset_path": getattr(chunk, "asset_path", None) or "",
+        "figure_type": str(getattr(chunk, "figure_type", "") or ""),
         "labels": list(meta.labels),
         "concept_ids_expanded": list(getattr(chunk, "concept_ids_expanded", ())),
         "text": chunk.text,

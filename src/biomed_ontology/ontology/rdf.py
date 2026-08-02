@@ -169,6 +169,38 @@ class GraphStore:
         self._store.bulk_extend(quads)
         return graph_uri
 
+    def load_concept_links(
+        self,
+        concepts: list[BuiltConcept],
+        *,
+        source_id: str,
+        tier: LicenseTierEnum,
+    ) -> str:
+        """把种子断言的类型化链接（药→靶点、药→适应症）写入**独立命名图**。
+
+        谓词与事实层同名（`hmd:has_target` / `hmd:treats`），因为它们说的确实是
+        同一件事；区分来源靠命名图，不靠两套词汇表 —— 后者会让 `pipeline_matrix`
+        这类查询必须同时 UNION 两组谓词，而漏掉一组的失败形态是"结果少了一半"。
+
+        但两者的证据强度天差地别：事实层的每条边都挂着 reifier（出处、置信度、
+        抽取器、语句级溯源），种子链接只是一句人工断言。混进同一个图，
+        "这条边是谁说的"就再也分不出来了。
+        """
+        graph_uri = self.register_graph(source_id, tier)
+        g = _n(graph_uri)
+        quads = [
+            ox.Quad(
+                _curie_uri(c.concept_id),
+                _n(f"{HMD}{link.predicate}"),
+                _curie_uri(link.object_id),
+                g,
+            )
+            for c in concepts
+            for link in c.links
+        ]
+        self._store.bulk_extend(quads)
+        return graph_uri
+
     def load_facts(self, facts: list[Any], *, source_id: str, tier: LicenseTierEnum) -> str:
         """写入事实层。用 RDF 1.2 三元组项 + `rdf:reifies` 承载语句级溯源。
 

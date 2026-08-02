@@ -380,6 +380,25 @@ sources:
       PT/LLT 术语不得暴露给无 subscription 的消费方，导出闸门必须逐条拦截。
       仅当不良事件成为刚需时采购。
 
+  - id: CLINICAL_IMAGING
+    name: 临床影像语料（DICOM / PACS 导出）
+    track: B
+    enabled: false
+    license_id: internal-dua
+    license_tier: TIER_3
+    entity_types: []
+    role: corpus
+    requires_credentials: true
+    notes: >-
+      MedImageInsight（MIT，610M，覆盖 14 个临床影像域）的接入前置条件。
+      模型本身免费且许可干净，缺的不是钱而是**数据**：当前语料只有 PMC 文献插图，
+      对这类模型属于分布外 —— 在文献插图上评它，测出来的既不是它的能力也不是我们的。
+      登记在这里而不是登记模型本身：sources.yaml 管的是数据源
+      （有实体类型、权威范围、命名图），模型的许可义务归 licensing.COMPONENTS。
+      不填 procurement_priority —— 它不是一笔采购，是 DUA / 伦理审批与脱敏管线，
+      跟 UMLS 那类"给钱就能拿到"的插槽不可比价。
+      真实影像一旦进来，TIER_3 与去标识化要求会同时生效，此处先把闸门位置占住。
+
   # ---------------------------------------------------------------- 许可插槽验证用
   - id: MOCK_LICENSED
     name: Mock Licensed Source (许可插槽验证)

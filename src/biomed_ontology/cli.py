@@ -192,6 +192,9 @@ def eval_cmd(
     milvus: bool = typer.Option(False, "--milvus", help="连 Milvus 跑另外 6 个臂"),
     embedder: str = typer.Option("fake", "--embedder", help="仅 --milvus 时生效"),
     collection: str | None = typer.Option(None, "--collection"),
+    reranker: str = typer.Option(
+        "", "--reranker", help="交叉编码器精排模型，留空则精排臂标为未运行"
+    ),
     allow_fake: bool = typer.Option(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
@@ -200,6 +203,7 @@ def eval_cmd(
     from biomed_ontology.eval import eval_normalization, eval_retrieval
     from biomed_ontology.eval.targets import check_targets, render_outcomes
     from biomed_ontology.pipeline import build_knowledge_base
+    from biomed_ontology.rerank import get_reranker
 
     if milvus:
         _require_real_embedder(embedder, allow_fake=allow_fake)
@@ -217,6 +221,7 @@ def eval_cmd(
         # 报的是模型真名（bge-m3+sapbert+qwen3-vl），不是命令行别名。
         # 别名说不清生医列到底装了什么，而这行字要给净值背书。
         embedder=backend.embedder.name if backend else "",
+        reranker=get_reranker(reranker) if reranker else None,
     )
     console.print(ev.as_table())
     console.print()
@@ -243,6 +248,27 @@ def _require_real_embedder(name: str, *, allow_fake: bool) -> None:
         "只想验证管线接线请显式加 --allow-fake。[/red]"
     )
     raise typer.Exit(1)
+
+
+def _apply_figure_types(chunks: list, typer_impl, asset_root) -> dict[str, int]:
+    """就地给带图切片打上 `figure_type`，返回类型分布。
+
+    在索引期算而不是解析期：判型要读像素，而解析产物是要进版本库的 YAML ——
+    把一个模型的输出写进去，等于让语料的内容随模型版本变化。
+    索引是可重建的，那里才是模型推断该落的地方。
+    """
+    from collections import Counter
+
+    from biomed_ontology.parse.assets import resolve_asset
+
+    targets = [c for c in chunks if getattr(c, "asset_path", None)]
+    if not targets:
+        return {}
+    paths = [resolve_asset(asset_root, c.doc_id, c.asset_path) for c in targets]
+    typings = typer_impl.classify(paths, [c.text for c in targets])
+    for chunk, typing in zip(targets, typings, strict=True):
+        chunk.figure_type = typing.figure_type
+    return dict(Counter(t.figure_type for t in typings if t.figure_type))
 
 
 def _milvus_backend(embedder: str, collection: str | None):
@@ -409,10 +435,15 @@ def parse_cmd(
 @app.command("index")
 def index_cmd(
     embedder: str = typer.Option(
-        "multimodal", "--embedder", help="multimodal | dual | bge-m3 | sapbert | qwen3-vl | fake"
+        "multimodal",
+        "--embedder",
+        help="multimodal-bio | multimodal | dual | bge-m3 | sapbert | qwen3-vl | biomedclip | fake",
     ),
     collection: str | None = typer.Option(None, "--collection"),
     recreate: bool = typer.Option(False, "--recreate", help="先删表再建，用于换 embedder"),
+    figure_typer: str = typer.Option(
+        "caption", "--figure-typer", help="biomedclip（零样本判图型）| caption（关键词兜底）"
+    ),
     allow_fake: bool = typer.Option(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
@@ -420,6 +451,7 @@ def index_cmd(
     """把知识库切片写入 Milvus。各向量列一次算完，不分次前向。"""
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
+    from biomed_ontology.parse.figure_type import get_figure_typer
     from biomed_ontology.pipeline import DATA_ROOT, build_knowledge_base
     from biomed_ontology.registry import load_registry
     from biomed_ontology.search import HybridSearcher
@@ -432,16 +464,18 @@ def index_cmd(
     registry = load_registry()
 
     model = get_embedder(embedder)
+    asset_root = DATA_ROOT / "assets"
     backend = MilvusBackend(
         uri=settings.milvus_uri,
         token=settings.milvus_token.get_secret_value(),
         collection=collection or settings.milvus_collection,
         embedder=model,
         known_sources=frozenset(s.id for s in registry.active()),
-        asset_root=DATA_ROOT / "assets",
+        asset_root=asset_root,
     )
     backend.ensure_collection(drop_existing=recreate)
 
+    typed = _apply_figure_types(kb.chunks, get_figure_typer(figure_typer), asset_root)
     rows = [chunk_to_row(ch, searcher.chunk_meta(ch.chunk_id)) for ch in kb.chunks]
     written = backend.upsert(rows)
 
@@ -452,7 +486,10 @@ def index_cmd(
     table.add_row("切片", str(written))
     table.add_row("向量列", str(len(backend.vector_fields())))
     table.add_row("带图切片", str(sum(1 for r in rows if r["asset_path"])))
+    table.add_row("图型已标注", f"{sum(typed.values())}（{figure_typer}）")
     console.print(table)
+    if typed:
+        console.print(f"图型分布 {dict(sorted(typed.items(), key=lambda kv: -kv[1]))}")
 
     # 分档计数：受限内容有没有真的进库，是许可过滤能否被验证的前提
     by_tier: dict[int, int] = {}

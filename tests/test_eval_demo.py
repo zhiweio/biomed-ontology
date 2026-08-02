@@ -51,44 +51,84 @@ def test_gold_keys_address_every_chunk_in_the_section(kb):
 
 
 def test_retrieval_arms_are_all_evaluated(kb):
-    """本地臂全跑；Milvus 臂标为未运行而不是静默消失。
+    """零依赖能跑的臂全跑；需要外部模型的标为未运行而不是静默消失。
 
-    惄惄少几行会让读报告的人以为那些配置没做，而不是没测。
+    悄悄少几行会让读报告的人以为那些配置没做，而不是没测。
+
+    "需要外部模型"有两类：Milvus 臂要向量库，精排臂要交叉编码器权重。
+    两类都遵守同一条纪律 —— 拿不到就标为未运行，**绝不回落**顶替。
+    回落之后报表上写着"Milvus 三列"或"+精排"，跑的却是本地 TF-IDF 或原序返回。
     """
     ev = eval_retrieval(kb, entitlements=LICENSED)
-    local = {k for k, v in ARMS.items() if v.get("backend", "local") == "local"}
-    assert set(ev.arms) == local
-    assert set(ev.unavailable) == set(ARMS) - local
+    offline = {
+        k for k, v in ARMS.items() if v.get("backend", "local") == "local" and not v.get("rerank")
+    }
+    assert set(ev.arms) == offline
+    assert set(ev.unavailable) == set(ARMS) - offline
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="gold 已覆盖全部 14 篇、judged@10=1.000，标注覆盖不再是理由："
-    "0.335 → 0.317（-5.2%）就是本体臂当前的真实水平。"
-    "成因在检索侧：本体今天只经由 GRAPH 一个通道参与融合，该通道净值 -0.018；"
-    "84 个概念下几乎每个切片都能挂上，判别力稀释了却仍按整通道权重进 RRF。"
-    "见 targets.yaml T1 豁免。检索侧改造后本条应自动转绿 —— "
-    "strict=True 保证那时不会被无声跳过。",
-)
+def test_rerank_arms_refuse_to_fall_back_to_a_null_reranker(kb):
+    """没给精排模型时，精排臂必须缺席，而不是原序返回冒充精排结果。"""
+    from biomed_ontology.rerank import NullReranker
+
+    ev = eval_retrieval(kb, entitlements=LICENSED, reranker=NullReranker())
+    assert "ontology_hybrid_rerank" in ev.unavailable
+    assert "reranker" in ev.unavailable["ontology_hybrid_rerank"]
+
+
 def test_ontology_hybrid_improves_recall_over_bm25(kb):
-    """本体增强的核心承诺就是召回 —— 这条掉了整个方案的价值主张就没了。"""
+    """本体增强的核心承诺就是召回 —— 这条掉了整个方案的价值主张就没了。
+
+    这条曾经是 xfail(strict)，记的账是"本体只经由 GRAPH 一个通道参与融合，
+    而该通道往 RRF 里注入的是按 chunk_id 排序的随机采样"。检索侧改造后转绿。
+
+    但只看符号会读出比事实更强的结论：+0.003 的 95% CI 是 [-0.048, +0.048]。
+    所以这条守的是"不再是负的"，T1 才守"提升够不够大"—— 而 T1 仍然挂着豁免。
+    """
     ev = eval_retrieval(kb, entitlements=LICENSED)
     assert ev.lift("recall_at_10") > 0, ev.as_table()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="同上：召回提升本身当前测不出来，这条依赖它成立。",
-)
-def test_expansion_trades_top1_precision_for_recall(kb):
-    """扩展提召回、摊薄 top-1，这个权衡必须看得见。
+def test_expansion_does_not_trade_ranking_for_recall(kb):
+    """召回涨的同时排序不能退 —— 否则只是把噪声推给下游 agent。
 
-    这条早先是个写死的 `lift("mrr") <= 0` 断言。现已改由 T4 目标承载 ——
-    写死的断言只能表达"我预期它很差"，表达不了"我希望它好、当前没做到、原因如下"。
+    这条早先是个写死的 `lift("mrr") <= 0` 断言，意思是"我预期它很差"。
+    现在三项同时为正，写成三条断言而不是一条：哪一项退回去要能一眼看出是哪一项。
     """
     ev = eval_retrieval(kb, entitlements=LICENSED)
     assert ev.lift("recall_at_10") > 0
-    assert ev.lift("map_score") >= 0, "MAP 也降了，那就不是首位抖动而是真的排序退化"
+    assert ev.lift("map_score") >= 0, "MAP 降了，那就不是首位抖动而是真的排序退化"
+    assert ev.lift("ndcg_at_10") >= 0, "nDCG 降了：理想序按 K 截断，这一项没有天花板可推诿"
+
+
+def test_ontology_gains_are_reported_with_confidence_intervals(kb):
+    """n=28 上任何 ±0.02 都落在噪声里。报表必须自带 CI 与 p 值。
+
+    这条守的不是数值，是**表达方式**：一份只有点估计的报表，
+    读者除了看符号别无选择，而符号在这个规模上是可以靠随机翻转的。
+    """
+    ev = eval_retrieval(kb, entitlements=LICENSED)
+    sig = ev.significance("ndcg_at_10")
+    assert sig.n == ev.arms["ontology_hybrid"].query_count
+    assert sig.ci_low < sig.delta < sig.ci_high
+    assert 0.0 < sig.p_value <= 1.0
+    table = ev.as_table()
+    assert "95% CI" in table and "p=" in table
+
+
+def test_significance_reports_no_difference_when_arms_are_identical(kb):
+    """同一个臂与自己比，p 必须是 1.0 而不是 0.000。
+
+    置换检验里全零差值会让"极端值计数"命中每一次重排，
+    朴素实现会算出 p=0.000 —— 也就是把"两臂毫无差别"报成"差别极显著"。
+    """
+    from biomed_ontology.eval import paired_significance
+
+    scores = {"q1": 0.5, "q2": 0.25, "q3": 1.0}
+    sig = paired_significance(scores, dict(scores), resamples=200)
+    assert sig.delta == 0.0
+    assert sig.p_value == 1.0
+    assert not sig.significant
 
 
 def test_metrics_are_reported_per_language(kb):
@@ -103,13 +143,6 @@ def test_metrics_are_reported_per_language(kb):
         assert sum(sub.query_count for sub in arm.by_lang.values()) == arm.query_count
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="当前 nDCG 提升三个口径同为负：总 -0.015 / en -0.009 / zh -0.027，符号一致。"
-    "这不代表分表没信息量 —— 同一份数据里 Recall 的 en 是 +0.014、zh 是 -0.086，"
-    "分表在那个指标上照样给出了总平均给不出的结论。"
-    "只是 nDCG 这一项上，GRAPH 通道的稀释对两个语种是同向的。",
-)
 def test_language_split_can_disagree_with_the_average(kb):
     """分语种表必须真的能和总平均给出不同结论，否则拆分只是装饰。"""
     ev = eval_retrieval(kb, entitlements=LICENSED)
@@ -175,22 +208,21 @@ def test_demo_passes(kb, demo_id):
     from biomed_ontology.agentapi import AgentApi
     from biomed_ontology.demo import run_demo
 
-    if demo_id == "D1":
-        pytest.xfail(
-            "真实文献语料下 AZD6094 / AZD-6094 的前十接地精度只有 0.500（门槛 0.800）。"
-            "这是真实缺陷不是测试噪声：研究代号是低频串，词法通道会拽进无关内容，"
-            "而本体扩展没能把它拉回来。归一化不变性仍然完好（6 种写法 → 1 个 code）。"
-        )
     result = run_demo(demo_id, kb, AgentApi.from_kb(kb))
     assert result.passed, result.render()
 
 
 def test_all_demos_pass_together(kb):
+    """写成"一条都不许失败"而不是"允许若干条失败"：坏一条必须立刻炸。
+
+    D1（AZD6094 归一化不变性）曾长期挂在这里：研究代号是低频串，
+    词法通道会拽进无关内容，前十接地精度只有 0.500（门槛 0.800）。
+    修好它的是查询改写 —— `Normalizer.expand()` 的输出终于下发给了词法通道，
+    于是"AZD6094"这条 query 同时带上了沃利替尼的其余写法。
+    """
     results = run_all(kb)
     failed = {r.demo_id for r in results if not r.passed}
-    # D1 当前不达标，原因见 test_demo_passes 里的 xfail 说明。
-    # 这里写成精确集合而不是放宽为"允许若干条失败"：多坏一条必须立刻炸。
-    assert failed == {"D1"}, [r.render() for r in results if not r.passed]
+    assert not failed, [r.render() for r in results if not r.passed]
     assert len(results) == len(DEMOS)
 
 
