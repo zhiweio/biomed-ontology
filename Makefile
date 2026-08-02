@@ -9,7 +9,7 @@ SCHEMAS := hmd_concept hmd_fact hmd_taxonomy hmd_obs hmd_agentapi
 COMPOSE := docker compose -f docker/milvus-standalone.yml
 
 .PHONY: all gen gen-py gen-jsonschema gen-shacl gen-owl canon-ttl canon-check nightly \
-        lint test check clean milvus-up milvus-down milvus-logs corpus
+        lint test check clean milvus-up milvus-down milvus-logs corpus docs docs-serve
 
 all: gen lint test
 
@@ -75,6 +75,13 @@ test:
 	uv run pytest
 
 check: lint test
+
+# 完整手册（mkdocs-material）。命令与实测数字仍以 README 为准，手册讲机制。
+docs:
+	uv run --extra docs mkdocs build --strict
+
+docs-serve:
+	uv run --extra docs mkdocs serve
 
 # Milvus 只在需要向量后端时起；默认 HMD_SEARCH_BACKEND=local，不装 Docker 也能跑全套测试。
 milvus-up:

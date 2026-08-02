@@ -1,0 +1,9 @@
+/* Mermaid diagrams: keep them readable in both palettes. */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+[data-md-color-scheme="slate"] .mermaid svg {
+  background: transparent;
+}

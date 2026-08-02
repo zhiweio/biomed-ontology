@@ -77,6 +77,9 @@ dev = [
     "mypy>=1.13.0",
     "respx>=0.21.1",
 ]
+docs = [
+    "mkdocs-material>=9.5.0",
+]
 
 [project.scripts]
 hmd = "biomed_ontology.cli:app"

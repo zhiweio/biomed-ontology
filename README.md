@@ -7,6 +7,16 @@
 
 **本仓库不包含 AI agent 本身** —— 只构建其消费的数据底座与工具接口。
 
+**完整手册**（机制、事故教训、设计不变量）：见 [`docs/`](docs/index.md)，本地预览：
+
+```bash
+uv sync --extra docs --extra dev
+make docs-serve    # http://127.0.0.1:8000
+make docs          # mkdocs build --strict
+```
+
+命令与**实测数字只维护在本 README**（有测试守着）；手册讲为什么，不抄表。
+
 ---
 
 ## 快速开始
@@ -101,7 +111,7 @@ L1 术语层        Concept / Synonym / Xref(SSSOM) / Hierarchy → RDF named gr
 L2 语义层        LinkML schema（Biolink 子集）→ OWL + SHACL + JSON Schema + Pydantic
 L3 归一化        文本 → 唯一 CURIE（词典 → 规则 → 向量 → LLM 消歧）
 L4 语料治理      文档标引分类 + 三模态抽取（文本/表格/图像）→ 结构化事实 + provenance
-L5 检索/查询     BM25 ⊕ dense ⊕ 图通道 → RRF 融合；Milvus 四向量列 + 模态过滤；SPARQL 图查询
+L5 检索/查询     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus 五向量列 + 模态/图型过滤；SPARQL
 L6 Agent 接口    MCP + REST（11 个工具），返回体内建 provenance + trace_id + license_tier
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
 L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release → Impact → 回归守门
@@ -114,7 +124,7 @@ flowchart LR
     V --> KB[(KnowledgeBase)]
     ONT[LinkML schema] -->|gen-pydantic| KB
     KB --> S[search<br/>BM25 ⊕ dense ⊕ graph]
-    KB --> M[(Milvus<br/>4 向量列)]
+    KB --> M[(Milvus<br/>5 向量列)]
     M --> S
     S --> API[AgentApi<br/>11 tools]
     API --> REST[REST /v1/*]
@@ -125,96 +135,24 @@ flowchart LR
     EVO -.new release.-> ONT
 ```
 
-**LinkML 是唯一事实来源。** 所有 Python 数据模型由 `make gen` 从 `schema/` 生成到
-`src/biomed_ontology/_generated/`，该目录不手改、不入 lint。
-契约、OpenAPI、MCP 描述符全部从同一份 schema 导出 —— 手写第二份就一定会漂移。
-
-**生成是确定性的。** `make gen` 逐字节幂等：同一份 schema 跑两次，`git diff` 为空。
-
-这不是洁癖。rdflib 每次序列化都给空白节点新标签，
-`sh:property [ ... ]` 这些匿名块的排列随之改变，曾经一次 `make gen` 就刷出
-**6341 增 = 6341 删**，内容一字未动。后果是生成物**失去可审查性** ——
-真实的 schema 变更被淹没在纯重排里，review 只能整块跳过；
-工作区又永远是脏的，久了就形成"顺手 `git checkout -- schema/generated`"的习惯，
-连带真变更一起丢。
-
-`scripts/canon_ttl.py` 在 `gen-shacl` / `gen-owl` 之后重写生成物：
-用 `to_canonical_graph()` 按图同构给空白节点算确定性标签，
-再把 `sh:ignoredProperties` 这个语义上是集合、却被写成 RDF list 的字段排序
-（图同构会如实保留 list 顺序，而那个顺序来自 Python set 的遍历序）。
-N-Triples 不行 —— 它按集合迭代序直接倾倒，不排序。
-
-`tests/test_canon_ttl.py` 守三条性质：已提交的生成物已是规范形式、
-重新序列化后规范化能回到同一份字节、以及**规范化不改变图语义**
-（最后一条是安全带：一个把文件清空的实现同样"幂等"）。
-
-默认套件只跑每类最小的一份文件：`to_canonical_graph` 是图同构算法，
-随空白节点数急剧变慢，全部 10 份要 4 分半（`hmd_agentapi.owl.ttl` 一份就占 79 秒）。
-把它塞进 `make check` 的真实后果不是"慢一点"，是大家不再跑 `make check`。
-**全量覆盖挂 nightly**：
-
-```bash
-make nightly        # = make canon-check，全部 10 份，只判定不落盘，约 50s
-```
+**LinkML 是唯一事实来源**（`make gen` → `_generated/`，不手改）。生成物经
+`canon_ttl` 规范化；全量校验挂 `make nightly`。机制见手册
+[LinkML 与生成物](docs/architecture/linkml.md)。分层与 search-around 的完整论证见
+[手册 · 架构](docs/architecture/layers.md)。
 
 ---
 
-## Citationware：引用优先的 RAG
+## Citationware 与可观测（摘要）
 
-检索返回的是**高匹配度碎片**。碎片能证明"有这句话"，却证明不了"在什么语境下说的" ——
-而临床结论的语境（哪一组、哪个终点、哪次随访）恰恰决定它成不成立。
-
-因此每次检索都同时给出三样东西：
-
-| 产物 | 作用 | 入口 |
-|---|---|---|
-| `results` | 扁平命中，含 `page` / `section` / `license_tier` / `explain` | `search_documents` |
-| `evidence_tree` | 文档 → 章节 → 碎片的聚合视图 | `search_documents` |
-| 原文还原 | 拼回整节 + 面包屑 + 原始页码 | `restore_context` |
-
-**为什么要证据树**：扁平列表里同一段落的 5 个碎片看上去像 5 条独立证据，
-这种"证据量的错觉"会直接误导判断。树把它们收回一个节点。
-
-**为什么还原要走许可**：`restore_context` 若不校验凭据，就成了一个用碎片 id 换全文的后门。
-它复用 `LicenseScope.permits` 这**同一个谓词**，而不是自己再实现一份 ——
-各写一份迟早出现"检索看不到但还原看得到"。
+检索同时给出 `results` / `evidence_tree` / `restore_context`（还原复用同一
+`LicenseScope.permits`；截断自报 `truncated`）。四支柱 Trace/IO/State/Metrics
+与 Citationware 合成可复核证据链；`trace_id` 闭合 feedback loop。
 
 ```bash
 uv run hmd demo --id D7
 ```
 
-```
-✓ [D7] 引用优先：碎片 → 原文
-   检索命中 5 条，聚成 3 篇文档：
-     DOC:CTGOV.NCT02807415 碎片 1 个 → 章节 1 处：BriefSummary
-     DOC:PMC12133497       碎片 3 个 → 章节 2 处：Introduction、Discussion
-     DOC:PMC13193915       碎片 1 个 → 章节 1 处：Introduction
-   还原 CHK:txt.361514dd1b：A Study of Surufatinib … / BriefSummary p1-1，
-        300 字碎片 → 312 字全节（共 1 个碎片，截断=False）
-   同级章节可继续查阅：Outcomes
-   限长 60 字时：truncated=True，实际返回 60 字
-   受限文档 DOC:PATSNAP.PS-2023-00417：无凭据还原 0 字（LICENSE_DENIED） /
-        有凭据还原 354 字
-```
-
-截断会**自报**（`truncated: true`）。静默丢内容会让"还原完整原文"变成一句假话。
-
----
-
-## 四支柱可观测 ↔ Citationware
-
-两者不是两套东西：Citationware 回答"这句话从哪来"，四支柱回答"这个答案怎么得出的"。
-合起来才构成一条可复核的证据链。
-
-| 支柱 | 问题 | 落点 | 在 Citationware 中的角色 |
-|---|---|---|---|
-| **Trace** | WHERE | `TraceContext.span_tree()` | 哪个通道召回了这条碎片、RRF 各通道名次 |
-| **I/O** | WHAT | `ToolIoRecord` | 请求与返回体逐字留档，含 `license_filtered_count` |
-| **State** | WHY | `DecisionRecord` | 标题层级判定、消歧选择的候选集与理由 |
-| **Metrics** | WHEN | `ArmResult` / `MetricTarget` | 引用忠实度、召回、时延随发版的走向 |
-
-`trace_id` 随返回体回传 agent，`submit_feedback` 以它为主键 ——
-**这就是 data loop 的闭合点**：一次错误结论能定位到具体哪一行别名、哪一次扩展决策。
+详解：[Citationware](docs/agent/citationware.md) · [四支柱](docs/observability/pillars.md)。
 
 ---
 
@@ -243,23 +181,13 @@ uv run hmd demo --id D7
 
 `uv run hmd eval --entitlements MOCK_LICENSED`
 
-gold set 覆盖**全部 14 篇文档 / 37 条 query**（en 26 / zh 11；文本意图 25 / 图像意图 12），
-**judged@10 = 1.000** —— 前十里每一条命中都被判定过。
-因此下面的数字是测量值，不再是下界。这一点值得单独说：上一版 README 里那句
-"这些数字是下界"曾是真的（judged@10 只有 0.238），它现在被删掉不是因为结论变好看了，
-而是因为**造成它的原因被消除了**，而消除之后结论反而更难看。
+读数方法、ARMS 定义、显著性纪律见手册
+[评测](docs/eval/arms.md) · [显著性](docs/eval/significance.md) · [豁免](docs/eval/targets.md)。
+下面只保留**当前实测快照**（有 `tests/test_readme.py` 守着）。
 
-> **但 Recall@10 的上限是 0.848，不是 1.000。**
-> gold 的判定粒度是章节：一节内全部切片同 grade，于是 `|relevant|` 常常大于 K=10。
-> 完美检索也拿不到 1.0。`hmd eval` 会把这个上限单独打一行 ——
-> 它和 judged@10 是两回事，且处置完全相反：judged 低要补标注，上限低只能换指标
-> （nDCG@10 的理想序已按 K 截断，不受影响）。混在一起看，
-> 会把一份标注齐全的报表继续当成"标注没做完"。
-
-gold 的键是 `doc_id#section`，section 名来自解析结果，凭记忆写必然拼错。
-`scripts/dump_sections.py` 把每篇的真实 section 清单打出来供照抄
-（`--grep MET` 可按正文关键词筛）；写错的键会被 `eval_retrieval` 的 dangling 检查拦下，
-整份评测拒绝出数 —— 不是跳过那一条，因为一条静默失效的判定会让分母悄悄变小。
+gold：**14 篇 / 37 query**（en 26 / zh 11；文本 25 / 图像 12），**judged@10 = 1.000**。
+判定粒度是章节 → **Recall@10 上限 0.848**（不是 1.0）；主指标取 nDCG@10。
+键用 `scripts/dump_sections.py` 对照；dangling 键拒绝整次评测。
 
 **全部 query（n=37）**
 
@@ -293,13 +221,8 @@ gold 的键是 `doc_id#section`，section 名来自解析结果，凭记忆写�
 | ③ + search-around（沿类型化链接多跳） | 0.259 | **0.254** | **0.328** | 0.541 |
 | ④ 仅查询改写（不开图通道） | **0.263** | 0.249 | 0.318 | 0.484 |
 
-三条路径各自的读数：**(a)** 图通道现在按概念 IDF 加权累加打分，
-上一版它是个**按 chunk_id 哈希排序的随机采样器**（几百个切片并列 1.0，
-次级排序键是 SHA-1 前缀），nDCG 净值 -0.018；现在 +0.008。
-**(b)** search-around 让"查靶点 → 找到打这个靶点的药"走得通，
-是 P@5 与 nDCG 上唯一同时为正的一项。
-**(c)** 查询改写在中文上是最强的单项（zh nDCG 0.286 → 0.380），在英文上是负的
-（0.331 → 0.292）—— BM25 在英文原词上本来就命中，追加别名只会稀释词频。
+机制（IDF 打分、search-around、查询改写、哈希并列事故）见
+[手册 · 查询改写 vs 图通道](docs/retrieval/ontology-paths.md)。
 
 #### 按意图拆：图像那 12 条不该和文本混在一个平均里
 
@@ -666,18 +589,21 @@ uv run hmd serve --port 8000
 | `src/biomed_ontology/evolution/` | 信号挖掘 → KGCL → 发版守门 |
 | `src/biomed_ontology/eval/` | 消融评测 + 指标目标 |
 | `data/gold/` | gold set 与指标目标 |
+| `docs/` | mkdocs-material 完整手册（`make docs-serve`） |
 | `tests/` | 契约与不变量测试 |
 
 ---
 
 ## 核心设计约束
 
+完整 PR 检查清单见 [手册 · 设计不变量](docs/invariants.md)。
+
 - **内部 CURIE 是唯一主键**，外部 ID 一律作为 xref 挂靠（供应商中立）
 - **别名必须带 scope**，检索扩展行为由 scope 驱动
 - **许可分层贯穿全链路**，tier ≥ 2 内容不得进入导出物与训练语料
 - **构建期可联网，运行期完全内网离线**
-- **RRF 用名次而非分数融合** —— 三通道量纲不可比，归一化会引入说不清的超参
-- **融合不下推到 Milvus** —— Milvus 的 RRF 分数无法还原为各通道名次，会毁掉 `explain`
+- **RRF 用名次而非分数融合**；**融合不下推到 Milvus**（保住 `explain`）
+- **无静默回落**（Milvus / 精排臂不可达 → 标「未运行」）；`fake` 需 `--allow-fake`
 
 ---
 
