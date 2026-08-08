@@ -46,9 +46,14 @@ Claim
 
 ```bash
 uv run hmd foundation sync
-uv run hmd foundation golden --candidate HMPL-504
+uv run hmd foundation golden --candidate HMPL-504 --json
+uv run hmd foundation golden-eval          # 多路径：药物/靶点/适应症
+uv run python scripts/golden_path_eval.py
 uv run hmd foundation serve --mcp   # :8100
 ```
+
+评估检查：`backends` 无 yaml；BIOS 桥接读 GraphDB `graph/biomedical`；证据 Milvus；资产 OpenMetadata。  
+检索操作 structlog 四支柱：`Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)`。
 
 MCP / REST 主契约：`get_entity_context`（不暴露裸 `graph_sparql` / 向量 API）。
 

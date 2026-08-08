@@ -9,6 +9,8 @@ from typing import Any
 
 from biomed_ontology.foundation.graphdb import GraphDbClient
 from biomed_ontology.foundation.graphs import (
+    BIOS_NS,
+    GRAPH_BIOMEDICAL,
     GRAPH_KNOWLEDGE,
     GRAPH_ONTOLOGY,
     GRAPH_PROVENANCE,
@@ -19,6 +21,7 @@ from biomed_ontology.foundation.world import entity_iri
 
 __all__ = [
     "enterprise_id_from_iri",
+    "fetch_bios_concepts",
     "fetch_claims",
     "fetch_entity",
     "fetch_related_ids",
@@ -241,3 +244,50 @@ def fetch_related_ids(client: GraphDbClient, enterprise_id: str) -> list[str]:
 def entity_to_dict_from_graph(client: GraphDbClient, enterprise_id: str) -> dict[str, Any] | None:
     ent = fetch_entity(client, enterprise_id)
     return ent.to_dict() if ent else None
+
+
+def fetch_bios_concepts(
+    client: GraphDbClient,
+    xrefs: list[str],
+) -> list[dict[str, Any]]:
+    """按 exactMatch 中的 BIOS:* / 外部 ID 从 biomedical 命名图取概念（非 YAML）。"""
+    bios_iris: list[str] = []
+    for x in xrefs:
+        if not x:
+            continue
+        if x.startswith("BIOS:"):
+            bios_iris.append(f"{BIOS_NS}{x.split(':', 1)[1]}")
+        elif x.startswith(BIOS_NS):
+            bios_iris.append(x)
+    if not bios_iris:
+        return []
+    values = " ".join(f"<{iri}>" for iri in dict.fromkeys(bios_iris))
+    # 必须 ?s a skos:Concept，避免 VALUES 在图中无三元组时假阳性
+    q = f"""
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX hmd: <{HMD_NS}>
+    SELECT ?s ?lab ?biosId WHERE {{
+      VALUES ?s {{ {values} }}
+      GRAPH <{GRAPH_BIOMEDICAL}> {{
+        ?s a skos:Concept .
+        OPTIONAL {{ ?s skos:prefLabel ?lab }}
+        OPTIONAL {{ ?s hmd:biosId ?biosId }}
+      }}
+    }}
+    """
+    out: list[dict[str, Any]] = []
+    for row in client.query(q):
+        iri = row.get("s") or ""
+        if not iri:
+            continue
+        bios_id = row.get("biosId") or iri.rsplit("/", 1)[-1]
+        out.append(
+            {
+                "bios_curie": f"BIOS:{bios_id}" if bios_id else None,
+                "iri": iri,
+                "pref_label": row.get("lab"),
+                "graph": GRAPH_BIOMEDICAL,
+                "backend": "graphdb_biomedical",
+            }
+        )
+    return out

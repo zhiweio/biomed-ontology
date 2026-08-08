@@ -373,6 +373,11 @@ tasks:
     cmds:
       - uv run python scripts/ontology_validate.py
 
+  foundation:golden-eval:
+    desc: 多 Golden Path JSON 评估（GraphDB+BIOS / Milvus / OM，禁止 YAML）
+    cmds:
+      - uv run hmd foundation golden-eval
+
   ontology:sync-artifacts:
     desc: 将 generated OWL/SHACL 复制到 ontology/ 供 Protégé 离线打开（非 SSOT）
     cmds:

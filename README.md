@@ -45,9 +45,11 @@ uv run hmd foundation resolve "HMPL-504"
 uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
 uv run hmd foundation sync                           # YAML 校验入库 → GraphDB + Milvus + OM（幂等，三后端必达）
 uv run hmd foundation evolve-mine                    # 候选落库，不自动改本体
-uv run hmd foundation golden --candidate HMPL-504    # 强制读 GraphDB/Milvus/OM（禁止 YAML fallback）
-uv run hmd foundation serve --mcp                    # Semantic API + MCP :8100
-task ontology:validate                               # Ontology-as-Code +（后端就绪时）Golden Path
+uv run hmd foundation golden --candidate HMPL-504 --json   # 单路径 JSON
+uv run hmd foundation golden-eval                            # 多路径评估（药物/靶点/适应症）
+uv run hmd foundation serve --mcp                            # Semantic API + MCP :8100
+task ontology:validate                                       # Ontology-as-Code + Golden Path
+task foundation:golden-eval                                  # GraphDB(+BIOS)/Milvus/OM，禁止 YAML
 ```
 
 金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。  

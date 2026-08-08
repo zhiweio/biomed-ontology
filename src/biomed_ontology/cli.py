@@ -517,7 +517,7 @@ def foundation_golden(
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Trace 步骤条，不展开详情"),
 ) -> None:
-    """金路径验收：DrugCandidate → Target → Disease → Evidence → Asset。
+    """金路径验收：按实体类型走 Drug / Target / Indication 路径。
 
     默认用 Rich 分步展示推理过程（resolve / graph / citationware / assets）；
     `--json` 给脚本，`--compact` 只要计数摘要。
@@ -525,8 +525,10 @@ def foundation_golden(
     import json
 
     from biomed_ontology.foundation import FoundationApi, load_world_model
+    from biomed_ontology.foundation.obs_log import configure_foundation_logging
     from biomed_ontology.foundation.render import render_golden_path
 
+    configure_foundation_logging(json_logs=True)
     api = FoundationApi(load_world_model())
     result = api.golden_path(candidate)
     if json_out:
@@ -538,6 +540,26 @@ def foundation_golden(
         render_golden_path(result, console=console)
         raise typer.Exit(1)
     render_golden_path(result, console=console, verbose=not compact)
+
+
+@foundation_app.command("golden-eval")
+def foundation_golden_eval(
+    candidate: list[str] | None = typer.Argument(
+        None,
+        help="候选列表；默认 HMPL-504/savolitinib/AZD6094/MET/c-MET/NSCLC",
+    ),
+) -> None:
+    """多 Golden Path JSON 评估：GraphDB(+BIOS) / Milvus / OM，禁止 YAML。"""
+    import json
+
+    from biomed_ontology.foundation.golden_eval import DEFAULT_CANDIDATES, eval_golden_paths
+    from biomed_ontology.foundation.obs_log import configure_foundation_logging
+
+    configure_foundation_logging(json_logs=True)
+    summary = eval_golden_paths(list(candidate) if candidate else list(DEFAULT_CANDIDATES))
+    console.print_json(json.dumps(summary, ensure_ascii=False))
+    if summary["passed"] != summary["total"]:
+        raise typer.Exit(1)
 
 
 @foundation_app.command("resolve")

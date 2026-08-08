@@ -115,7 +115,13 @@ def check_golden_path_live() -> None:
     ]:
         if backends.get(key) != want:
             _fail(f"backend[{key}]={backends.get(key)!r}，期望 {want}（禁止 YAML）")
+    if any(v == "yaml" for v in backends.values() if isinstance(v, str)):
+        _fail(f"禁止 YAML fallback，backends={backends}")
     ctx = result["context"]
+    if not ctx.get("bios_bridges"):
+        _fail("BIOS 桥接为空：请确认 GraphDB biomedical 已灌库（task foundation:init / bios-load）")
+    if not str(backends.get("bios") or "").startswith("graphdb_biomedical"):
+        _fail(f"bios backend 异常：{backends.get('bios')!r}")
     target_ids = {t["id"] for t in ctx.get("targets") or []}
     for t in expected["targets"]:
         if t["id"] not in target_ids:

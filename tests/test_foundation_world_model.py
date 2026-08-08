@@ -125,18 +125,64 @@ def test_golden_path_live_backends() -> None:
     assert result["ok"] is True
     assert result["canonical_entity"] == "HMD:ENT:DC:savolitinib"
     ctx = result["context"]
-    assert ctx["backends"] == {
-        "entity": "graphdb",
-        "relationships": "graphdb",
-        "related": "graphdb",
-        "evidence": "milvus",
-        "assets": "openmetadata",
-    }
+    assert ctx["backends"]["entity"] == "graphdb"
+    assert ctx["backends"]["relationships"] == "graphdb"
+    assert ctx["backends"]["evidence"] == "milvus"
+    assert ctx["backends"]["assets"] == "openmetadata"
+    assert str(ctx["backends"].get("bios", "")).startswith("graphdb_biomedical")
+    assert "yaml" not in ctx["backends"].values()
+    assert ctx.get("bios_bridges")
     assert any(t["id"] == "HMD:ENT:TGT:MET" for t in ctx["targets"])
     assert any(d["id"] == "HMD:ENT:IND:nsclc" for d in ctx["diseases"])
     assert any(e.get("span") for e in ctx["evidence"])
     assert any("exp_2025_012" in (a.get("id") or "") for a in ctx["internal_assets"])
     assert "SELECT " not in str(ctx)
+
+
+def test_multi_golden_path_eval_live() -> None:
+    if not _backends_ready():
+        pytest.skip("需要 GraphDB + Milvus + OpenMetadata")
+    from biomed_ontology.foundation.golden_eval import eval_golden_paths
+
+    summary = eval_golden_paths()
+    assert summary["passed"] == summary["total"], summary["failed"]
+    for row in summary["paths"]:
+        assert row["checks"]["no_yaml"]
+        assert row["checks"]["bios_graphdb"]
+        assert row["backends"]["evidence"] == "milvus"
+        assert row["backends"]["assets"] == "openmetadata"
+
+
+def test_observe_retrieval_emits_four_pillars() -> None:
+    import io
+
+    from biomed_ontology.foundation import obs_log
+    from biomed_ontology.foundation.obs_log import observe_retrieval
+
+    buf = io.StringIO()
+    obs_log._CONFIGURED = False  # noqa: SLF001 — 测试强制重配
+    # 直接把 logger 打到 buffer，避免捕获真实 stderr 句柄
+    import structlog
+
+    structlog.configure(
+        processors=[
+            structlog.processors.add_log_level,
+            structlog.processors.JSONRenderer(ensure_ascii=False),
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(0),
+        context_class=dict,
+        logger_factory=structlog.PrintLoggerFactory(file=buf),
+        cache_logger_on_first_use=False,
+    )
+    obs_log._CONFIGURED = True  # noqa: SLF001
+    with observe_retrieval("test.where", op="unit", input_summary={"q": 1}) as st:
+        st["backend"] = "milvus"
+        st["why"] = {"yaml_fallback": False}
+        st["output"] = {"hit_count": 2}
+    blob = buf.getvalue()
+    for pillar in ("trace", "io", "state", "metrics"):
+        assert f'"pillar": "{pillar}"' in blob or f'"pillar":"{pillar}"' in blob
+    obs_log._CONFIGURED = False  # noqa: SLF001
 
 
 def test_golden_path_rich_render_with_mock_context() -> None:
