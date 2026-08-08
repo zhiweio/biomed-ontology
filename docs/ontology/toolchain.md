@@ -63,11 +63,15 @@ task ontology:validate   # 目录 + 映射对齐 + Golden Path
 task ontology:sync-artifacts  # 可选：复制 OWL/SHACL 到 ontology/
 ```
 
-PR 流程：
+PR / 运行时流程：
 
 ```text
 Git → PR → ontology:validate →（人工 Protégé 审阅可选）→ merge
-         → 本地 foundation:sync → GraphDB
+         → hmd foundation sync
+              ├── GraphDB   (ontology / knowledge / provenance)
+              ├── Milvus    (foundation_evidence)
+              └── OpenMetadata (Glossary HMDEnterpriseAssets)
+         → Semantic Ops / golden 只读三后端
 ```
 
 ## 三层 ID

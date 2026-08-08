@@ -73,9 +73,14 @@ class Settings(BaseSettings):
     bern2_url: str = ""
     openmetadata_url: str = "http://localhost:8585"
     openmetadata_token: SecretStr = SecretStr("")
+    # OpenMetadata 唯一 Admin（业务读写共用此账号）
+    openmetadata_email: str = "noparking188@gmail.com"
+    openmetadata_password: SecretStr = SecretStr("Hello123456,")
     bios_license_ack: str = ""
     bios_init: Literal["full", "subset"] = "full"
     bios_max_concepts: int = Field(default=0, ge=0)  # 0 = 全量不截断
+    bios_batch_size: int = Field(default=500, ge=50)
+    bios_alt_labels: bool = False
 
     # --- 模型权重源 -------------------------------------------------------
     # 内网往往连不上 huggingface.co（TLS 直接被重置）。取不到时自动回落 Gitee

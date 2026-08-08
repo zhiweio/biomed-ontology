@@ -7,13 +7,15 @@
 from __future__ import annotations
 
 import json
-import os
 import sqlite3
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import httpx
+
+from biomed_ontology.config import Settings, settings
 from biomed_ontology.foundation.graphdb import GraphDbClient, ensure_repository
 from biomed_ontology.foundation.graphs import BIOS_NS, GRAPH_BIOMEDICAL, HMD_NS
 
@@ -28,6 +30,7 @@ __all__ = [
     "download_bios_full",
     "initialize_bios",
     "load_bios_subset_jsonl",
+    "read_bios_init_marker",
 ]
 
 BIOS_SOURCE_URL = "https://huggingface.co/datasets/THUMedInfo/BIOS_v3"
@@ -46,11 +49,17 @@ class BiosLicenseGate:
     purpose: str = "poc"
 
     @classmethod
-    def from_env(cls) -> BiosLicenseGate:
-        ack = os.environ.get("HMD_BIOS_LICENSE_ACK", "").strip().lower()
+    def from_settings(cls, cfg: Settings | None = None) -> BiosLicenseGate:
+        cfg = cfg or settings
+        ack = (cfg.bios_license_ack or "").strip().lower()
         if not ack:
             return cls(False, "poc")
         return cls(True, ack)
+
+    @classmethod
+    def from_env(cls) -> BiosLicenseGate:
+        """兼容别名 → ``from_settings``。"""
+        return cls.from_settings()
 
     def allow_full_load(self) -> bool:
         return self.acknowledged and self.purpose in {
@@ -164,21 +173,78 @@ def download_bios_full(cache_dir: Path | None = None) -> Path:
     return dest
 
 
-def _bios_max_concepts() -> int:
-    """0 = 不截断（全量 ~2.2e7）。默认 0；PoC 可设 HMD_BIOS_MAX_CONCEPTS=50000。"""
-    raw = os.environ.get("HMD_BIOS_MAX_CONCEPTS", "0").strip()
-    try:
-        return max(0, int(raw))
-    except ValueError:
-        return 0
+def _bios_max_concepts(cfg: Settings | None = None) -> int:
+    """0 = 不截断（全量 ~2.2e7）。"""
+    return max(0, (cfg or settings).bios_max_concepts)
 
 
-def _bios_batch_size() -> int:
-    raw = os.environ.get("HMD_BIOS_BATCH_SIZE", "500").strip()
+def _bios_batch_size(cfg: Settings | None = None) -> int:
+    return max(50, (cfg or settings).bios_batch_size)
+
+
+def read_bios_init_marker(cache_dir: Path | None = None) -> dict[str, Any] | None:
+    """读取 ``data/cache/bios_v3/.initialized``；不存在或损坏则返回 None。"""
+    marker = (cache_dir or DEFAULT_CACHE) / INIT_MARKER
+    if not marker.is_file():
+        return None
     try:
-        return max(50, int(raw))
-    except ValueError:
-        return 500
+        data = json.loads(marker.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _graph_has_bios_concepts(client: GraphDbClient) -> bool:
+    """GraphDB biomedical 图是否已有 BIOS Concept（体积探测，非全量 COUNT）。"""
+    sparql = f"""
+ASK {{
+  GRAPH <{GRAPH_BIOMEDICAL}> {{
+    ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+  }}
+}}
+"""
+    try:
+        with httpx.Client(timeout=30.0) as http:
+            r = http.post(
+                client.sparql_url,
+                data={"query": sparql},
+                headers={"Accept": "application/sparql-results+json"},
+            )
+            r.raise_for_status()
+            return bool(r.json().get("boolean"))
+    except Exception:
+        return False
+
+
+def _bios_load_satisfied(
+    *,
+    full: bool,
+    marker: dict[str, Any],
+    max_concepts: int,
+    graph_ready: bool | None,
+) -> bool:
+    """marker +（可选）GraphDB 是否已满足当前初始化意图。"""
+    concepts = int(marker.get("concepts") or 0)
+    if concepts < 10:
+        return False
+    source = str(marker.get("source") or "")
+    if full:
+        if source == "subset" or source.startswith("subset"):
+            return False
+        done_max = marker.get("max_concepts")
+        try:
+            done_max_i = int(done_max) if done_max is not None else 0
+        except (TypeError, ValueError):
+            done_max_i = 0
+        # 先前截断、现在要更大/全量 → 需重灌
+        if max_concepts == 0 and done_max_i > 0:
+            return False
+        if max_concepts > 0 and 0 < done_max_i < max_concepts:
+            return False
+    # GraphDB 不可达时仅信 marker（避免 foundation:up 因探测失败反复重灌）
+    if graph_ready is False:
+        return False
+    return True
 
 
 def _iter_concepts_tsv_lines(lines: Iterator[str], *, max_concepts: int) -> Iterator[BiosConcept]:
@@ -370,22 +436,59 @@ def initialize_bios(
     cache_dir: Path | None = None,
     graphdb: GraphDbClient | None = None,
     gate: BiosLicenseGate | None = None,
+    cfg: Settings | None = None,
+    force: bool = False,
 ) -> dict[str, Any]:
-    """默认全量流式下载并灌库；subset 仅测试。全量勿 list() 进内存。"""
-    g = gate or BiosLicenseGate.from_env()
-    # CI 可用 HMD_BIOS_INIT=subset 强制子集
-    init_mode = os.environ.get("HMD_BIOS_INIT", "full" if full else "subset").lower()
+    """默认全量流式下载并灌库；subset 仅测试。全量勿 list() 进内存。
+
+    若 ``.initialized`` 已存在且 GraphDB 仍有 Concept，则跳过重灌（``force=True`` 强制）。
+    """
+    cfg = cfg or settings
+    g = gate or BiosLicenseGate.from_settings(cfg)
+    # Settings.bios_init=subset 可强制子集（CI / 无 ACK）
+    init_mode = cfg.bios_init if full else "subset"
     if init_mode == "subset":
         full = False
-    if full:
-        g.require()
 
     cache = cache_dir or DEFAULT_CACHE
-    max_concepts = _bios_max_concepts()
-    batch_size = _bios_batch_size()
+    max_concepts = _bios_max_concepts(cfg)
+    batch_size = _bios_batch_size(cfg)
     idx_path = REPO_ROOT / "data" / "cache" / "bios_ext_index.sqlite"
+    client = graphdb or GraphDbClient.from_settings(cfg)
+    client.timeout = 600.0
 
+    if not force:
+        marker = read_bios_init_marker(cache)
+        if marker is not None:
+            graph_ready: bool | None = None
+            if client.health():
+                graph_ready = _graph_has_bios_concepts(client)
+            if _bios_load_satisfied(
+                full=full,
+                marker=marker,
+                max_concepts=max_concepts,
+                graph_ready=graph_ready,
+            ):
+                print(
+                    "[bios] already initialized — skip load "
+                    f"(concepts={marker.get('concepts')}, source={marker.get('source')}; "
+                    "pass force=True / --force to reload)",
+                    flush=True,
+                )
+                return {
+                    "source": marker.get("source", "cached"),
+                    "concepts": int(marker.get("concepts") or 0),
+                    "index": str(idx_path),
+                    "graph_loaded": int(marker.get("concepts") or 0)
+                    if graph_ready is not False
+                    else 0,
+                    "cache": str(cache),
+                    "skipped": True,
+                }
+
+    # 真正灌库前再校验 ACK（跳过路径不要求）
     if full:
+        g.require()
         download_bios_full(cache)
         concept_iter: Iterator[BiosConcept] = _iter_full_concepts(
             cache, max_concepts=max_concepts
@@ -408,8 +511,7 @@ def initialize_bios(
 
     indexed_iter, idx_path = _stream_index_sqlite(idx_path, merged())
 
-    client = graphdb or GraphDbClient(timeout=600.0)
-    write_alts = os.environ.get("HMD_BIOS_ALT_LABELS", "0") == "1"
+    write_alts = cfg.bios_alt_labels
     loaded = 0
     if client.health():
         ensure_repository(client)

@@ -120,14 +120,16 @@ graph:inference    ← 推导关系（可选物化）
 | Op | 后端 |
 |---|---|
 | `resolve_entity` | BERN2 + Resolver（词典 / Zingg） |
-| `get_entity` | GraphDB（联调前可读 YAML seed） |
-| `get_relationships` | GraphDB |
-| `find_related_entities` | GraphDB |
-| `search_evidence` | **Milvus Evidence Index**（不可用时联调可回落 YAML；生产强制 Milvus） |
-| `search_assets` | OpenMetadata |
-| `get_entity_evidence` | PROV → Milvus |
+| `get_entity` | **GraphDB** ontology graph（不可用则报错，禁止 YAML） |
+| `get_relationships` | **GraphDB** knowledge + provenance |
+| `find_related_entities` | **GraphDB** |
+| `search_evidence` | **Milvus** `foundation_evidence` |
+| `search_assets` | **OpenMetadata** Glossary `HMDEnterpriseAssets`（幂等 upsert） |
+| `get_entity_evidence` | Milvus |
 | `get_entity_assets` | OpenMetadata |
-| `get_entity_context` | 聚合：entity + targets + diseases + evidence(claim/span) + internal_assets |
+| `get_entity_context` | GraphDB + Milvus + OM（**禁止 YAML fallback**） |
+
+入库：`data/foundation/*.yaml` 为离线资源 → `ontology:validate` → `hmd foundation sync`（幂等）写入 GraphDB + Milvus + OM。查询层不读 YAML。
 
 ## 入湖流水线（目标形态）
 
@@ -169,7 +171,7 @@ export HMD_BERN2_URL=http://localhost:8888
 task milvus:up
 task foundation:smoke
 uv run hmd foundation bios-load --full
-uv run hmd foundation sync     # YAML → Named Graphs + Milvus Evidence + OM 探活
+uv run hmd foundation sync     # YAML → GraphDB + Milvus + OpenMetadata（三后端必达）
 
 uv run hmd foundation resolve "HMPL-504"
 uv run hmd foundation golden --candidate HMPL-504

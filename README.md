@@ -43,14 +43,17 @@ task foundation:up
 
 uv run hmd foundation resolve "HMPL-504"
 uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
-uv run hmd foundation sync
+uv run hmd foundation sync                           # YAML 校验入库 → GraphDB + Milvus + OM（幂等，三后端必达）
 uv run hmd foundation evolve-mine                    # 候选落库，不自动改本体
+uv run hmd foundation golden --candidate HMPL-504    # 强制读 GraphDB/Milvus/OM（禁止 YAML fallback）
 uv run hmd foundation serve --mcp                    # Semantic API + MCP :8100
-task ontology:validate                               # Ontology-as-Code + Golden Path
+task ontology:validate                               # Ontology-as-Code +（后端就绪时）Golden Path
 ```
 
-金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。
-Ontology 工程工具链（LinkML SSOT / Protégé 审阅 / rdflib+pyshacl / SHACL / GraphDB）：见 [`ontology/`](ontology/) 与 [toolchain](docs/ontology/toolchain.md)。**不引入 Jena**。
+金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。  
+**YAML 只是离线资源**（`data/foundation/*.yaml`），经 `ontology:validate` + `foundation sync` 入库后，查询只走 GraphDB / Milvus / OpenMetadata，**禁止 fallback 到 YAML**。  
+OM / GraphDB / Milvus 等联调参数统一走 `biomed_ontology.config.Settings`（pydantic-settings，`.env` 前缀 `HMD_`）。  
+Ontology 工程工具链：见 [`ontology/`](ontology/) 与 [toolchain](docs/ontology/toolchain.md)。**不引入 Jena**。
 
 ---
 

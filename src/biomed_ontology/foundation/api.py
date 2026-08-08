@@ -1,76 +1,93 @@
 """Foundation Semantic Access Layer。
 
-对 Agent 暴露语义操作，隐藏 GraphDB / Milvus / OpenMetadata / BERN2。
+查询路径强制 GraphDB（关系）+ Milvus（证据）+ OpenMetadata（资产）。
+YAML 仅作离线资源，经 `hmd foundation sync` 校验入库后供运行时读取；禁止 YAML fallback。
+Entity Resolution 词典仍可从本地 seed 加载（非查询回落）。
 """
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
-from biomed_ontology.foundation.models import AssetHit, EvidenceHit
+from biomed_ontology.config import settings
+from biomed_ontology.foundation.catalog import OpenMetadataClient
+from biomed_ontology.foundation.graphdb import GraphDbClient
+from biomed_ontology.foundation.graphs import (
+    GRAPH_KNOWLEDGE,
+    GRAPH_ONTOLOGY,
+    GRAPH_PROVENANCE,
+)
+from biomed_ontology.foundation.models import EvidenceHit
+from biomed_ontology.foundation.store import fetch_claims, fetch_entity, fetch_related_ids
 from biomed_ontology.foundation.world import WorldModel
 
 __all__ = ["SEMANTIC_OPS", "FoundationApi"]
+
+
+class BackendUnavailableError(RuntimeError):
+    """GraphDB / Milvus / OpenMetadata 不可用；禁止回落 YAML。"""
 
 
 def _search_evidence_milvus(
     *,
     query: str | None,
     entity_ids: list[str] | None,
-) -> list[EvidenceHit] | None:
-    """读 foundation_evidence；不可用时返回 None（回落 YAML seed）。"""
-    if os.environ.get("HMD_EVIDENCE_BACKEND", "auto") == "yaml":
-        return None
+) -> list[EvidenceHit]:
     try:
         from pymilvus import MilvusClient
-    except ImportError:
-        return None
+    except ImportError as exc:
+        raise BackendUnavailableError(
+            "Milvus 客户端不可用（缺少 pymilvus）。请 uv sync --extra vector"
+        ) from exc
 
-    uri = os.environ.get("HMD_MILVUS_URI", "http://localhost:19530")
+    uri = settings.milvus_uri
     try:
         client = MilvusClient(uri=uri)
         if not client.has_collection("foundation_evidence"):
-            return None
+            raise BackendUnavailableError(
+                "Milvus 集合 foundation_evidence 不存在；请先 hmd foundation sync"
+            )
         filt: str | None = None
         if entity_ids:
-            # ARRAY_CONTAINS_ANY 在部分版本可用；失败则全量后本地过滤
             quoted = ", ".join(f'"{e}"' for e in entity_ids)
             filt = f"ARRAY_CONTAINS_ANY(entity_ids, [{quoted}])"
-        rows: list[dict[str, Any]]
+        fields = ["evidence_id", "text", "quote", "entity_ids", "doc_id", "collection", "score"]
         try:
             rows = client.query(
                 collection_name="foundation_evidence",
                 filter=filt or 'evidence_id != ""',
-                output_fields=["evidence_id", "text", "entity_ids"],
+                output_fields=fields,
                 limit=64,
             )
         except Exception:
             rows = client.query(
                 collection_name="foundation_evidence",
                 filter='evidence_id != ""',
-                output_fields=["evidence_id", "text", "entity_ids"],
+                output_fields=["evidence_id", "text", "entity_ids", "quote", "doc_id", "collection", "score"],
                 limit=256,
             )
             if entity_ids:
                 wanted = set(entity_ids)
                 rows = [r for r in rows if wanted & set(r.get("entity_ids") or [])]
-    except Exception:
-        return None
+    except BackendUnavailableError:
+        raise
+    except Exception as exc:
+        raise BackendUnavailableError(f"Milvus Evidence Index 不可用：{exc}") from exc
 
     hits: list[EvidenceHit] = []
     for r in rows:
-        text = str(r.get("text") or "")
+        text = str(r.get("quote") or r.get("text") or "")
         if query and query.lower() not in text.lower():
             continue
         hits.append(
             EvidenceHit(
                 evidence_id=str(r["evidence_id"]),
-                text=text,
+                text=str(r.get("text") or text),
                 quote=text,
                 entity_ids=list(r.get("entity_ids") or []),
-                score=1.0,
-                collection="milvus",
+                doc_id=r.get("doc_id"),
+                collection=str(r.get("collection") or "milvus"),
+                score=float(r.get("score") or 1.0),
             )
         )
     return hits
@@ -79,48 +96,64 @@ def _search_evidence_milvus(
 SEMANTIC_OPS: list[dict[str, str]] = [
     {
         "name": "resolve_entity",
-        "summary": "文本/别名 → Enterprise Entity ID（经 BERN2 候选 + Entity Resolution）",
+        "summary": "文本/别名 → Enterprise Entity ID（词典 / BERN2 候选 + Resolver）",
     },
     {
         "name": "get_entity",
-        "summary": "按 Enterprise ID 取实体详情与外部映射",
+        "summary": "按 Enterprise ID 取实体（GraphDB）",
     },
     {
         "name": "get_relationships",
-        "summary": "实体相关 KnowledgeClaim（含 provenance 字段）",
+        "summary": "KnowledgeClaim（GraphDB provenance）",
     },
     {
         "name": "find_related_entities",
-        "summary": "一跳相关企业实体",
+        "summary": "一跳相关企业实体（GraphDB）",
     },
     {
         "name": "search_evidence",
-        "summary": "Evidence Index：可引用原文片段（证据优先）",
+        "summary": "Evidence Index（Milvus）",
     },
     {
         "name": "search_assets",
-        "summary": "OpenMetadata 企业数据资产上下文",
+        "summary": "企业资产（OpenMetadata Glossary）",
     },
     {
         "name": "get_entity_evidence",
-        "summary": "实体 → 证据（经 claim.evidence_ids 与 entity_ids）",
+        "summary": "实体 → 证据（Milvus）",
     },
     {
         "name": "get_entity_assets",
-        "summary": "实体 → 企业资产",
+        "summary": "实体 → 资产（OpenMetadata）",
     },
     {
         "name": "get_entity_context",
-        "summary": "聚合：entity + targets + diseases + evidence(claim/span) + internal_assets",
+        "summary": "聚合：GraphDB + Milvus + OpenMetadata（禁止 YAML fallback）",
     },
 ]
 
 
 class FoundationApi:
-    def __init__(self, world: WorldModel) -> None:
+    def __init__(
+        self,
+        world: WorldModel,
+        *,
+        graphdb: GraphDbClient | None = None,
+        openmetadata: OpenMetadataClient | None = None,
+    ) -> None:
         self.world = world
+        self.graphdb = graphdb or GraphDbClient.from_settings()
+        self.openmetadata = openmetadata or OpenMetadataClient.from_settings()
+
+    def _require_graphdb(self) -> GraphDbClient:
+        if not self.graphdb.health():
+            raise BackendUnavailableError(
+                "GraphDB 不可用。请 task foundation:up 后执行 hmd foundation sync"
+            )
+        return self.graphdb
 
     def resolve_entity(self, text: str, *, type_hint: str | None = None) -> dict[str, Any]:
+        """ER 使用本地词典/Resolver（seed）；不读 YAML 作为 World Model 查询回落。"""
         assert self.world.resolver is not None
         hits = self.world.resolver.resolve_text(text)
         if type_hint and len(hits) == 1 and hits[0].canonical_entity is None:
@@ -132,36 +165,61 @@ class FoundationApi:
         }
 
     def get_entity(self, enterprise_id: str) -> dict[str, Any]:
-        ent = self.world.entity(enterprise_id)
+        gdb = self._require_graphdb()
+        try:
+            ent = fetch_entity(gdb, enterprise_id)
+        except Exception as exc:
+            raise BackendUnavailableError(f"GraphDB 读实体失败：{exc}") from exc
         if ent is None:
             return {
                 "ontology_release_id": self.world.release_id,
                 "enterprise_id": enterprise_id,
                 "found": False,
+                "backend": "graphdb",
             }
         return {
             "ontology_release_id": self.world.release_id,
             "found": True,
             "entity": ent.to_dict(),
-            "named_graphs": self.world.named_graphs,
+            "named_graphs": {
+                "ontology": GRAPH_ONTOLOGY,
+                "knowledge": GRAPH_KNOWLEDGE,
+                "provenance": GRAPH_PROVENANCE,
+            },
+            "backend": "graphdb",
         }
 
     def get_relationships(
         self, enterprise_id: str, *, predicate: str | None = None
     ) -> dict[str, Any]:
-        claims = self.world.relationships(enterprise_id, predicate=predicate)
+        gdb = self._require_graphdb()
+        try:
+            claims = fetch_claims(gdb, enterprise_id, predicate=predicate)
+        except Exception as exc:
+            raise BackendUnavailableError(f"GraphDB 读关系失败：{exc}") from exc
         return {
             "ontology_release_id": self.world.release_id,
             "enterprise_id": enterprise_id,
             "claims": [c.to_dict() for c in claims],
+            "backend": "graphdb",
         }
 
     def find_related_entities(self, enterprise_id: str) -> dict[str, Any]:
-        related = self.world.related_entities(enterprise_id)
+        gdb = self._require_graphdb()
+        try:
+            ids = fetch_related_ids(gdb, enterprise_id)
+            related = []
+            for eid in ids:
+                ent = fetch_entity(gdb, eid)
+                if ent:
+                    related.append(ent.to_dict())
+        except Exception as exc:
+            raise BackendUnavailableError(f"GraphDB 读相关实体失败：{exc}") from exc
         return {
             "ontology_release_id": self.world.release_id,
             "enterprise_id": enterprise_id,
-            "related": [e.to_dict() for e in related],
+            "related": related,
+            "backend": "graphdb",
         }
 
     def search_evidence(
@@ -171,27 +229,9 @@ class FoundationApi:
         entity_ids: list[str] | None = None,
         require_quote: bool = True,
     ) -> dict[str, Any]:
-        milvus_hits = _search_evidence_milvus(query=query, entity_ids=entity_ids)
-        if milvus_hits is not None:
-            hits = milvus_hits
-            backend = "milvus"
-        else:
-            hits = list(self.world.evidence)
-            if entity_ids:
-                wanted = set(entity_ids)
-                hits = [e for e in hits if wanted & set(e.entity_ids)]
-            if query:
-                q = query.lower()
-                hits = [
-                    e for e in hits if q in e.text.lower() or (e.quote and q in e.quote.lower())
-                ]
-            backend = "yaml"
+        hits = _search_evidence_milvus(query=query, entity_ids=entity_ids)
         if require_quote:
-            # Milvus 行可能只存 quote/text 合一；YAML 路径要求独立 quote 字段
-            if backend == "yaml":
-                hits = [e for e in hits if e.quote]
-            else:
-                hits = [e for e in hits if (e.quote or e.text)]
+            hits = [e for e in hits if (e.quote or e.text)]
         hits.sort(key=lambda e: (0 if e.quote else 1, -e.score))
         return {
             "ontology_release_id": self.world.release_id,
@@ -199,82 +239,101 @@ class FoundationApi:
             "entity_ids": entity_ids or [],
             "evidence": [e.to_dict() for e in hits],
             "policy": "evidence_first",
-            "backend": backend,
+            "backend": "milvus",
         }
 
     def search_assets(
         self, *, query: str | None = None, entity_ids: list[str] | None = None
     ) -> dict[str, Any]:
-        hits = list(self.world.assets)
-        if entity_ids:
-            wanted = set(entity_ids)
-            hits = [a for a in hits if wanted & set(a.entity_ids)]
-        if query:
-            q = query.lower()
-
-            def _match(a: AssetHit) -> bool:
-                desc = (a.description or "").lower()
-                return q in a.name.lower() or q in a.asset_fqn.lower() or q in desc
-
-            hits = [a for a in hits if _match(a)]
+        try:
+            self.openmetadata.ping()
+            hits = self.openmetadata.search_assets(query=query, entity_ids=entity_ids)
+        except Exception as exc:
+            raise BackendUnavailableError(f"OpenMetadata 不可用：{exc}") from exc
         return {
             "ontology_release_id": self.world.release_id,
             "query": query,
             "entity_ids": entity_ids or [],
             "assets": [a.to_dict() for a in hits],
+            "backend": "openmetadata",
         }
 
     def get_entity_evidence(self, enterprise_id: str) -> dict[str, Any]:
-        hits = self.world.evidence_for(enterprise_id)
+        out = self.search_evidence(entity_ids=[enterprise_id], require_quote=True)
         return {
             "ontology_release_id": self.world.release_id,
             "enterprise_id": enterprise_id,
-            "evidence": [e.to_dict() for e in hits],
+            "evidence": out["evidence"],
+            "backend": out["backend"],
         }
 
     def get_entity_assets(self, enterprise_id: str) -> dict[str, Any]:
-        hits = self.world.assets_for(enterprise_id)
+        out = self.search_assets(entity_ids=[enterprise_id])
         return {
             "ontology_release_id": self.world.release_id,
             "enterprise_id": enterprise_id,
-            "assets": [a.to_dict() for a in hits],
+            "assets": out["assets"],
+            "backend": out["backend"],
         }
 
     def get_entity_context(self, enterprise_id: str) -> dict[str, Any]:
-        """World Model 聚合上下文（Citationware）：entity + 关系 + 证据 claim/span + 资产。"""
+        """强制三后端聚合；无 YAML fallback。"""
         ent = self.get_entity(enterprise_id)
         if not ent.get("found"):
             return ent
 
-        relationships = self.get_relationships(enterprise_id)["claims"]
-        related = self.find_related_entities(enterprise_id)["related"]
+        rel = self.get_relationships(enterprise_id)
+        relationships = rel["claims"]
+        related_resp = self.find_related_entities(enterprise_id)
+        related = related_resp["related"]
         related_by_id = {e["enterprise_id"]: e for e in related}
         entity = ent["entity"]
 
         target_ids = list(entity.get("targets") or [])
         for c in relationships:
             oid = c.get("object_id")
-            if c.get("predicate") == "targets" and oid and oid not in target_ids:
+            if (
+                c.get("predicate") == "targets"
+                and oid
+                and oid not in target_ids
+                and c.get("subject_id") == enterprise_id
+            ):
                 target_ids.append(oid)
 
         disease_ids = list(entity.get("indications") or [])
         for c in relationships:
             oid = c.get("object_id")
-            if c.get("predicate") == "investigates" and oid and oid not in disease_ids:
+            if (
+                c.get("predicate") == "investigates"
+                and oid
+                and oid not in disease_ids
+                and c.get("subject_id") == enterprise_id
+            ):
                 disease_ids.append(oid)
 
-        targets = [_entity_ref(related_by_id, tid, self.world) for tid in target_ids]
-        diseases = [_entity_ref(related_by_id, did, self.world) for did in disease_ids]
+        targets = [_entity_ref(related_by_id, tid, self) for tid in target_ids]
+        diseases = [_entity_ref(related_by_id, did, self) for did in disease_ids]
 
-        evidence_by_id = {e.evidence_id: e for e in self.world.evidence_for(enterprise_id)}
+        ev_out = self.get_entity_evidence(enterprise_id)
+        evidence_hits = {
+            e["evidence_id"]: EvidenceHit(
+                evidence_id=e["evidence_id"],
+                text=e.get("text") or "",
+                quote=e.get("quote"),
+                entity_ids=list(e.get("entity_ids") or []),
+                doc_id=e.get("doc_id"),
+                collection=e.get("collection") or "",
+                score=float(e.get("score") or 0),
+            )
+            for e in ev_out["evidence"]
+        }
         citation_evidence = _build_citation_evidence(
             relationships,
-            evidence_by_id,
+            evidence_hits,
             enterprise_id=enterprise_id,
         )
-        # 补充仅挂在 entity_ids 上、尚未被 claim 引用的证据
         claimed_eids = {row["id"] for row in citation_evidence if row.get("id")}
-        for hit in evidence_by_id.values():
+        for hit in evidence_hits.values():
             if hit.evidence_id in claimed_eids:
                 continue
             citation_evidence.append(
@@ -289,7 +348,8 @@ class FoundationApi:
                 }
             )
 
-        assets = self.get_entity_assets(enterprise_id)["assets"]
+        assets_out = self.get_entity_assets(enterprise_id)
+        assets = assets_out["assets"]
         internal_assets = [
             {
                 "id": a.get("asset_fqn"),
@@ -310,10 +370,16 @@ class FoundationApi:
             "diseases": diseases,
             "evidence": citation_evidence,
             "internal_assets": internal_assets,
-            # 向后兼容字段
             "relationships": relationships,
             "related_entities": related,
             "assets": assets,
+            "backends": {
+                "entity": "graphdb",
+                "relationships": "graphdb",
+                "related": "graphdb",
+                "evidence": "milvus",
+                "assets": "openmetadata",
+            },
         }
 
     def dispatch(self, op: str, **kwargs: Any) -> dict[str, Any]:
@@ -323,7 +389,6 @@ class FoundationApi:
         return fn(**kwargs)
 
     def golden_path(self, candidate_key: str = "savolitinib") -> dict[str, Any]:
-        """金路径：DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset。"""
         resolve = self.resolve_entity(candidate_key)
         canonical = next(
             (r["canonical_entity"] for r in resolve["resolved"] if r.get("canonical_entity")),
@@ -339,18 +404,20 @@ class FoundationApi:
             "query": candidate_key,
             "resolve": resolve,
             "context": ctx,
+            "backends": ctx.get("backends"),
         }
 
 
 def _entity_ref(
     related_by_id: dict[str, dict[str, Any]],
     enterprise_id: str,
-    world: WorldModel,
+    api: FoundationApi,
 ) -> dict[str, Any]:
     row = related_by_id.get(enterprise_id)
     if row is None:
-        ent = world.entity(enterprise_id)
-        row = ent.to_dict() if ent is not None else {"enterprise_id": enterprise_id}
+        got = api.get_entity(enterprise_id)
+        row = got.get("entity") if got.get("found") else {"enterprise_id": enterprise_id}
+    assert row is not None
     return {
         "id": row.get("enterprise_id", enterprise_id),
         "type": row.get("entity_kind"),
@@ -365,7 +432,6 @@ def _build_citation_evidence(
     *,
     enterprise_id: str,
 ) -> list[dict[str, Any]]:
-    """Claim + Evidence span → Citationware 条目。"""
     out: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
     for claim in relationships:
@@ -424,8 +490,10 @@ def _evidence_type(hit: Any) -> str:
         return "Patent"
     if collection == "lims" or doc_id.startswith("lims:"):
         return "LIMS"
-    if collection == "internal_docs" or doc_id.startswith("eln:"):
+    if collection in {"internal_docs", "eln"} or doc_id.startswith("eln:"):
         return "ELN"
-    if getattr(hit, "pmid", None) or doc_id.startswith("pubmed:"):
+    if getattr(hit, "pmid", None) or doc_id.startswith("pubmed:") or collection == "literature":
         return "PubMed"
+    if collection == "milvus":
+        return "Evidence"
     return collection or "Evidence"

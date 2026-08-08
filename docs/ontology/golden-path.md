@@ -41,7 +41,11 @@ Claim
 
 ## Agent 入口
 
+运行时强制读 **GraphDB + Milvus + OpenMetadata**（禁止 YAML fallback）。  
+`data/foundation/*.yaml` 仅离线种子 → `ontology:validate` → `hmd foundation sync`（幂等）入库。
+
 ```bash
+uv run hmd foundation sync
 uv run hmd foundation golden --candidate HMPL-504
 uv run hmd foundation serve --mcp   # :8100
 ```

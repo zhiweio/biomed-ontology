@@ -559,48 +559,80 @@ def foundation_resolve(
 @foundation_app.command("bios-load")
 def foundation_bios_load(
     full: bool = typer.Option(True, "--full/--subset", help="默认全量下载初始化"),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="忽略 .initialized，强制重新灌库（默认已初始化则跳过）",
+    ),
 ) -> None:
-    """BIOS_v3 默认全量下载并灌 GraphDB（需 HMD_BIOS_LICENSE_ACK）。"""
+    """BIOS_v3 默认全量下载并灌 GraphDB（需 Settings.bios_license_ack）。
+
+    已有 ``data/cache/bios_v3/.initialized`` 且 GraphDB 仍有 Concept 时跳过；
+    ``--force`` 或 ``HMD_BIOS_FORCE=1`` 强制重灌。
+    """
     import os
 
-    from biomed_ontology.foundation.bios import BiosLicenseGate, initialize_bios
+    from biomed_ontology.config import settings
+    from biomed_ontology.foundation.bios import (
+        BiosLicenseGate,
+        initialize_bios,
+        read_bios_init_marker,
+    )
     from biomed_ontology.foundation.graphdb import GraphDbClient
 
-    # 与 initialize_bios 一致：HMD_BIOS_INIT=subset 可跳过全量闸门（CI / 无 ACK）
-    init_mode = os.environ.get("HMD_BIOS_INIT", "full" if full else "subset").lower()
-    want_full = full and init_mode != "subset"
-    if want_full and not os.environ.get("HMD_BIOS_LICENSE_ACK"):
+    want_full = full and settings.bios_init != "subset"
+    force = force or os.environ.get("HMD_BIOS_FORCE", "").strip() in {
+        "1",
+        "true",
+        "yes",
+    }
+    # 已初始化且非 force：可跳过 ACK；真正重灌时仍要求
+    if want_full and not settings.bios_license_ack and (
+        force or read_bios_init_marker() is None
+    ):
         console.print(
             "[red]需要 HMD_BIOS_LICENSE_ACK=poc|evaluation|licensed[/red]\n"
             "见 data/foundation/NOTICE_BIOS.md\n"
-            "仅子集：export HMD_BIOS_INIT=subset"
+            "仅子集：HMD_BIOS_INIT=subset"
         )
         raise typer.Exit(2)
     result = initialize_bios(
         full=want_full,
-        graphdb=GraphDbClient(),
-        gate=BiosLicenseGate.from_env() if want_full else BiosLicenseGate(True, "poc"),
+        cfg=settings,
+        graphdb=GraphDbClient.from_settings(settings),
+        gate=BiosLicenseGate.from_settings(settings)
+        if want_full
+        else BiosLicenseGate(True, "poc"),
+        force=force,
     )
+    if result.get("skipped"):
+        console.print("[yellow]BIOS already initialized — skipped[/yellow]")
     console.print(result)
 
 
 @foundation_app.command("sync")
 def foundation_sync() -> None:
-    """YAML seed → GraphDB Named Graphs + Milvus Evidence（必选）+ OM 探活。"""
-    import os
-
-    from biomed_ontology.foundation.graphdb import GraphDbClient
+    """YAML seed → GraphDB + Milvus + OpenMetadata（三后端必达入库）。"""
+    from biomed_ontology.config import settings
     from biomed_ontology.foundation.sync import sync_world_model
 
-    os.environ.setdefault("HMD_ALLOW_FAKE_EVIDENCE", "1")
     result = sync_world_model(
-        graphdb=GraphDbClient(),
-        openmetadata_url=os.environ.get("HMD_OPENMETADATA_URL", "http://localhost:8585"),
+        cfg=settings,
+        require_graphdb=True,
         require_milvus=True,
+        require_om=True,
     )
     for line in result.details:
         console.print(line)
-    if not result.milvus_ok:
+    table = Table(title="Foundation Sync")
+    table.add_column("backend")
+    table.add_column("ok")
+    table.add_column("count", justify="right")
+    table.add_row("GraphDB", "✓" if result.graphdb_ok else "✗", str(result.entities))
+    table.add_row("Milvus", "✓" if result.milvus_ok else "✗", str(result.evidence_upserted))
+    table.add_row("OpenMetadata", "✓" if result.om_ok else "✗", str(result.assets))
+    console.print(table)
+    if not (result.graphdb_ok and result.milvus_ok and result.om_ok):
         raise typer.Exit(1)
 
 

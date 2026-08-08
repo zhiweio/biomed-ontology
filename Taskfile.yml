@@ -148,7 +148,7 @@ tasks:
         fi
 
   foundation:up:
-    desc: 启动 Foundation 全栈（含 Milvus）并 BIOS init（需 HMD_BIOS_LICENSE_ACK）
+    desc: 启动 Foundation 全栈（含 Milvus）；BIOS 仅首次 init（已有 .initialized 则跳过）
     cmds:
       - task: foundation:preflight
       - docker compose -f {{.FOUNDATION_COMPOSE}} up -d
@@ -199,7 +199,26 @@ tasks:
           if [ -f "$ROOT/resources/GNormPlusJava/CRF++-0.58.tar.gz" ] && [ ! -d "$ROOT/resources/GNormPlusJava/CRF" ]; then
             (cd "$ROOT/resources/GNormPlusJava" && tar -zxvf CRF++-0.58.tar.gz && mv CRF++-0.58 CRF)
           fi
+          # GNormPlus / gene normalizer 调用 ./CRF/crf_test；资源包通常只有源码
+          if [ -d "$ROOT/resources/GNormPlusJava/CRF" ] && [ ! -x "$ROOT/resources/GNormPlusJava/CRF/.libs/crf_test" ]; then
+            echo "Building CRF++ for GNormPlus…"
+            (cd "$ROOT/resources/GNormPlusJava/CRF" && ./configure --prefix="$HOME" && make -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 2)" && make install)
+          fi
+          GENE_CRF="$ROOT/resources/normalization/normalizers/gene/CRF"
+          if [ -x "$ROOT/resources/GNormPlusJava/CRF/.libs/crf_test" ] && [ -d "$GENE_CRF" ]; then
+            if ! file "$GENE_CRF/.libs/crf_test" 2>/dev/null | grep -q 'Mach-O\|ELF.*aarch64\|ELF.*x86-64'; then
+              :
+            fi
+            # Linux 预编译二进制在 macOS 不可用：复用本机编好的 GNorm CRF
+            if file "$GENE_CRF/.libs/crf_test" 2>/dev/null | grep -q 'ELF.*x86-64' || [ ! -x "$GENE_CRF/.libs/crf_test" ]; then
+              echo "Installing macOS CRF++ into gene normalizer…"
+              mkdir -p "$GENE_CRF/.libs"
+              cp -f "$ROOT/resources/GNormPlusJava/CRF/.libs/"* "$GENE_CRF/.libs/"
+              cp -f "$ROOT/resources/GNormPlusJava/CRF/crf_test" "$ROOT/resources/GNormPlusJava/CRF/crf_learn" "$GENE_CRF/" 2>/dev/null || true
+            fi
+          fi
           touch "$ROOT/resources/.fetched"
+          touch "$ROOT/resources/.crf_built"
           echo "BERN2 resources ready"
         else
           echo "BERN2 resources already fetched"
@@ -269,12 +288,11 @@ tasks:
         # shellcheck disable=SC1091
         set -a; . docker/bern2/.bern2.env; set +a
         if [ "${BERN2_RUNTIME}" = "native" ]; then
-          chmod +x docker/bern2/run_native.sh
+          chmod +x docker/bern2/run_native.sh docker/bern2/start_native_bg.sh
           mkdir -p docker/bern2/upstream/logs
           echo "Starting BERN2 native (device auto → MPS on Apple Silicon)…"
           echo "日志：docker/bern2/upstream/logs/  端口：http://127.0.0.1:8888"
-          nohup docker/bern2/run_native.sh > docker/bern2/upstream/logs/native_stdout.log 2>&1 &
-          echo $! > docker/bern2/.bern2.pid
+          BERN2_PYTHON="${BERN2_PYTHON:-python3.11}" docker/bern2/start_native_bg.sh
           echo "BERN2 native pid=$(cat docker/bern2/.bern2.pid)"
         else
           COMPOSE=(-f {{.FOUNDATION_COMPOSE}})
@@ -323,17 +341,26 @@ tasks:
       - uv run python scripts/foundation_smoke.py
 
   foundation:init:
-    desc: BIOS init + sync（全量默认；HMD_BIOS_MAX_CONCEPTS=0 不截断）
+    desc: BIOS init（幂等跳过）+ sync；强制重灌 HMD_BIOS_FORCE=1
     cmds:
       - |
+        set -euo pipefail
+        MARKER=data/cache/bios_v3/.initialized
+        if [ "${HMD_BIOS_FORCE:-}" != "1" ] && [ -f "$MARKER" ]; then
+          echo "BIOS marker 已存在 → $MARKER（跳过重灌；强制：HMD_BIOS_FORCE=1）"
+          # 仍走 bios-load：内部会再确认 GraphDB 是否还有 Concept；库被清空时自动重灌
+        fi
         if [ "${HMD_BIOS_INIT:-full}" = "subset" ]; then
           uv run hmd foundation bios-load --subset
         else
           if [ -z "${HMD_BIOS_LICENSE_ACK:-}" ]; then
-            echo "需要 HMD_BIOS_LICENSE_ACK=poc|evaluation|licensed"
-            echo "见 data/foundation/NOTICE_BIOS.md"
-            echo "仅子集联调：HMD_BIOS_INIT=subset task foundation:init"
-            exit 2
+            # 已初始化过则无需 ACK 也能跳过；仅首次/强制重灌才要求
+            if [ ! -f "$MARKER" ] || [ "${HMD_BIOS_FORCE:-}" = "1" ]; then
+              echo "需要 HMD_BIOS_LICENSE_ACK=poc|evaluation|licensed"
+              echo "见 data/foundation/NOTICE_BIOS.md"
+              echo "仅子集联调：HMD_BIOS_INIT=subset task foundation:init"
+              exit 2
+            fi
           fi
           export HMD_BIOS_MAX_CONCEPTS="${HMD_BIOS_MAX_CONCEPTS:-0}"
           echo "BIOS load max_concepts=${HMD_BIOS_MAX_CONCEPTS} (0=full)"

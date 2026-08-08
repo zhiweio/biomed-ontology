@@ -114,3 +114,17 @@ def test_unknown_hmd_variables_are_ignored_not_fatal():
     """拼错的变量名不该拖垮进程；但它也不会生效 —— 这正是 warnings() 存在的理由。"""
     s = load_settings({"HMD_NO_SUCH_KNOB": "x"})
     assert s.layout_backend == "pymupdf"
+
+
+def test_foundation_openmetadata_settings():
+    s = load_settings(
+        {
+            "HMD_OPENMETADATA_URL": "http://om:8585",
+            "HMD_OPENMETADATA_EMAIL": "a@b.com",
+            "HMD_OPENMETADATA_PASSWORD": "secret,",
+        }
+    )
+    assert s.openmetadata_url == "http://om:8585"
+    assert s.openmetadata_email == "a@b.com"
+    assert s.openmetadata_password.get_secret_value() == "secret,"
+    assert "secret," not in repr(s)

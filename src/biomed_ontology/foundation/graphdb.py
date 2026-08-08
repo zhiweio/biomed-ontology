@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import httpx
 
+from biomed_ontology.config import Settings, settings
 from biomed_ontology.foundation.graphs import GRAPH_BIOMEDICAL, NAMED_GRAPHS
 
 __all__ = ["GraphDbClient", "ensure_repository"]
@@ -16,6 +17,11 @@ class GraphDbClient:
     base_url: str = "http://localhost:7200"
     repository: str = "hmd"
     timeout: float = 120.0
+
+    @classmethod
+    def from_settings(cls, cfg: Settings | None = None) -> GraphDbClient:
+        cfg = cfg or settings
+        return cls(base_url=cfg.graphdb_url, repository=cfg.graphdb_repository)
 
     @property
     def sparql_url(self) -> str:

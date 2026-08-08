@@ -3,16 +3,17 @@
 
 from __future__ import annotations
 
-import os
 import sys
 
 import httpx
 
+from biomed_ontology.config import settings
+
 
 def main() -> int:
-    milvus = os.environ.get("HMD_MILVUS_URI", "http://localhost:19530")
-    graphdb = os.environ.get("HMD_GRAPHDB_URL", "http://localhost:7200")
-    om = os.environ.get("HMD_OPENMETADATA_URL", "http://localhost:8585")
+    milvus = settings.milvus_uri
+    graphdb = settings.graphdb_url
+    om = settings.openmetadata_url
     errors: list[str] = []
 
     # Milvus 必选

@@ -63,10 +63,34 @@ if [ -f resources/tmVarJava/tmVar2Server.main.jar ]; then
     >> ../../logs/nohup_tmvar.out 2>&1 &)
 fi
 
+mkdir -p resources/normalization/inputs/disease resources/normalization/outputs/disease
+if [ -f resources/normalization/normalizers/disease/disease_normalizer_21.jar ]; then
+  (cd resources/normalization && java \
+    "-Xmx${BERN2_JAVA_XMX_DISEASE:-6G}" \
+    -jar normalizers/disease/disease_normalizer_21.jar \
+    "inputs/disease" \
+    "outputs/disease" \
+    "dictionary/dict_Disease_20210630.txt" \
+    "normalizers/disease/resources" \
+    9 \
+    18892 \
+    >> ../../logs/nohup_disease_normalize.out 2>&1 &)
+fi
+if [ -f resources/normalization/normalizers/gene/gnormplus-normalization_21.jar ]; then
+  (cd resources/normalization/normalizers/gene && java \
+    "-Xmx${BERN2_JAVA_XMX_GENE:-8G}" \
+    -jar gnormplus-normalization_21.jar \
+    18888 \
+    >> ../../../../logs/nohup_gene_normalize.out 2>&1 &)
+fi
+
 # 等 NER 端口（模型加载可能很久）
+# 切勿空 TCP connect：NER/GNorm 一连上就按协议读数据，会崩服
 i=0
 while [ "$i" -lt 90 ]; do
-  if python -c "import socket; s=socket.socket(); s.settimeout(1); s.connect(('127.0.0.1',18894)); s.close()" 2>/dev/null; then
+  if (command -v ss >/dev/null 2>&1 && ss -ltn "( sport = :18894 )" | grep -q 18894) \
+    || (command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:18894 -sTCP:LISTEN >/dev/null 2>&1) \
+    || (command -v netstat >/dev/null 2>&1 && netstat -lnt 2>/dev/null | grep -q ':18894'); then
     echo "multi_ner listening on 18894"
     break
   fi

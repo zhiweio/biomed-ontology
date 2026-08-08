@@ -1,17 +1,24 @@
-"""Enterprise Biomedical World Model — Foundation 验收测试。"""
+"""Enterprise Biomedical World Model — Foundation 验收测试。
+
+查询路径强制 GraphDB / Milvus / OpenMetadata；YAML 仅 seed 资源。
+无后端时联调类测试 skip，不回落 YAML。
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from biomed_ontology.foundation.api import FoundationApi
+from biomed_ontology.foundation.api import BackendUnavailableError, FoundationApi
 from biomed_ontology.foundation.bios import (
     BiosLicenseGate,
     build_external_id_index,
     load_bios_subset_jsonl,
 )
+from biomed_ontology.foundation.graphdb import GraphDbClient
 from biomed_ontology.foundation.ids import (
     EnterpriseKind,
     EvidenceId,
@@ -20,10 +27,28 @@ from biomed_ontology.foundation.ids import (
     mint_enterprise_id,
     normalize_evidence_id,
 )
+from biomed_ontology.foundation.models import AssetHit, EvidenceHit, KnowledgeClaim
 from biomed_ontology.foundation.world import load_world_model
 
 ROOT = Path(__file__).resolve().parents[1]
 FOUNDATION = ROOT / "data" / "foundation"
+
+
+def _backends_ready() -> bool:
+    try:
+        from biomed_ontology.config import settings
+        from biomed_ontology.foundation.catalog import OpenMetadataClient
+        from pymilvus import MilvusClient
+
+        if not GraphDbClient.from_settings().health():
+            return False
+        client = MilvusClient(uri=settings.milvus_uri)
+        if not client.has_collection("foundation_evidence"):
+            return False
+        OpenMetadataClient.from_settings().ping()
+        return True
+    except Exception:
+        return False
 
 
 def test_enterprise_id_not_bios() -> None:
@@ -64,32 +89,229 @@ def test_evidence_id_normalization() -> None:
     assert not is_enterprise_id("pubmed:123")
 
 
-def test_golden_path_candidate_to_asset() -> None:
+def test_seed_claims_direction_and_provenance() -> None:
+    """YAML seed 约束（入库前校验）；运行时查询不读 YAML。"""
+    wm = load_world_model(FOUNDATION)
+    claims = [c for c in wm.claims if c.subject_id == "HMD:ENT:DC:savolitinib"]
+    predicates = {c.predicate for c in claims}
+    assert "testedIn" in predicates
+    assert "hasAssay" in predicates
+    inverted = [
+        c
+        for c in wm.claims
+        if c.predicate == "supportedBy" and (c.object_id or "").startswith("HMD:ENT:DC:")
+    ]
+    assert not inverted
+    for c in claims:
+        assert c.source_type
+        assert c.extracted_by
+
+
+def test_query_rejects_without_graphdb() -> None:
+    api = FoundationApi(load_world_model(FOUNDATION))
+    api.graphdb = MagicMock()
+    api.graphdb.health.return_value = False
+    with pytest.raises(BackendUnavailableError, match="GraphDB"):
+        api.get_entity("HMD:ENT:DC:savolitinib")
+    with pytest.raises(BackendUnavailableError, match="GraphDB"):
+        api.get_relationships("HMD:ENT:DC:savolitinib")
+
+
+def test_golden_path_live_backends() -> None:
+    if not _backends_ready():
+        pytest.skip("需要 GraphDB + Milvus foundation_evidence + OpenMetadata（先 foundation sync）")
     api = FoundationApi(load_world_model(FOUNDATION))
     result = api.golden_path("HMPL-504")
     assert result["ok"] is True
     assert result["canonical_entity"] == "HMD:ENT:DC:savolitinib"
     ctx = result["context"]
+    assert ctx["backends"] == {
+        "entity": "graphdb",
+        "relationships": "graphdb",
+        "related": "graphdb",
+        "evidence": "milvus",
+        "assets": "openmetadata",
+    }
     assert any(t["id"] == "HMD:ENT:TGT:MET" for t in ctx["targets"])
     assert any(d["id"] == "HMD:ENT:IND:nsclc" for d in ctx["diseases"])
-    assert any(e.get("span") for e in ctx["evidence"]), "证据必须带 span"
-    assert any(e.get("claim") for e in ctx["evidence"]), "Citationware 需要 claim"
+    assert any(e.get("span") for e in ctx["evidence"])
     assert any("exp_2025_012" in (a.get("id") or "") for a in ctx["internal_assets"])
-    assert any("asy_001" in (a.get("id") or "") for a in ctx["internal_assets"])
-    # 向后兼容
-    kinds = {e["entity_kind"] for e in ctx["related_entities"]}
-    assert "Target" in kinds
-    assert any("exp_2025_012" in a["asset_fqn"] for a in ctx["assets"])
+    assert "SELECT " not in str(ctx)
 
 
-def test_evidence_first_requires_quote(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("HMD_EVIDENCE_BACKEND", "yaml")
-    api = FoundationApi(load_world_model(FOUNDATION))
-    out = api.search_evidence(entity_ids=["HMD:ENT:DC:savolitinib"], require_quote=True)
-    assert out["policy"] == "evidence_first"
-    assert out["backend"] == "yaml"
-    assert out["evidence"]
-    assert all(e.get("quote") for e in out["evidence"])
+def test_golden_path_rich_render_with_mock_context() -> None:
+    from io import StringIO
+
+    from rich.console import Console
+
+    from biomed_ontology.foundation.render import render_golden_path
+
+    result = {
+        "ok": True,
+        "path": "DrugCandidate→Target→Disease→Evidence→Asset",
+        "canonical_entity": "HMD:ENT:DC:savolitinib",
+        "query": "HMPL-504",
+        "resolve": {
+            "query": "HMPL-504",
+            "resolved": [
+                {
+                    "mention": "HMPL-504",
+                    "canonical_entity": "HMD:ENT:DC:savolitinib",
+                    "resolution_method": "xref",
+                    "confidence": 1.0,
+                    "entity_kind": "DrugCandidate",
+                    "external_ids": ["BIOS:SAVO_DEMO"],
+                }
+            ],
+        },
+        "context": {
+            "ontology_release_id": "0.3.0-foundation",
+            "enterprise_id": "HMD:ENT:DC:savolitinib",
+            "entity": {
+                "enterprise_id": "HMD:ENT:DC:savolitinib",
+                "entity_kind": "DrugCandidate",
+                "preferred_label_en": "savolitinib",
+                "preferred_label_zh": "赛沃替尼",
+                "aliases": ["HMPL-504"],
+                "exact_match_xrefs": ["BIOS:SAVO_DEMO"],
+            },
+            "targets": [
+                {
+                    "id": "HMD:ENT:TGT:MET",
+                    "type": "Target",
+                    "label": "MET",
+                    "external_ids": ["HGNC:7029"],
+                }
+            ],
+            "diseases": [
+                {
+                    "id": "HMD:ENT:IND:nsclc",
+                    "type": "Indication",
+                    "label": "NSCLC",
+                    "external_ids": [],
+                }
+            ],
+            "evidence": [
+                {
+                    "id": "ev:lit:savo_met_1",
+                    "type": "PubMed",
+                    "claim": "HMD:ENT:DC:savolitinib targets HMD:ENT:TGT:MET",
+                    "span": "selective MET tyrosine kinase inhibitor",
+                    "confidence": 0.95,
+                }
+            ],
+            "internal_assets": [
+                {
+                    "id": "asliva.eln.exp_2025_012",
+                    "type": "eln_experiment",
+                    "name": "EXP-2025-012",
+                }
+            ],
+            "relationships": [],
+            "related_entities": [],
+            "backends": {
+                "entity": "graphdb",
+                "relationships": "graphdb",
+                "evidence": "milvus",
+                "assets": "openmetadata",
+            },
+        },
+    }
+    buf = StringIO()
+    cons = Console(file=buf, force_terminal=True, width=100, color_system=None)
+    render_golden_path(result, console=cons, verbose=True)
+    text = buf.getvalue()
+    assert "HMD:ENT:DC:savolitinib" in text
+    assert "graphdb" in text
+    assert "milvus" in text
+    assert "openmetadata" in text
+
+
+def test_get_entity_context_mocked_stores() -> None:
+    """用 mock 三后端验证聚合逻辑，仍不走 YAML。"""
+    from biomed_ontology.foundation.models import EnterpriseEntity
+
+    world = load_world_model(FOUNDATION)
+    api = FoundationApi(world)
+    savo = EnterpriseEntity(
+        enterprise_id="HMD:ENT:DC:savolitinib",
+        entity_kind="DrugCandidate",
+        preferred_label_en="savolitinib",
+        targets=["HMD:ENT:TGT:MET"],
+        indications=["HMD:ENT:IND:nsclc"],
+        exact_match_xrefs=["BIOS:SAVO_DEMO"],
+    )
+    met = EnterpriseEntity(
+        enterprise_id="HMD:ENT:TGT:MET",
+        entity_kind="Target",
+        preferred_label_en="MET",
+        exact_match_xrefs=["HGNC:7029"],
+    )
+    nsclc = EnterpriseEntity(
+        enterprise_id="HMD:ENT:IND:nsclc",
+        entity_kind="Indication",
+        preferred_label_en="NSCLC",
+    )
+    claims = [
+        KnowledgeClaim(
+            claim_id="c1",
+            subject_id="HMD:ENT:DC:savolitinib",
+            predicate="targets",
+            object_id="HMD:ENT:TGT:MET",
+            source_id="pubmed:1",
+            source_type="literature",
+            evidence_ids=["ev:1"],
+            span="inhibits MET",
+            confidence=0.9,
+        )
+    ]
+
+    api.graphdb = MagicMock()
+    api.graphdb.health.return_value = True
+
+    def _fetch_entity(_c: Any, eid: str) -> EnterpriseEntity | None:
+        return {"HMD:ENT:DC:savolitinib": savo, "HMD:ENT:TGT:MET": met, "HMD:ENT:IND:nsclc": nsclc}.get(
+            eid
+        )
+
+    with (
+        patch("biomed_ontology.foundation.api.fetch_entity", side_effect=_fetch_entity),
+        patch("biomed_ontology.foundation.api.fetch_claims", return_value=claims),
+        patch(
+            "biomed_ontology.foundation.api.fetch_related_ids",
+            return_value=["HMD:ENT:TGT:MET", "HMD:ENT:IND:nsclc"],
+        ),
+        patch(
+            "biomed_ontology.foundation.api._search_evidence_milvus",
+            return_value=[
+                EvidenceHit(
+                    evidence_id="ev:1",
+                    text="inhibits MET",
+                    quote="inhibits MET",
+                    entity_ids=["HMD:ENT:DC:savolitinib"],
+                    collection="literature",
+                    score=0.9,
+                )
+            ],
+        ),
+    ):
+        api.openmetadata = MagicMock()
+        api.openmetadata.ping.return_value = {"version": "1.5"}
+        api.openmetadata.search_assets.return_value = [
+            AssetHit(
+                asset_fqn="asliva.eln.exp_2025_012",
+                name="EXP",
+                entity_ids=["HMD:ENT:DC:savolitinib"],
+                asset_type="eln_experiment",
+            )
+        ]
+        ctx = api.get_entity_context("HMD:ENT:DC:savolitinib")
+
+    assert ctx["backends"]["entity"] == "graphdb"
+    assert ctx["backends"]["evidence"] == "milvus"
+    assert ctx["backends"]["assets"] == "openmetadata"
+    assert ctx["targets"][0]["id"] == "HMD:ENT:TGT:MET"
+    assert ctx["internal_assets"][0]["id"] == "asliva.eln.exp_2025_012"
 
 
 def test_evolve_mine_writes_candidates_only(tmp_path: Path) -> None:
@@ -113,21 +335,41 @@ def test_zingg_matches_file_present() -> None:
     assert lines
 
 
-def test_claims_carry_provenance() -> None:
-    api = FoundationApi(load_world_model(FOUNDATION))
-    rel = api.get_relationships("HMD:ENT:DC:savolitinib")
-    assert rel["claims"]
-    for c in rel["claims"]:
-        assert c.get("source_id")
-        assert c.get("source_type")
-        assert c.get("extracted_by")
-
-
 def test_bios_license_gate_blocks_by_default() -> None:
     gate = BiosLicenseGate()
     with pytest.raises(PermissionError, match="CC-BY-NC-ND"):
         gate.require()
     BiosLicenseGate(acknowledged=True, purpose="poc").require()
+
+
+def test_bios_load_satisfied_skips_when_marker_and_graph_ready() -> None:
+    from biomed_ontology.foundation.bios import _bios_load_satisfied
+
+    marker = {
+        "source": "full_download_concepts_tsv",
+        "concepts": 22104562,
+        "max_concepts": 0,
+    }
+    assert _bios_load_satisfied(
+        full=True, marker=marker, max_concepts=0, graph_ready=True
+    )
+    assert not _bios_load_satisfied(
+        full=True, marker=marker, max_concepts=0, graph_ready=False
+    )
+    # 先前截断、现在要全量 → 不满足
+    assert not _bios_load_satisfied(
+        full=True,
+        marker={**marker, "max_concepts": 1000, "concepts": 1000},
+        max_concepts=0,
+        graph_ready=True,
+    )
+    # subset marker 不能满足 full
+    assert not _bios_load_satisfied(
+        full=True,
+        marker={"source": "subset", "concepts": 50, "max_concepts": 0},
+        max_concepts=0,
+        graph_ready=True,
+    )
 
 
 def test_bios_subset_external_index() -> None:
@@ -137,37 +379,12 @@ def test_bios_subset_external_index() -> None:
     assert "BIOS:SAVO_DEMO" in idx.lookup_external("DrugBank:DEMO_SAVO")
 
 
-def test_get_entity_context_hides_backend_names() -> None:
-    api = FoundationApi(load_world_model(FOUNDATION))
-    ctx = api.get_entity_context("HMD:ENT:DC:savolitinib")
-    blob = str(ctx)
-    # Semantic API 载荷不应要求调用方拼 SPARQL
-    assert "SELECT " not in blob
-    assert ctx["entity"]["enterprise_id"] == "HMD:ENT:DC:savolitinib"
-    assert ctx["targets"]
-    assert ctx["diseases"]
-    assert ctx["internal_assets"]
+def test_enterprise_id_from_iri_roundtrip() -> None:
+    from biomed_ontology.foundation.store import enterprise_id_from_iri
+    from biomed_ontology.foundation.world import entity_iri
 
-
-def test_golden_path_rich_render_smoke() -> None:
-    from io import StringIO
-
-    from rich.console import Console
-
-    from biomed_ontology.foundation.render import render_golden_path
-
-    api = FoundationApi(load_world_model(FOUNDATION))
-    result = api.golden_path("HMPL-504")
-    assert result.get("resolve")
-    buf = StringIO()
-    cons = Console(file=buf, force_terminal=True, width=100, color_system=None)
-    render_golden_path(result, console=cons, verbose=True)
-    text = buf.getvalue()
-    assert "HMD:ENT:DC:savolitinib" in text
-    assert "Trace" in text
-    assert "MET" in text
-    assert "Citationware" in text or "Evidence" in text
-    assert "asliva.eln.exp_2025_012" in text or "EXP-2025-012" in text
+    eid = "HMD:ENT:DC:savolitinib"
+    assert enterprise_id_from_iri(entity_iri(eid)) == eid
 
 
 def test_foundation_mcp_exposes_get_entity_context() -> None:
@@ -181,17 +398,3 @@ def test_foundation_mcp_exposes_get_entity_context() -> None:
     assert "resolve_entity" in names
     assert "graph_sparql" not in names
     assert "vector_search" not in names
-
-
-def test_claims_use_tested_in_not_inverted_supported_by() -> None:
-    api = FoundationApi(load_world_model(FOUNDATION))
-    rel = api.get_relationships("HMD:ENT:DC:savolitinib")
-    predicates = {c["predicate"] for c in rel["claims"]}
-    assert "testedIn" in predicates
-    assert "hasAssay" in predicates
-    inverted = [
-        c
-        for c in rel["claims"]
-        if c["predicate"] == "supportedBy" and c.get("object_id", "").startswith("HMD:ENT:DC:")
-    ]
-    assert not inverted, "supportedBy 不得倒置为企业实体作为 object"

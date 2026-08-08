@@ -344,6 +344,7 @@ def _footer(ctx: dict[str, Any], *, canonical: str) -> Panel:
     n_e = len(ctx.get("evidence") or [])
     n_a = len(ctx.get("internal_assets") or [])
     release = ctx.get("ontology_release_id") or "—"
+    backends = ctx.get("backends") or {}
     text = Text()
     text.append("✓ ", style="bold green")
     text.append("World Model query ready", style="bold")
@@ -353,6 +354,16 @@ def _footer(ctx: dict[str, Any], *, canonical: str) -> Panel:
         f"release={escape(str(release))}",
         style="dim",
     )
+    if backends:
+        text.append("\n")
+        text.append("backends  ", style="dim")
+        parts = [
+            f"entity={backends.get('entity')}",
+            f"rels={backends.get('relationships')}",
+            f"evidence={backends.get('evidence')}",
+            f"assets={backends.get('assets')}",
+        ]
+        text.append("  ".join(parts), style="cyan")
     text.append("\n")
     text.append("next  ", style="dim")
     text.append("hmd foundation serve --mcp", style="cyan")
