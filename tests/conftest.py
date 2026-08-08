@@ -51,10 +51,10 @@ def build(registry, seed_files, ambiguity, ledgers):
 
 @pytest.fixture(scope="session")
 def kb():
-    """文献 KB（ENT）。session 级；单测开 oxigraph 供 RDF/demo 许可图断言。"""
+    """文献 KB（ENT）。session 级；默认不灌 GraphDB（图测见 test_graphstore_*）。"""
     from biomed_ontology.pipeline import build_literature_base
 
-    return build_literature_base(with_graph=True)
+    return build_literature_base(with_graph=False)
 
 
 @pytest.fixture

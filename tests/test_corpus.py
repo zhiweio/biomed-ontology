@@ -157,6 +157,11 @@ def test_build_is_warning_free(kb):
     assert kb.warnings == []
 
 
-@pytest.mark.parametrize("key", ["concepts", "synonyms", "documents", "chunks", "facts", "triples"])
+@pytest.mark.parametrize("key", ["concepts", "synonyms", "documents", "chunks", "facts"])
 def test_stats_are_non_zero(kb, key):
     assert kb.stats()[key] > 0
+
+
+def test_triples_zero_without_graph_sync(kb):
+    """默认 with_graph=False：不向 GraphDB 灌库，triples 为 0。"""
+    assert kb.stats()["triples"] == 0

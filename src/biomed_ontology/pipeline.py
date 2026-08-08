@@ -2,7 +2,7 @@
 
 运行时文献面入口是 ``build_literature_base()``（``HMD:ENT:*``，无 seed 铸造）。
 ``build_knowledge_base()`` 为其兼容别名；``legacy_seed_ids=True`` 仅供单测对照。
-oxigraph ``GraphStore`` 默认关闭（``with_graph=False``）；单测可显式打开。
+``with_graph=True`` 时把 KB 投影同步进 GraphDB；默认关闭。
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from biomed_ontology.corpus.classify import (
     load_taxonomy,
 )
 from biomed_ontology.corpus.extract import ExtractedFact, TriModalPipeline
+from biomed_ontology.foundation.graphdb import GraphDbClient
 from biomed_ontology.ingest import build_from_seed, load_ambiguity_registry
 from biomed_ontology.ingest.seed import BuiltConcept, BuiltSynonym
 from biomed_ontology.normalize import Normalizer
@@ -112,11 +113,12 @@ def build_literature_base(
     with_corpus: bool = True,
     with_graph: bool = False,
     id_mode: str = "enterprise",
+    graph_client: GraphDbClient | None = None,
 ) -> KnowledgeBase:
     """装配文献面：ENT 目录 + corpus（身份不经 HMD:SUB 铸造）。
 
-    ``with_graph=True`` 时写入 oxigraph（仅单测 / 离线校验）；运行时默认关闭，
-    图扩展走 GraphDB / ENT LinkIndex。
+    ``with_graph=True`` 时把概念/链接/语料/事实同步进 GraphDB（需可达）；
+    默认关闭。可注入 ``graph_client``（单测 respx mock）。
     """
     root = data_root or DATA_ROOT
     hub = hub or ObservabilityHub()
@@ -153,7 +155,7 @@ def build_literature_base(
         release_id=release_id,
     )
 
-    graph = GraphStore()
+    graph = GraphStore(client=graph_client) if graph_client is not None else GraphStore()
     if with_graph:
         graph.load_concepts(
             built.concepts, built.synonyms, source_id=_CATALOG_SOURCE, tier=LicenseTierEnum.TIER_0
@@ -261,8 +263,7 @@ def build_knowledge_base(
             stacklevel=2,
         )
     mode = "ledger" if legacy_seed_ids else "enterprise"
-    # 遗留单测常依赖 oxigraph；ENT 默认路径关闭图库
-    graph = True if with_graph is None and legacy_seed_ids else bool(with_graph)
+    graph = bool(with_graph) if with_graph is not None else False
     rid = release_id or ("0.1.0" if legacy_seed_ids else DEFAULT_RELEASE)
     return build_literature_base(
         data_root=data_root,

@@ -108,7 +108,7 @@ uv run hmd serve     # 起 REST + MCP 服务（:8000）
 task check           # ruff + 全量测试
 ```
 
-`task check` = ruff + 全量测试，共 **533 条测试**。
+`task check` = ruff + 全量测试，共 **541 条测试**（默认跳过需 GraphDB 的 integration）。
 其中若干条 Milvus 集成测试在没有 Docker 时转为 skipped 而非失败 —— 但要注意，
 **这批测试长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
 `hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。

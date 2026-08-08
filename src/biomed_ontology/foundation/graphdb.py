@@ -56,6 +56,18 @@ class GraphDbClient:
             out.append({k: v.get("value", "") for k, v in row.items()})
         return out
 
+    def ask(self, sparql: str) -> bool:
+        headers = {"Accept": "application/sparql-results+json"}
+        with httpx.Client(timeout=self.timeout) as client:
+            r = client.post(
+                self.sparql_url,
+                data={"query": sparql},
+                headers=headers,
+            )
+            r.raise_for_status()
+            payload = r.json()
+        return bool(payload.get("boolean", False))
+
     def update(self, sparql: str) -> None:
         url = f"{self.sparql_url}/statements"
         with httpx.Client(timeout=self.timeout) as client:
@@ -90,6 +102,31 @@ class GraphDbClient:
 
     def clear_graph(self, graph_uri: str) -> None:
         self.update(f"CLEAR GRAPH <{graph_uri}>")
+
+    def replace_graph(self, graph_uri: str, turtle: str) -> None:
+        """清空命名图后写入 Turtle（非事务；失败时图可能已空）。"""
+        self.clear_graph(graph_uri)
+        if turtle.strip():
+            self.load_turtle(turtle, graph_uri=graph_uri)
+
+    def export_graph(
+        self,
+        graph_uri: str | None = None,
+        *,
+        accept: str = "application/n-quads",
+    ) -> bytes:
+        """导出 statements（可选限定 named graph）。"""
+        params: dict[str, str] = {}
+        if graph_uri:
+            params["context"] = f"<{graph_uri}>"
+        with httpx.Client(timeout=self.timeout) as client:
+            r = client.get(
+                self.statements_url,
+                params=params,
+                headers={"Accept": accept},
+            )
+            r.raise_for_status()
+            return r.content
 
 
 def ensure_repository(client: GraphDbClient) -> None:

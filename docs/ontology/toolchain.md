@@ -8,7 +8,7 @@
 
 - **LinkML 是唯一 SSOT**（[`schema/`](../../schema/)）。
 - **Protégé 只审阅**生成的 OWL，禁止成为第二真相源。
-- **不引入 Apache Jena**；RDF 工程层由 **rdflib + pyshacl**（及 GraphDB / oxigraph）承担。
+- **不引入 Apache Jena**；RDF 工程层由 **rdflib + pyshacl + GraphDB** 承担。
 
 ## 工具链
 
@@ -96,7 +96,7 @@ Graph / Milvus / API 主键仍是 **Enterprise ID**。详见 [Foundation](../arc
 
 业界常见的「Jena = RDF engineering」角色，在本仓库由：
 
-- `src/biomed_ontology/ontology/rdf.py`（PoC GraphStore / oxigraph）
+- `src/biomed_ontology/ontology/rdf.py`（GraphStore → GraphDB）
 - `foundation/sync.py` + `foundation/graphdb.py`
 - `quality/` + pyshacl
 

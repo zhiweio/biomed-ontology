@@ -99,9 +99,14 @@ tasks:
       - uv run ruff check --fix src tests scripts
 
   test:
-    desc: pytest
+    desc: pytest（默认跳过 integration）
     cmds:
       - uv run pytest
+
+  test:integration:
+    desc: GraphDB 集成测（需 task foundation:up）
+    cmds:
+      - uv run pytest -m integration
 
   check:
     desc: lint + test

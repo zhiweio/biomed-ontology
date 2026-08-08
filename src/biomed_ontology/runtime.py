@@ -58,7 +58,7 @@ def open_dual_surface(
     if kb is None and load_literature:
         from biomed_ontology.pipeline import build_literature_base
 
-        # 运行时不装 oxigraph；图扩展走 GraphDB / LinkIndex(ENT)
+        # 运行时默认不灌 KB 命名图；完整图面需 with_graph=True / gate
         kb = build_literature_base(with_graph=False)
 
     if kb is None:

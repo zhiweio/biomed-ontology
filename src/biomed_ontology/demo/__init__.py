@@ -251,12 +251,17 @@ def demo_facts_and_license(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     tri_paid = sum(kb.graph.count_triples(g) for g in graphs_paid)
     r.lines.append(f"可见命名图：无凭据 {len(graphs_free)} / 有凭据 {len(graphs_paid)}")
     r.lines.append(f"可读三元组：无凭据 {tri_free} / 有凭据 {tri_paid}")
+    graph_ok = True
+    if graphs_paid:
+        graph_ok = tri_paid > tri_free
+    else:
+        r.lines.append("命名图：未 sync 到 GraphDB，跳过图侧断言（需 with_graph=True）")
     r.passed = (
         not leaked
         and bool(unlocked)
         and paid["total"] > free["total"]
         and free["license_filtered_count"] > 0
-        and tri_paid > tri_free
+        and graph_ok
     )
     return r
 

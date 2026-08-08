@@ -1,6 +1,6 @@
 """GraphDB Named Graph 约定与 PROV 图 URI。
 
-PoC 可用进程内 store；生产指向 GraphDB（Free 仅 Dev，生产用 SE/EE）。
+KB 许可命名图（``graph/{tier}/{source}``）与下列 Foundation 固定图共存于同一 repo。
 """
 
 from __future__ import annotations

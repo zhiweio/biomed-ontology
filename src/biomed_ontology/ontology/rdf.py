@@ -1,25 +1,29 @@
 """RDF 三元组库装载与许可感知查询（L2，设计决策 D10 / D11）。
 
-**oxigraph 仅单测 / 离线校验**；运行时图走 GraphDB。文献装配默认
-``with_graph=False``。SPARQL 与命名图布局与 GraphDB 对齐，不用厂商扩展。
+后端为 GraphDB（``GraphDbClient``）。``with_graph=True`` 时把 KB 投影同步进
+命名图；运行时默认 ``with_graph=False``，术语/检索不依赖本地灌库。
 
 命名图布局是许可隔离的执行点：
     https://w3id.org/asliva/biomed-ontology/graph/{tier}/{source}
 
 tier 编在图 URI 里，于是"过滤掉调用方无权访问的源"退化成一次 `FROM NAMED` 集合运算，
 不需要逐三元组判权限。这是把合规约束下沉到存储布局、而不是留在应用层 if 判断的关键。
+
+事实溯源使用 RDF 1.1 标准 reification（``rdf:subject|predicate|object``），
+以兼容 GraphDB / RDF4J。
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import pyoxigraph as ox
+import httpx
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology.foundation.graphdb import GraphDbClient, ensure_repository
 from biomed_ontology.licensing import named_graph_uri, tier_rank
 
 if TYPE_CHECKING:
@@ -31,6 +35,7 @@ __all__ = [
     "GraphStore",
     "NamedGraphInfo",
     "ShaclReport",
+    "curie_to_iri",
 ]
 
 HMD = "https://w3id.org/asliva/biomed-ontology/"
@@ -42,17 +47,32 @@ XSD = "http://www.w3.org/2001/XMLSchema#"
 
 _META_GRAPH = f"{HMD}graph/meta"
 
+_PREFIXES = f"""@prefix hmd: <{HMD}> .
+@prefix skos: <{SKOS}> .
+@prefix prov: <{PROV}> .
+@prefix rdf: <{RDF_NS}> .
+@prefix rdfs: <{RDFS}> .
+@prefix xsd: <{XSD}> .
+"""
 
-def _n(uri: str) -> ox.NamedNode:
-    return ox.NamedNode(uri)
+_META_LIST_SPARQL = f"""
+PREFIX hmd: <{HMD}>
+SELECT ?g ?tier ?source
+WHERE {{
+  GRAPH <{_META_GRAPH}> {{
+    ?g hmd:licenseTier ?tier ; hmd:sourceId ?source .
+  }}
+}}
+ORDER BY ?g
+"""
 
 
-def _curie_uri(curie: str) -> ox.NamedNode:
-    """CURIE → URI。内部 CURIE 展开到 hmd 命名空间，外部 CURIE 走 Bioregistry 风格前缀。"""
+def _curie_iri(curie: str) -> str:
+    """CURIE → IRI（装载路径，不做注入校验）。"""
     if curie.startswith("HMD:"):
-        return _n(HMD + curie.replace(":", "_", 2).replace(":", "_"))
+        return HMD + curie.replace(":", "_", 2).replace(":", "_")
     prefix, _, local = curie.partition(":")
-    return _n(f"https://bioregistry.io/{prefix.lower()}:{local}")
+    return f"https://bioregistry.io/{prefix.lower()}:{local}"
 
 
 _SAFE_BINDING = re.compile(r"^[A-Za-z][A-Za-z0-9]*:[A-Za-z0-9._:/#%-]+$")
@@ -68,15 +88,24 @@ def curie_to_iri(value: str) -> str:
         raise ValueError(f"非法的模板绑定值：{value!r}")
     if value.startswith(("http://", "https://")):
         return value
-    return _curie_uri(value).value
+    return _curie_iri(value)
 
 
-def _lit(value: Any, lang: str | None = None, datatype: str | None = None) -> ox.Literal:
+def _esc(s: str) -> str:
+    return s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+
+
+def _iri(uri: str) -> str:
+    return f"<{uri}>"
+
+
+def _lit_ttl(value: Any, lang: str | None = None, datatype: str | None = None) -> str:
+    body = f'"{_esc(str(value))}"'
     if lang:
-        return ox.Literal(str(value), language=lang)
+        return f"{body}@{lang}"
     if datatype:
-        return ox.Literal(str(value), datatype=_n(datatype))
-    return ox.Literal(str(value))
+        return f"{body}^^{_iri(datatype)}"
+    return body
 
 
 @dataclass(frozen=True)
@@ -96,13 +125,22 @@ class ShaclReport:
         return self.conforms
 
 
+@dataclass
 class GraphStore:
-    """带许可命名图隔离的三元组库。"""
+    """带许可命名图隔离的三元组库（GraphDB）。"""
 
-    def __init__(self, path: Path | None = None) -> None:
-        self._store = ox.Store(str(path)) if path else ox.Store()
-        self._graph_tier: dict[str, LicenseTierEnum] = {}
-        self._graph_source: dict[str, str] = {}
+    client: GraphDbClient = field(default_factory=GraphDbClient.from_settings)
+    _graph_tier: dict[str, LicenseTierEnum] = field(default_factory=dict, init=False, repr=False)
+    _graph_source: dict[str, str] = field(default_factory=dict, init=False, repr=False)
+    _ensured: bool = field(default=False, init=False, repr=False)
+
+    def _ensure(self) -> None:
+        if self._ensured:
+            return
+        if not self.client.health():
+            raise RuntimeError("GraphDB 为必选后端，请先 task foundation:up")
+        ensure_repository(self.client)
+        self._ensured = True
 
     # -------------------------------------------------- 装载
 
@@ -110,11 +148,16 @@ class GraphStore:
         uri = named_graph_uri(source_id, tier)
         self._graph_tier[uri] = tier
         self._graph_source[uri] = source_id
-        self._store.add_graph(_n(uri))
-        # 图的许可元数据自身也进库，这样断电重启后 tier 不依赖进程内存。
-        g = _n(_META_GRAPH)
-        self._store.add(ox.Quad(_n(uri), _n(f"{HMD}licenseTier"), _lit(tier.value), g))
-        self._store.add(ox.Quad(_n(uri), _n(f"{HMD}sourceId"), _lit(source_id), g))
+        self._ensure()
+        self.client.update(
+            f"DELETE WHERE {{ GRAPH <{_META_GRAPH}> {{ {_iri(uri)} ?p ?o }} }}"
+        )
+        meta = (
+            _PREFIXES
+            + f"{_iri(uri)} hmd:licenseTier {_lit_ttl(tier.value)} ;\n"
+            + f"  hmd:sourceId {_lit_ttl(source_id)} .\n"
+        )
+        self.client.load_turtle(meta, graph_uri=_META_GRAPH)
         return uri
 
     def load_concepts(
@@ -127,46 +170,42 @@ class GraphStore:
     ) -> str:
         """把术语层写入某个源的命名图。"""
         graph_uri = self.register_graph(source_id, tier)
-        g = _n(graph_uri)
         by_concept: dict[str, list[BuiltSynonym]] = {}
         for s in synonyms:
             by_concept.setdefault(s.concept_id, []).append(s)
 
-        quads = []
+        lines = [_PREFIXES]
         for c in concepts:
-            subj = _curie_uri(c.concept_id)
-            quads.append(ox.Quad(subj, _n(RDF_NS + "type"), _n(SKOS + "Concept"), g))
-            quads.append(ox.Quad(subj, _n(f"{HMD}entityType"), _lit(c.entity_type.value), g))
-            quads.append(ox.Quad(subj, _n(SKOS + "prefLabel"), _lit(c.preferred_label_en, "en"), g))
+            subj = _iri(_curie_iri(c.concept_id))
+            lines.append(f"{subj} a skos:Concept ;")
+            lines.append(f"  hmd:entityType {_lit_ttl(c.entity_type.value)} ;")
+            lines.append(f"  skos:prefLabel {_lit_ttl(c.preferred_label_en, 'en')} ;")
             if c.preferred_label_zh:
-                quads.append(
-                    ox.Quad(subj, _n(SKOS + "prefLabel"), _lit(c.preferred_label_zh, "zh"), g)
-                )
+                lines.append(f"  skos:prefLabel {_lit_ttl(c.preferred_label_zh, 'zh')} ;")
             if c.definition:
-                quads.append(ox.Quad(subj, _n(SKOS + "definition"), _lit(c.definition), g))
-            quads.append(ox.Quad(subj, _n(f"{HMD}licenseTier"), _lit(c.license_tier.value), g))
+                lines.append(f"  skos:definition {_lit_ttl(c.definition)} ;")
+            lines.append(f"  hmd:licenseTier {_lit_ttl(c.license_tier.value)} ;")
             for p in c.parents:
-                quads.append(ox.Quad(subj, _n(SKOS + "broader"), _curie_uri(p), g))
-            # scope 决定用哪个 skos 谓词，检索侧的扩展权重据此推导，不另存一份。
+                lines.append(f"  skos:broader {_iri(_curie_iri(p))} ;")
+            # 收束概念语句：末尾改用 `.` —— 用临时缓冲更清晰
+            # 上面用分号链；最后一条改句号
+            if lines[-1].endswith(" ;"):
+                lines[-1] = lines[-1][:-2] + " ."
             for s in by_concept.get(c.concept_id, []):
-                pred = _SCOPE_PREDICATE.get(s.scope.value, SKOS + "altLabel")
-                quads.append(ox.Quad(subj, _n(pred), _lit(s.alias_raw, s.lang.value), g))
-                a = _n(f"{HMD}alias/{s.alias_id.replace(':', '_')}")
-                quads.append(ox.Quad(a, _n(RDF_NS + "type"), _n(f"{HMD}Synonym"), g))
-                quads.append(ox.Quad(a, _n(f"{HMD}ofConcept"), subj, g))
-                quads.append(ox.Quad(a, _n(f"{HMD}aliasRaw"), _lit(s.alias_raw), g))
-                quads.append(ox.Quad(a, _n(f"{HMD}aliasNorm"), _lit(s.alias_norm), g))
-                quads.append(ox.Quad(a, _n(f"{HMD}scope"), _lit(s.scope.value), g))
+                pred = _SCOPE_PREDICATE.get(s.scope.value, "skos:altLabel")
+                lines.append(f"{subj} {pred} {_lit_ttl(s.alias_raw, s.lang.value)} .")
+                a = _iri(f"{HMD}alias/{s.alias_id.replace(':', '_')}")
+                lines.append(f"{a} a hmd:Synonym ;")
+                lines.append(f"  hmd:ofConcept {subj} ;")
+                lines.append(f"  hmd:aliasRaw {_lit_ttl(s.alias_raw)} ;")
+                lines.append(f"  hmd:aliasNorm {_lit_ttl(s.alias_norm)} ;")
+                lines.append(f"  hmd:scope {_lit_ttl(s.scope.value)} ;")
                 if s.is_ambiguous:
-                    quads.append(
-                        ox.Quad(
-                            a,
-                            _n(f"{HMD}isAmbiguous"),
-                            _lit("true", datatype=XSD + "boolean"),
-                            g,
-                        )
-                    )
-        self._store.bulk_extend(quads)
+                    amb = _lit_ttl("true", datatype=XSD + "boolean")
+                    lines.append(f"  hmd:isAmbiguous {amb} ;")
+                if lines[-1].endswith(" ;"):
+                    lines[-1] = lines[-1][:-2] + " ."
+        self.client.replace_graph(graph_uri, "\n".join(lines))
         return graph_uri
 
     def load_concept_links(
@@ -176,76 +215,55 @@ class GraphStore:
         source_id: str,
         tier: LicenseTierEnum,
     ) -> str:
-        """把种子断言的类型化链接（药→靶点、药→适应症）写入**独立命名图**。
-
-        谓词与事实层同名（`hmd:has_target` / `hmd:treats`），因为它们说的确实是
-        同一件事；区分来源靠命名图，不靠两套词汇表 —— 后者会让 `pipeline_matrix`
-        这类查询必须同时 UNION 两组谓词，而漏掉一组的失败形态是"结果少了一半"。
-
-        但两者的证据强度天差地别：事实层的每条边都挂着 reifier（出处、置信度、
-        抽取器、语句级溯源），种子链接只是一句人工断言。混进同一个图，
-        "这条边是谁说的"就再也分不出来了。
-        """
+        """把种子断言的类型化链接写入独立命名图。"""
         graph_uri = self.register_graph(source_id, tier)
-        g = _n(graph_uri)
-        quads = [
-            ox.Quad(
-                _curie_uri(c.concept_id),
-                _n(f"{HMD}{link.predicate}"),
-                _curie_uri(link.object_id),
-                g,
-            )
-            for c in concepts
-            for link in c.links
-        ]
-        self._store.bulk_extend(quads)
+        lines = [_PREFIXES]
+        for c in concepts:
+            for link in c.links:
+                lines.append(
+                    f"{_iri(_curie_iri(c.concept_id))} hmd:{link.predicate} "
+                    f"{_iri(_curie_iri(link.object_id))} ."
+                )
+        self.client.replace_graph(graph_uri, "\n".join(lines))
         return graph_uri
 
     def load_facts(self, facts: list[Any], *, source_id: str, tier: LicenseTierEnum) -> str:
-        """写入事实层。用 RDF 1.2 三元组项 + `rdf:reifies` 承载语句级溯源。
-
-        备选方案是 RDF 1.1 reification（4 个额外三元组、无原生语义）
-        或 fact-per-graph（命名图数量与事实数同阶增长，"按源过滤"随即失效）。
-        这里的 reifier 直接用 fact_id 的 IRI，于是"某条事实的证据"是一次主语查找，
-        agent 拿到 fact_id 就能原地展开全部出处。
-        """
+        """写入事实层。用 RDF 1.1 标准 reification 承载语句级溯源。"""
         graph_uri = self.register_graph(source_id, tier)
-        g = _n(graph_uri)
-        quads = []
+        lines = [_PREFIXES]
         for f in facts:
-            s = _curie_uri(f.subject_id)
-            p = _n(f"{HMD}{f.predicate.value}")
-            o = _curie_uri(f.object_id) if f.object_id else _lit(f.object_value or "")
-            quads.append(ox.Quad(s, p, o, g))
-
-            reifier = _n(f"{HMD}fact/{f.fact_id.replace(':', '_')}")
-            quads.append(ox.Quad(reifier, _n(RDF_NS + "reifies"), ox.Triple(s, p, o), g))
-            quads.append(ox.Quad(reifier, _n(RDF_NS + "type"), _n(f"{HMD}Fact"), g))
-            quads.append(ox.Quad(reifier, _n(f"{HMD}factId"), _lit(f.fact_id), g))
-            quads.append(
-                ox.Quad(
-                    reifier,
-                    _n(f"{HMD}confidence"),
-                    _lit(f.confidence, datatype=XSD + "double"),
-                    g,
-                )
+            s = _iri(_curie_iri(f.subject_id))
+            p = f"hmd:{f.predicate.value}"
+            o = (
+                _iri(_curie_iri(f.object_id))
+                if f.object_id
+                else _lit_ttl(f.object_value or "")
             )
-            quads.append(ox.Quad(reifier, _n(f"{HMD}extractor"), _lit(f.extractor_id), g))
-            quads.append(ox.Quad(reifier, _n(f"{HMD}licenseTier"), _lit(f.license_tier.value), g))
-            quads.append(ox.Quad(reifier, _n(f"{HMD}modality"), _lit(f.modality.value), g))
+            lines.append(f"{s} {p} {o} .")
+
+            reifier = _iri(f"{HMD}fact/{f.fact_id.replace(':', '_')}")
+            lines.append(f"{reifier} a hmd:Fact ;")
+            lines.append(f"  rdf:subject {s} ;")
+            lines.append(f"  rdf:predicate {p} ;")
+            lines.append(f"  rdf:object {o} ;")
+            lines.append(f"  hmd:factId {_lit_ttl(f.fact_id)} ;")
+            lines.append(f"  hmd:confidence {_lit_ttl(f.confidence, datatype=XSD + 'double')} ;")
+            lines.append(f"  hmd:extractor {_lit_ttl(f.extractor_id)} ;")
+            lines.append(f"  hmd:licenseTier {_lit_ttl(f.license_tier.value)} ;")
+            lines.append(f"  hmd:modality {_lit_ttl(f.modality.value)} ;")
             if f.object_unit:
-                quads.append(ox.Quad(reifier, _n(f"{HMD}unit"), _lit(f.object_unit), g))
+                lines.append(f"  hmd:unit {_lit_ttl(f.object_unit)} ;")
             for q in f.qualifiers:
-                quads.append(ox.Quad(reifier, _n(f"{HMD}qualifier"), _lit(q), g))
+                lines.append(f"  hmd:qualifier {_lit_ttl(q)} ;")
             for ev in f.evidence:
-                quads.append(
-                    ox.Quad(
-                        reifier, _n(PROV + "wasDerivedFrom"), _n(f"{HMD}chunk/{ev.chunk_id}"), g
-                    )
+                lines.append(
+                    f"  prov:wasDerivedFrom {_iri(f'{HMD}chunk/{ev.chunk_id}')} ;"
                 )
                 if ev.quote:
-                    quads.append(ox.Quad(reifier, _n(f"{HMD}quote"), _lit(ev.quote), g))
-        self._store.bulk_extend(quads)
+                    lines.append(f"  hmd:quote {_lit_ttl(ev.quote)} ;")
+            if lines[-1].endswith(" ;"):
+                lines[-1] = lines[-1][:-2] + " ."
+        self.client.replace_graph(graph_uri, "\n".join(lines))
         return graph_uri
 
     def load_corpus(
@@ -256,59 +274,74 @@ class GraphStore:
         source_id: str,
         tier: LicenseTierEnum,
     ) -> str:
-        """把文档与切片作为 PROV 实体入库。
-
-        事实上的 `prov:wasDerivedFrom` 指向 chunk，若 chunk 本身不在图里，
-        溯源链就断在半路：agent 能拿到 chunk_id 却无法回答"这句话出自哪一页哪一段"。
-        """
+        """把文档与切片作为 PROV 实体入库。"""
         graph_uri = self.register_graph(source_id, tier)
-        g = _n(graph_uri)
-        quads = []
+        lines = [_PREFIXES]
         for d in documents:
-            subj = _n(f"{HMD}doc/{d.doc_id.replace(':', '_')}")
-            quads.append(ox.Quad(subj, _n(RDF_NS + "type"), _n(PROV + "Entity"), g))
-            quads.append(ox.Quad(subj, _n(f"{HMD}docId"), _lit(d.doc_id), g))
-            quads.append(ox.Quad(subj, _n(RDFS + "label"), _lit(d.title), g))
-            quads.append(ox.Quad(subj, _n(f"{HMD}docType"), _lit(d.doc_type.value), g))
-            quads.append(ox.Quad(subj, _n(f"{HMD}licenseTier"), _lit(d.license_tier.value), g))
-            quads.append(ox.Quad(subj, _n(f"{HMD}sourceId"), _lit(d.source_id), g))
+            subj = _iri(f"{HMD}doc/{d.doc_id.replace(':', '_')}")
+            lines.append(f"{subj} a prov:Entity ;")
+            lines.append(f"  hmd:docId {_lit_ttl(d.doc_id)} ;")
+            lines.append(f"  rdfs:label {_lit_ttl(d.title)} ;")
+            lines.append(f"  hmd:docType {_lit_ttl(d.doc_type.value)} ;")
+            lines.append(f"  hmd:licenseTier {_lit_ttl(d.license_tier.value)} ;")
+            lines.append(f"  hmd:sourceId {_lit_ttl(d.source_id)} ;")
             if d.published_on:
-                quads.append(ox.Quad(subj, _n(f"{HMD}publishedOn"), _lit(str(d.published_on)), g))
+                lines.append(f"  hmd:publishedOn {_lit_ttl(str(d.published_on))} ;")
+            if lines[-1].endswith(" ;"):
+                lines[-1] = lines[-1][:-2] + " ."
         for c in chunks:
-            subj = _n(f"{HMD}chunk/{c.chunk_id}")
-            quads.append(ox.Quad(subj, _n(RDF_NS + "type"), _n(PROV + "Entity"), g))
-            quads.append(
-                ox.Quad(
-                    subj,
-                    _n(PROV + "wasDerivedFrom"),
-                    _n(f"{HMD}doc/{c.doc_id.replace(':', '_')}"),
-                    g,
-                )
-            )
-            quads.append(ox.Quad(subj, _n(f"{HMD}section"), _lit(c.section), g))
-            quads.append(ox.Quad(subj, _n(f"{HMD}modality"), _lit(c.modality.value), g))
-            quads.append(
-                ox.Quad(subj, _n(f"{HMD}page"), _lit(str(c.page), datatype=XSD + "integer"), g)
-            )
+            subj = _iri(f"{HMD}chunk/{c.chunk_id}")
+            doc_iri = _iri(f"{HMD}doc/{c.doc_id.replace(':', '_')}")
+            lines.append(f"{subj} a prov:Entity ;")
+            lines.append(f"  prov:wasDerivedFrom {doc_iri} ;")
+            lines.append(f"  hmd:section {_lit_ttl(c.section)} ;")
+            lines.append(f"  hmd:modality {_lit_ttl(c.modality.value)} ;")
+            lines.append(f"  hmd:page {_lit_ttl(str(c.page), datatype=XSD + 'integer')} ;")
             for cid in c.concept_ids:
-                quads.append(ox.Quad(subj, _n(f"{HMD}mentions"), _curie_uri(cid), g))
-        self._store.bulk_extend(quads)
+                lines.append(f"  hmd:mentions {_iri(_curie_iri(cid))} ;")
+            if lines[-1].endswith(" ;"):
+                lines[-1] = lines[-1][:-2] + " ."
+        self.client.replace_graph(graph_uri, "\n".join(lines))
         return graph_uri
 
     def load_turtle(self, path: Path, *, graph_uri: str | None = None) -> None:
-        self._store.load(
-            path.read_bytes(),
-            format=ox.RdfFormat.TURTLE,
-            to_graph=_n(graph_uri) if graph_uri else None,
-        )
+        self._ensure()
+        text = path.read_text(encoding="utf-8")
+        target = graph_uri or _META_GRAPH
+        self.client.load_turtle(text, graph_uri=target)
 
     # -------------------------------------------------- 查询
 
+    def _meta_entries(self) -> list[tuple[str, LicenseTierEnum, str]]:
+        """(uri, tier, source_id)。优先 GraphDB meta；失败时回落进程内缓存。"""
+        try:
+            rows = self.client.query(_META_LIST_SPARQL)
+        except httpx.HTTPError:
+            rows = []
+        out: list[tuple[str, LicenseTierEnum, str]] = []
+        seen: set[str] = set()
+        for row in rows:
+            uri = row.get("g") or ""
+            if not uri:
+                continue
+            try:
+                tier = LicenseTierEnum(row.get("tier") or "TIER_0")
+            except ValueError:
+                tier = LicenseTierEnum.TIER_0
+            source = row.get("source") or self._graph_source.get(uri, "")
+            out.append((uri, tier, source))
+            seen.add(uri)
+            self._graph_tier[uri] = tier
+            self._graph_source[uri] = source
+        for uri, tier in self._graph_tier.items():
+            if uri not in seen:
+                out.append((uri, tier, self._graph_source.get(uri, "")))
+        return out
+
     def graphs(self) -> list[NamedGraphInfo]:
         out = []
-        for uri, tier in self._graph_tier.items():
-            n = sum(1 for _ in self._store.quads_for_pattern(None, None, None, _n(uri)))
-            out.append(NamedGraphInfo(uri, self._graph_source[uri], tier, n))
+        for uri, tier, source in self._meta_entries():
+            out.append(NamedGraphInfo(uri, source, tier, self.count_triples(uri)))
         return sorted(out, key=lambda i: i.uri)
 
     def visible_graphs(self, entitlements: frozenset[str]) -> list[str]:
@@ -316,8 +349,8 @@ class GraphStore:
         unrestricted = tier_rank(LicenseTierEnum.TIER_1)
         return [
             uri
-            for uri, tier in self._graph_tier.items()
-            if tier_rank(tier) <= unrestricted or self._graph_source[uri] in entitlements
+            for uri, tier, source in self._meta_entries()
+            if tier_rank(tier) <= unrestricted or source in entitlements
         ]
 
     def query(
@@ -333,17 +366,10 @@ class GraphStore:
         FILTER 依赖查询作者主动写对，注入 dataset 则在引擎层面让无权数据根本不可达。
         """
         effective = sparql if unrestricted else self._rewrite(sparql, entitlements)
-        result = self._store.query(effective)
-        if isinstance(result, ox.QueryBoolean):
-            return [{"result": str(bool(result))}]
-        out = []
-        for sol in result:
-            row = {}
-            for var in result.variables:
-                term = sol[var]
-                row[var.value] = term.value if term is not None else None
-            out.append(row)
-        return out
+        stripped = effective.lstrip()
+        if stripped.upper().startswith("ASK"):
+            return [{"result": str(self.client.ask(effective))}]
+        return self.client.query(effective)
 
     def _rewrite(self, sparql: str, entitlements: frozenset[str]) -> str:
         visible = self.visible_graphs(entitlements)
@@ -359,40 +385,58 @@ class GraphStore:
         return sparql[:idx] + clause + "\n" + sparql[idx:]
 
     def count_triples(self, graph_uri: str | None = None) -> int:
-        g = _n(graph_uri) if graph_uri else None
-        return sum(1 for _ in self._store.quads_for_pattern(None, None, None, g))
+        """计数。无 ``graph_uri`` 时只合计 KB 许可命名图（不含 Foundation 固定图）。"""
+        if graph_uri is None:
+            uris = [u for u, _, _ in self._meta_entries()]
+            if not uris:
+                return 0
+            return sum(self.count_triples(u) for u in uris)
+        sparql = f"SELECT (COUNT(*) AS ?c) WHERE {{ GRAPH <{graph_uri}> {{ ?s ?p ?o }} }}"
+        try:
+            rows = self.client.query(sparql)
+        except httpx.HTTPError:
+            return 0
+        if not rows:
+            return 0
+        try:
+            return int(float(rows[0].get("c") or "0"))
+        except ValueError:
+            return 0
 
     def dump_turtle(self) -> bytes:
-        return self._store.dump(format=ox.RdfFormat.N_QUADS) or b""
+        """导出全部 statements（N-Quads）；供调试。"""
+        try:
+            return self.client.export_graph(accept="application/n-quads")
+        except httpx.HTTPError:
+            return b""
 
     # -------------------------------------------------- 校验
 
     def validate_shacl(self, shapes_path: Path, *, graph_uri: str | None = None) -> ShaclReport:
-        """SHACL 校验。
-
-        用 `schema/shapes/projection.shacl.ttl` 而非 gen-shacl 产物：
-        后者描述的是 LinkML 实例形状（closed、按 slot URI 命名），
-        而入库的是 SKOS/PROV 投影，谓词对不上。
-        """
+        """SHACL 校验：从 GraphDB 导出到 rdflib，再跑 pyshacl。"""
         try:
             import pyshacl
             import rdflib
         except ImportError:
             return ShaclReport(True, ["pyshacl 未安装，跳过图侧校验"])
 
+        try:
+            raw = self.client.export_graph(
+                graph_uri, accept="application/n-quads" if graph_uri is None else "text/turtle"
+            )
+        except httpx.HTTPError as exc:
+            return ShaclReport(False, [f"GraphDB 导出失败：{exc}"])
+
         data = rdflib.Graph()
-        pattern_graph = _n(graph_uri) if graph_uri else None
-        for q in self._store.quads_for_pattern(None, None, None, pattern_graph):
-            try:
-                data.add(
-                    (
-                        _to_rdflib(q.subject, rdflib),
-                        _to_rdflib(q.predicate, rdflib),
-                        _to_rdflib(q.object, rdflib),
-                    )
-                )
-            except TypeError:
-                continue  # 三元组项（rdf:reifies 的宾语），rdflib 侧不参与 SHACL 校验
+        if not raw.strip():
+            return ShaclReport(True, [])
+        fmt = "nquads" if graph_uri is None else "turtle"
+        try:
+            data.parse(data=raw, format=fmt)
+        except Exception:
+            # 部分 GraphDB 版本 export 默认 turtle
+            data = rdflib.Graph()
+            data.parse(data=raw, format="turtle")
 
         shapes = rdflib.Graph().parse(str(shapes_path), format="turtle")
         conforms, _, text = pyshacl.validate(
@@ -402,35 +446,16 @@ class GraphStore:
         return ShaclReport(conforms, violations)
 
 
-def _to_rdflib(term: Any, rdflib: Any) -> Any:
-    if isinstance(term, ox.NamedNode):
-        return rdflib.URIRef(term.value)
-    if isinstance(term, ox.BlankNode):
-        return rdflib.BNode(term.value)
-    if isinstance(term, ox.Literal):
-        if term.language:
-            return rdflib.Literal(term.value, lang=term.language)
-        dt = term.datatype.value
-        # oxigraph 按 RDF 1.1 把无类型字面量归一为 xsd:string，rdflib 却把
-        # Literal("x") 与 Literal("x", datatype=xsd:string) 当作不相等。不抓回去的话，
-        # shapes 里写的 sh:in ("EXACT" ...) 会全部落空 —— 而且是静默地报违规，
-        # 看上去像数据错了。同样的坑会出现在任何走 rdflib 的下游。
-        if dt == XSD + "string":
-            return rdflib.Literal(term.value)
-        return rdflib.Literal(term.value, datatype=rdflib.URIRef(dt))
-    raise TypeError(f"不可转换的项：{type(term)}")
-
-
 # 别名字面量一律落到 label 谓词。不能用 skos:broader/narrower 承载别名 ——
 # 它们的值域是 skos:Concept，写入字符串会让层级查询拿到一堆无法继续展开的字面量。
 # 作用域信息不会丢：它存在别名节点的 hmd:scope 上，且那才是它应待的位置。
 _SCOPE_PREDICATE = {
-    "EXACT": SKOS + "altLabel",
+    "EXACT": "skos:altLabel",
     # 下位词仍是指向本概念的有效检索串，保留为 altLabel。
-    "NARROW": SKOS + "altLabel",
+    "NARROW": "skos:altLabel",
     # 上位词与相关词不参与检索（SCOPE_WEIGHTS 为 0），入 hiddenLabel 留存溯源。
-    "BROAD": SKOS + "hiddenLabel",
-    "RELATED": SKOS + "hiddenLabel",
+    "BROAD": "skos:hiddenLabel",
+    "RELATED": "skos:hiddenLabel",
 }
 
 

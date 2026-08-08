@@ -244,7 +244,7 @@ Ontology → Knowledge →（仓外 Agent）→ New Evidence
 |---|---|
 | LinkML schema | 扩展为 Enterprise Ontology SSOT（`hmd_enterprise`） |
 | Normalizer | 降为 Resolver 一环 / 企业词典源 |
-| GraphStore / oxigraph | GraphDB 适配；单测可保留轻量后端 |
+| GraphStore（曾用 oxigraph） | 统一 GraphDB；单测 respx mock + 少量集成测 |
 | Citationware / PROV | 升级为图侧一等 Provenance |
 | Milvus 多模态 | Evidence Index；`entity_ids` → Enterprise ID |
 | MCP 工具 | 收敛为单一 `hmd serve` 上的 Semantic Ops + KB 工具 |
