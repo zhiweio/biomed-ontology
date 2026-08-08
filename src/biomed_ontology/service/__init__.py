@@ -1,4 +1,4 @@
-"""服务层：CLI 之外的第二个入口，共用同一个 `dispatch`。"""
+"""服务层：CLI 之外的唯一 HTTP/MCP 入口，共用同一个 Semantic Access Layer。"""
 
 from __future__ import annotations
 

@@ -4,13 +4,13 @@
 
 > **BIOS provides the biomedical world. Enterprise Ontology provides the company's world.**
 
-既有 PoC（`:8000` agentapi）继续服务文献检索与 Citationware；Foundation（`:8100`）交付世界模型 Semantic Ops。二者并行，概念权威逐步收敛到 `HMD:ENT:*`。
+单一 Semantic Access Layer（`hmd serve`）同时暴露 KB 检索工具与 Foundation Semantic Ops；概念权威收敛到 `HMD:ENT:*`。
 
 ## 非目标
 
 - 不做 LangGraph / vLLM / 多步 Agent 编排 / 报告自动生成
 - 不做自研 RDF 引擎、Ontology Editor、ER 引擎、向量库、Catalog、Agent Runtime
-- Agent **不得**把裸 `graph_sparql` / 原始向量 API 当主契约；应调用 Semantic Ops
+- 仓外调用方 **不得**把裸 `graph_sparql` / 原始向量 API 当主契约；应调用 Semantic Ops
 
 ## 核心判断
 
@@ -177,7 +177,7 @@ uv run hmd foundation resolve "HMPL-504"
 uv run hmd foundation golden --candidate HMPL-504
 uv run hmd foundation evolve-mine   # unmapped → KGCL 候选（不改本体）
 uv run hmd foundation zingg-run     # 校验预计算 matches
-uv run hmd foundation serve         # http://127.0.0.1:8100
+uv run hmd serve --mcp              # 单一 REST + MCP（含 get_entity_context）
 ```
 
 | GraphDB 环境 | 选型 |
@@ -203,7 +203,7 @@ Ontology → Knowledge →（仓外 Agent）→ New Evidence
 | 做 | 不做 |
 |---|---|
 | unmapped / 低置信 → `evolve-mine` → `.kgcl` + candidates JSON | 自动改 GraphDB ontology |
-| 候选含建议别名 / suggested exactMatch | Agent 自动策展 / `evolve-apply` |
+| 候选含建议别名 / suggested exactMatch | 自动策展 / `evolve-apply` |
 
 复用 `src/biomed_ontology/evolution/` 与 Foundation `foundation/evolve.py`。
 
@@ -228,7 +228,7 @@ Ontology → Knowledge →（仓外 Agent）→ New Evidence
 | Evidence Index | Milvus（默认 multimodal-bio 五列） |
 | Data Context | OpenMetadata |
 | Provenance | W3C PROV |
-| Agent 接口 | 薄 MCP / REST（`hmd foundation serve --mcp`，主契约 `get_entity_context`） |
+| Semantic Tool API | 薄 MCP / REST（`hmd serve --mcp`，主契约 `get_entity_context`） |
 
 **自研 IP**：R&D Domain Ontology、BIOS↔Enterprise 映射、BERN2→Resolver 胶水、Semantic API、金路径数据与评测。
 
@@ -252,5 +252,5 @@ Ontology → Knowledge →（仓外 Agent）→ New Evidence
 | GraphStore / oxigraph | GraphDB 适配；单测可保留轻量后端 |
 | Citationware / PROV | 升级为图侧一等 Provenance |
 | Milvus 多模态 | Evidence Index；`entity_ids` → Enterprise ID |
-| MCP 工具 | Foundation 收敛为 Semantic Ops（`:8100`） |
+| MCP 工具 | 收敛为单一 `hmd serve` 上的 Semantic Ops + KB 工具 |
 | `evolution/` | Data Loop 脚手架（`evolve-mine`） |

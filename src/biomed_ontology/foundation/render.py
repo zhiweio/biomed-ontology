@@ -366,7 +366,7 @@ def _footer(ctx: dict[str, Any], *, canonical: str) -> Panel:
         text.append("  ".join(parts), style="cyan")
     text.append("\n")
     text.append("next  ", style="dim")
-    text.append("hmd foundation serve --mcp", style="cyan")
+    text.append("hmd serve --mcp", style="cyan")
     text.append("  →  get_entity_context(", style="dim")
     text.append(escape(canonical), style="yellow")
     text.append(")", style="dim")

@@ -4,6 +4,8 @@ KB 构建要读全部语料、建索引、跑 SHACL，每请求重建会让 P95 
 但更要紧的是 `feedback_log` 与 `hub`：它们必须**跨请求共享**，
 否则每个请求各写各的内存，本体演化信号一条也挖不出来 ——
 而"形成 data loop"正是这套底座存在的理由。
+
+Foundation WorldModel 与 ToolApi 同进程：单一 Semantic Access Layer。
 """
 
 from __future__ import annotations
@@ -11,8 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from biomed_ontology.agentapi import AgentApi
 from biomed_ontology.config import Settings, settings
+from biomed_ontology.tools import ToolApi
 
 __all__ = ["ServiceState", "build_state", "get_state", "parse_entitlements", "set_state"]
 
@@ -21,21 +23,42 @@ _state: ServiceState | None = None
 
 @dataclass
 class ServiceState:
-    api: AgentApi
+    api: ToolApi
     kb: Any
     config: Settings
+    foundation: Any | None = None  # FoundationApi | None
+    world: Any | None = None
 
     @property
     def hub(self) -> Any:
         return getattr(self.kb, "hub", None)
 
 
-def build_state(*, config: Settings | None = None) -> ServiceState:
+def build_state(
+    *,
+    config: Settings | None = None,
+    bern2_url: str | None = None,
+    load_foundation: bool = True,
+) -> ServiceState:
     from biomed_ontology.pipeline import build_knowledge_base
 
     cfg = config or settings
     kb = build_knowledge_base()
-    return ServiceState(api=AgentApi.from_kb(kb), kb=kb, config=cfg)
+    foundation = None
+    world = None
+    if load_foundation:
+        from biomed_ontology.foundation.api import FoundationApi
+        from biomed_ontology.foundation.world import load_world_model
+
+        world = load_world_model(bern2_url=bern2_url)
+        foundation = FoundationApi(world)
+    return ServiceState(
+        api=ToolApi.from_kb(kb),
+        kb=kb,
+        config=cfg,
+        foundation=foundation,
+        world=world,
+    )
 
 
 def set_state(state: ServiceState | None) -> None:

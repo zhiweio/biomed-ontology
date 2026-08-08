@@ -7,7 +7,7 @@
 `BuiltConcept` 够跑检索；还要 RDF 是因为：
 
 1. **许可隔离要有物理边界** —— 命名图 URI 编进 tier，SPARQL `FROM NAMED` 可裁剪可见世界  
-2. **Agent 的 `sparql_query`** 走受控模板，自动注入可见图  
+2. **GraphStore 内部查询**按 entitlement 注入可见命名图（**无**对外公开的 `sparql_query` 工具）  
 3. **种子链接 vs 事实边** 谓词同名、证据不同，靠图 URI 区分，而不是两套词汇表  
 
 运行时用 `pyoxigraph`（`extra rdf`）。
@@ -32,7 +32,7 @@ https://w3id.org/asliva/biomed-ontology/graph/{source_id}/tier-{n}
 
 ## 查询时的可见性
 
-`sparql_query` / GraphStore 查询路径根据调用方 `entitlements` + `max_tier` 注入允许的命名图集合。模板在 `SPARQL_TEMPLATES`；**不允许**任意用户 SPARQL —— 任意查询是数据面攻击面，也是许可旁路。
+GraphStore 内部查询路径根据调用方 `entitlements` + `max_tier` 注入允许的命名图集合。模板在 `SPARQL_TEMPLATES`；**不对外暴露** `sparql_query` 工具，也不允许任意用户 SPARQL —— 任意查询是数据面攻击面，也是许可旁路。
 
 ## 与检索图通道的关系
 

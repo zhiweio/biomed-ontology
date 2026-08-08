@@ -2,7 +2,7 @@
 
 源码：`src/biomed_ontology/pipeline.py`。
 
-`build_knowledge_base()` 是整仓的**唯一装配入口**。检索、Agent 工具、评测、demo 都必须吃同一份 `KnowledgeBase`；各自装配会让「评测库」和「服务库」在 `release_id`、别名表、链接解析上悄悄分叉。
+`build_knowledge_base()` 是整仓的**唯一装配入口**。检索、Tool API、评测、demo 都必须吃同一份 `KnowledgeBase`；各自装配会让「评测库」和「服务库」在 `release_id`、别名表、链接解析上悄悄分叉。
 
 ## 为什么存在这个模块
 
@@ -96,7 +96,7 @@ ch.labels = 文档级 taxonomy 标签
 | 入口 | 用法 |
 |---|---|
 | CLI `hmd kb` / `demo` / `eval` | 内部调 `build_knowledge_base()` |
-| `hmd serve` | 进程启动时装一次，注入 `AgentApi` |
+| `hmd serve` | 进程启动时装一次，注入 `ToolApi` |
 | 测试 | fixture 调同一函数；不要手搓概念列表「模拟 KB」除非测的是装配本身 |
 | 索引 `hmd index` | 先有 KB，再交给 `MilvusBackend` + embedder |
 
@@ -107,4 +107,4 @@ uv run hmd kb          # 看 stats + warnings
 uv run pytest tests/test_seed_build.py tests/test_eval_demo.py -q
 ```
 
-读代码时从 `build_knowledge_base` 跟到 `HybridSearcher(kb)` 与 `AgentApi(kb)` —— 不应再出现第二条装配路径。
+读代码时从 `build_knowledge_base` 跟到 `HybridSearcher(kb)` 与 `ToolApi(kb)` —— 不应再出现第二条装配路径。

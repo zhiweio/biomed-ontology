@@ -118,10 +118,10 @@ nav:
       - 模态与图型过滤: retrieval/filters.md
       - 交叉编码器精排: retrieval/rerank.md
       - 嵌入器与权重解析: retrieval/embedders.md
-  - Agent 接口与 Citationware:
-      - 11 工具与包裹链: agent/tools.md
-      - 证据树与 restore_context: agent/citationware.md
-      - REST / MCP 与凭据边界: agent/serve.md
+  - Semantic Tool API 与 Citationware:
+      - 工具面与包裹链: tools/tools.md
+      - 证据树与 restore_context: tools/citationware.md
+      - REST / MCP 与凭据边界: tools/serve.md
   - 许可与合规:
       - Tier 策略矩阵: licensing/tiers.md
       - 组件闸门: licensing/components.md

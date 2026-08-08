@@ -1,9 +1,10 @@
-id: https://w3id.org/asliva/biomed-ontology/agentapi
-name: hmd_agentapi
-title: HMD Agent Tool I/O Contract
+id: https://w3id.org/asliva/biomed-ontology/tools
+name: hmd_tools
+title: HMD Semantic Tool I/O Contract
 description: >-
-  Agent 工具契约（L6）。这份 schema 是底座与 agent 团队之间的接口约定，
-  由它生成 JSON Schema 用于运行时双向校验，也由它生成 MCP tool 描述。
+  Semantic Tool API 契约（L6）。这份 schema 是底座与外部 agents / coding agents
+  之间的工具 I/O 约定（不是 agent 运行时），由它生成 JSON Schema 用于运行时双向校验，
+  也由它生成 MCP tool 描述。
 
   三条不可协商的约定：
   1. 每个返回体都带 trace_id 与 ontology_release_id —— 否则无法归因、无法重放、反馈无处挂靠
@@ -124,7 +125,7 @@ classes:
   ConceptDetail:
     description: >-
       get_concept 的详情块。包含 children 而非只有 parents：
-      agent 做层级扩展时需要向下看，只给父链会逼它再发一轮查询。
+      调用方做层级扩展时需要向下看，只给父链会逼它再发一轮查询。
     slots:
       - entity_type
       - preferred_label_en
@@ -145,7 +146,6 @@ classes:
       - scope
       - depth
       - lang
-      - shared_targets
 
   SearchRequest:
     description: 本体增强混合检索。
@@ -225,7 +225,7 @@ classes:
   RestoreRequest:
     description: >-
       引用优先（Citationware）的还原入口。检索返回的是高匹配度的碎片，
-      但人要核对的是原文 —— 没有这一步，agent 只能拿着一句话去说服人，
+      但人要核对的是原文 —— 没有这一步，调用方只能拿着一句话去说服人，
       而对方无法翻回原文第几页确认。
     slots:
       - chunk_id
@@ -249,51 +249,6 @@ classes:
       - truncated
       - restored_chunk_ids
 
-  SparqlRequest:
-    description: >-
-      受控 SPARQL。只接受模板名而非任意查询串 —— 开放任意 SPARQL
-      等于把许可重写这道防线交给调用方自觉遵守。
-    slots:
-      - sparql_template
-      - bindings
-    slot_usage:
-      sparql_template:
-        required: true
-
-  SparqlResponse:
-    is_a: ToolEnvelope
-    slots:
-      - rows
-      - total
-
-  LandscapeRequest:
-    description: 管线矩阵：靶点 × 适应症 × 在研药物。
-    slots:
-      - target_id
-      - disease_id
-
-  LandscapeResponse:
-    is_a: ToolEnvelope
-    slots:
-      - landscape_rows
-      - total
-
-  LandscapeRow:
-    slots:
-      - target_id
-      - target_label
-      - disease_id
-      - disease_label
-      - substances
-      - license_tier
-
-  LandscapeEntry:
-    slots:
-      - concept_id
-      - label
-      - stage
-      - license_tier
-
   FactsRequest:
     description: 按 s/p/o 查抽取事实。
     slots:
@@ -314,7 +269,7 @@ classes:
   FeedbackRequest:
     description: >-
       以 trace_id 为主键的反馈。这是演进闭环的入口，
-      也是 agent 接入的前置条件 —— 不回传 feedback，闭环就断了。
+      也是工具接入的前置条件 —— 不回传 feedback，闭环就断了。
     slots:
       - trace_id
       - verdict
@@ -455,7 +410,7 @@ slots:
     range: integer
   restore_scope:
     range: RestoreScopeEnum
-    description: 还原范围。默认 SECTION —— 整篇文档往往超出 agent 的上下文预算。
+    description: 还原范围。默认 SECTION —— 整篇文档往往超出调用方的上下文预算。
   max_chars:
     range: integer
     description: 还原上限。超出即截断并置 truncated，绝不静默丢内容。
@@ -509,38 +464,8 @@ slots:
     multivalued: true
   lang:
     range: LanguageEnum
-  shared_targets:
-    range: ConceptCurie
-    multivalued: true
-    description: find_analogous 中两个资产共享的靶点，是相似度成立的依据。
   include_evidence:
     range: boolean
-  sparql_template:
-    range: string
-  bindings:
-    range: string
-    multivalued: true
-  rows:
-    range: string
-    multivalued: true
-  landscape_rows:
-    range: LandscapeRow
-    multivalued: true
-    inlined_as_list: true
-  target_id:
-    range: ConceptCurie
-  target_label:
-    range: string
-  disease_id:
-    range: ConceptCurie
-  disease_label:
-    range: string
-  substances:
-    range: LandscapeEntry
-    multivalued: true
-    inlined_as_list: true
-  label:
-    range: string
   stage:
     range: string
   explain:

@@ -2,7 +2,7 @@
 
 面向阿斯利华创新药研发场景的**企业级 AI Data Foundation / 生物医药语义层** PoC。
 
-本仓库不交付 AI agent 本身 —— 它交付两条底座：
+本仓库不交付 AI agent 本身 —— 它交付单一 Semantic Access Layer 背后的底座：
 
 1. **检索与 Citationware**（既有 L0–L8）：谁是谁、发生了什么、在哪说的、多可信  
 2. **Foundation 世界模型**：Enterprise Ontology（`HMD:ENT:*`）+ GraphDB + Milvus Evidence Index + OpenMetadata  
@@ -28,7 +28,7 @@
 | 第一次接触本仓库 | [快速开始](getting-started.md) → [分层架构](architecture/layers.md) → [Foundation](architecture/foundation.md) → [设计不变量](invariants.md) |
 | 要做企业世界模型 / Foundation | [Foundation 架构](architecture/foundation.md) → [Toolchain](ontology/toolchain.md) → [Golden Path](ontology/golden-path.md) → `hmd foundation golden` |
 | 要改检索 / 本体 | [类型化链接](ontology/links.md) → [三通道与 RRF](retrieval/hybrid.md) → [查询改写 vs 图通道](retrieval/ontology-paths.md) → [评测消融](eval/arms.md) |
-| 要接 agent / 对外服务 | [11 工具](agent/tools.md) + Foundation Semantic Ops → [Citationware](agent/citationware.md) → [许可](licensing/tiers.md) |
+| 要接工具面 / 对外服务 | [Semantic Tool API](tools/tools.md) → [Citationware](tools/citationware.md) → [serve](tools/serve.md) → [许可](licensing/tiers.md) |
 | 要接视觉 / Evidence Index | [资产路径](parse/assets.md) → [Milvus](retrieval/milvus.md) → [图型](parse/figure-type.md) → [嵌入器](retrieval/embedders.md) |
 | 合规 / 采购 | [Tier 矩阵](licensing/tiers.md) → [组件闸门](licensing/components.md) → [NOTICE](appendix/notice.md) → [BIOS 闸门](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
 

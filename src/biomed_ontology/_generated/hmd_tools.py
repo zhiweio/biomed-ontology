@@ -68,21 +68,22 @@ class LinkMLMeta(RootModel):
 
 linkml_meta = LinkMLMeta({'default_prefix': 'hmd',
      'default_range': 'string',
-     'description': 'Agent 工具契约（L6）。这份 schema 是底座与 agent 团队之间的接口约定， 由它生成 JSON '
-                    'Schema 用于运行时双向校验，也由它生成 MCP tool 描述。\n'
+     'description': 'Semantic Tool API 契约（L6）。这份 schema 是底座与外部 agents / coding '
+                    'agents 之间的工具 I/O 约定（不是 agent 运行时），由它生成 JSON Schema 用于运行时双向校验， '
+                    '也由它生成 MCP tool 描述。\n'
                     '三条不可协商的约定： 1. 每个返回体都带 trace_id 与 ontology_release_id —— '
                     '否则无法归因、无法重放、反馈无处挂靠 2. 每条结果都带 provenance —— 无出处的结论在药物研发场景不可用 '
                     '3. 每条结果都带 license_tier —— 调用方需要知道哪些内容不可外发',
-     'id': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+     'id': 'https://w3id.org/asliva/biomed-ontology/tools',
      'imports': ['linkml:types', 'hmd_obs', 'hmd_taxonomy'],
      'license': 'Proprietary',
-     'name': 'hmd_agentapi',
+     'name': 'hmd_tools',
      'prefixes': {'hmd': {'prefix_prefix': 'hmd',
                           'prefix_reference': 'https://w3id.org/asliva/biomed-ontology/'},
                   'linkml': {'prefix_prefix': 'linkml',
                              'prefix_reference': 'https://w3id.org/linkml/'}},
-     'source_file': 'schema/hmd_agentapi.yaml',
-     'title': 'HMD Agent Tool I/O Contract'} )
+     'source_file': 'schema/hmd_tools.yaml',
+     'title': 'HMD Semantic Tool I/O Contract'} )
 
 class EntityTypeEnum(str, Enum):
     """
@@ -642,9 +643,7 @@ class Document(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     retrieved_on: Optional[datetime ] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document']} })
     labels: Optional[list[str]] = Field(default=None, description="""标引分类打的多标签，取值来自 taxonomy。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Document', 'SearchRequest', 'SearchHit']} })
@@ -878,9 +877,7 @@ class Fact(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     created_in_release: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Concept']} })
     modality: Optional[ModalityChannelEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Fact', 'Evidence', 'Provenance', 'SearchHit']} })
@@ -997,9 +994,7 @@ class Provenance(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
 
     @field_validator('doc_id')
@@ -1082,10 +1077,7 @@ class DecisionRecord(ConfiguredBaseModel):
                        'FeedbackRequest']} })
     span_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'DecisionRecord']} })
     step_seq: int = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord']} })
-    stage: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord',
-                       'Candidate',
-                       'MatchedConcept',
-                       'LandscapeEntry']} })
+    stage: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord', 'Candidate', 'MatchedConcept']} })
     state_before: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord']} })
     state_after: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord']} })
     candidates: Optional[list[Candidate]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord']} })
@@ -1110,13 +1102,10 @@ class Candidate(ConfiguredBaseModel):
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/obs'})
 
     candidate_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Candidate']} })
-    label: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Candidate', 'LandscapeEntry']} })
+    label: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Candidate']} })
     score: Optional[float] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Candidate', 'SearchHit', 'EvidenceChunk']} })
     channel: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Candidate']} })
-    stage: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord',
-                       'Candidate',
-                       'MatchedConcept',
-                       'LandscapeEntry']} })
+    stage: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord', 'Candidate', 'MatchedConcept']} })
 
 
 class Signal(ConfiguredBaseModel):
@@ -1199,8 +1188,7 @@ class Concept(ConfiguredBaseModel):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     entity_type: EntityTypeEnum = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'MatchedConcept', 'ConceptDetail']} })
     category: Optional[list[str]] = Field(default=None, description="""Biolink Model 类别，用于与外部图谱对齐""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
@@ -1229,9 +1217,7 @@ class Concept(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     created_in_release: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Concept']} })
     modified_in_release: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
@@ -1266,8 +1252,7 @@ class Synonym(ConfiguredBaseModel):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     alias_raw: str = Field(default=..., description="""原始写法，保留大小写、连字符与空白""", json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym']} })
     alias_norm: str = Field(default=..., description="""归一化形式：小写、去连字符与空白、希腊字母转写、全角转半角。 词典精确匹配走这一列，alias_raw 只用于展示与溯源。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym']} })
@@ -1294,9 +1279,7 @@ class Synonym(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     valid_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym']} })
     valid_to: Optional[date] = Field(default=None, description="""为空表示当前有效""", json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym']} })
@@ -1358,9 +1341,7 @@ class Mapping(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     review_status: Optional[ReviewStatusEnum] = Field(default=ReviewStatusEnum.PENDING, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Synonym', 'Mapping', 'DocumentLabel', 'ConceptDetail'],
          'ifabsent': 'ReviewStatusEnum(PENDING)'} })
@@ -1409,8 +1390,7 @@ class Clique(ConfiguredBaseModel):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     members: list[str] = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Clique']} })
     primary_xref: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'Clique']} })
@@ -1516,7 +1496,7 @@ class ToolEnvelope(ConfiguredBaseModel):
     所有 tool 返回体的公共头。做成抽象基类而非各自定义， 是为了让可观测埋点与许可闸门可以统一处理任意 tool 的输出。
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'abstract': True,
-         'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+         'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
          'slot_usage': {'license_tier_max': {'description': '本次返回体中出现的最高 '
                                                             'tier。调用方据此判断可否外发。',
                                              'name': 'license_tier_max',
@@ -1542,7 +1522,7 @@ class MatchedConcept(ConfiguredBaseModel):
     """
     一次归一化命中，记录命中在级联的哪一级以及依据。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
          'slot_usage': {'concept_id': {'name': 'concept_id', 'required': True},
                         'stage': {'name': 'stage',
                                   'range': 'NormalizationStageEnum',
@@ -1555,18 +1535,14 @@ class MatchedConcept(ConfiguredBaseModel):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     alias_id: Optional[str] = Field(default=None, description="""别名条目的稳定 ID。可观测埋点回传的就是这个 ID —— 归因排障时要能从一条错误结论定位到具体哪一行别名（Demo 场景 4）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym', 'MatchedConcept', 'ExpansionTermOut']} })
     matched_text: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['MatchedConcept']} })
     char_start: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'MatchedConcept']} })
     char_end: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'MatchedConcept']} })
     scope: Optional[SynonymScopeEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym', 'MatchedConcept', 'ExpansionTermOut']} })
-    stage: NormalizationStageEnum = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord',
-                       'Candidate',
-                       'MatchedConcept',
-                       'LandscapeEntry']} })
+    stage: NormalizationStageEnum = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord', 'Candidate', 'MatchedConcept']} })
     confidence: Optional[float] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact',
                        'DecisionRecord',
                        'Synonym',
@@ -1605,7 +1581,7 @@ class ConceptAlternative(ConfiguredBaseModel):
     """
     消歧未确定时返回的备选。宁可返回 top-k + 置信度，也不猜一个（设计决策 D3）。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     concept_id: Optional[str] = Field(default=None, description="""内部概念 CURIE""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept',
                        'Synonym',
@@ -1614,8 +1590,7 @@ class ConceptAlternative(ConfiguredBaseModel):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     preferred_label_en: Optional[str] = Field(default=None, description="""英文首选标签""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept',
                        'MatchedConcept',
@@ -1635,7 +1610,7 @@ class NormalizeRequest(ConfiguredBaseModel):
     """
     文本 → CURIE。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
          'slot_usage': {'text': {'name': 'text', 'required': True}}})
 
     text: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'NormalizeRequest']} })
@@ -1651,7 +1626,7 @@ class NormalizeRequest(ConfiguredBaseModel):
 
 
 class NormalizeResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     matched_concepts: Optional[list[MatchedConcept]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['NormalizeResponse', 'SearchResponse']} })
     unmapped_spans: Optional[list[str]] = Field(default=None, description="""有实体形态但未能归一化的片段，直接产出 unmapped_span 信号。""", json_schema_extra = { "linkml_meta": {'domain_of': ['NormalizeResponse']} })
@@ -1673,7 +1648,7 @@ class ExpandRequest(ConfiguredBaseModel):
     """
     概念 → 扩展词集。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
          'slot_usage': {'concept_id': {'name': 'concept_id', 'required': True}}})
 
     concept_id: str = Field(default=..., description="""内部概念 CURIE""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept',
@@ -1683,8 +1658,7 @@ class ExpandRequest(ConfiguredBaseModel):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     max_depth: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandRequest']} })
     include_descendants: Optional[bool] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandRequest']} })
@@ -1697,7 +1671,7 @@ class ExpandRequest(ConfiguredBaseModel):
 
 
 class ExpandResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     concept_id: Optional[str] = Field(default=None, description="""内部概念 CURIE""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept',
                        'Synonym',
@@ -1706,8 +1680,7 @@ class ExpandResponse(ToolEnvelope):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     expansion_terms: Optional[list[ExpansionTermOut]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse']} })
     expansion_size: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse', 'SearchResponse']} })
@@ -1727,9 +1700,9 @@ class ExpandResponse(ToolEnvelope):
 
 class ConceptDetail(ConfiguredBaseModel):
     """
-    get_concept 的详情块。包含 children 而非只有 parents： agent 做层级扩展时需要向下看，只给父链会逼它再发一轮查询。
+    get_concept 的详情块。包含 children 而非只有 parents： 调用方做层级扩展时需要向下看，只给父链会逼它再发一轮查询。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     entity_type: Optional[EntityTypeEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'MatchedConcept', 'ConceptDetail']} })
     preferred_label_en: Optional[str] = Field(default=None, description="""英文首选标签""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept',
@@ -1751,9 +1724,7 @@ class ConceptDetail(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     review_status: Optional[ReviewStatusEnum] = Field(default=ReviewStatusEnum.PENDING, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Synonym', 'Mapping', 'DocumentLabel', 'ConceptDetail'],
          'ifabsent': 'ReviewStatusEnum(PENDING)'} })
@@ -1763,7 +1734,7 @@ class ExpansionTermOut(ConfiguredBaseModel):
     """
     一个扩展词及其权重。权重来自 scope 与本体距离（设计决策 D2）。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     term: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpansionTermOut']} })
     weight: Optional[float] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpansionTermOut']} })
@@ -1774,14 +1745,12 @@ class ExpansionTermOut(ConfiguredBaseModel):
                        'ConceptAlternative',
                        'ExpandRequest',
                        'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
+                       'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
     alias_id: Optional[str] = Field(default=None, description="""别名条目的稳定 ID。可观测埋点回传的就是这个 ID —— 归因排障时要能从一条错误结论定位到具体哪一行别名（Demo 场景 4）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym', 'MatchedConcept', 'ExpansionTermOut']} })
     scope: Optional[SynonymScopeEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym', 'MatchedConcept', 'ExpansionTermOut']} })
     depth: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpansionTermOut']} })
     lang: Optional[LanguageEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Synonym', 'ExpansionTermOut']} })
-    shared_targets: Optional[list[str]] = Field(default=None, description="""find_analogous 中两个资产共享的靶点，是相似度成立的依据。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ExpansionTermOut']} })
 
     @field_validator('alias_id')
     def pattern_alias_id(cls, v):
@@ -1801,7 +1770,7 @@ class SearchRequest(ConfiguredBaseModel):
     """
     本体增强混合检索。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
          'slot_usage': {'query': {'name': 'query', 'required': True}}})
 
     query: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest', 'FeedbackRequest']} })
@@ -1821,15 +1790,12 @@ class SearchRequest(ConfiguredBaseModel):
 
 
 class SearchResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     matched_concepts: Optional[list[MatchedConcept]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['NormalizeResponse', 'SearchResponse']} })
     expansion_size: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse', 'SearchResponse']} })
     results: Optional[list[SearchHit]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse']} })
-    total: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse',
-                       'SparqlResponse',
-                       'LandscapeResponse',
-                       'FactsResponse']} })
+    total: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse', 'FactsResponse']} })
     evidence_tree: Optional[list[EvidenceDoc]] = Field(default=None, description="""文档 → 章节 → 碎片的聚合视图。扁平列表会让同一段落的多个碎片 看上去像多条独立证据，造成证据量的错觉。""", json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse']} })
     trace_id: str = Field(default=..., description="""随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord',
                        'DecisionRecord',
@@ -1848,7 +1814,7 @@ class SearchHit(ConfiguredBaseModel):
     """
     一条检索结果。provenance 与 rank_before_rerank 是排障的必要条件； modality 则是 SearchRequest.modalities 的对侧 —— 一个过滤条件如果在返回体里查不到对应字段，调用方就无从验证它到底生效没有。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     chunk_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk',
                        'Evidence',
@@ -1881,9 +1847,7 @@ class SearchHit(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     section: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'SearchHit']} })
     page: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk', 'Evidence', 'Provenance', 'SearchHit', 'EvidenceChunk']} })
@@ -1922,7 +1886,7 @@ class EvidenceDoc(ConfiguredBaseModel):
     """
     证据树的文档层。best_score 用于排序，chunk_count 用于识别集中度。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     doc_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
                        'DocumentSection',
@@ -1942,9 +1906,7 @@ class EvidenceDoc(ConfiguredBaseModel):
                        'Mapping',
                        'ConceptDetail',
                        'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
+                       'EvidenceDoc'],
          'ifabsent': 'LicenseTierEnum(TIER_0)'} })
     sections: Optional[list[EvidenceSection]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['EvidenceDoc']} })
     chunk_count: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['EvidenceDoc']} })
@@ -1965,7 +1927,7 @@ class EvidenceDoc(ConfiguredBaseModel):
 
 
 class EvidenceSection(ConfiguredBaseModel):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     section_path: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DocumentSection',
                        'Chunk',
@@ -1977,7 +1939,7 @@ class EvidenceSection(ConfiguredBaseModel):
 
 
 class EvidenceChunk(ConfiguredBaseModel):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     chunk_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk',
                        'Evidence',
@@ -2006,9 +1968,9 @@ class EvidenceChunk(ConfiguredBaseModel):
 
 class RestoreRequest(ConfiguredBaseModel):
     """
-    引用优先（Citationware）的还原入口。检索返回的是高匹配度的碎片， 但人要核对的是原文 —— 没有这一步，agent 只能拿着一句话去说服人， 而对方无法翻回原文第几页确认。
+    引用优先（Citationware）的还原入口。检索返回的是高匹配度的碎片， 但人要核对的是原文 —— 没有这一步，调用方只能拿着一句话去说服人， 而对方无法翻回原文第几页确认。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
          'slot_usage': {'chunk_id': {'name': 'chunk_id', 'required': True}}})
 
     chunk_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['Chunk',
@@ -2017,7 +1979,7 @@ class RestoreRequest(ConfiguredBaseModel):
                        'SearchHit',
                        'EvidenceChunk',
                        'RestoreRequest']} })
-    restore_scope: Optional[RestoreScopeEnum] = Field(default=None, description="""还原范围。默认 SECTION —— 整篇文档往往超出 agent 的上下文预算。""", json_schema_extra = { "linkml_meta": {'domain_of': ['RestoreRequest']} })
+    restore_scope: Optional[RestoreScopeEnum] = Field(default=None, description="""还原范围。默认 SECTION —— 整篇文档往往超出调用方的上下文预算。""", json_schema_extra = { "linkml_meta": {'domain_of': ['RestoreRequest']} })
     max_chars: Optional[int] = Field(default=None, description="""还原上限。超出即截断并置 truncated，绝不静默丢内容。""", json_schema_extra = { "linkml_meta": {'domain_of': ['RestoreRequest']} })
 
     @field_validator('chunk_id')
@@ -2035,7 +1997,7 @@ class RestoreRequest(ConfiguredBaseModel):
 
 
 class RestoreResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     full_text: Optional[str] = Field(default=None, description="""按 sort_order 重排后的连续原文。""", json_schema_extra = { "linkml_meta": {'domain_of': ['RestoreResponse']} })
     breadcrumb: Optional[str] = Field(default=None, description="""文档标题 → 各级章节标题的可读路径，供人核对位置。""", json_schema_extra = { "linkml_meta": {'domain_of': ['RestoreResponse']} })
@@ -2084,129 +2046,11 @@ class RestoreResponse(ToolEnvelope):
         return v
 
 
-class SparqlRequest(ConfiguredBaseModel):
-    """
-    受控 SPARQL。只接受模板名而非任意查询串 —— 开放任意 SPARQL 等于把许可重写这道防线交给调用方自觉遵守。
-    """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
-         'slot_usage': {'sparql_template': {'name': 'sparql_template',
-                                            'required': True}}})
-
-    sparql_template: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['SparqlRequest']} })
-    bindings: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SparqlRequest']} })
-
-
-class SparqlResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
-
-    rows: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SparqlResponse']} })
-    total: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse',
-                       'SparqlResponse',
-                       'LandscapeResponse',
-                       'FactsResponse']} })
-    trace_id: str = Field(default=..., description="""随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord',
-                       'DecisionRecord',
-                       'ToolEnvelope',
-                       'FeedbackRequest']} })
-    ontology_release_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'QualityMetric', 'ToolEnvelope']} })
-    tool_name: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'ToolEnvelope']} })
-    tool_version: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'ToolEnvelope']} })
-    elapsed_ms: Optional[float] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord', 'ToolEnvelope']} })
-    license_tier_max: LicenseTierEnum = Field(default=..., description="""本次返回体中出现的最高 tier。调用方据此判断可否外发。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolEnvelope']} })
-    license_filtered_count: Optional[int] = Field(default=None, description="""因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'ToolEnvelope']} })
-    warnings: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ToolEnvelope']} })
-
-
-class LandscapeRequest(ConfiguredBaseModel):
-    """
-    管线矩阵：靶点 × 适应症 × 在研药物。
-    """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
-
-    target_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeRequest', 'LandscapeRow']} })
-    disease_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeRequest', 'LandscapeRow']} })
-
-
-class LandscapeResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
-
-    landscape_rows: Optional[list[LandscapeRow]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeResponse']} })
-    total: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse',
-                       'SparqlResponse',
-                       'LandscapeResponse',
-                       'FactsResponse']} })
-    trace_id: str = Field(default=..., description="""随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord',
-                       'DecisionRecord',
-                       'ToolEnvelope',
-                       'FeedbackRequest']} })
-    ontology_release_id: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'QualityMetric', 'ToolEnvelope']} })
-    tool_name: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'ToolEnvelope']} })
-    tool_version: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'ToolEnvelope']} })
-    elapsed_ms: Optional[float] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord', 'ToolEnvelope']} })
-    license_tier_max: LicenseTierEnum = Field(default=..., description="""本次返回体中出现的最高 tier。调用方据此判断可否外发。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolEnvelope']} })
-    license_filtered_count: Optional[int] = Field(default=None, description="""因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord', 'ToolEnvelope']} })
-    warnings: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ToolEnvelope']} })
-
-
-class LandscapeRow(ConfiguredBaseModel):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
-
-    target_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeRequest', 'LandscapeRow']} })
-    target_label: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeRow']} })
-    disease_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeRequest', 'LandscapeRow']} })
-    disease_label: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeRow']} })
-    substances: Optional[list[LandscapeEntry]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['LandscapeRow']} })
-    license_tier: Optional[LicenseTierEnum] = Field(default=LicenseTierEnum.TIER_0, json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
-                       'Fact',
-                       'Provenance',
-                       'Concept',
-                       'Synonym',
-                       'Mapping',
-                       'ConceptDetail',
-                       'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
-         'ifabsent': 'LicenseTierEnum(TIER_0)'} })
-
-
-class LandscapeEntry(ConfiguredBaseModel):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
-
-    concept_id: Optional[str] = Field(default=None, description="""内部概念 CURIE""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept',
-                       'Synonym',
-                       'Clique',
-                       'MatchedConcept',
-                       'ConceptAlternative',
-                       'ExpandRequest',
-                       'ExpandResponse',
-                       'ExpansionTermOut',
-                       'LandscapeEntry'],
-         'slot_uri': 'skos:notation'} })
-    label: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Candidate', 'LandscapeEntry']} })
-    stage: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['DecisionRecord',
-                       'Candidate',
-                       'MatchedConcept',
-                       'LandscapeEntry']} })
-    license_tier: Optional[LicenseTierEnum] = Field(default=LicenseTierEnum.TIER_0, json_schema_extra = { "linkml_meta": {'domain_of': ['Document',
-                       'Fact',
-                       'Provenance',
-                       'Concept',
-                       'Synonym',
-                       'Mapping',
-                       'ConceptDetail',
-                       'SearchHit',
-                       'EvidenceDoc',
-                       'LandscapeRow',
-                       'LandscapeEntry'],
-         'ifabsent': 'LicenseTierEnum(TIER_0)'} })
-
-
 class FactsRequest(ConfiguredBaseModel):
     """
     按 s/p/o 查抽取事实。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     subject_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Mapping', 'FactsRequest']} })
     predicate: Optional[PredicateEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Fact', 'Hierarchy', 'FactsRequest']} })
@@ -2221,13 +2065,10 @@ class FactsRequest(ConfiguredBaseModel):
 
 
 class FactsResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     facts: Optional[list[Fact]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['FactsResponse']} })
-    total: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse',
-                       'SparqlResponse',
-                       'LandscapeResponse',
-                       'FactsResponse']} })
+    total: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse', 'FactsResponse']} })
     trace_id: str = Field(default=..., description="""随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord',
                        'DecisionRecord',
                        'ToolEnvelope',
@@ -2243,9 +2084,9 @@ class FactsResponse(ToolEnvelope):
 
 class FeedbackRequest(ConfiguredBaseModel):
     """
-    以 trace_id 为主键的反馈。这是演进闭环的入口， 也是 agent 接入的前置条件 —— 不回传 feedback，闭环就断了。
+    以 trace_id 为主键的反馈。这是演进闭环的入口， 也是工具接入的前置条件 —— 不回传 feedback，闭环就断了。
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi',
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
          'slot_usage': {'trace_id': {'name': 'trace_id', 'required': True},
                         'verdict': {'name': 'verdict', 'required': True}}})
 
@@ -2262,7 +2103,7 @@ class FeedbackRequest(ConfiguredBaseModel):
 
 
 class FeedbackResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/agentapi'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
 
     accepted: Optional[bool] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['FeedbackResponse']} })
     signal_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Signal', 'FeedbackResponse']} })
@@ -2329,12 +2170,6 @@ EvidenceSection.model_rebuild()
 EvidenceChunk.model_rebuild()
 RestoreRequest.model_rebuild()
 RestoreResponse.model_rebuild()
-SparqlRequest.model_rebuild()
-SparqlResponse.model_rebuild()
-LandscapeRequest.model_rebuild()
-LandscapeResponse.model_rebuild()
-LandscapeRow.model_rebuild()
-LandscapeEntry.model_rebuild()
 FactsRequest.model_rebuild()
 FactsResponse.model_rebuild()
 FeedbackRequest.model_rebuild()

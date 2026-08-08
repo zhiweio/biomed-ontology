@@ -9,7 +9,8 @@
 1. 一份可遍历的本体（概念 + 类型化链接；Foundation 侧为 Enterprise Ontology）  
 2. 一份带许可的语料切片与 **Evidence Index**（Milvus 必选）  
 3. 一条可解释的混合检索 + 世界模型 Semantic Ops  
-4. 一组带 provenance 的 Agent 工具（`:8000`）与 Foundation API（`:8100`）  
+4. 一组带 provenance 的 Semantic tools（单一 `hmd serve`）  
+
 
 跑通下面闭环，再读机制章。
 
@@ -42,7 +43,7 @@ task foundation:up
 uv run hmd foundation resolve "HMPL-504"
 uv run hmd foundation golden --candidate HMPL-504
 uv run hmd foundation evolve-mine
-uv run hmd foundation serve --port 8100
+uv run hmd serve --mcp
 ```
 
 金路径：`DrugCandidate → Target → Disease → Evidence → ELN Asset`。
@@ -80,6 +81,6 @@ uv run hmd eval --entitlements MOCK_LICENSED
 1. [Foundation 世界模型](architecture/foundation.md) + [分层 L0–L8](architecture/layers.md)  
 2. [links / search-around](ontology/links.md) + [hybrid RRF](retrieval/hybrid.md)  
 3. [ARMS](eval/arms.md) + [不变量](invariants.md)  
-4. 按任务选：Agent / Evidence Index / 许可  
+4. 按任务选：Semantic tools / Evidence Index / 许可  
 
 手册预览：`uv sync --extra docs && task docs:serve`。

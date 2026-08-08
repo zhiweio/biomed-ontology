@@ -12,8 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from biomed_ontology._generated.hmd_agentapi import RestoreScopeEnum
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology._generated.hmd_tools import RestoreScopeEnum
 
 if TYPE_CHECKING:  # pragma: no cover
     from biomed_ontology.pipeline import KnowledgeBase

@@ -34,7 +34,7 @@ biomed-ontology/
     ├── normalize/ + alias/
     ├── parse/ + corpus/
     ├── search/ + embed/ + rerank/
-    ├── agentapi/ + service/  # :8000
+    ├── tools/ + service/     # hmd serve（Tool API + Semantic Ops）
     ├── licensing.py
     ├── observability/ + quality/ + evolution/
     ├── eval/

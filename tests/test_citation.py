@@ -5,21 +5,20 @@ from __future__ import annotations
 import pytest
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
-from biomed_ontology.agentapi import AgentApi
-from biomed_ontology.agentapi.citation import restore_context as raw_restore
-from biomed_ontology.agentapi.serve import dispatch
 from biomed_ontology.pipeline import build_knowledge_base
+from biomed_ontology.tools import ToolApi, dispatch
+from biomed_ontology.tools.citation import restore_context as raw_restore
 
 LICENSED = frozenset({"MOCK_LICENSED"})
 
 
 @pytest.fixture(scope="module")
-def api() -> AgentApi:
-    return AgentApi.from_kb(build_knowledge_base())
+def api() -> ToolApi:
+    return ToolApi.from_kb(build_knowledge_base())
 
 
 @pytest.fixture(scope="module")
-def open_chunk(api: AgentApi):
+def open_chunk(api: ToolApi):
     return api.search_documents("surufatinib", top_k=5)["results"][0]["chunk_id"]
 
 

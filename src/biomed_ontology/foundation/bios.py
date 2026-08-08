@@ -242,9 +242,7 @@ def _bios_load_satisfied(
         if max_concepts > 0 and 0 < done_max_i < max_concepts:
             return False
     # GraphDB 不可达时仅信 marker（避免 foundation:up 因探测失败反复重灌）
-    if graph_ready is False:
-        return False
-    return True
+    return graph_ready is not False
 
 
 def _iter_concepts_tsv_lines(lines: Iterator[str], *, max_concepts: int) -> Iterator[BiosConcept]:
@@ -490,12 +488,8 @@ def initialize_bios(
     if full:
         g.require()
         download_bios_full(cache)
-        concept_iter: Iterator[BiosConcept] = _iter_full_concepts(
-            cache, max_concepts=max_concepts
-        )
-        has_concepts = bool(
-            list(cache.glob("Concepts*.7z")) or list(cache.glob("Concepts*.txt"))
-        )
+        concept_iter: Iterator[BiosConcept] = _iter_full_concepts(cache, max_concepts=max_concepts)
+        has_concepts = bool(list(cache.glob("Concepts*.7z")) or list(cache.glob("Concepts*.txt")))
         source = "full_download_concepts_tsv" if has_concepts else "full_download"
         if max_concepts:
             source += f"_capped_{max_concepts}"

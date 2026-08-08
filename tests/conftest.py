@@ -57,10 +57,10 @@ def kb():
 
 @pytest.fixture
 def api(kb):
-    """每个测试一个新 AgentApi —— feedback_log 是可变状态，共用会互相污染。"""
-    from biomed_ontology.agentapi import AgentApi
+    """每个测试一个新 ToolApi —— feedback_log 是可变状态，共用会互相污染。"""
+    from biomed_ontology.tools import ToolApi
 
-    return AgentApi.from_kb(kb)
+    return ToolApi.from_kb(kb)
 
 
 @pytest.fixture

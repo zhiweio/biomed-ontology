@@ -1,7 +1,7 @@
 """服务层：契约一致性与越权防线。
 
 两条最要紧的性质：
-1. 路由由 TOOL_SPECS 生成 → 导出的 OpenAPI 与真实路由不可能对不上；
+1. 路由由 TOOL_SPECS + SEMANTIC_OPS 生成 → 导出的 OpenAPI 与真实路由不可能对不上；
 2. `X-HMD-Entitlements` 默认不被信任 → 任何人写上 MOCK_LICENSED 都拿不到受限内容。
 """
 
@@ -12,11 +12,11 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
-from biomed_ontology.agentapi import TOOL_SPECS
-from biomed_ontology.agentapi.serve import openapi_spec
 from biomed_ontology.config import load_settings
+from biomed_ontology.foundation.api import SEMANTIC_OPS
 from biomed_ontology.service.app import create_app
 from biomed_ontology.service.deps import build_state, parse_entitlements
+from biomed_ontology.tools import TOOL_SPECS, openapi_spec
 
 TRUSTING = load_settings({"HMD_TRUST_ENTITLEMENT_HEADER": "true"})
 
@@ -45,15 +45,17 @@ def trusting_client(state):
 
 
 def test_every_declared_tool_has_a_route(client):
-    """契约里写了工具却没有路由，agent 团队会照着文档接一个 404。"""
+    """契约里写了工具却没有路由，外部调用方会照着文档接一个 404。"""
     routes = {r.path for r in client.app.routes}
     for spec in TOOL_SPECS:
         assert f"/v1/{spec['name']}" in routes
+    for op in SEMANTIC_OPS:
+        assert f"/v1/{op['name']}" in routes
 
 
 def test_openapi_paths_match_actual_routes(client):
-    """`hmd contract` 导出的那份必须就是真实在跑的这份。"""
-    declared = set(openapi_spec()["paths"])
+    """合并后的 OpenAPI 必须覆盖真实在跑的 /v1/* 路由。"""
+    declared = set(client.get("/openapi.json").json()["paths"])
     actual = {r.path for r in client.app.routes if r.path.startswith("/v1/")}
     assert declared == actual
 
@@ -61,7 +63,10 @@ def test_openapi_paths_match_actual_routes(client):
 def test_openapi_comes_from_the_contract_not_framework_reflection(client):
     """FastAPI 自省出的 schema 与 LinkML 契约会漂移，必须以契约为准。"""
     spec = client.get("/openapi.json").json()
-    assert spec["paths"].keys() == set(openapi_spec()["paths"].keys())
+    kb_paths = set(openapi_spec()["paths"])
+    assert kb_paths <= set(spec["paths"])
+    for op in SEMANTIC_OPS:
+        assert f"/v1/{op['name']}" in spec["paths"]
 
 
 def test_health_reports_release_and_warnings(client):
@@ -156,14 +161,15 @@ def test_mcp_and_rest_share_one_dispatch():
 
 
 def test_mcp_exposes_the_same_tool_set():
-    """MCP 少一个工具，agent 换个接入方式就少一半能力，且没人会立刻发现。"""
+    """MCP 少一个工具，换个接入方式就少一半能力，且没人会立刻发现。"""
     pytest.importorskip("fastmcp")
     import asyncio
 
     from biomed_ontology.service.mcp import create_mcp
 
     tools = asyncio.run(create_mcp().list_tools())
-    assert {t.name for t in tools} == {s["name"] for s in TOOL_SPECS}
+    expected = {s["name"] for s in TOOL_SPECS} | {o["name"] for o in SEMANTIC_OPS}
+    assert {t.name for t in tools} == expected
 
 
 def test_mcp_does_not_accept_client_asserted_entitlements():

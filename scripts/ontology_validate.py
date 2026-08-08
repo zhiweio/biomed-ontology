@@ -73,11 +73,10 @@ def check_claims() -> None:
 
 def check_golden_path_live() -> None:
     """查询必须走三后端；后端未就绪则跳过（非 YAML fallback）。"""
+    from biomed_ontology.config import settings
     from biomed_ontology.foundation.api import FoundationApi
     from biomed_ontology.foundation.graphdb import GraphDbClient
     from biomed_ontology.foundation.world import load_world_model
-
-    from biomed_ontology.config import settings
 
     if not GraphDbClient.from_settings().health():
         print("SKIP golden_path: GraphDB 未就绪（请 task foundation:up && hmd foundation sync）")

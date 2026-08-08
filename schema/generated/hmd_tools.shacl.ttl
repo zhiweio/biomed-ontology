@@ -736,7 +736,7 @@ hmd:FactsResponse a sh:NodeShape ;
     sh:targetClass hmd:FactsResponse .
 
 hmd:FeedbackRequest a sh:NodeShape ;
-    rdfs:comment "以 trace_id 为主键的反馈。这是演进闭环的入口， 也是 agent 接入的前置条件 —— 不回传 feedback，闭环就断了。" ;
+    rdfs:comment "以 trace_id 为主键的反馈。这是演进闭环的入口， 也是工具接入的前置条件 —— 不回传 feedback，闭环就断了。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [ sh:datatype xsd:string ;
@@ -869,79 +869,6 @@ hmd:Hierarchy a sh:NodeShape ;
             sh:order 3 ;
             sh:path hmd:source ] ;
     sh:targetClass hmd:Hierarchy .
-
-hmd:LandscapeRequest a sh:NodeShape ;
-    rdfs:comment "管线矩阵：靶点 × 适应症 × 在研药物。" ;
-    sh:closed true ;
-    sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 1 ;
-            sh:path hmd:disease_id ],
-        [ sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 0 ;
-            sh:path hmd:target_id ] ;
-    sh:targetClass hmd:LandscapeRequest .
-
-hmd:LandscapeResponse a sh:NodeShape ;
-    sh:closed true ;
-    sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:integer ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 1 ;
-            sh:path hmd:total ],
-        [ sh:datatype xsd:integer ;
-            sh:description "因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:license_filtered_count ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 4 ;
-            sh:path hmd:tool_name ],
-        [ sh:datatype xsd:string ;
-            sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:warnings ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path hmd:tool_version ],
-        [ sh:datatype xsd:float ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 6 ;
-            sh:path hmd:elapsed_ms ],
-        [ sh:datatype xsd:string ;
-            sh:description "随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 2 ;
-            sh:path hmd:trace_id ],
-        [ sh:class hmd:LandscapeRow ;
-            sh:nodeKind sh:BlankNodeOrIRI ;
-            sh:order 0 ;
-            sh:path hmd:landscape_rows ],
-        [ sh:description "本次返回体中出现的最高 tier。调用方据此判断可否外发。" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 7 ;
-            sh:path hmd:license_tier_max ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:ontology_release_id ;
-            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ;
-    sh:targetClass hmd:LandscapeResponse .
 
 hmd:NormalizeRequest a sh:NodeShape ;
     rdfs:comment "文本 → CURIE。" ;
@@ -1102,7 +1029,7 @@ hmd:QualityMetric a sh:NodeShape ;
     sh:targetClass hmd:QualityMetric .
 
 hmd:RestoreRequest a sh:NodeShape ;
-    rdfs:comment "引用优先（Citationware）的还原入口。检索返回的是高匹配度的碎片， 但人要核对的是原文 —— 没有这一步，agent 只能拿着一句话去说服人， 而对方无法翻回原文第几页确认。" ;
+    rdfs:comment "引用优先（Citationware）的还原入口。检索返回的是高匹配度的碎片， 但人要核对的是原文 —— 没有这一步，调用方只能拿着一句话去说服人， 而对方无法翻回原文第几页确认。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [ sh:datatype xsd:integer ;
@@ -1111,7 +1038,7 @@ hmd:RestoreRequest a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 2 ;
             sh:path hmd:max_chars ],
-        [ sh:description "还原范围。默认 SECTION —— 整篇文档往往超出 agent 的上下文预算。" ;
+        [ sh:description "还原范围。默认 SECTION —— 整篇文档往往超出调用方的上下文预算。" ;
             sh:in ( "SECTION" "SIBLINGS" "DOCUMENT" ) ;
             sh:maxCount 1 ;
             sh:order 1 ;
@@ -1416,81 +1343,6 @@ hmd:Signal a sh:NodeShape ;
             sh:pattern "^HMDS:\\d{9}$" ] ;
     sh:targetClass hmd:Signal .
 
-hmd:SparqlRequest a sh:NodeShape ;
-    rdfs:comment "受控 SPARQL。只接受模板名而非任意查询串 —— 开放任意 SPARQL 等于把许可重写这道防线交给调用方自觉遵守。" ;
-    sh:closed true ;
-    sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:string ;
-            sh:nodeKind sh:Literal ;
-            sh:order 1 ;
-            sh:path hmd:bindings ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 0 ;
-            sh:path hmd:sparql_template ] ;
-    sh:targetClass hmd:SparqlRequest .
-
-hmd:SparqlResponse a sh:NodeShape ;
-    sh:closed true ;
-    sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:integer ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 1 ;
-            sh:path hmd:total ],
-        [ sh:datatype xsd:string ;
-            sh:nodeKind sh:Literal ;
-            sh:order 0 ;
-            sh:path hmd:rows ],
-        [ sh:datatype xsd:integer ;
-            sh:description "因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:license_filtered_count ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 4 ;
-            sh:path hmd:tool_name ],
-        [ sh:datatype xsd:string ;
-            sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:warnings ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path hmd:tool_version ],
-        [ sh:datatype xsd:float ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 6 ;
-            sh:path hmd:elapsed_ms ],
-        [ sh:datatype xsd:string ;
-            sh:description "随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 2 ;
-            sh:path hmd:trace_id ],
-        [ sh:description "本次返回体中出现的最高 tier。调用方据此判断可否外发。" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 7 ;
-            sh:path hmd:license_tier_max ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:ontology_release_id ;
-            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ;
-    sh:targetClass hmd:SparqlResponse .
-
 hmd:Synonym a sh:NodeShape ;
     rdfs:comment "别名条目。scope 必填 —— 检索扩展行为完全由 scope 驱动（D2）。 is_ambiguous 为真时，该别名不得直接单选，必须走上下文消歧（D3）。" ;
     sh:closed true ;
@@ -1588,7 +1440,7 @@ hmd:Synonym a sh:NodeShape ;
 hmd:ToolEnvelope a sh:NodeShape ;
     rdfs:comment "所有 tool 返回体的公共头。做成抽象基类而非各自定义， 是为了让可观测埋点与许可闸门可以统一处理任意 tool 的输出。" ;
     sh:closed false ;
-    sh:ignoredProperties ( rdf:type skos:notation hmd:accepted hmd:breadcrumb hmd:concept_detail hmd:doc_id hmd:evidence_tree hmd:expansion_size hmd:expansion_terms hmd:facts hmd:full_text hmd:landscape_rows hmd:llm_invoked hmd:matched_concepts hmd:page_end hmd:page_start hmd:restored_chunk_ids hmd:results hmd:rows hmd:section_id hmd:section_path hmd:sibling_paths hmd:signal_id hmd:total hmd:truncated hmd:unmapped_spans ) ;
+    sh:ignoredProperties ( rdf:type skos:notation hmd:accepted hmd:breadcrumb hmd:concept_detail hmd:doc_id hmd:evidence_tree hmd:expansion_size hmd:expansion_terms hmd:facts hmd:full_text hmd:llm_invoked hmd:matched_concepts hmd:page_end hmd:page_start hmd:restored_chunk_ids hmd:results hmd:section_id hmd:section_path hmd:sibling_paths hmd:signal_id hmd:total hmd:truncated hmd:unmapped_spans ) ;
     sh:property [ sh:datatype xsd:integer ;
             sh:description "因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。" ;
             sh:maxCount 1 ;
@@ -1872,7 +1724,7 @@ hmd:ConceptAlternative a sh:NodeShape ;
     sh:targetClass hmd:ConceptAlternative .
 
 hmd:ConceptDetail a sh:NodeShape ;
-    rdfs:comment "get_concept 的详情块。包含 children 而非只有 parents： agent 做层级扩展时需要向下看，只给父链会逼它再发一轮查询。" ;
+    rdfs:comment "get_concept 的详情块。包含 children 而非只有 parents： 调用方做层级扩展时需要向下看，只给父链会逼它再发一轮查询。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
     sh:property [ sh:nodeKind sh:IRI ;
@@ -2091,10 +1943,6 @@ hmd:ExpansionTermOut a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:order 4 ;
             sh:path hmd:scope ],
-        [ sh:description "find_analogous 中两个资产共享的靶点，是相似度成立的依据。" ;
-            sh:nodeKind sh:IRI ;
-            sh:order 7 ;
-            sh:path hmd:shared_targets ],
         [ sh:datatype xsd:float ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -2202,63 +2050,6 @@ hmd:Fact a sh:NodeShape ;
             sh:path hmd:created_in_release ;
             sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ;
     sh:targetClass hmd:Fact .
-
-hmd:LandscapeEntry a sh:NodeShape ;
-    sh:closed true ;
-    sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 2 ;
-            sh:path hmd:stage ],
-        [ sh:description "内部概念 CURIE" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 0 ;
-            sh:path skos:notation ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:order 3 ;
-            sh:path hmd:license_tier ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 1 ;
-            sh:path hmd:label ] ;
-    sh:targetClass hmd:LandscapeEntry .
-
-hmd:LandscapeRow a sh:NodeShape ;
-    sh:closed true ;
-    sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 2 ;
-            sh:path hmd:disease_id ],
-        [ sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 0 ;
-            sh:path hmd:target_id ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:disease_label ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 1 ;
-            sh:path hmd:target_label ],
-        [ sh:class hmd:LandscapeEntry ;
-            sh:nodeKind sh:BlankNodeOrIRI ;
-            sh:order 4 ;
-            sh:path hmd:substances ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:order 5 ;
-            sh:path hmd:license_tier ] ;
-    sh:targetClass hmd:LandscapeRow .
 
 hmd:Provenance a sh:NodeShape ;
     rdfs:comment "面向 agent 返回体的溯源块（设计决策 D6），是 tool 返回体的一等公民。" ;

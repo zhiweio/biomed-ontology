@@ -99,10 +99,10 @@ def test_gate_blocks_on_regression_even_when_above_floor(kb):
 @pytest.fixture(scope="module")
 def signals(kb):
     """先制造真实使用痕迹，再挖信号 —— 没有使用就不该有信号。"""
-    from biomed_ontology.agentapi import AgentApi
     from biomed_ontology.demo import run_all
+    from biomed_ontology.tools import ToolApi
 
-    api = AgentApi.from_kb(kb)
+    api = ToolApi.from_kb(kb)
     run_all(kb, api)
     return mine_signals(MiningInput.from_runtime(kb, api)), api
 

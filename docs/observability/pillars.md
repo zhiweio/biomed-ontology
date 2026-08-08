@@ -21,11 +21,11 @@ State 最容易被省掉，排障时却最不可替代：只记结果不记候�
 
 ## 与业务同次写入
 
-归一化级联的中间候选在函数返回后消失 —— 后补埋点只能拿到最终结果。因此 `Normalizer` / `HybridSearcher._graph_channel` / `AgentApi._invoke` 在决策点当场 `record_decision`。
+归一化级联的中间候选在函数返回后消失 —— 后补埋点只能拿到最终结果。因此 `Normalizer` / `HybridSearcher._graph_channel` / `ToolApi._invoke` 在决策点当场 `record_decision`。
 
-## Agent 包裹链中的位置
+## Tool 包裹链中的位置
 
-见 [11 工具](../agent/tools.md)：`_invoke` 强制起 trace、落 I/O。`trace_id` 随返回体回传，反馈接口以它为主键（D6）。
+见 [Semantic Tool API](../tools/tools.md)：`_invoke` 强制起 trace、落 I/O。`trace_id` 随返回体回传，反馈接口以它为主键（D6）。
 
 ## Explain 是 WHY 的用户可见面
 

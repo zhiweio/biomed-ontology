@@ -11,12 +11,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from biomed_ontology.agentapi import TOOL_SPECS, AgentApi
 from biomed_ontology.observability.contracts import SCHEMA_DIR
+from biomed_ontology.tools.api import TOOL_SPECS, ToolApi
 
 __all__ = ["dispatch", "mcp_tool_descriptors", "openapi_spec"]
 
-_SCHEMA_FILE = SCHEMA_DIR / "hmd_agentapi.schema.json"
+_SCHEMA_FILE = SCHEMA_DIR / "hmd_tools.schema.json"
 
 
 def _json_schema() -> dict[str, Any]:
@@ -83,14 +83,14 @@ def openapi_spec(*, base_url: str = "/v1") -> dict[str, Any]:
                         "in": "header",
                         "required": False,
                         "schema": {"type": "string"},
-                        "description": "上游 trace_id。透传后可把 agent 侧与底座侧的链路拼成一条。",
+                        "description": "上游 trace_id。透传后可把调用方与底座侧的链路拼成一条。",
                     },
                 ],
             }
         }
     return {
         "openapi": "3.1.0",
-        "info": {"title": "HMD Biomed Ontology Agent API", "version": "0.1.0"},
+        "info": {"title": "HMD Biomed Ontology Semantic Tool API", "version": "0.1.0"},
         "paths": paths,
         "components": {"schemas": defs},
     }
@@ -100,18 +100,17 @@ def openapi_spec(*, base_url: str = "/v1") -> dict[str, Any]:
 # 两边不强行统一，靠这张表衔接。
 _ARG_MAP: dict[str, dict[str, str]] = {
     "search_documents": {"use_expansion": "expand"},
-    "sparql_query": {"sparql_template": "template"},
     "submit_feedback": {"trace_id": "source_trace_id"},
 }
 
 
 def dispatch(
-    api: AgentApi,
+    api: ToolApi,
     tool_name: str,
     arguments: dict[str, Any],
     *,
     entitlements: frozenset[str] = frozenset(),
-    agent_id: str | None = None,
+    client_id: str | None = None,
     trace_id: str | None = None,
 ) -> dict[str, Any]:
     """MCP / HTTP 的共同入口。所有工具都从这里走，包裹链因此无法被绕过。"""
@@ -121,11 +120,7 @@ def dispatch(
 
     mapping = _ARG_MAP.get(tool_name, {})
     kwargs = {mapping.get(k, k): v for k, v in arguments.items()}
-    if tool_name == "sparql_query":
-        raw = kwargs.pop("bindings", None) or []
-        if isinstance(raw, list):
-            kwargs["bindings"] = dict(b.split("=", 1) for b in raw if "=" in b)
-    kwargs.update(entitlements=entitlements, agent_id=agent_id, trace_id=trace_id)
+    kwargs.update(entitlements=entitlements, client_id=client_id, trace_id=trace_id)
 
     positional = {
         "normalize_entity": "text",
@@ -133,9 +128,7 @@ def dispatch(
         "expand_concept": "concept_id",
         "get_concept": "concept_id",
         "search_documents": "query",
-        "find_analogous": "concept_id",
         "submit_feedback": "verdict",
-        "sparql_query": "template",
         "restore_context": "chunk_id",
     }.get(tool_name)
     if positional and positional in kwargs:
@@ -144,7 +137,7 @@ def dispatch(
 
 
 def write_contract_bundle(out_dir: Path) -> list[Path]:
-    """把 agent 团队需要的全部契约物料落到一个目录，方便直接交付。"""
+    """把外部 tool consumers 需要的全部契约物料落到一个目录，方便直接交付。"""
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for name, payload in (

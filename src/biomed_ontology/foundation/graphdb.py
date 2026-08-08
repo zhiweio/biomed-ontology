@@ -84,7 +84,7 @@ class GraphDbClient:
                     break
                 import time
 
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
         assert last is not None
         raise last
 

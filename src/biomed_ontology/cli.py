@@ -311,16 +311,16 @@ def demo_cmd(
     demo_id: str | None = typer.Option(None, "--id", help="只跑某个场景，如 D3"),
 ) -> None:
     """跑演示场景。"""
-    from biomed_ontology.agentapi import AgentApi
     from biomed_ontology.demo import DEMOS, run_all, run_demo
     from biomed_ontology.pipeline import build_knowledge_base
+    from biomed_ontology.tools import ToolApi
 
     kb = build_knowledge_base()
     if demo_id:
         if demo_id not in DEMOS:
             console.print(f"[red]未知场景 {demo_id}，可用：{sorted(DEMOS)}[/red]")
             raise typer.Exit(2)
-        results = [run_demo(demo_id, kb, AgentApi.from_kb(kb))]
+        results = [run_demo(demo_id, kb, ToolApi.from_kb(kb))]
     else:
         results = run_all(kb)
     for r in results:
@@ -338,7 +338,6 @@ def signals_cmd(
     approved_by: str | None = typer.Option(None, "--approved-by", help="人工审批人"),
 ) -> None:
     """挖掘演进信号并生成 KGCL changeset。"""
-    from biomed_ontology.agentapi import AgentApi
     from biomed_ontology.demo import run_all
     from biomed_ontology.evolution import (
         MiningInput,
@@ -349,9 +348,10 @@ def signals_cmd(
     )
     from biomed_ontology.pipeline import build_knowledge_base
     from biomed_ontology.quality import QualityGate
+    from biomed_ontology.tools import ToolApi
 
     kb = build_knowledge_base()
-    api = AgentApi.from_kb(kb)
+    api = ToolApi.from_kb(kb)
     # 先跑一遍 demo 制造真实使用痕迹：没有使用就没有信号，
     # 这正是"信号必须来自真实使用"这条设计约束的直接体现。
     run_all(kb, api)
@@ -380,8 +380,8 @@ def signals_cmd(
 def contract_cmd(
     out_dir: Path = typer.Option(REPO_ROOT / "build" / "contract", "--out"),
 ) -> None:
-    """导出 agent 接入契约（MCP 描述符 + OpenAPI）。"""
-    from biomed_ontology.agentapi.serve import write_contract_bundle
+    """导出 tools 接入契约（MCP 描述符 + OpenAPI）。"""
+    from biomed_ontology.tools import write_contract_bundle
 
     written = write_contract_bundle(out_dir)
     for p in written:
@@ -609,9 +609,7 @@ def foundation_bios_load(
         "yes",
     }
     # 已初始化且非 force：可跳过 ACK；真正重灌时仍要求
-    if want_full and not settings.bios_license_ack and (
-        force or read_bios_init_marker() is None
-    ):
+    if want_full and not settings.bios_license_ack and (force or read_bios_init_marker() is None):
         console.print(
             "[red]需要 HMD_BIOS_LICENSE_ACK=poc|evaluation|licensed[/red]\n"
             "见 data/foundation/NOTICE_BIOS.md\n"
@@ -622,9 +620,7 @@ def foundation_bios_load(
         full=want_full,
         cfg=settings,
         graphdb=GraphDbClient.from_settings(settings),
-        gate=BiosLicenseGate.from_settings(settings)
-        if want_full
-        else BiosLicenseGate(True, "poc"),
+        gate=BiosLicenseGate.from_settings(settings) if want_full else BiosLicenseGate(True, "poc"),
         force=force,
     )
     if result.get("skipped"):
@@ -686,42 +682,14 @@ def foundation_zingg_run() -> None:
     console.print("完整 Zingg Spark 作业：见计划 docker/zingg（预计算表已接入 Resolver）")
 
 
-@foundation_app.command("serve")
-def foundation_serve(
-    host: str = typer.Option("127.0.0.1", "--host"),
-    port: int = typer.Option(8100, "--port"),
-    bern2_url: str | None = typer.Option(None, "--bern2-url", help="BERN2 base URL"),
-    mcp: bool = typer.Option(True, "--mcp/--no-mcp", help="在 /mcp 挂载 Foundation MCP"),
-) -> None:
-    """启动 Foundation Semantic API（默认 :8100，与既有 agentapi :8000 并行）。"""
-    import uvicorn
-
-    from biomed_ontology.foundation.mcp import create_foundation_mcp
-    from biomed_ontology.foundation.service import create_foundation_app
-
-    # MCP 子应用要先建好再交给 create_foundation_app —— lifespan 必须由父应用串起来。
-    mcp_app = create_foundation_mcp(bern2_url=bern2_url).http_app(path="/") if mcp else None
-    application = create_foundation_app(bern2_url=bern2_url, mcp_app=mcp_app)
-    table = Table(title="Foundation Semantic API")
-    table.add_column("路径")
-    table.add_column("说明")
-    table.add_row(f"http://{host}:{port}/v1/*", "Semantic Ops")
-    table.add_row(f"http://{host}:{port}/v1/golden_path", "金路径")
-    table.add_row(f"http://{host}:{port}/docs", "OpenAPI")
-    table.add_row(f"http://{host}:{port}/health", "健康检查")
-    if mcp:
-        table.add_row(f"http://{host}:{port}/mcp", "MCP streamable HTTP（get_entity_context）")
-    console.print(table)
-    uvicorn.run(application, host=host, port=port)
-
-
 @app.command("serve")
 def serve_cmd(
     host: str = typer.Option("127.0.0.1", "--host"),
     port: int = typer.Option(8000, "--port"),
+    bern2_url: str | None = typer.Option(None, "--bern2-url", help="BERN2 base URL"),
     mcp: bool = typer.Option(True, "--mcp/--no-mcp", help="在 /mcp 挂载 MCP（HTTP 协议）"),
 ) -> None:
-    """启动 REST + MCP 服务。原有 CLI 命令一个不动，这是并列的第二个入口。"""
+    """唯一 Semantic Access Layer（KB tools + Foundation ops）。"""
     import uvicorn
 
     from biomed_ontology.config import settings
@@ -730,12 +698,13 @@ def serve_cmd(
     # MCP 子应用要先建好再交给 create_app —— 它的 lifespan 必须由父应用串起来跑，
     # mount() 自己不会跑子应用的 lifespan，漏掉就只有 404。
     mcp_app = create_mcp().http_app(path="/") if mcp else None
-    application = create_app(mcp_app=mcp_app)
+    application = create_app(mcp_app=mcp_app, bern2_url=bern2_url)
 
-    table = Table(title="服务入口")
+    table = Table(title="Semantic Access Layer")
     table.add_column("路径")
     table.add_column("说明")
-    table.add_row(f"http://{host}:{port}/v1/*", "REST 工具端点")
+    table.add_row(f"http://{host}:{port}/v1/*", "KB tools + Foundation ops")
+    table.add_row(f"http://{host}:{port}/v1/golden_path", "金路径")
     table.add_row(f"http://{host}:{port}/docs", "交互式文档")
     table.add_row(f"http://{host}:{port}/health", "健康检查")
     if mcp:

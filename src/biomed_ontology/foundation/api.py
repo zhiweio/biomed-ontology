@@ -417,9 +417,7 @@ class FoundationApi:
             drugs = [_entity_ref(related_by_id, did, self) for did in drug_ids]
 
             # Evidence / assets：根实体 + 一跳相关（仍走 Milvus / OM）
-            ev_scope = list(
-                dict.fromkeys([enterprise_id, *target_ids, *disease_ids, *drug_ids])
-            )
+            ev_scope = list(dict.fromkeys([enterprise_id, *target_ids, *disease_ids, *drug_ids]))
             ev_out = self.search_evidence(entity_ids=ev_scope, require_quote=True)
             evidence_hits = {
                 e["evidence_id"]: EvidenceHit(
@@ -477,21 +475,15 @@ class FoundationApi:
             bios_bridges = fetch_bios_concepts(gdb, xref_pool)
             for t in targets:
                 t["bios"] = [
-                    b
-                    for b in bios_bridges
-                    if b.get("bios_curie") in (t.get("external_ids") or [])
+                    b for b in bios_bridges if b.get("bios_curie") in (t.get("external_ids") or [])
                 ]
             for d in diseases:
                 d["bios"] = [
-                    b
-                    for b in bios_bridges
-                    if b.get("bios_curie") in (d.get("external_ids") or [])
+                    b for b in bios_bridges if b.get("bios_curie") in (d.get("external_ids") or [])
                 ]
             for d in drugs:
                 d["bios"] = [
-                    b
-                    for b in bios_bridges
-                    if b.get("bios_curie") in (d.get("external_ids") or [])
+                    b for b in bios_bridges if b.get("bios_curie") in (d.get("external_ids") or [])
                 ]
 
             backends = {
@@ -548,11 +540,7 @@ class FoundationApi:
         ) as obs:
             resolve = self.resolve_entity(candidate_key)
             canonical = next(
-                (
-                    r["canonical_entity"]
-                    for r in resolve["resolved"]
-                    if r.get("canonical_entity")
-                ),
+                (r["canonical_entity"] for r in resolve["resolved"] if r.get("canonical_entity")),
                 None,
             )
             if not canonical:

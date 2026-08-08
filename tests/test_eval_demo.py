@@ -205,10 +205,10 @@ def test_entitlement_gated_queries_are_skipped_without_the_entitlement(kb):
 
 @pytest.mark.parametrize("demo_id", sorted(DEMOS))
 def test_demo_passes(kb, demo_id):
-    from biomed_ontology.agentapi import AgentApi
     from biomed_ontology.demo import run_demo
+    from biomed_ontology.tools import ToolApi
 
-    result = run_demo(demo_id, kb, AgentApi.from_kb(kb))
+    result = run_demo(demo_id, kb, ToolApi.from_kb(kb))
     assert result.passed, result.render()
 
 

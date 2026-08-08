@@ -119,9 +119,7 @@ class OpenMetadataClient:
         """幂等：glossary 已存在则返回，否则创建。"""
         self.require_admin()
         assert self.base_url and self.token
-        name_url = (
-            f"{self.base_url.rstrip('/')}/api/v1/glossaries/name/{HMD_ASSET_GLOSSARY}"
-        )
+        name_url = f"{self.base_url.rstrip('/')}/api/v1/glossaries/name/{HMD_ASSET_GLOSSARY}"
         with httpx.Client(timeout=self.timeout) as client:
             got = client.get(name_url, headers=self._headers())
             if got.status_code == 401:
@@ -313,9 +311,7 @@ class OpenMetadataClient:
             gloss = src.get("glossary") or {}
             gname = gloss.get("name") if isinstance(gloss, dict) else None
             fqn = str(src.get("fullyQualifiedName") or "")
-            if gname and gname != HMD_ASSET_GLOSSARY and not fqn.startswith(
-                HMD_ASSET_GLOSSARY
-            ):
+            if gname and gname != HMD_ASSET_GLOSSARY and not fqn.startswith(HMD_ASSET_GLOSSARY):
                 continue
             asset = _asset_from_term(src, base_url=self.base_url or "")
             if wanted and not (wanted & set(asset.entity_ids)):
@@ -334,9 +330,7 @@ class OpenMetadataClient:
                 return listed
         return hits
 
-    def _list_glossary_assets(
-        self, *, entity_ids: list[str] | None = None
-    ) -> list[AssetHit]:
+    def _list_glossary_assets(self, *, entity_ids: list[str] | None = None) -> list[AssetHit]:
         """GET glossaryTerms 全量后按 entity_ids 过滤（避免 ES CURIE 500）。"""
         self.ensure_auth()
         assert self.base_url

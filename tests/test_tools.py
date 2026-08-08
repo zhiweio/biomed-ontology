@@ -1,4 +1,4 @@
-"""混合检索与 11 个 agent tool。
+"""混合检索与 8 个 Semantic tools。
 
 许可相关的断言集中在这里：tool 层是唯一的对外面，
 门禁在别处漏一点还有机会被拦住，在这里漏就是直接出库。
@@ -10,8 +10,8 @@ import pytest
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
-from biomed_ontology.agentapi import TOOL_SPECS
 from biomed_ontology.search import HybridSearcher, rrf_fuse
+from biomed_ontology.tools import TOOL_SPECS
 
 LICENSED = frozenset({"MOCK_LICENSED"})
 SAVOLITINIB = "HMD:SUB:0000001"
@@ -127,7 +127,7 @@ def test_max_tier_caps_results_below_entitlement(kb, searcher, ctx):
     assert all(kb.doc_tier(h.doc_id) is LicenseTierEnum.TIER_0 for h in hits)
 
 
-# ------------------------------------------------------------------ agent tool
+# ------------------------------------------------------------------ tools
 
 
 def test_every_declared_tool_is_dispatchable(api):
@@ -144,18 +144,19 @@ def test_every_declared_tool_is_dispatchable(api):
         ("get_concept", {"concept_id": SAVOLITINIB}),
         ("search_documents", {"query": "savolitinib NSCLC"}),
         ("get_facts", {"subject_id": SAVOLITINIB}),
-        ("sparql_query", {"template": "concept_aliases", "bindings": {"concept_uri": SAVOLITINIB}}),
-        ("get_landscape", {}),
-        ("find_analogous", {"concept_id": SAVOLITINIB}),
         ("submit_feedback", {"verdict": "WRONG_CONCEPT", "source_trace_id": "t-1"}),
+        ("restore_context", {"chunk_id": "CHUNK:PMC.PLACEHOLDER"}),
     ],
 )
 def test_tool_responses_satisfy_the_contract(api, name, kwargs):
     """契约违规必须是硬失败。
 
-    agent 侧是拿 schema 生成代码的，返回体多一个字段少一个字段，
+    外部调用方是拿 schema 生成代码的，返回体多一个字段少一个字段，
     对面就是运行时炸开 —— 而且炸在别人的系统里。
     """
+    if name == "restore_context":
+        hit = api.search_documents(query="surufatinib", top_k=1)["results"][0]
+        kwargs = {"chunk_id": hit["chunk_id"]}
     env = getattr(api, name)(**kwargs)
     assert env["warnings"] == [], f"{name}: {env['warnings']}"
     assert env["trace_id"]
@@ -196,18 +197,6 @@ def test_get_facts_filters_by_license_and_reports_the_count(api):
     assert free["license_tier_max"] == "TIER_0"
 
 
-def test_landscape_keeps_public_entries_in_a_row_that_also_has_paid_ones(api):
-    """按条目过滤而不是按行过滤。
-
-    行内混进一条 TIER_3 就把整行藏掉，等于用许可控制做信息删减 ——
-    公开信息本来就该看得见。
-    """
-    free = api.get_landscape()
-    paid = api.get_landscape(entitlements=LICENSED)
-    assert len(free["landscape_rows"]) == len(paid["landscape_rows"])
-    assert free["license_filtered_count"] >= 1
-
-
 def test_facts_never_leak_a_paid_source_without_entitlement(api, kb):
     env = api.get_facts(subject_id=SAVOLITINIB)
     for f in env["facts"]:
@@ -218,34 +207,10 @@ def test_facts_never_leak_a_paid_source_without_entitlement(api, kb):
 def _failed(env) -> bool:
     """工具层把错误放回包里而不抛出去。
 
-    抛异常会把 agent 的循环直接打断；放回包里它才能改参数重试，
+    抛异常会把调用方的循环直接打断；放回包里它才能改参数重试，
     而且这次失败同样留下了 trace 与 IO 记录。
     """
     return env["warnings"] != []
-
-
-def test_sparql_rejects_injection(api):
-    env = api.sparql_query(template="concept_aliases", bindings={"concept_uri": "x> } DROP ALL #"})
-    assert _failed(env)
-    assert not env.get("rows")
-
-
-def test_sparql_requires_every_placeholder(api):
-    env = api.sparql_query(template="concept_aliases", bindings={})
-    assert any("MISSING_BINDING" in w for w in env["warnings"])
-
-
-def test_sparql_rejects_unknown_template(api):
-    """只能跑白名单模板。开放任意 SPARQL 等于把三元组库直接暴露给模型。"""
-    env = api.sparql_query(template="不存在的模板", bindings={})
-    assert _failed(env)
-
-
-def test_pipeline_matrix_joins_across_named_graphs(api):
-    """事实在各源图里、标签在种子图里，单个 GRAPH 块 join 不到。"""
-    env = api.sparql_query(template="pipeline_matrix", bindings={})
-    assert env["warnings"] == []
-    assert env["rows"], "跨图 join 返回空集"
 
 
 def test_feedback_is_persisted_and_linked_to_a_trace(api):
@@ -265,7 +230,7 @@ def test_feedback_is_persisted_and_linked_to_a_trace(api):
 def test_unknown_concept_reports_an_error_rather_than_an_empty_success(api):
     """查不到要明说查不到。
 
-    静默返回空结果会让 agent 把"本体里没有这个概念"读成"这个概念没有属性"。
+    静默返回空结果会让调用方把"本体里没有这个概念"读成"这个概念没有属性"。
     """
     env = api.get_concept(concept_id="HMD:SUB:9999999")
     assert _failed(env)

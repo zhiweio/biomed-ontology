@@ -18,7 +18,7 @@
 |---|---|---|
 | `hmd_concept.yaml` | 概念、同义词、映射、许可枚举 | `_generated/hmd_concept.py` |
 | `hmd_fact.yaml` | 文档、切片、事实、检索通道枚举 | `_generated/hmd_fact.py` |
-| `hmd_agentapi.yaml` | 11 工具请求/响应、Provenance | `_generated/hmd_agentapi.py` |
+| `hmd_tools.yaml` | 8 工具请求/响应、Provenance | `_generated/hmd_tools.py` |
 | `hmd_obs.yaml` | Trace / Decision / ToolIo | `_generated/hmd_obs.py` |
 | `hmd_taxonomy.yaml` | 文档标引标签 | `_generated/hmd_taxonomy.py` |
 | `hmd_enterprise.yaml` | Enterprise Ontology（DrugCandidate / Target / Claim…） | `_generated/hmd_enterprise.py` |
@@ -34,21 +34,21 @@ Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与
 # 2. 重新生成
 task gen
 # 3. 跑契约与 API 测试
-uv run pytest tests/test_agentapi.py tests/test_service.py -q
+uv run pytest tests/test_tools.py tests/test_service.py -q
 ```
 
 !!! warning "不要手改 _generated/"
     生成目录视为构建产物。手改会在下次 `task gen` 被覆盖，且审查时看不出意图。
     需要新字段：改 YAML → gen → 再改消费方。
 
-## 与 Agent 工具清单的对齐
+## 与 Semantic 工具清单的对齐
 
-`TOOL_SPECS`（`agentapi/__init__.py`）与 `schema/hmd_agentapi.yaml` **一一对应**，供 MCP / OpenAPI 自动生成。新增工具时必须同时改：
+`TOOL_SPECS`（`tools/api.py`）与 `schema/hmd_tools.yaml` **一一对应**，供 MCP / OpenAPI 自动生成。新增工具时必须同时改：
 
 1. schema 里的 Request/Response  
 2. `TOOL_SPECS` 一行  
-3. `AgentApi` 实现 + `_invoke` 注册  
-4. README / 手册里的「11」—— 有测试绊线  
+3. `ToolApi` 实现 + `_invoke` 注册  
+4. README / 手册里的「8」—— 有测试绊线  
 
 漏改 schema = 运行时能调、对外契约却撒谎。
 

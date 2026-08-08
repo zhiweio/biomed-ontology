@@ -415,7 +415,7 @@
         },
         "ConceptDetail": {
             "additionalProperties": false,
-            "description": "get_concept \u7684\u8be6\u60c5\u5757\u3002\u5305\u542b children \u800c\u975e\u53ea\u6709 parents\uff1a agent \u505a\u5c42\u7ea7\u6269\u5c55\u65f6\u9700\u8981\u5411\u4e0b\u770b\uff0c\u53ea\u7ed9\u7236\u94fe\u4f1a\u903c\u5b83\u518d\u53d1\u4e00\u8f6e\u67e5\u8be2\u3002",
+            "description": "get_concept \u7684\u8be6\u60c5\u5757\u3002\u5305\u542b children \u800c\u975e\u53ea\u6709 parents\uff1a \u8c03\u7528\u65b9\u505a\u5c42\u7ea7\u6269\u5c55\u65f6\u9700\u8981\u5411\u4e0b\u770b\uff0c\u53ea\u7ed9\u7236\u94fe\u4f1a\u903c\u5b83\u518d\u53d1\u4e00\u8f6e\u67e5\u8be2\u3002",
             "properties": {
                 "children": {
                     "items": {
@@ -1139,17 +1139,6 @@
                 "scope": {
                     "$ref": "#/$defs/SynonymScopeEnum"
                 },
-                "shared_targets": {
-                    "description": "find_analogous \u4e2d\u4e24\u4e2a\u8d44\u4ea7\u5171\u4eab\u7684\u9776\u70b9\uff0c\u662f\u76f8\u4f3c\u5ea6\u6210\u7acb\u7684\u4f9d\u636e\u3002",
-                    "items": {
-                        "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
-                        "type": "string"
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                },
                 "term": {
                     "type": [
                         "string",
@@ -1404,7 +1393,7 @@
         },
         "FeedbackRequest": {
             "additionalProperties": false,
-            "description": "\u4ee5 trace_id \u4e3a\u4e3b\u952e\u7684\u53cd\u9988\u3002\u8fd9\u662f\u6f14\u8fdb\u95ed\u73af\u7684\u5165\u53e3\uff0c \u4e5f\u662f agent \u63a5\u5165\u7684\u524d\u7f6e\u6761\u4ef6 \u2014\u2014 \u4e0d\u56de\u4f20 feedback\uff0c\u95ed\u73af\u5c31\u65ad\u4e86\u3002",
+            "description": "\u4ee5 trace_id \u4e3a\u4e3b\u952e\u7684\u53cd\u9988\u3002\u8fd9\u662f\u6f14\u8fdb\u95ed\u73af\u7684\u5165\u53e3\uff0c \u4e5f\u662f\u5de5\u5177\u63a5\u5165\u7684\u524d\u7f6e\u6761\u4ef6 \u2014\u2014 \u4e0d\u56de\u4f20 feedback\uff0c\u95ed\u73af\u5c31\u65ad\u4e86\u3002",
             "properties": {
                 "expected_concept_id": {
                     "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
@@ -1585,179 +1574,6 @@
                 "source"
             ],
             "title": "Hierarchy",
-            "type": "object"
-        },
-        "LandscapeEntry": {
-            "additionalProperties": false,
-            "description": "",
-            "properties": {
-                "concept_id": {
-                    "description": "\u5185\u90e8\u6982\u5ff5 CURIE",
-                    "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "label": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "license_tier": {
-                    "$ref": "#/$defs/LicenseTierEnum"
-                },
-                "stage": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                }
-            },
-            "title": "LandscapeEntry",
-            "type": "object"
-        },
-        "LandscapeRequest": {
-            "additionalProperties": false,
-            "description": "\u7ba1\u7ebf\u77e9\u9635\uff1a\u9776\u70b9 \u00d7 \u9002\u5e94\u75c7 \u00d7 \u5728\u7814\u836f\u7269\u3002",
-            "properties": {
-                "disease_id": {
-                    "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "target_id": {
-                    "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                }
-            },
-            "title": "LandscapeRequest",
-            "type": "object"
-        },
-        "LandscapeResponse": {
-            "additionalProperties": false,
-            "description": "",
-            "properties": {
-                "elapsed_ms": {
-                    "type": [
-                        "number",
-                        "null"
-                    ]
-                },
-                "landscape_rows": {
-                    "items": {
-                        "$ref": "#/$defs/LandscapeRow"
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                },
-                "license_filtered_count": {
-                    "description": "\u56e0\u8bb8\u53ef\u88ab\u8fc7\u6ee4\u6389\u7684\u6761\u76ee\u6570\u3002\u6301\u7eed\u4e3a 0 \u8bf4\u660e\u8fc7\u6ee4\u5668\u53ef\u80fd\u6ca1\u751f\u6548\u3002",
-                    "type": [
-                        "integer",
-                        "null"
-                    ]
-                },
-                "license_tier_max": {
-                    "$ref": "#/$defs/LicenseTierEnum",
-                    "description": "\u672c\u6b21\u8fd4\u56de\u4f53\u4e2d\u51fa\u73b0\u7684\u6700\u9ad8 tier\u3002\u8c03\u7528\u65b9\u636e\u6b64\u5224\u65ad\u53ef\u5426\u5916\u53d1\u3002"
-                },
-                "ontology_release_id": {
-                    "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$",
-                    "type": "string"
-                },
-                "tool_name": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "tool_version": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "total": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ]
-                },
-                "trace_id": {
-                    "description": "\u968f tool \u8fd4\u56de\u4f53\u56de\u4f20 agent\uff0c\u53cd\u9988\u63a5\u53e3\u4ee5\u5b83\u4e3a\u4e3b\u952e\uff08\u8bbe\u8ba1\u51b3\u7b56 D6\uff09\u3002",
-                    "type": "string"
-                },
-                "warnings": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                }
-            },
-            "required": [
-                "trace_id",
-                "ontology_release_id",
-                "license_tier_max"
-            ],
-            "title": "LandscapeResponse",
-            "type": "object"
-        },
-        "LandscapeRow": {
-            "additionalProperties": false,
-            "description": "",
-            "properties": {
-                "disease_id": {
-                    "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "disease_label": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "license_tier": {
-                    "$ref": "#/$defs/LicenseTierEnum"
-                },
-                "substances": {
-                    "items": {
-                        "$ref": "#/$defs/LandscapeEntry"
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                },
-                "target_id": {
-                    "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "target_label": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                }
-            },
-            "title": "LandscapeRow",
             "type": "object"
         },
         "LanguageEnum": {
@@ -2302,7 +2118,7 @@
         },
         "RestoreRequest": {
             "additionalProperties": false,
-            "description": "\u5f15\u7528\u4f18\u5148\uff08Citationware\uff09\u7684\u8fd8\u539f\u5165\u53e3\u3002\u68c0\u7d22\u8fd4\u56de\u7684\u662f\u9ad8\u5339\u914d\u5ea6\u7684\u788e\u7247\uff0c \u4f46\u4eba\u8981\u6838\u5bf9\u7684\u662f\u539f\u6587 \u2014\u2014 \u6ca1\u6709\u8fd9\u4e00\u6b65\uff0cagent \u53ea\u80fd\u62ff\u7740\u4e00\u53e5\u8bdd\u53bb\u8bf4\u670d\u4eba\uff0c \u800c\u5bf9\u65b9\u65e0\u6cd5\u7ffb\u56de\u539f\u6587\u7b2c\u51e0\u9875\u786e\u8ba4\u3002",
+            "description": "\u5f15\u7528\u4f18\u5148\uff08Citationware\uff09\u7684\u8fd8\u539f\u5165\u53e3\u3002\u68c0\u7d22\u8fd4\u56de\u7684\u662f\u9ad8\u5339\u914d\u5ea6\u7684\u788e\u7247\uff0c \u4f46\u4eba\u8981\u6838\u5bf9\u7684\u662f\u539f\u6587 \u2014\u2014 \u6ca1\u6709\u8fd9\u4e00\u6b65\uff0c\u8c03\u7528\u65b9\u53ea\u80fd\u62ff\u7740\u4e00\u53e5\u8bdd\u53bb\u8bf4\u670d\u4eba\uff0c \u800c\u5bf9\u65b9\u65e0\u6cd5\u7ffb\u56de\u539f\u6587\u7b2c\u51e0\u9875\u786e\u8ba4\u3002",
             "properties": {
                 "chunk_id": {
                     "pattern": "^CHK:[A-Za-z0-9._:-]+$",
@@ -2317,7 +2133,7 @@
                 },
                 "restore_scope": {
                     "$ref": "#/$defs/RestoreScopeEnum",
-                    "description": "\u8fd8\u539f\u8303\u56f4\u3002\u9ed8\u8ba4 SECTION \u2014\u2014 \u6574\u7bc7\u6587\u6863\u5f80\u5f80\u8d85\u51fa agent \u7684\u4e0a\u4e0b\u6587\u9884\u7b97\u3002"
+                    "description": "\u8fd8\u539f\u8303\u56f4\u3002\u9ed8\u8ba4 SECTION \u2014\u2014 \u6574\u7bc7\u6587\u6863\u5f80\u5f80\u8d85\u51fa\u8c03\u7528\u65b9\u7684\u4e0a\u4e0b\u6587\u9884\u7b97\u3002"
                 }
             },
             "required": [
@@ -2892,103 +2708,6 @@
             "title": "SignalTypeEnum",
             "type": "string"
         },
-        "SparqlRequest": {
-            "additionalProperties": false,
-            "description": "\u53d7\u63a7 SPARQL\u3002\u53ea\u63a5\u53d7\u6a21\u677f\u540d\u800c\u975e\u4efb\u610f\u67e5\u8be2\u4e32 \u2014\u2014 \u5f00\u653e\u4efb\u610f SPARQL \u7b49\u4e8e\u628a\u8bb8\u53ef\u91cd\u5199\u8fd9\u9053\u9632\u7ebf\u4ea4\u7ed9\u8c03\u7528\u65b9\u81ea\u89c9\u9075\u5b88\u3002",
-            "properties": {
-                "bindings": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                },
-                "sparql_template": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "sparql_template"
-            ],
-            "title": "SparqlRequest",
-            "type": "object"
-        },
-        "SparqlResponse": {
-            "additionalProperties": false,
-            "description": "",
-            "properties": {
-                "elapsed_ms": {
-                    "type": [
-                        "number",
-                        "null"
-                    ]
-                },
-                "license_filtered_count": {
-                    "description": "\u56e0\u8bb8\u53ef\u88ab\u8fc7\u6ee4\u6389\u7684\u6761\u76ee\u6570\u3002\u6301\u7eed\u4e3a 0 \u8bf4\u660e\u8fc7\u6ee4\u5668\u53ef\u80fd\u6ca1\u751f\u6548\u3002",
-                    "type": [
-                        "integer",
-                        "null"
-                    ]
-                },
-                "license_tier_max": {
-                    "$ref": "#/$defs/LicenseTierEnum",
-                    "description": "\u672c\u6b21\u8fd4\u56de\u4f53\u4e2d\u51fa\u73b0\u7684\u6700\u9ad8 tier\u3002\u8c03\u7528\u65b9\u636e\u6b64\u5224\u65ad\u53ef\u5426\u5916\u53d1\u3002"
-                },
-                "ontology_release_id": {
-                    "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$",
-                    "type": "string"
-                },
-                "rows": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                },
-                "tool_name": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "tool_version": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "total": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ]
-                },
-                "trace_id": {
-                    "description": "\u968f tool \u8fd4\u56de\u4f53\u56de\u4f20 agent\uff0c\u53cd\u9988\u63a5\u53e3\u4ee5\u5b83\u4e3a\u4e3b\u952e\uff08\u8bbe\u8ba1\u51b3\u7b56 D6\uff09\u3002",
-                    "type": "string"
-                },
-                "warnings": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                }
-            },
-            "required": [
-                "trace_id",
-                "ontology_release_id",
-                "license_tier_max"
-            ],
-            "title": "SparqlResponse",
-            "type": "object"
-        },
         "Synonym": {
             "additionalProperties": false,
             "description": "\u522b\u540d\u6761\u76ee\u3002scope \u5fc5\u586b \u2014\u2014 \u68c0\u7d22\u6269\u5c55\u884c\u4e3a\u5b8c\u5168\u7531 scope \u9a71\u52a8\uff08D2\uff09\u3002 is_ambiguous \u4e3a\u771f\u65f6\uff0c\u8be5\u522b\u540d\u4e0d\u5f97\u76f4\u63a5\u5355\u9009\uff0c\u5fc5\u987b\u8d70\u4e0a\u4e0b\u6587\u6d88\u6b67\uff08D3\uff09\u3002",
@@ -3349,11 +3068,11 @@
             "type": "object"
         }
     },
-    "$id": "https://w3id.org/asliva/biomed-ontology/agentapi",
+    "$id": "https://w3id.org/asliva/biomed-ontology/tools",
     "$schema": "https://json-schema.org/draft/2019-09/schema",
     "additionalProperties": true,
     "metamodel_version": "1.11.0",
-    "title": "hmd_agentapi",
+    "title": "hmd_tools",
     "type": "object",
     "version": null
 }

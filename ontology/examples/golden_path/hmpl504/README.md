@@ -19,7 +19,7 @@ uv run hmd foundation golden --candidate HMPL-504          # Rich 分步推理�
 uv run hmd foundation golden --candidate HMPL-504 --compact  # 仅 Trace
 uv run hmd foundation golden --candidate HMPL-504 --json     # 机器可读
 # 或
-uv run hmd foundation serve --mcp   # :8100  REST + MCP get_entity_context
+uv run hmd serve --mcp   # REST + MCP get_entity_context
 ```
 
 离线（仅 YAML seed）即可验证解析与聚合；不依赖 Docker。
@@ -59,7 +59,7 @@ uv run hmd foundation resolve "NSCLC"
 ## MCP
 
 ```bash
-uv run hmd foundation serve --mcp
+uv run hmd serve --mcp
 # 工具：get_entity_context(enterprise_id="HMD:ENT:DC:savolitinib")
 ```
 

@@ -1,7 +1,7 @@
 """8 个演示场景。
 
-每个场景都直接调 agent tool 而不是内部函数 —— 演示的是"agent 能拿到什么"，
-用内部函数演示会得出一个 agent 实际上够不着的结论。
+每个场景都直接调 tools API 而不是内部函数 —— 演示的是外部调用方能拿到什么，
+用内部函数演示会得出一个实际上够不着的结论。
 """
 
 from __future__ import annotations
@@ -11,7 +11,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
-from biomed_ontology.agentapi import AgentApi
 from biomed_ontology.evolution import (
     MiningInput,
     build_changeset,
@@ -20,6 +19,7 @@ from biomed_ontology.evolution import (
 )
 from biomed_ontology.pipeline import KnowledgeBase
 from biomed_ontology.quality import QualityGate
+from biomed_ontology.tools import ToolApi
 
 __all__ = ["DEMOS", "DemoResult", "run_all", "run_demo"]
 
@@ -48,7 +48,7 @@ def _jaccard(a: set[str], b: set[str]) -> float:
 # ---------------------------------------------------------------- D1 别名一致性
 
 
-def demo_alias_consistency(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_alias_consistency(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult(
         "D1",
         "别名一致性",
@@ -84,7 +84,7 @@ def demo_alias_consistency(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
 # ---------------------------------------------------------------- D2 层级扩展
 
 
-def demo_hierarchy_expansion(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_hierarchy_expansion(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult(
         "D2",
         "层级扩展",
@@ -114,7 +114,7 @@ def demo_hierarchy_expansion(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
 # ---------------------------------------------------------------- D3 跨语言
 
 
-def demo_cross_lingual(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_cross_lingual(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult("D3", "跨语言", "中文查询召回英文文献，中英证据合并到同一条事实上")
     hits = api.search_documents("沃利替尼 非小细胞肺癌", top_k=5)["results"]
     langs = {kb.document(h["doc_id"]).language.value for h in hits}
@@ -137,7 +137,7 @@ def demo_cross_lingual(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
 # ---------------------------------------------------------------- D4 归因排障
 
 
-def demo_traceability(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_traceability(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult(
         "D4",
         "归因排障",
@@ -170,7 +170,7 @@ def demo_traceability(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
 # ---------------------------------------------------------------- D5 演进闭环
 
 
-def demo_evolution_loop(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_evolution_loop(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult("D5", "演进闭环", "一次未命中 → 信号 → KGCL → 双闸门发版，全程留痕")
     api.normalize_entity("Zanubrutinib 联合 ABT-869 治疗", detect_spans=True)
     api.submit_feedback(
@@ -205,7 +205,7 @@ def demo_evolution_loop(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
 # ---------------------------------------------------------------- D6 事实溯源 + license
 
 
-def demo_facts_and_license(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_facts_and_license(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult(
         "D6",
         "结构化事实溯源 + 许可隔离",
@@ -238,12 +238,11 @@ def demo_facts_and_license(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
         f"有凭据命中 {len(unlocked)} 条"
     )
 
-    # graph_inventory 查的是元数据图，两边都看得到——这是故意的：
-    # "存在你读不了的源"本身不是机密，藏掉它会让采购决策失去依据。
-    inv = api.sparql_query("graph_inventory")
-    r.lines.append(f"SPARQL 元数据：可见命名图 {inv['total']} 个（含不可读的）")
-    tri_free = sum(kb.graph.count_triples(g) for g in kb.graph.visible_graphs(frozenset()))
-    tri_paid = sum(kb.graph.count_triples(g) for g in kb.graph.visible_graphs(_LICENSED))
+    graphs_free = kb.graph.visible_graphs(frozenset())
+    graphs_paid = kb.graph.visible_graphs(_LICENSED)
+    tri_free = sum(kb.graph.count_triples(g) for g in graphs_free)
+    tri_paid = sum(kb.graph.count_triples(g) for g in graphs_paid)
+    r.lines.append(f"可见命名图：无凭据 {len(graphs_free)} / 有凭据 {len(graphs_paid)}")
     r.lines.append(f"可读三元组：无凭据 {tri_free} / 有凭据 {tri_paid}")
     r.passed = (
         not leaked
@@ -258,7 +257,7 @@ def demo_facts_and_license(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
 # ---------------------------------------------------------------- D7 引用还原
 
 
-def demo_citation_restore(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_citation_restore(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult(
         "D7",
         "引用优先：碎片 → 原文",
@@ -319,7 +318,7 @@ def demo_citation_restore(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
 # ---------------------------------------------------------------- D8 看图通道
 
 
-def demo_modality_channel(kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def demo_modality_channel(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult(
         "D8",
         "看图通道",
@@ -373,7 +372,7 @@ def _tally(values: list[str]) -> dict[str, int]:
     return out
 
 
-DEMOS: dict[str, Callable[[KnowledgeBase, AgentApi], DemoResult]] = {
+DEMOS: dict[str, Callable[[KnowledgeBase, ToolApi], DemoResult]] = {
     "D1": demo_alias_consistency,
     "D2": demo_hierarchy_expansion,
     "D3": demo_cross_lingual,
@@ -385,15 +384,15 @@ DEMOS: dict[str, Callable[[KnowledgeBase, AgentApi], DemoResult]] = {
 }
 
 
-def run_demo(demo_id: str, kb: KnowledgeBase, api: AgentApi) -> DemoResult:
+def run_demo(demo_id: str, kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     return DEMOS[demo_id](kb, api)
 
 
-def run_all(kb: KnowledgeBase, api: AgentApi | None = None) -> list[DemoResult]:
-    api = api or AgentApi.from_kb(kb)
+def run_all(kb: KnowledgeBase, api: ToolApi | None = None) -> list[DemoResult]:
+    api = api or ToolApi.from_kb(kb)
     # 每个场景一个 api 实例，但共用 kb.hub —— 于是 D4 那次弃权会作为 unmapped
     # 信号出现在 D5 的挖掘结果里。这不是串扰，正是要演示的闭环本身。
-    return [DEMOS[d](kb, AgentApi.from_kb(kb)) for d in DEMOS]
+    return [DEMOS[d](kb, ToolApi.from_kb(kb)) for d in DEMOS]
 
 
 def summary_json(results: list[DemoResult]) -> str:

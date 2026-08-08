@@ -26,7 +26,7 @@ canon_ttl = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(canon_ttl)
 
 # 只取每类最小的一份。`to_canonical_graph` 是图同构算法，随空白节点数急剧变慢：
-# 全部 10 份跑一遍要 4 分半，而 hmd_agentapi.owl.ttl 一份就占 79 秒。
+# 全部 10 份跑一遍要 4 分半，而 hmd_tools.owl.ttl 一份就占 79 秒。
 # 把它塞进默认套件的真实后果不是"慢一点"，是大家不再跑 task check。
 #
 # 全量覆盖挂在 `task nightly`（= `task canon-check`，只判定不落盘）。

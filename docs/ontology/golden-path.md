@@ -39,7 +39,7 @@ Claim
 
 `get_entity_context` 聚合返回 `entity` / `targets` / `diseases` / `evidence` / `internal_assets`。
 
-## Agent 入口
+## Semantic Access 入口
 
 运行时强制读 **GraphDB + Milvus + OpenMetadata**（禁止 YAML fallback）。  
 `data/foundation/*.yaml` 仅离线种子 → `ontology:validate` → `hmd foundation sync`（幂等）入库。
@@ -48,8 +48,7 @@ Claim
 uv run hmd foundation sync
 uv run hmd foundation golden --candidate HMPL-504 --json
 uv run hmd foundation golden-eval          # 多路径：药物/靶点/适应症
-uv run python scripts/golden_path_eval.py
-uv run hmd foundation serve --mcp   # :8100
+uv run hmd serve --mcp                     # 单一 REST + MCP
 ```
 
 评估检查：`backends` 无 yaml；BIOS 桥接读 GraphDB `graph/biomedical`；证据 Milvus；资产 OpenMetadata。  
@@ -60,7 +59,7 @@ MCP / REST 主契约：`get_entity_context`（不暴露裸 `graph_sparql` / 向�
 ## 最终视觉
 
 ```text
-                         AI Agent
+                    仓外 LLM / Tool Client
                             │
                             ▼
                  get_entity_context()

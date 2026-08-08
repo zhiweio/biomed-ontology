@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from biomed_ontology.agentapi import TOOL_SPECS
 from biomed_ontology.demo import DEMOS
 from biomed_ontology.eval import eval_retrieval
 from biomed_ontology.pipeline import build_knowledge_base
+from biomed_ontology.tools import TOOL_SPECS
 
 README = Path(__file__).resolve().parents[1] / "README.md"
 LICENSED = frozenset({"MOCK_LICENSED"})

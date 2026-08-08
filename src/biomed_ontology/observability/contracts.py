@@ -54,7 +54,7 @@ class ContractValidator:
         return self._backend_available
 
     def validate(
-        self, class_name: str, payload: dict[str, Any], *, schema: str = "hmd_agentapi"
+        self, class_name: str, payload: dict[str, Any], *, schema: str = "hmd_tools"
     ) -> ValidationResult:
         doc = self._load(schema)
         defs = doc.get("$defs", {})

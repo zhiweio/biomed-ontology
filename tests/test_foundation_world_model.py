@@ -36,9 +36,10 @@ FOUNDATION = ROOT / "data" / "foundation"
 
 def _backends_ready() -> bool:
     try:
+        from pymilvus import MilvusClient
+
         from biomed_ontology.config import settings
         from biomed_ontology.foundation.catalog import OpenMetadataClient
-        from pymilvus import MilvusClient
 
         if not GraphDbClient.from_settings().health():
             return False
@@ -119,7 +120,9 @@ def test_query_rejects_without_graphdb() -> None:
 
 def test_golden_path_live_backends() -> None:
     if not _backends_ready():
-        pytest.skip("需要 GraphDB + Milvus foundation_evidence + OpenMetadata（先 foundation sync）")
+        pytest.skip(
+            "需要 GraphDB + Milvus foundation_evidence + OpenMetadata（先 foundation sync）"
+        )
     api = FoundationApi(load_world_model(FOUNDATION))
     result = api.golden_path("HMPL-504")
     assert result["ok"] is True
@@ -160,7 +163,7 @@ def test_observe_retrieval_emits_four_pillars() -> None:
     from biomed_ontology.foundation.obs_log import observe_retrieval
 
     buf = io.StringIO()
-    obs_log._CONFIGURED = False  # noqa: SLF001 — 测试强制重配
+    obs_log._CONFIGURED = False
     # 直接把 logger 打到 buffer，避免捕获真实 stderr 句柄
     import structlog
 
@@ -174,7 +177,7 @@ def test_observe_retrieval_emits_four_pillars() -> None:
         logger_factory=structlog.PrintLoggerFactory(file=buf),
         cache_logger_on_first_use=False,
     )
-    obs_log._CONFIGURED = True  # noqa: SLF001
+    obs_log._CONFIGURED = True
     with observe_retrieval("test.where", op="unit", input_summary={"q": 1}) as st:
         st["backend"] = "milvus"
         st["why"] = {"yaml_fallback": False}
@@ -182,7 +185,7 @@ def test_observe_retrieval_emits_four_pillars() -> None:
     blob = buf.getvalue()
     for pillar in ("trace", "io", "state", "metrics"):
         assert f'"pillar": "{pillar}"' in blob or f'"pillar":"{pillar}"' in blob
-    obs_log._CONFIGURED = False  # noqa: SLF001
+    obs_log._CONFIGURED = False
 
 
 def test_golden_path_rich_render_with_mock_context() -> None:
@@ -316,9 +319,12 @@ def test_get_entity_context_mocked_stores() -> None:
     api.graphdb.health.return_value = True
 
     def _fetch_entity(_c: Any, eid: str) -> EnterpriseEntity | None:
-        return {"HMD:ENT:DC:savolitinib": savo, "HMD:ENT:TGT:MET": met, "HMD:ENT:IND:nsclc": nsclc}.get(
-            eid
-        )
+        table = {
+            "HMD:ENT:DC:savolitinib": savo,
+            "HMD:ENT:TGT:MET": met,
+            "HMD:ENT:IND:nsclc": nsclc,
+        }
+        return table.get(eid)
 
     with (
         patch("biomed_ontology.foundation.api.fetch_entity", side_effect=_fetch_entity),
@@ -396,12 +402,8 @@ def test_bios_load_satisfied_skips_when_marker_and_graph_ready() -> None:
         "concepts": 22104562,
         "max_concepts": 0,
     }
-    assert _bios_load_satisfied(
-        full=True, marker=marker, max_concepts=0, graph_ready=True
-    )
-    assert not _bios_load_satisfied(
-        full=True, marker=marker, max_concepts=0, graph_ready=False
-    )
+    assert _bios_load_satisfied(full=True, marker=marker, max_concepts=0, graph_ready=True)
+    assert not _bios_load_satisfied(full=True, marker=marker, max_concepts=0, graph_ready=False)
     # 先前截断、现在要全量 → 不满足
     assert not _bios_load_satisfied(
         full=True,
@@ -436,11 +438,18 @@ def test_enterprise_id_from_iri_roundtrip() -> None:
 def test_foundation_mcp_exposes_get_entity_context() -> None:
     import asyncio
 
-    from biomed_ontology.foundation.mcp import create_foundation_mcp
+    from biomed_ontology.service.deps import build_state, set_state
+    from biomed_ontology.service.mcp import create_mcp
+    from biomed_ontology.tools import TOOL_SPECS
 
-    tools = asyncio.run(create_foundation_mcp().list_tools())
-    names = {t.name for t in tools}
-    assert "get_entity_context" in names
-    assert "resolve_entity" in names
-    assert "graph_sparql" not in names
-    assert "vector_search" not in names
+    set_state(build_state())
+    try:
+        tools = asyncio.run(create_mcp().list_tools())
+        names = {t.name for t in tools}
+        assert "get_entity_context" in names
+        assert "resolve_entity" in names
+        assert {s["name"] for s in TOOL_SPECS} <= names
+        assert "graph_sparql" not in names
+        assert "vector_search" not in names
+    finally:
+        set_state(None)

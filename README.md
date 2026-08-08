@@ -2,14 +2,14 @@
 
 面向阿斯利华创新药研发场景的**企业级 AI Data Foundation / 生物医药语义层** PoC。
 
-两条交付面并行：
+**单一 Semantic Access Layer**（`hmd serve`，默认 `:8000`）：
 
-1. **检索底座（既有 PoC）**：Ontology + 事实 + 多模态文献检索 + Citationware（`:8000`）  
-2. **Foundation 世界模型**：以 **Enterprise Ontology ID**（`HMD:ENT:*`）为锚，统一实体 / 关系 / 证据 / 企业资产（`:8100`）
+1. **检索基座**：Ontology + 事实 + 多模态文献检索 + Citationware  
+2. **Foundation 世界模型**：以 **Enterprise Ontology ID**（`HMD:ENT:*`）为锚，统一实体 / 关系 / 证据 / 企业资产  
 
 > BIOS provides the biomedical world. Enterprise Ontology provides the company's world.
 
-**本仓库不包含 AI agent 本身** —— 只构建其消费的数据底座与 Semantic API / MCP。
+**本仓库不包含 AI agent 本身** —— 不做意图解析与编排；只提供 REST/MCP tools，供仓外 GPT / Codex 等调用。
 
 **完整手册**（机制、事故教训、设计不变量）：见 [`docs/`](docs/index.md)，本地预览：
 
@@ -47,7 +47,7 @@ uv run hmd foundation sync                           # YAML 校验入库 → Gra
 uv run hmd foundation evolve-mine                    # 候选落库，不自动改本体
 uv run hmd foundation golden --candidate HMPL-504 --json   # 单路径 JSON
 uv run hmd foundation golden-eval                            # 多路径评估（药物/靶点/适应症）
-uv run hmd foundation serve --mcp                            # Semantic API + MCP :8100
+uv run hmd serve --mcp                                       # 唯一 Semantic API + MCP（KB tools + Foundation ops）
 task ontology:validate                                       # Ontology-as-Code + Golden Path
 task foundation:golden-eval                                  # GraphDB(+BIOS)/Milvus/OM，禁止 YAML
 ```
@@ -71,7 +71,7 @@ uv run hmd serve     # 起 REST + MCP 服务（:8000）
 task check           # ruff + 全量测试
 ```
 
-`task check` = ruff + 全量测试，共 **528 条测试**（527 passed + 1 xfailed）。
+`task check` = ruff + 全量测试，共 **529 条测试**（528 passed + 1 xfailed）。
 那 1 条 xfail 不是"暂时跳过"，而是**当前证伪不了的产品承诺**：T1 本体增强召回
 相对提升 ≥ 10%。标了 `strict=True` —— 一旦重新成立就会立刻炸掉，
 逼人回来删标记，而不是让"曾经声称过的能力"无声地留在文档里。原因见下面的检索评测一节。
@@ -153,8 +153,8 @@ L2 语义层        LinkML（Biolink 子集 + hmd_enterprise）→ OWL + SHACL +
 L3 归一化 / ER   文本 → CURIE；Foundation：BERN2 候选 → Enterprise ID
 L4 语料治理      文档标引分类 + 三模态抽取（文本/表格/图像）→ 结构化事实 + provenance
 L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列检索 + Evidence Index
-L6 Agent 接口    :8000 AgentApi（11 tools）∥ :8100 Foundation Semantic Ops
-L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
+L6 Tool API      唯一 REST/MCP：KB 工具 + Foundation Semantic Ops（`hmd serve`）
+L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)；dual obs（Hub + foundation obs_log）
 L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release；Foundation evolve-mine 不自动改本体
 ```
 
@@ -167,15 +167,15 @@ flowchart LR
     KB --> S[search<br/>BM25 ⊕ dense ⊕ graph]
     KB --> M[(Milvus<br/>Evidence Index)]
     M --> S
-    S --> API[AgentApi<br/>11 tools :8000]
+    S --> API[ToolApi<br/>KB tools]
     ENT[Enterprise Ontology] --> GDB[(GraphDB<br/>Named Graphs)]
     ENT --> RES[Entity Resolution]
-    RES --> FAPI[Foundation<br/>Semantic Ops :8100]
+    RES --> FAPI[Foundation<br/>Semantic Ops]
     GDB --> FAPI
     M --> FAPI
     OM[(OpenMetadata)] --> FAPI
-    API --> REST[REST / MCP]
-    FAPI --> REST
+    API --> SAL[REST / MCP<br/>hmd serve]
+    FAPI --> SAL
     API -.trace.-> OBS[可观测]
     OBS -.signal.-> EVO[演进 KGCL]
     EVO -.release.-> ONT
@@ -199,7 +199,7 @@ flowchart LR
 uv run hmd demo --id D7
 ```
 
-详解：[Citationware](docs/agent/citationware.md) · [四支柱](docs/observability/pillars.md)。
+详解：[Citationware](docs/tools/citationware.md) · [四支柱](docs/observability/pillars.md)。
 
 ---
 
@@ -454,7 +454,7 @@ fake 的"生医稠密"列根本不是 SapBERT，只是确定性哈希。
 模态间隙不是靠调分数补的。文本-文本相似度系统性高于文本-图像，
 想让图浮上来就得引入一个说不清的跨模态偏置项；
 而"我要看那张生存曲线"本来就是个**布尔条件**，不是偏好。
-所以它落成过滤：契约里的 `modalities` 槽 → `AgentApi.search_documents` →
+所以它落成过滤：契约里的 `modalities` 槽 → `ToolApi.search_documents` →
 `RetrievalRequest` → 两个后端各自执行（Milvus 下推成 `modality in [...]`，
 本地后端在候选集上过滤），GRAPH 通道的产物也走同一道过滤。
 
@@ -581,17 +581,18 @@ T2 / T3 / T4 都走完了整条路径：未达成 + 署名豁免 → 达成 + �
 
 ## 服务入口
 
-CLI 一个命令不动，REST 与 MCP 是**并列的第二个入口**，三者共用同一个 `dispatch` ——
-包裹链（契约校验 / 许可过滤 / trace 留痕）因此无法被绕过。
+**唯一** Semantic Access Layer：`hmd serve` 同时挂载 KB 工具（8 个工具）与 Foundation ops；
+CLI 构建/评测命令不变。KB 工具共用 `dispatch` 包裹链（契约校验 / 许可过滤 / trace）。
 
 ```bash
-uv run hmd serve --port 8000
+uv run hmd serve --mcp --port 8000
 ```
 
 | 入口 | 地址 |
 |---|---|
-| REST | `POST /v1/{tool_name}` × 11 |
-| OpenAPI | `GET /openapi.json`（从契约导出，非反射生成） |
+| REST（KB） | `POST /v1/{tool_name}` × 8 |
+| REST（Foundation） | `POST /v1/{op}`（resolve/get_entity/…） |
+| OpenAPI | `GET /openapi.json`（KB 契约 + Foundation 路径） |
 | MCP | `POST /mcp/`（Streamable HTTP） |
 | 健康 | `GET /health` |
 
@@ -627,14 +628,15 @@ uv run hmd serve --port 8000
 | `schema/` | LinkML SSOT（含 `hmd_enterprise`） |
 | `ontology/` | Ontology-as-Code 策展面（mappings / Protégé 入口 / Golden Path 样例） |
 | `Taskfile.yml` | 统一任务入口（替代 Makefile） |
-| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic API + MCP |
+| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic Ops |
 | `src/biomed_ontology/registry/` | 数据源注册表 + 许可分层 |
 | `src/biomed_ontology/ontology/` | 等价团构建、ID 分配、发版、RDF |
 | `src/biomed_ontology/parse/` | PDF → 语义树（衍生自 knowhere，见 NOTICE） |
 | `src/biomed_ontology/embed/` | BGE-M3 + SapBERT + Qwen3-VL + BiomedCLIP，五向量列 |
 | `src/biomed_ontology/rerank/` | bge-reranker-v2-m3 交叉编码器精排 |
 | `src/biomed_ontology/search/` | 三通道检索 + 带权 RRF + 模态/图型过滤 + Milvus |
-| `src/biomed_ontology/agentapi/` | 11 个工具 + Citationware（:8000） |
+| `src/biomed_ontology/tools/` | 8 个工具 + Citationware（KB Semantic Tools） |
+| `src/biomed_ontology/service/` | 唯一 REST/MCP 宿主（`hmd serve`） |
 | `src/biomed_ontology/observability/` | 四支柱埋点与契约校验 |
 | `src/biomed_ontology/evolution/` | 信号挖掘 → KGCL → 发版守门 |
 | `src/biomed_ontology/eval/` | 消融评测 + 指标目标 |

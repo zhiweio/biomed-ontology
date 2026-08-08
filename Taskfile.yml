@@ -5,7 +5,7 @@ vars:
   SCHEMA_DIR: schema
   GEN_PY: src/biomed_ontology/_generated
   GEN_ART: schema/generated
-  SCHEMAS: hmd_concept hmd_fact hmd_taxonomy hmd_obs hmd_agentapi hmd_enterprise
+  SCHEMAS: hmd_concept hmd_fact hmd_taxonomy hmd_obs hmd_tools hmd_enterprise
   # 单一项目 hmd-foundation；Milvus 片段见 docker/milvus-standalone.yml（被 include）
   FOUNDATION_COMPOSE: docker/docker-compose.foundation.yml
   MILVUS_SERVICES: etcd minio standalone
