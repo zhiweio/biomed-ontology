@@ -1,0 +1,80 @@
+# Enterprise Ontology 金路径种子 —— 企业世界模型实体（主键 ≠ BIOS URI）
+release_id: "0.3.0-foundation"
+
+entities:
+  - key: met_program
+    entity_kind: Program
+    enterprise_id: HMD:ENT:PRG:met_nsclc
+    preferred_label_en: MET NSCLC Program
+    preferred_label_zh: MET 非小细胞肺癌项目
+    therapeutic_area: oncology
+    aliases: [MET program]
+
+  - key: MET
+    entity_kind: Target
+    enterprise_id: HMD:ENT:TGT:MET
+    preferred_label_en: MET
+    preferred_label_zh: MET
+    definition: Hepatocyte growth factor receptor tyrosine kinase
+    exact_match_xrefs:
+      - HGNC:7029
+      - NCBIGene:4233
+      - BIOS:MET_DEMO
+    aliases: [c-MET, HGFR, MET proto-oncogene]
+
+  - key: nsclc
+    entity_kind: Indication
+    enterprise_id: HMD:ENT:IND:nsclc
+    preferred_label_en: non-small cell lung cancer
+    preferred_label_zh: 非小细胞肺癌
+    exact_match_xrefs:
+      - MONDO:0005233
+      - DOID:3908
+      - BIOS:NSCLC_DEMO
+    aliases: [NSCLC, non-small-cell lung cancer, 非小细胞肺癌]
+
+  - key: savolitinib
+    entity_kind: DrugCandidate
+    enterprise_id: HMD:ENT:DC:savolitinib
+    preferred_label_en: savolitinib
+    preferred_label_zh: 赛沃替尼
+    definition: Selective MET tyrosine kinase inhibitor (Asliva / AstraZeneca)
+    exact_match_xrefs:
+      - CHEBI:DEMO_SAVO
+      - DrugBank:DEMO_SAVO
+      - BIOS:SAVO_DEMO
+    aliases:
+      - HMPL-504
+      - AZD6094
+      - AZD-6094
+      - volitinib
+      - ORPATHYS
+      - 沃瑞沙
+      - 赛沃替尼
+    targets: [HMD:ENT:TGT:MET]
+    indications: [HMD:ENT:IND:nsclc]
+    program_id: HMD:ENT:PRG:met_nsclc
+    modality: small_molecule
+
+  - key: exp_2025_012
+    entity_kind: Experiment
+    enterprise_id: HMD:ENT:EXP:2025_012
+    preferred_label_en: EXP-2025-012 MET inhibition assay
+    preferred_label_zh: EXP-2025-012 MET 抑制实验
+    definition: Internal ELN batch testing savolitinib against MET
+    candidate_id: HMD:ENT:DC:savolitinib
+    target_ids: [HMD:ENT:TGT:MET]
+    indication_ids: [HMD:ENT:IND:nsclc]
+    asset_fqn: asliva.eln.exp_2025_012
+    performed_on: "2025-03-12"
+    aliases: [EXP-2025-012]
+
+  - key: pmid_demo
+    entity_kind: Publication
+    enterprise_id: HMD:ENT:PUB:pmid_demo_savo
+    preferred_label_en: Savolitinib NSCLC demonstration abstract
+    pmid: "00000001"
+    mentions:
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:TGT:MET
+      - HMD:ENT:IND:nsclc

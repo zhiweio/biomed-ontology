@@ -8,11 +8,11 @@ from pydantic import ValidationError
 from biomed_ontology.config import load_settings
 
 
-def test_defaults_require_no_external_service():
-    """不装 Docker、不联网、不配 key 也要能跑通全链路。"""
+def test_defaults_prefer_milvus_evidence_index():
+    """Milvus 为必选 Evidence Index；layout/vision 仍保持零依赖默认。"""
     s = load_settings({})
     assert s.layout_backend == "pymupdf"
-    assert s.search_backend == "local"
+    assert s.search_backend == "milvus"
     assert s.vision_provider == "null"
 
 
@@ -20,7 +20,13 @@ def test_security_sensitive_defaults_are_closed():
     s = load_settings({})
     assert s.trust_entitlement_header is False
     assert s.layout_fallback is False
+    # milvus 默认不触发「非 milvus」告警
     assert s.warnings() == []
+
+
+def test_local_search_backend_emits_milvus_warning():
+    s = load_settings({"HMD_SEARCH_BACKEND": "local"})
+    assert any("milvus" in w.lower() for w in s.warnings())
 
 
 def test_trusting_client_entitlements_emits_a_warning():
@@ -100,8 +106,8 @@ def test_attack_surface_limits_must_be_positive(key: str):
 
 def test_test_env_ignores_host_environment(monkeypatch: pytest.MonkeyPatch):
     """传 dict 就只认这个 dict —— 开发机上一个 .env 不该让断言在本地与 CI 分叉。"""
-    monkeypatch.setenv("HMD_SEARCH_BACKEND", "milvus")
-    assert load_settings({}).search_backend == "local"
+    monkeypatch.setenv("HMD_SEARCH_BACKEND", "local")
+    assert load_settings({}).search_backend == "milvus"
 
 
 def test_unknown_hmd_variables_are_ignored_not_fatal():

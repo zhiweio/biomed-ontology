@@ -1,0 +1,8 @@
+# 可选：GraphDB SE/EE 许可证覆盖层（Free 联调不要用本文件）
+# 用法：先把真实 license 存为 docker/secrets/graphdb.license（普通文件），再：
+#   docker compose -f docker/docker-compose.foundation.yml \
+#     -f docker/docker-compose.graphdb-license.yml up -d graphdb
+services:
+  graphdb:
+    volumes:
+      - ./secrets/graphdb.license:/opt/graphdb/home/conf/graphdb.license:ro

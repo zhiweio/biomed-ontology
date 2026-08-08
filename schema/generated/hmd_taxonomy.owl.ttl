@@ -267,6 +267,12 @@ hmd:Concept a owl:Class ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:equivalent_xrefs ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:has_target ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:treats ],
+        [ a owl:Restriction ;
             owl:allValuesFrom xsd:string ;
             owl:onProperty hmd:modified_in_release ],
         [ a owl:Restriction ;
@@ -320,6 +326,12 @@ hmd:Concept a owl:Class ;
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:equivalent_xrefs ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:has_target ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:anyURI ;
+            owl:onProperty hmd:treats ],
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
             owl:onProperty hmd:entity_type ],
@@ -1989,6 +2001,12 @@ hmd:evidence a owl:ObjectProperty ;
     rdfs:range hmd:Evidence ;
     skos:inScheme hmd:fact .
 
+hmd:has_target a owl:DatatypeProperty ;
+    rdfs:label "has_target" ;
+    rdfs:range xsd:anyURI ;
+    skos:definition "药物作用的靶点。与 parents 一样是概念之间的边，但它是**跨实体类型**的： parents 只在同类内部走（疾病→上位疾病），has_target 从 SUBSTANCE 跳到 TARGET。 检索期的 search-around 靠的就是这类跨类型跳转 —— 「VEGFR2 抑制剂」这种查询要从靶点反向找到药，层级扩展一步也走不到。" ;
+    skos:inScheme hmd:concept .
+
 hmd:keywords_en a owl:DatatypeProperty ;
     rdfs:label "keywords_en" ;
     rdfs:range xsd:string ;
@@ -2026,6 +2044,12 @@ hmd:qualifiers a owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     skos:definition "限定条件，如 line_of_therapy=3L、population=MET_ex14。" ;
     skos:inScheme hmd:fact .
+
+hmd:treats a owl:DatatypeProperty ;
+    rdfs:label "treats" ;
+    rdfs:range xsd:anyURI ;
+    skos:definition "药物的适应症。同为跨类型边（SUBSTANCE → DISEASE）。 与事实层同名谓词的区别在证据强度：这里是种子里的人工断言， 事实层那条是从正文抽出来、带 reifier 与出处的。两者落在不同命名图。" ;
+    skos:inScheme hmd:concept .
 
 <https://w3id.org/semapv/vocab/CompositeMatching> a owl:Class ;
     rdfs:label "CompositeMatching" ;

@@ -42,6 +42,8 @@ vector = [
     # uv 的锁定，也会被下一次 `uv sync` 抹掉，表现为"装了但导入不到"。
     "FlagEmbedding>=1.3.3",
     "sentence-transformers>=3.0.0",
+    # BIOS_v3 全量下载与模型权重拉取共用。
+    "huggingface_hub>=0.26.0",
     # 内网连不上 huggingface.co 时改走 ModelScope（HMD_MODEL_HUB=modelscope）。
     "modelscope>=1.20.0",
     # Qwen3-VL-Embedding 的视觉列。官方推理脚本随权重下发，但它 import 的这两个
@@ -94,7 +96,7 @@ packages = ["src/biomed_ontology"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-# LinkML 生成的代码不做人工维护，改动会在下次 make gen 时丢失。
+# LinkML 生成的代码不做人工维护，改动会在下次 task gen 时丢失。
 extend-exclude = ["src/biomed_ontology/_generated"]
 
 [tool.ruff.lint]

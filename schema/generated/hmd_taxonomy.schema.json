@@ -264,6 +264,17 @@
                         "null"
                     ]
                 },
+                "has_target": {
+                    "description": "\u836f\u7269\u4f5c\u7528\u7684\u9776\u70b9\u3002\u4e0e parents \u4e00\u6837\u662f\u6982\u5ff5\u4e4b\u95f4\u7684\u8fb9\uff0c\u4f46\u5b83\u662f**\u8de8\u5b9e\u4f53\u7c7b\u578b**\u7684\uff1a parents \u53ea\u5728\u540c\u7c7b\u5185\u90e8\u8d70\uff08\u75be\u75c5\u2192\u4e0a\u4f4d\u75be\u75c5\uff09\uff0chas_target \u4ece SUBSTANCE \u8df3\u5230 TARGET\u3002 \u68c0\u7d22\u671f\u7684 search-around \u9760\u7684\u5c31\u662f\u8fd9\u7c7b\u8de8\u7c7b\u578b\u8df3\u8f6c \u2014\u2014 \u300cVEGFR2 \u6291\u5236\u5242\u300d\u8fd9\u79cd\u67e5\u8be2\u8981\u4ece\u9776\u70b9\u53cd\u5411\u627e\u5230\u836f\uff0c\u5c42\u7ea7\u6269\u5c55\u4e00\u6b65\u4e5f\u8d70\u4e0d\u5230\u3002",
+                    "items": {
+                        "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
                 "is_obsolete": {
                     "type": [
                         "boolean",
@@ -314,6 +325,17 @@
                     "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
                     "type": [
                         "string",
+                        "null"
+                    ]
+                },
+                "treats": {
+                    "description": "\u836f\u7269\u7684\u9002\u5e94\u75c7\u3002\u540c\u4e3a\u8de8\u7c7b\u578b\u8fb9\uff08SUBSTANCE \u2192 DISEASE\uff09\u3002 \u4e0e\u4e8b\u5b9e\u5c42\u540c\u540d\u8c13\u8bcd\u7684\u533a\u522b\u5728\u8bc1\u636e\u5f3a\u5ea6\uff1a\u8fd9\u91cc\u662f\u79cd\u5b50\u91cc\u7684\u4eba\u5de5\u65ad\u8a00\uff0c \u4e8b\u5b9e\u5c42\u90a3\u6761\u662f\u4ece\u6b63\u6587\u62bd\u51fa\u6765\u3001\u5e26 reifier \u4e0e\u51fa\u5904\u7684\u3002\u4e24\u8005\u843d\u5728\u4e0d\u540c\u547d\u540d\u56fe\u3002",
+                    "items": {
+                        "pattern": "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
                         "null"
                     ]
                 }

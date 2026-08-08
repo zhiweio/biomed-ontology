@@ -96,3 +96,12 @@ MinerU 自 3.1.0（2026-04-18）起由 AGPLv3 改为「MinerU Open Source Licens
 在本地各自取得。许可关系停留在原始发布方与使用者之间；
 下载脚本会以 NCBI OA 服务的声明为准校验许可，NonCommercial 变体一律拒绝。
 实际取得的文件及其许可记录见 `data/raw/SOURCES.md`（生成物，不入库）。
+
+---
+
+## BIOS_v3 — CC-BY-NC-ND 4.0
+
+[THUMedInfo/BIOS_v3](https://huggingface.co/datasets/THUMedInfo/BIOS_v3) 为可选公共生物医学知识图谱源。
+许可为 **CC-BY-NC-ND 4.0**（非商业、禁止演绎）。生产使用前须法务确认。
+闸门说明见 [`data/foundation/NOTICE_BIOS.md`](data/foundation/NOTICE_BIOS.md)；
+运行时由 `BiosLicenseGate` 强制 acknowledge 后方可全量加载。

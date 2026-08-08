@@ -5,7 +5,7 @@ LinkML 经 rdflib 序列化时，空白节点的标签是每次新生成的，
 内容一字未改，diff 却有几千行（上一次实测 6341 增 = 6341 删，纯 ordering）。
 
 后果不是"难看"，而是**生成物失去可审查性** —— 真正的 schema 变更被淹没在噪声里，
-而且每跑一次 `make gen` 工作区就变脏，久而久之大家习惯性 checkout 掉生成物，
+而且每跑一次 `task gen` 工作区就变脏，久而久之大家习惯性 checkout 掉生成物，
 连带真实变更也一起丢。
 
 `to_canonical_graph()` 按图同构给空白节点算出确定性标签（URDNA2015 思路），
@@ -75,7 +75,7 @@ def main(argv: list[str]) -> int:
     for p in drifted:
         print(f"非规范形式: {p}", file=sys.stderr)
     if drifted:
-        print(f"\n{len(drifted)}/{len(paths)} 份生成物不是规范形式，请跑 make gen", file=sys.stderr)
+        print(f"\n{len(drifted)}/{len(paths)} 份生成物不是规范形式，请跑 task gen", file=sys.stderr)
     return 1 if drifted else 0
 
 

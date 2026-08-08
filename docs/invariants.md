@@ -20,12 +20,24 @@
 
 | 不变量 | 说明 |
 |---|---|
-| 内部 CURIE 主键 | 外部 ID 只做 xref（D1/D9） |
+| Enterprise ID 主键 | 世界模型对外锚点是 `HMD:ENT:*`；BIOS/ChEBI 等只做 External Concept |
+| 内部 CURIE 主键 | 检索底座：外部 ID 只做 xref（D1/D9） |
 | 别名带 scope | BROAD 不进精确归一（D2） |
-| 不确定不猜 | 消歧返回 top-k（D3） |
+| 不确定不猜 | 消歧返回 top-k（D3）；Foundation unmapped → evolve-mine 候选 |
 | 链接双向建 | 种子写正向；`LinkIndex` 建反向 |
 | 跨类型最多一跳 | 防竞品关系污染召回 |
 | 别名扩展 ≠ search-around | `_children` 与 `LinkIndex` 不合并 |
+| Evolution 不自动改本体 | `evolve-mine` 只落 KGCL/JSON；禁止静默 apply |
+
+## Foundation / Evidence
+
+| 不变量 | 说明 |
+|---|---|
+| Milvus 必选 | Evidence Index；生产路径失败不回落 LocalBackend |
+| Semantic Ops 隐藏后端 | Agent 默认不拼 SPARQL / 原始向量 API |
+| Knowledge ≠ Truth | Claim + Provenance + Evidence 才可消费 |
+| BIOS 许可闸门 | 全量需 `HMD_BIOS_LICENSE_ACK`；子集仅测试 / CI |
+| GraphDB Free ≠ 生产 | 文档与运维不得把 Free 写成生产架构决策 |
 
 ## 解析与资产
 
@@ -51,6 +63,6 @@
 - [ ] 是否引入第二处拼资产路径 / 第二份 tier 判断 / 第二套别名表？  
 - [ ] gold 键是否对照 `dump_sections`？  
 - [ ] 若动了评测数字，README 与豁免正文是否同步？（测试会问）  
-- [ ] `make docs` 与相关 pytest 是否绿？  
+- [ ] `task docs` 与相关 pytest 是否绿？  
 
 更多决策背景见 [附录 · D1–D12](appendix/decisions.md)。

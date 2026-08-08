@@ -44,5 +44,5 @@ BiomedCLIP 组件 `review=pending`，见 [组件闸门](../licensing/components.
 
 ```bash
 uv run pytest tests/test_figure_type.py -q
-uv run hmd index --figure-typer biomedclip --embedder multimodal-bio --recreate
+uv run hmd index --recreate   # 默认 --figure-typer biomedclip
 ```

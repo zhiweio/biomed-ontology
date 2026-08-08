@@ -1,0 +1,45 @@
+# KnowledgeClaim + Provenance（Knowledge ≠ Truth）
+claims:
+  - claim_id: claim:savo_targets_met
+    subject_id: HMD:ENT:DC:savolitinib
+    predicate: targets
+    object_id: HMD:ENT:TGT:MET
+    confidence: 0.95
+    source_id: PMID:00000001
+    source_type: literature
+    extracted_by: seed
+    evidence_ids: [ev:lit:savo_met_1]
+    created_at: "2026-08-08T00:00:00Z"
+
+  - claim_id: claim:savo_investigates_nsclc
+    subject_id: HMD:ENT:DC:savolitinib
+    predicate: investigates
+    object_id: HMD:ENT:IND:nsclc
+    confidence: 0.93
+    source_id: PMID:00000001
+    source_type: literature
+    extracted_by: seed
+    evidence_ids: [ev:lit:savo_nsclc_1]
+    created_at: "2026-08-08T00:00:00Z"
+
+  - claim_id: claim:savo_belongs_program
+    subject_id: HMD:ENT:DC:savolitinib
+    predicate: belongsTo
+    object_id: HMD:ENT:PRG:met_nsclc
+    confidence: 1.0
+    source_id: SEED_INTERNAL
+    source_type: manual
+    extracted_by: seed
+    evidence_ids: []
+    created_at: "2026-08-08T00:00:00Z"
+
+  - claim_id: claim:exp_tests_savo
+    subject_id: HMD:ENT:EXP:2025_012
+    predicate: supportedBy
+    object_id: HMD:ENT:DC:savolitinib
+    confidence: 1.0
+    source_id: EXP-2025-012
+    source_type: eln
+    extracted_by: seed
+    evidence_ids: [ev:eln:exp_2025_012]
+    created_at: "2025-03-12T00:00:00Z"

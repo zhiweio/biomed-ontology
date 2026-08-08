@@ -61,11 +61,21 @@ class Settings(BaseSettings):
     vision_api_key: SecretStr = SecretStr("")
     vision_cache_dir: Path = Path("data/cache/vision")
 
-    # --- 检索后端 ---------------------------------------------------------
-    search_backend: SearchBackendName = "local"
+    # --- 检索后端（Milvus 为必选；local 仅单测）-------------------------------
+    search_backend: SearchBackendName = "milvus"
     milvus_uri: str = "http://localhost:19530"
     milvus_token: SecretStr = SecretStr("")
     milvus_collection: str = "hmd_chunks"
+
+    # --- Foundation 联调 ----------------------------------------------------
+    graphdb_url: str = "http://localhost:7200"
+    graphdb_repository: str = "hmd"
+    bern2_url: str = ""
+    openmetadata_url: str = "http://localhost:8585"
+    openmetadata_token: SecretStr = SecretStr("")
+    bios_license_ack: str = ""
+    bios_init: Literal["full", "subset"] = "full"
+    bios_max_concepts: int = Field(default=0, ge=0)  # 0 = 全量不截断
 
     # --- 模型权重源 -------------------------------------------------------
     # 内网往往连不上 huggingface.co（TLS 直接被重置）。取不到时自动回落 Gitee
@@ -80,7 +90,14 @@ class Settings(BaseSettings):
     # --- 第三方组件法务闸门 -------------------------------------------------
     accept_uncleared_components: bool = False
 
-    @field_validator("mineru_base_url", "milvus_uri", "vision_base_url")
+    @field_validator(
+        "mineru_base_url",
+        "milvus_uri",
+        "vision_base_url",
+        "graphdb_url",
+        "bern2_url",
+        "openmetadata_url",
+    )
     @classmethod
     def _strip_trailing_slash(cls, v: str) -> str:
         return v.rstrip("/")
@@ -112,6 +129,11 @@ class Settings(BaseSettings):
             out.append(
                 "HMD_ACCEPT_UNCLEARED_COMPONENTS=true：跳过了第三方组件的法务闸门。"
                 "仅限本地试用；待核实的许可义务见 NOTICE。"
+            )
+        if self.search_backend != "milvus":
+            out.append(
+                "HMD_SEARCH_BACKEND 非 milvus：生产与 Foundation Evidence 要求必选 Milvus。"
+                "请 task milvus:up 并将 HMD_SEARCH_BACKEND=milvus。"
             )
         return out
 

@@ -407,6 +407,7 @@ service = [
 vector = [
     { name = "av" },
     { name = "flagembedding" },
+    { name = "huggingface-hub" },
     { name = "modelscope" },
     { name = "open-clip-torch" },
     { name = "pymilvus", extra = ["model"] },
@@ -428,6 +429,7 @@ requires-dist = [
     { name = "fastmcp", marker = "extra == 'service'", specifier = ">=3.0.0,<4.0.0" },
     { name = "flagembedding", marker = "extra == 'vector'", specifier = ">=1.3.3" },
     { name = "httpx", specifier = ">=0.27.0" },
+    { name = "huggingface-hub", marker = "extra == 'vector'", specifier = ">=0.26.0" },
     { name = "kgcl-schema", marker = "extra == 'ontology'", specifier = ">=0.6.0" },
     { name = "linkml", specifier = ">=1.8.0" },
     { name = "linkml-runtime", specifier = ">=1.8.0" },

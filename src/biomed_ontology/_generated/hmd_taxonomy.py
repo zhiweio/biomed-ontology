@@ -602,6 +602,8 @@ class Concept(ConfiguredBaseModel):
     primary_xref: Optional[str] = Field(default=None, description="""等价团的代表 ID，选取规则见 ontology/clique.py。 仅作展示与回溯用途，不是主键。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept', 'Clique']} })
     equivalent_xrefs: Optional[list[str]] = Field(default=None, description="""等价团其余成员，含外采数据的 vendor ID""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'skos:exactMatch'} })
     parents: Optional[list[str]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
+    has_target: Optional[list[str]] = Field(default=None, description="""药物作用的靶点。与 parents 一样是概念之间的边，但它是**跨实体类型**的： parents 只在同类内部走（疾病→上位疾病），has_target 从 SUBSTANCE 跳到 TARGET。 检索期的 search-around 靠的就是这类跨类型跳转 —— 「VEGFR2 抑制剂」这种查询要从靶点反向找到药，层级扩展一步也走不到。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
+    treats: Optional[list[str]] = Field(default=None, description="""药物的适应症。同为跨类型边（SUBSTANCE → DISEASE）。 与事实层同名谓词的区别在证据强度：这里是种子里的人工断言， 事实层那条是从正文抽出来、带 reifier 与出处的。两者落在不同命名图。""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept']} })
     is_obsolete: Optional[bool] = Field(default=False, json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'ifabsent': 'false'} })
     replaced_by: Optional[str] = Field(default=None, description="""废弃概念的唯一继任者""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'oio:replacedBy'} })
     consider: Optional[list[str]] = Field(default=None, description="""废弃概念的候选替代（非唯一，需人工判断）""", json_schema_extra = { "linkml_meta": {'domain_of': ['Concept'], 'slot_uri': 'oio:consider'} })

@@ -45,6 +45,7 @@ SapBERT / 视觉列在 n 很小时可以「看起来很赚」；gold 放大后�
 ## 如何验证
 
 ```bash
-uv run hmd index --embedder fake --allow-fake --recreate
+uv run hmd index --recreate                                 # 默认 multimodal-bio
+uv run hmd index --embedder fake --allow-fake --recreate    # 仅接线验证
 uv run pytest tests/test_licensing.py -q   # 组件闸门
 ```

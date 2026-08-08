@@ -331,7 +331,7 @@ def _explain_vector_field_cap(exc: Exception, wanted: int) -> None:
         f"[milvus] 本次要建 {wanted} 个向量列，超过服务端上限。"
         "这是 Milvus 的 proxy.maxVectorFieldNum（默认 4，上限 10），不是 schema 的问题。"
         "docker/milvus-standalone.yml 里已设 PROXY_MAXVECTORFIELDNUM=6，"
-        "请 make milvus-down && make milvus-up 让它生效。"
+        "请 task milvus:down && task milvus:up 让它生效。"
         "**不要靠删掉一列来绕过** —— 那一列会从报表上无声消失。",
         flush=True,
     )

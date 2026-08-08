@@ -96,6 +96,7 @@ nav:
   - 快速开始: getting-started.md
   - 架构总览:
       - 分层 L0–L8: architecture/layers.md
+      - Foundation 世界模型: architecture/foundation.md
       - 端到端数据流: architecture/pipeline.md
       - LinkML 与生成物: architecture/linkml.md
   - 本体与语义层:

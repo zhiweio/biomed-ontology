@@ -1,0 +1,295 @@
+id: https://w3id.org/asliva/biomed-ontology/enterprise
+name: hmd_enterprise
+title: HMD Enterprise Ontology (World Model)
+description: >-
+  企业内部创新药研发世界模型（Enterprise Ontology）。
+  企业实体主键是 HMD:ENT:* CURIE，不是 BIOS / ChEBI 等外部概念 ID。
+  外部概念通过 exact_match_xrefs 挂接（skos:exactMatch / SSSOM）。
+license: Proprietary
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hmd: https://w3id.org/asliva/biomed-ontology/
+  skos: http://www.w3.org/2004/02/skos/core#
+  prov: http://www.w3.org/ns/prov#
+  owl: http://www.w3.org/2002/07/owl#
+  biolink: https://w3id.org/biolink/vocab/
+  xsd: http://www.w3.org/2001/XMLSchema#
+
+default_prefix: hmd
+default_range: string
+
+imports:
+  - linkml:types
+  - hmd_types
+
+classes:
+  EnterpriseEntity:
+    abstract: true
+    description: 企业世界模型实体基类。主键永不复用；废弃走 replaced_by。
+    slots:
+      - enterprise_id
+      - entity_kind
+      - preferred_label_en
+      - preferred_label_zh
+      - definition
+      - exact_match_xrefs
+      - related_xrefs
+      - aliases
+      - status
+      - created_in_release
+      - replaced_by
+    slot_usage:
+      enterprise_id:
+        identifier: true
+        required: true
+      entity_kind:
+        required: true
+      preferred_label_en:
+        required: true
+
+  DrugCandidate:
+    is_a: EnterpriseEntity
+    description: 企业候选药物 / 管线分子（可对应多个外部 Chemical 概念）。
+    class_uri: biolink:Drug
+    slots:
+      - active_ingredient_xrefs
+      - targets
+      - indications
+      - program_id
+      - modality
+    slot_usage:
+      entity_kind:
+        # equals_string 要求 range=string（gen-shacl）；取值仍对齐 EnterpriseKindEnum
+        range: string
+        equals_string: DrugCandidate
+
+  Program:
+    is_a: EnterpriseEntity
+    description: 研发项目 / 管线项目。
+    slots:
+      - therapeutic_area
+    slot_usage:
+      entity_kind:
+        range: string
+        equals_string: Program
+
+  Target:
+    is_a: EnterpriseEntity
+    description: 企业视角的靶点实体（可 exactMatch 到基因/蛋白外部概念）。
+    class_uri: biolink:GeneOrGeneProduct
+    slot_usage:
+      entity_kind:
+        range: string
+        equals_string: Target
+
+  Indication:
+    is_a: EnterpriseEntity
+    description: 企业适应症实体。
+    class_uri: biolink:Disease
+    slot_usage:
+      entity_kind:
+        range: string
+        equals_string: Indication
+
+  Experiment:
+    is_a: EnterpriseEntity
+    description: ELN / 内部实验批次。
+    slots:
+      - candidate_id
+      - target_ids
+      - indication_ids
+      - asset_fqn
+      - performed_on
+    slot_usage:
+      entity_kind:
+        range: string
+        equals_string: Experiment
+
+  Publication:
+    is_a: EnterpriseEntity
+    description: 文献或专利在企业世界模型中的登记（证据入口，非全文）。
+    slots:
+      - pmid
+      - doi
+      - mentions
+    slot_usage:
+      entity_kind:
+        range: string
+        equals_string: Publication
+
+  KnowledgeClaim:
+    description: >-
+      带出处的知识断言。Knowledge ≠ Truth；
+      Claim + Provenance + Evidence 才可被 Agent 消费。
+    slots:
+      - claim_id
+      - subject_id
+      - predicate
+      - object_id
+      - object_value
+      - confidence
+      - source_id
+      - source_type
+      - extracted_by
+      - evidence_ids
+      - created_at
+    slot_usage:
+      claim_id:
+        identifier: true
+        required: true
+      subject_id:
+        required: true
+      predicate:
+        required: true
+
+slots:
+  enterprise_id:
+    range: EnterpriseCurie
+    description: 企业实体主键，形如 HMD:ENT:DC:savolitinib
+  entity_kind:
+    range: EnterpriseKindEnum
+  preferred_label_en:
+    range: string
+  preferred_label_zh:
+    range: string
+  definition:
+    range: string
+  exact_match_xrefs:
+    range: ExternalCurie
+    multivalued: true
+    description: 与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）
+  related_xrefs:
+    range: ExternalCurie
+    multivalued: true
+  aliases:
+    range: string
+    multivalued: true
+  status:
+    range: EntityStatusEnum
+  created_in_release:
+    range: SemanticVersion
+  replaced_by:
+    range: EnterpriseCurie
+  active_ingredient_xrefs:
+    range: ExternalCurie
+    multivalued: true
+  targets:
+    range: EnterpriseCurie
+    multivalued: true
+  indications:
+    range: EnterpriseCurie
+    multivalued: true
+  program_id:
+    range: EnterpriseCurie
+  modality:
+    range: string
+  therapeutic_area:
+    range: string
+  candidate_id:
+    range: EnterpriseCurie
+  target_ids:
+    range: EnterpriseCurie
+    multivalued: true
+  indication_ids:
+    range: EnterpriseCurie
+    multivalued: true
+  asset_fqn:
+    range: string
+    description: OpenMetadata 资产 fullyQualifiedName
+  performed_on:
+    range: string
+  pmid:
+    range: string
+  doi:
+    range: string
+  mentions:
+    range: EnterpriseCurie
+    multivalued: true
+  claim_id:
+    range: string
+  subject_id:
+    range: EnterpriseCurie
+  predicate:
+    range: ClaimPredicateEnum
+  object_id:
+    range: EnterpriseCurie
+  object_value:
+    range: string
+  confidence:
+    range: float
+  source_id:
+    range: string
+  source_type:
+    range: ProvenanceSourceTypeEnum
+  extracted_by:
+    range: string
+  evidence_ids:
+    range: string
+    multivalued: true
+    description: Evidence Index（Milvus）中的证据条目 ID
+  created_at:
+    range: string
+
+types:
+  EnterpriseCurie:
+    typeof: uriorcurie
+    uri: xsd:anyURI
+    repr: str
+    description: 企业实体 CURIE
+    pattern: '^HMD:ENT:(DC|PRG|TGT|IND|EXP|PUB|ASY|CMP|BMK):[A-Za-z0-9_-]+$'
+
+enums:
+  EnterpriseKindEnum:
+    permissible_values:
+      DrugCandidate:
+        description: 候选药物
+      Program:
+        description: 研发项目
+      Target:
+        description: 靶点
+      Indication:
+        description: 适应症
+      Experiment:
+        description: 实验/ELN 批次
+      Publication:
+        description: 文献/专利登记
+      Assay:
+        description: 检测方法
+      Compound:
+        description: 化合物（内部编号）
+      Biomarker:
+        description: 生物标志物
+
+  EntityStatusEnum:
+    permissible_values:
+      active:
+      deprecated:
+      draft:
+
+  ClaimPredicateEnum:
+    permissible_values:
+      targets:
+        description: 候选药/化合物作用于靶点
+      investigates:
+        description: 研究某适应症
+      treats:
+        description: 治疗关系（声明级，须带出处）
+      belongsTo:
+        description: 属于某项目
+      mentions:
+        description: 文献提及实体
+      supportedBy:
+        description: 断言被某证据支持
+      sameAsExternal:
+        description: 映射到外部概念
+
+  ProvenanceSourceTypeEnum:
+    permissible_values:
+      literature:
+      patent:
+      eln:
+      lims:
+      assay:
+      manual:
+      derived:

@@ -1,0 +1,13 @@
+{
+  "generated_at": "20260808T072955Z",
+  "candidates": [
+    {
+      "mention": "unknownzyme-xyz-999",
+      "canonical_entity": null,
+      "external_ids": [],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    }
+  ]
+}

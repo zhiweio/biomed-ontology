@@ -1,8 +1,13 @@
 # biomed-ontology 手册
 
-面向阿斯利华创新药研发场景的**生物医药语义层数据基座** PoC。
+面向阿斯利华创新药研发场景的**企业级 AI Data Foundation / 生物医药语义层** PoC。
 
-本仓库不交付 AI agent 本身 —— 它交付的是 agent **必须先存在**的那一层：谁是谁（本体）、发生了什么（事实）、在哪说的（可溯源检索）、多可信（质量与许可）。手册的目标不是列命令，而是让接手的人能**改、能证伪、能扩展**。
+本仓库不交付 AI agent 本身 —— 它交付两条底座：
+
+1. **检索与 Citationware**（既有 L0–L8）：谁是谁、发生了什么、在哪说的、多可信  
+2. **Foundation 世界模型**：Enterprise Ontology（`HMD:ENT:*`）+ GraphDB + Milvus Evidence Index + OpenMetadata  
+
+手册的目标不是列命令，而是让接手的人能**改、能证伪、能扩展**。
 
 ## 这本手册怎么读
 
@@ -20,11 +25,12 @@
 
 | 你是谁 | 建议阅读顺序 |
 |---|---|
-| 第一次接触本仓库 | [快速开始](getting-started.md) → [分层架构](architecture/layers.md) → [端到端数据流](architecture/pipeline.md) → [设计不变量](invariants.md) |
+| 第一次接触本仓库 | [快速开始](getting-started.md) → [分层架构](architecture/layers.md) → [Foundation](architecture/foundation.md) → [设计不变量](invariants.md) |
+| 要做企业世界模型 / Foundation | [Foundation 架构](architecture/foundation.md) → `task foundation:up` → `hmd foundation golden` |
 | 要改检索 / 本体 | [类型化链接](ontology/links.md) → [三通道与 RRF](retrieval/hybrid.md) → [查询改写 vs 图通道](retrieval/ontology-paths.md) → [评测消融](eval/arms.md) |
-| 要接 agent / 对外服务 | [11 工具](agent/tools.md) → [Citationware](agent/citationware.md) → [许可](licensing/tiers.md) |
-| 要接视觉 / Milvus | [资产路径](parse/assets.md) → [五列](retrieval/milvus.md) → [图型](parse/figure-type.md) → [嵌入器](retrieval/embedders.md) |
-| 合规 / 采购 | [Tier 矩阵](licensing/tiers.md) → [组件闸门](licensing/components.md) → [NOTICE](appendix/notice.md) |
+| 要接 agent / 对外服务 | [11 工具](agent/tools.md) + Foundation Semantic Ops → [Citationware](agent/citationware.md) → [许可](licensing/tiers.md) |
+| 要接视觉 / Evidence Index | [资产路径](parse/assets.md) → [Milvus](retrieval/milvus.md) → [图型](parse/figure-type.md) → [嵌入器](retrieval/embedders.md) |
+| 合规 / 采购 | [Tier 矩阵](licensing/tiers.md) → [组件闸门](licensing/components.md) → [NOTICE](appendix/notice.md) → [BIOS 闸门](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
 
 ## 与 README 的分工
 
@@ -36,17 +42,19 @@
 
 ## 一句话定位
 
-把本体从「术语表」做成**可遍历、可索引、带治理的操作层**。在创新药研发这个垂类里，这意味着：
+把本体从「术语表」做成**可遍历、可索引、带治理的企业世界模型**。在创新药研发这个垂类里，这意味着：
 
-- 药 ↔ 靶点 ↔ 适应症的类型化链接能在**检索期**走通（不只在图谱浏览器里好看）  
-- 许可边界在**候选生成阶段**就生效（不是返回前裁剪）  
-- 引用能还原到原文语境（Citationware）  
-- 「没达成」有署名豁免，而不是悄悄调低阈值  
+- **Enterprise ID** 是对外锚点；BIOS / ChEBI 等是外部概念  
+- 药 ↔ 靶点 ↔ 适应症的类型化链接能在**检索期与 GraphDB** 走通  
+- GraphDB / Milvus / OpenMetadata 分司关系、证据、企业资产  
+- 许可边界在**候选生成阶段**就生效；BIOS 全量需显式 ACK  
+- 引用能还原到原文语境（Citationware / Evidence Index）  
+- Ontology Evolution 一期只落 KGCL 候选，不自动改本体  
 
 ## 本地预览手册
 
 ```bash
 uv sync --extra docs --extra dev
-make docs-serve    # http://127.0.0.1:8000
-make docs          # 严格构建（断链会失败）
+task docs:serve    # http://127.0.0.1:8000
+task docs          # 严格构建（断链会失败）
 ```

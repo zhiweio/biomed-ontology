@@ -1,6 +1,6 @@
 # LinkML 与生成物
 
-源码与契约：`schema/*.yaml` → `src/biomed_ontology/_generated/`（`make gen`）。
+源码与契约：`schema/*.yaml` → `src/biomed_ontology/_generated/`（`task gen`）。
 
 ## 为什么用 LinkML 当 SSOT
 
@@ -21,6 +21,9 @@
 | `hmd_agentapi.yaml` | 11 工具请求/响应、Provenance | `_generated/hmd_agentapi.py` |
 | `hmd_obs.yaml` | Trace / Decision / ToolIo | `_generated/hmd_obs.py` |
 | `hmd_taxonomy.yaml` | 文档标引标签 | `_generated/hmd_taxonomy.py` |
+| `hmd_enterprise.yaml` | Enterprise Ontology（DrugCandidate / Target / Claim…） | `_generated/hmd_enterprise.py` |
+
+Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与 schema 对齐；契约变更仍以 YAML → `task gen` 为准。见 [Foundation](foundation.md)。
 
 枚举（`LicenseTierEnum`、`RetrievalChannelEnum`、`SynonymScopeEnum`…）以生成代码为准；业务代码 `from biomed_ontology._generated...` 导入，**禁止在业务模块再定义一份同名枚举**。
 
@@ -29,13 +32,13 @@
 ```bash
 # 1. 改 schema/*.yaml
 # 2. 重新生成
-make gen
+task gen
 # 3. 跑契约与 API 测试
 uv run pytest tests/test_agentapi.py tests/test_service.py -q
 ```
 
 !!! warning "不要手改 _generated/"
-    生成目录视为构建产物。手改会在下次 `make gen` 被覆盖，且审查时看不出意图。
+    生成目录视为构建产物。手改会在下次 `task gen` 被覆盖，且审查时看不出意图。
     需要新字段：改 YAML → gen → 再改消费方。
 
 ## 与 Agent 工具清单的对齐

@@ -1,21 +1,54 @@
 # biomed-ontology
 
-面向阿斯利华创新药研发场景的**生物医药语义层数据基座** PoC。
+面向阿斯利华创新药研发场景的**企业级 AI Data Foundation / 生物医药语义层** PoC。
 
-为 AI agent 提供可溯源的检索能力：Ontology 语义层（谁是谁）+ 结构化事实层（发生了什么）+
-文档层（在哪说的）+ 质量层（多可信），配套四支柱可观测与本体演进闭环。
+两条交付面并行：
 
-**本仓库不包含 AI agent 本身** —— 只构建其消费的数据底座与工具接口。
+1. **检索底座（既有 PoC）**：Ontology + 事实 + 多模态文献检索 + Citationware（`:8000`）  
+2. **Foundation 世界模型**：以 **Enterprise Ontology ID**（`HMD:ENT:*`）为锚，统一实体 / 关系 / 证据 / 企业资产（`:8100`）
+
+> BIOS provides the biomedical world. Enterprise Ontology provides the company's world.
+
+**本仓库不包含 AI agent 本身** —— 只构建其消费的数据底座与 Semantic API / MCP。
 
 **完整手册**（机制、事故教训、设计不变量）：见 [`docs/`](docs/index.md)，本地预览：
 
 ```bash
 uv sync --extra docs --extra dev
-make docs-serve    # http://127.0.0.1:8000
-make docs          # mkdocs build --strict
+task docs:serve    # http://127.0.0.1:8000
+task docs          # mkdocs build --strict
 ```
 
 命令与**实测数字只维护在本 README**（有测试守着）；手册讲为什么，不抄表。
+构建入口是 **[Taskfile](Taskfile.yml)**（`task …`），不再维护 Makefile。
+
+### Foundation（企业世界模型）
+
+手册详述：[`docs/architecture/foundation.md`](docs/architecture/foundation.md)。
+
+| 组件 | 角色 |
+|---|---|
+| Enterprise Ontology（LinkML `hmd_enterprise`） | 世界模型主键 `HMD:ENT:*` |
+| BIOS_v3 | 公共 biomedical KG（外部概念，非企业主键） |
+| BERN2 + 企业词典 + Zingg | NLU 候选 → Entity Resolution |
+| GraphDB Named Graphs | biomedical / ontology / knowledge / provenance / inference |
+| Milvus | **Evidence Index**（证据在哪；`entity_ids` = Enterprise ID） |
+| OpenMetadata | **Data Context**（资产在哪） |
+
+```bash
+# 联调栈：Milvus + GraphDB + OpenMetadata（BERN2 为 profile）
+export HMD_BIOS_LICENSE_ACK=poc          # BIOS 全量默认；CI: HMD_BIOS_INIT=subset
+# GraphDB 10 Free 无需 license；SE/EE 见 docker/docker-compose.graphdb-license.yml
+task foundation:up
+
+uv run hmd foundation resolve "HMPL-504"
+uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN
+uv run hmd foundation sync
+uv run hmd foundation evolve-mine                    # 候选落库，不自动改本体
+uv run hmd foundation serve                          # Semantic API :8100
+```
+
+金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。
 
 ---
 
@@ -26,11 +59,12 @@ uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --
 
 uv run hmd kb        # 构建知识库并打印统计
 uv run hmd demo      # 跑 8 个演示场景（全部自带断言，不是打印）
-uv run hmd eval      # 检索消融 + 指标目标达成情况
-uv run hmd serve     # 起 REST + MCP 服务
+uv run hmd eval --entitlements MOCK_LICENSED   # 默认 multimodal-bio + 精排
+uv run hmd serve     # 起 REST + MCP 服务（:8000）
+task check           # ruff + 全量测试
 ```
 
-`make check` = ruff + 全量测试，共 **517 条测试**（516 passed + 1 xfailed）。
+`task check` = ruff + 全量测试，共 **528 条测试**（527 passed + 1 xfailed）。
 那 1 条 xfail 不是"暂时跳过"，而是**当前证伪不了的产品承诺**：T1 本体增强召回
 相对提升 ≥ 10%。标了 `strict=True` —— 一旦重新成立就会立刻炸掉，
 逼人回来删标记，而不是让"曾经声称过的能力"无声地留在文档里。原因见下面的检索评测一节。
@@ -38,21 +72,20 @@ uv run hmd serve     # 起 REST + MCP 服务
 **这批测试长期静默跳过，曾把三个真 bug 藏了整整一个阶段**（写入不 flush、
 `hmd index` 崩、切片 ID 跨进程漂移）。要验收 Milvus 路径就必须把容器起起来。
 
-### 可选：Milvus
+### Milvus（Evidence Index，必选）
+
+Milvus 既是文献五列检索后端，也是 Foundation 的 **Evidence Index**。失败不回落 LocalBackend。
 
 ```bash
-make milvus-up                                              # docker compose，standalone 单机版
-uv run hmd index --embedder multimodal-bio --recreate \
-    --figure-typer biomedclip                               # 588 切片 / 5 向量列，MPS 约 3m34s
-uv run hmd eval --milvus --embedder multimodal-bio \
-    --reranker bge-reranker-v2-m3 \
-    --entitlements MOCK_LICENSED                            # 十九臂消融（9 本地 + 10 Milvus）
-make milvus-down
+task milvus:up                                              # hmd-foundation 子集（etcd/minio/standalone）
+uv run hmd index --recreate                                 # 默认 multimodal-bio 五列 + BiomedCLIP 图型
+uv run hmd eval --entitlements MOCK_LICENSED                # 同上 embedder + bge-reranker-v2-m3
+task milvus:down                                            # 只停 Milvus；全栈用 task foundation:down
 ```
 
-`--embedder` 可选 `fake` / `bge-m3` / `sapbert` / `qwen3-vl` / `biomedclip` / `dual` /
-`multimodal` / `multimodal-bio`。
-索引与评测必须用同一个 —— 集合 description 里盖了 `embedder=` 戳记，对不上直接退出。
+`index` / `eval` 默认 **multimodal-bio**（五列最全），无需再选 embedder。
+集合 description 盖了 `embedder=` 戳记，索引与评测不一致会直接退出。
+仅接线验证：`uv run hmd index --embedder fake --allow-fake --recreate`。
 
 五列需要 Milvus 放宽向量列上限（默认只允许 4 列）。`docker/milvus-standalone.yml`
 里已设 `PROXY_MAXVECTORFIELDNUM: "6"`；连的是自己的实例就得自己配，
@@ -69,7 +102,7 @@ CI 因此不必下载 GB 级权重。但它必须显式加 `--allow-fake` 才跑
 
 ```bash
 export HMD_MODEL_HUB=modelscope   # 可选 hf（默认）/ modelscope / gitee
-uv run hmd index --embedder dual --recreate
+uv run hmd index --recreate
 ```
 
 - **本地优先**：手工放进 `data/cache/models/models/<仓库名>/` 的权重直接生效。
@@ -94,9 +127,8 @@ uv run hmd index --embedder dual --recreate
 ModelScope 上唯一的 SapBERT 是 Xenova 的 ONNX 版、没有 PyTorch 权重，
 故在 `_MIRRORS` 里显式登记为 `None`（并有测试守着，防止被"顺手"填回去）。
 
-不加 `--milvus` 时那 6 个臂会明确列在"未运行的臂（后端不可达，非结果）"下，
-**不会**退化成本地后端顶替。这条是刻意的：一份写着 Milvus 却实际由本地跑出的数字，
-比没有数字更危险。同理，`--milvus` 遇到集合不存在会直接退出而不是静默降级。
+Milvus 为必选 Evidence Index；臂不可达时会明确列在"未运行的臂（后端不可达，非结果）"下，
+**不会**退化成本地后端顶替。集合不存在会直接退出而不是静默降级。
 
 > `--embedder fake` 跑出的"生医稠密"列并不是 SapBERT，
 > 因此该模式下的 SapBERT 净值不具备模型层面的解释力，只用于验证链路。
@@ -105,16 +137,18 @@ ModelScope 上唯一的 SapBERT 是 Xenova 的 ONNX 版、没有 PyTorch 权重�
 
 ## 分层架构
 
+检索底座仍按 L0–L8 组织；Foundation 在其上叠加 **Enterprise World Model**（GraphDB + Evidence Index + Data Context）。详见 [Foundation 手册](docs/architecture/foundation.md)。
+
 ```
 L0 Source        构建期联网拉快照 → 版本化存储（version / license / retrieved_on）
 L1 术语层        Concept / Synonym / Xref(SSSOM) / Hierarchy → RDF named graph per source
-L2 语义层        LinkML schema（Biolink 子集）→ OWL + SHACL + JSON Schema + Pydantic
-L3 归一化        文本 → 唯一 CURIE（词典 → 规则 → 向量 → LLM 消歧）
+L2 语义层        LinkML（Biolink 子集 + hmd_enterprise）→ OWL + SHACL + JSON Schema + Pydantic
+L3 归一化 / ER   文本 → CURIE；Foundation：BERN2 候选 → Enterprise ID
 L4 语料治理      文档标引分类 + 三模态抽取（文本/表格/图像）→ 结构化事实 + provenance
-L5 检索/查询     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus 五向量列 + 模态/图型过滤；SPARQL
-L6 Agent 接口    MCP + REST（11 个工具），返回体内建 provenance + trace_id + license_tier
+L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列检索 + Evidence Index
+L6 Agent 接口    :8000 AgentApi（11 tools）∥ :8100 Foundation Semantic Ops
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
-L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release → Impact → 回归守门
+L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release；Foundation evolve-mine 不自动改本体
 ```
 
 ```mermaid
@@ -124,20 +158,26 @@ flowchart LR
     V --> KB[(KnowledgeBase)]
     ONT[LinkML schema] -->|gen-pydantic| KB
     KB --> S[search<br/>BM25 ⊕ dense ⊕ graph]
-    KB --> M[(Milvus<br/>5 向量列)]
+    KB --> M[(Milvus<br/>Evidence Index)]
     M --> S
-    S --> API[AgentApi<br/>11 tools]
-    API --> REST[REST /v1/*]
-    API --> MCP[MCP /mcp]
-    API --> C[restore_context<br/>碎片 → 原文]
-    API -.trace/io/state/metrics.-> OBS[可观测四支柱]
-    OBS -.signal.-> EVO[演进闭环 KGCL]
-    EVO -.new release.-> ONT
+    S --> API[AgentApi<br/>11 tools :8000]
+    ENT[Enterprise Ontology] --> GDB[(GraphDB<br/>Named Graphs)]
+    ENT --> RES[Entity Resolution]
+    RES --> FAPI[Foundation<br/>Semantic Ops :8100]
+    GDB --> FAPI
+    M --> FAPI
+    OM[(OpenMetadata)] --> FAPI
+    API --> REST[REST / MCP]
+    FAPI --> REST
+    API -.trace.-> OBS[可观测]
+    OBS -.signal.-> EVO[演进 KGCL]
+    EVO -.release.-> ONT
+    EVO -.candidates.-> ENT
 ```
 
-**LinkML 是唯一事实来源**（`make gen` → `_generated/`，不手改）。生成物经
-`canon_ttl` 规范化；全量校验挂 `make nightly`。机制见手册
-[LinkML 与生成物](docs/architecture/linkml.md)。分层与 search-around 的完整论证见
+**LinkML 是唯一事实来源**（`task gen` → `_generated/`，含 `hmd_enterprise`，不手改）。生成物经
+`canon_ttl` 规范化；全量校验挂 `task nightly`。机制见手册
+[LinkML 与生成物](docs/architecture/linkml.md)。分层与 search-around 见
 [手册 · 架构](docs/architecture/layers.md)。
 
 ---
@@ -577,19 +617,23 @@ uv run hmd serve --port 8000
 
 | 路径 | 职责 |
 |---|---|
-| `schema/` | LinkML 模型定义，单一事实来源 |
+| `schema/` | LinkML SSOT（含 `hmd_enterprise`） |
+| `Taskfile.yml` | 统一任务入口（替代 Makefile） |
+| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic API |
 | `src/biomed_ontology/registry/` | 数据源注册表 + 许可分层 |
 | `src/biomed_ontology/ontology/` | 等价团构建、ID 分配、发版、RDF |
 | `src/biomed_ontology/parse/` | PDF → 语义树（衍生自 knowhere，见 NOTICE） |
 | `src/biomed_ontology/embed/` | BGE-M3 + SapBERT + Qwen3-VL + BiomedCLIP，五向量列 |
 | `src/biomed_ontology/rerank/` | bge-reranker-v2-m3 交叉编码器精排 |
-| `src/biomed_ontology/search/` | 三通道检索 + 带权 RRF + 模态/图型过滤 + Milvus 后端 |
-| `src/biomed_ontology/agentapi/` | 11 个 agent 工具 + Citationware |
+| `src/biomed_ontology/search/` | 三通道检索 + 带权 RRF + 模态/图型过滤 + Milvus |
+| `src/biomed_ontology/agentapi/` | 11 个工具 + Citationware（:8000） |
 | `src/biomed_ontology/observability/` | 四支柱埋点与契约校验 |
 | `src/biomed_ontology/evolution/` | 信号挖掘 → KGCL → 发版守门 |
 | `src/biomed_ontology/eval/` | 消融评测 + 指标目标 |
+| `data/foundation/` | 企业实体 / 词典 / claims / evidence / BIOS 子集 |
 | `data/gold/` | gold set 与指标目标 |
-| `docs/` | mkdocs-material 完整手册（`make docs-serve`） |
+| `docker/docker-compose.foundation.yml` | GraphDB + OM + Milvus 联调栈 |
+| `docs/` | mkdocs-material 完整手册（`task docs:serve`） |
 | `tests/` | 契约与不变量测试 |
 
 ---
@@ -598,12 +642,16 @@ uv run hmd serve --port 8000
 
 完整 PR 检查清单见 [手册 · 设计不变量](docs/invariants.md)。
 
-- **内部 CURIE 是唯一主键**，外部 ID 一律作为 xref 挂靠（供应商中立）
+- **Enterprise Ontology ID（`HMD:ENT:*`）是世界模型主键**；BIOS/ChEBI/HGNC 只做 External Concept xref
+- **内部 CURIE 是检索底座主键**，外部 ID 一律作为 xref 挂靠（供应商中立）
+- **Milvus = Evidence Index（必选）**；失败不回落；`fake` 需 `--allow-fake`
+- **Knowledge = Claim + Provenance + Evidence**（Knowledge ≠ Truth）
+- **Semantic Ops 隐藏后端**；不对 Agent 默认暴露裸 SPARQL / 原始向量 API
 - **别名必须带 scope**，检索扩展行为由 scope 驱动
-- **许可分层贯穿全链路**，tier ≥ 2 内容不得进入导出物与训练语料
+- **许可分层贯穿全链路**，tier ≥ 2 内容不得进入导出物与训练语料；BIOS 全量需 `HMD_BIOS_LICENSE_ACK`
 - **构建期可联网，运行期完全内网离线**
 - **RRF 用名次而非分数融合**；**融合不下推到 Milvus**（保住 `explain`）
-- **无静默回落**（Milvus / 精排臂不可达 → 标「未运行」）；`fake` 需 `--allow-fake`
+- **Ontology Evolution 一期只落候选**（`evolve-mine`），不自动改本体
 
 ---
 
@@ -621,4 +669,4 @@ BiomedCLIP 的权重是 MIT，但模型卡另有"任何部署用途均超出适�
 
 完整出处、修改说明与许可分析见 [NOTICE](NOTICE)。
 
-语料 PDF **不随仓库分发**，由 `make corpus` 在本地各自取得。
+语料 PDF **不随仓库分发**，由 `task corpus` 在本地各自取得。

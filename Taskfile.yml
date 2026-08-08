@@ -1,0 +1,249 @@
+# https://taskfile.dev — 替代 Makefile 的统一任务入口
+version: "3"
+
+vars:
+  SCHEMA_DIR: schema
+  GEN_PY: src/biomed_ontology/_generated
+  GEN_ART: schema/generated
+  SCHEMAS: hmd_concept hmd_fact hmd_taxonomy hmd_obs hmd_agentapi hmd_enterprise
+  # 单一项目 hmd-foundation；Milvus 片段见 docker/milvus-standalone.yml（被 include）
+  FOUNDATION_COMPOSE: docker/docker-compose.foundation.yml
+  MILVUS_SERVICES: etcd minio standalone
+
+env:
+  HMD_SEARCH_BACKEND: milvus
+
+tasks:
+  default:
+    desc: 列出全部任务
+    cmds:
+      - task --list
+
+  gen:
+    desc: LinkML → pydantic / JSON Schema / SHACL / OWL
+    cmds:
+      - task: gen:py
+      - task: gen:jsonschema
+      - task: gen:shacl
+      - task: gen:owl
+
+  gen:py:
+    silent: true
+    cmds:
+      - mkdir -p {{.GEN_PY}}
+      - touch {{.GEN_PY}}/__init__.py
+      - |
+        for s in {{.SCHEMAS}}; do
+          echo "gen-pydantic $s"
+          uv run gen-pydantic {{.SCHEMA_DIR}}/$s.yaml > {{.GEN_PY}}/$s.py
+        done
+
+  gen:jsonschema:
+    silent: true
+    cmds:
+      - mkdir -p {{.GEN_ART}}
+      - |
+        for s in {{.SCHEMAS}}; do
+          echo "gen-json-schema $s"
+          uv run gen-json-schema {{.SCHEMA_DIR}}/$s.yaml > {{.GEN_ART}}/$s.schema.json
+        done
+
+  gen:shacl:
+    silent: true
+    cmds:
+      - mkdir -p {{.GEN_ART}}
+      - |
+        for s in {{.SCHEMAS}}; do
+          echo "gen-shacl $s"
+          uv run gen-shacl {{.SCHEMA_DIR}}/$s.yaml > {{.GEN_ART}}/$s.shacl.ttl
+        done
+      - task: canon-ttl
+
+  gen:owl:
+    silent: true
+    cmds:
+      - mkdir -p {{.GEN_ART}}
+      - |
+        for s in {{.SCHEMAS}}; do
+          echo "gen-owl $s"
+          PYTHONWARNINGS=ignore::DeprecationWarning uv run gen-owl {{.SCHEMA_DIR}}/$s.yaml > {{.GEN_ART}}/$s.owl.ttl
+        done
+      - task: canon-ttl
+
+  canon-ttl:
+    desc: 规范化生成的 TTL（空白节点稳定）
+    cmds:
+      - uv run python scripts/canon_ttl.py {{.GEN_ART}}/*.ttl
+
+  canon-check:
+    desc: 校验生成物是否为规范形式（不落盘）
+    cmds:
+      - uv run python scripts/canon_ttl.py --check {{.GEN_ART}}/*.ttl
+      - echo "全部生成物均为规范形式"
+
+  nightly:
+    desc: 慢速全量 TTL 同构检查
+    cmds:
+      - task: canon-check
+
+  lint:
+    desc: ruff check + format check
+    cmds:
+      - uv run ruff check src tests scripts
+      - uv run ruff format --check src tests scripts
+
+  fmt:
+    desc: ruff format + autofix
+    cmds:
+      - uv run ruff format src tests scripts
+      - uv run ruff check --fix src tests scripts
+
+  test:
+    desc: pytest
+    cmds:
+      - uv run pytest
+
+  check:
+    desc: lint + test
+    cmds:
+      - task: lint
+      - task: test
+
+  docs:
+    desc: mkdocs 严格构建
+    cmds:
+      - uv run --extra docs mkdocs build --strict
+
+  docs:serve:
+    desc: mkdocs 本地预览
+    cmds:
+      - uv run --extra docs mkdocs serve
+
+  milvus:up:
+    desc: 启动必选 Milvus（hmd-foundation 子集：etcd/minio/standalone）
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} up -d {{.MILVUS_SERVICES}}
+      - 'echo "Milvus: http://localhost:19530 (project hmd-foundation)"'
+
+  milvus:down:
+    desc: 仅停止 Milvus 三服务（不拆 GraphDB/OM）
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} stop {{.MILVUS_SERVICES}}
+      - docker compose -f {{.FOUNDATION_COMPOSE}} rm -f {{.MILVUS_SERVICES}}
+
+  milvus:logs:
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} logs -f standalone
+
+  foundation:preflight:
+    desc: 检查 GraphDB license 挂载陷阱（空目录会让 Workbench 404）
+    cmds:
+      - |
+        lic=docker/secrets/graphdb.license
+        if [ -d "$lic" ]; then
+          echo "错误：$lic 是目录（Docker 在缺文件时误建）。"
+          echo "请：rm -rf $lic"
+          echo "GraphDB 10 Free 无需 license；SE/EE 再放真实 license 文件。"
+          exit 2
+        fi
+
+  foundation:up:
+    desc: 启动 Foundation 全栈（含 Milvus）并 BIOS init（需 HMD_BIOS_LICENSE_ACK）
+    cmds:
+      - task: foundation:preflight
+      - docker compose -f {{.FOUNDATION_COMPOSE}} up -d
+      - task: foundation:smoke
+      - task: foundation:init
+
+  foundation:bern2:fetch:
+    desc: 克隆 BERN2 源码并下载 ~70GB resources（可断点续传）
+    cmds:
+      - |
+        set -euo pipefail
+        ROOT=docker/bern2
+        mkdir -p "$ROOT"
+        if [ ! -f "$ROOT/upstream/server.py" ]; then
+          rm -rf "$ROOT/upstream"
+          git clone --depth 1 --branch v1.1.0 https://github.com/dmis-lab/BERN2.git "$ROOT/upstream"
+        fi
+        mkdir -p "$ROOT/resources"
+        if [ ! -f "$ROOT/resources/.fetched" ]; then
+          ARCHIVE="$ROOT/resources_v1.1.b.tar.gz"
+          URL="http://nlp.dmis.korea.edu/projects/bern2-sung-et-al-2022/resources_v1.1.b.tar.gz"
+          GDRIVE_ID="147b3OhU4IdQi121ZBUSqO1XKdKoXE5DK"
+          if [ ! -f "$ARCHIVE" ] || [ "$(stat -f%z "$ARCHIVE" 2>/dev/null || echo 0)" -lt 1000000 ]; then
+            rm -f "$ARCHIVE"
+            echo "Downloading BERN2 resources (~70GB) → $ARCHIVE"
+            if ! curl -L --retry 5 --retry-delay 10 --continue-at - -o "$ARCHIVE" "$URL"; then
+              echo "官方 URL 失败，改试 Google Drive ($GDRIVE_ID)…"
+              uv run --with gdown python -c "import gdown; gdown.download(id='$GDRIVE_ID', output='$ARCHIVE', quiet=False)"
+            fi
+          fi
+          echo "Extracting…"
+          tar -zxvf "$ARCHIVE" -C "$ROOT"
+          test -d "$ROOT/resources" || { echo "解压后未找到 $ROOT/resources"; exit 1; }
+          if [ -f "$ROOT/resources/GNormPlusJava/CRF++-0.58.tar.gz" ] && [ ! -d "$ROOT/resources/GNormPlusJava/CRF" ]; then
+            (cd "$ROOT/resources/GNormPlusJava" && tar -zxvf CRF++-0.58.tar.gz && mv CRF++-0.58 CRF)
+          fi
+          touch "$ROOT/resources/.fetched"
+          echo "BERN2 resources ready"
+        else
+          echo "BERN2 resources already fetched"
+        fi
+
+  foundation:up:bern2:
+    desc: 构建并启动 BERN2（需先 foundation:bern2:fetch；建议 GPU）
+    cmds:
+      - |
+        if [ ! -f docker/bern2/resources/.fetched ] && [ -z "$(ls -A "${BERN2_RESOURCES:-docker/bern2/resources}" 2>/dev/null || true)" ]; then
+          echo "缺少 BERN2 resources。请先：task foundation:bern2:fetch"
+          exit 2
+        fi
+        if [ ! -f docker/bern2/upstream/server.py ]; then
+          echo "缺少 BERN2 源码。请先：task foundation:bern2:fetch"
+          exit 2
+        fi
+      - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 build bern2
+      - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 up -d bern2
+      - 'echo "BERN2: http://localhost:8888  （首次就绪可能需数十分钟）"'
+
+  foundation:down:
+    desc: 拆除 hmd-foundation 全栈（含 Milvus + BERN2 profile）
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 down
+
+  foundation:ps:
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} ps
+
+  foundation:smoke:
+    desc: 健康检查 GraphDB / OM / Milvus
+    cmds:
+      - uv run python scripts/foundation_smoke.py
+
+  foundation:init:
+    desc: BIOS init + sync（全量默认；HMD_BIOS_MAX_CONCEPTS=0 不截断）
+    cmds:
+      - |
+        if [ "${HMD_BIOS_INIT:-full}" = "subset" ]; then
+          uv run hmd foundation bios-load --subset
+        else
+          if [ -z "${HMD_BIOS_LICENSE_ACK:-}" ]; then
+            echo "需要 HMD_BIOS_LICENSE_ACK=poc|evaluation|licensed"
+            echo "见 data/foundation/NOTICE_BIOS.md"
+            echo "仅子集联调：HMD_BIOS_INIT=subset task foundation:init"
+            exit 2
+          fi
+          export HMD_BIOS_MAX_CONCEPTS="${HMD_BIOS_MAX_CONCEPTS:-0}"
+          echo "BIOS load max_concepts=${HMD_BIOS_MAX_CONCEPTS} (0=full)"
+          uv run hmd foundation bios-load --full
+        fi
+      - uv run hmd foundation sync
+
+  corpus:
+    cmds:
+      - uv run python scripts/fetch_corpus.py
+
+  clean:
+    cmds:
+      - rm -rf {{.GEN_ART}} {{.GEN_PY}} .pytest_cache .ruff_cache

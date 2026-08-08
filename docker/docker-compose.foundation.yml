@@ -1,0 +1,149 @@
+# Enterprise Biomedical World Model — 真实联调栈（单一 Compose 项目）
+# 含：Milvus（etcd/minio/standalone）+ GraphDB + OpenMetadata
+# 启动全栈：task foundation:up（GraphDB 10 Free 默认无 license；BIOS 全量需 HMD_BIOS_LICENSE_ACK）
+# 仅 Milvus：task milvus:up（同一项目，子集服务）
+# BERN2：task foundation:up:bern2（需预先下载 ~70GB resources）
+# SE/EE license：把文件放到 docker/secrets/graphdb.license 后
+#   docker compose -f docker/docker-compose.foundation.yml -f docker/docker-compose.graphdb-license.yml up -d graphdb
+name: hmd-foundation
+
+include:
+  # Evidence Index；与 GraphDB/OM 同属 hmd-foundation，禁止再起 hmd-milvus
+  - path: milvus-standalone.yml
+    env_file: []
+
+services:
+  graphdb:
+    image: ontotext/graphdb:10.8.4
+    ports:
+      - "127.0.0.1:7200:7200"
+    environment:
+      # 全量 BIOS ~2e7 概念灌库需要更大堆；机器内存不足时可改回 4g
+      GDB_JAVA_OPTS: >-
+        -Xms4g -Xmx24g
+        -Dgraphdb.workbench.importDirectory=/root/graphdb-import
+    volumes:
+      # GraphDB 10 Free：不挂 license。切勿挂空路径——Docker 会建成目录，Workbench 起不来。
+      - graphdb-data:/opt/graphdb/home
+      - ./graphdb-import:/root/graphdb-import
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:7200/rest/repositories || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+
+  # OpenMetadata 最小依赖（对齐官方 quickstart 1.5.11；完整能力见官方文档）
+  mysql:
+    image: docker.getcollate.io/openmetadata/db:1.5.11
+    command: ["--sort_buffer_size=10M"]
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - om-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysql", "--user=root", "--password=password", "--silent", "--execute", "use openmetadata_db"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - om-es:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+
+  # 官方要求先 migrate 再建表，空库直接起 server 会报 DATABASE_CHANGE_LOG missing
+  openmetadata-migrate:
+    image: docker.getcollate.io/openmetadata/server:1.5.11
+    command: ["./bootstrap/openmetadata-ops.sh", "migrate"]
+    environment: &om_env
+      AUTHORIZER_CLASS_NAME: org.openmetadata.service.security.DefaultAuthorizer
+      AUTHORIZER_REQUEST_FILTER: org.openmetadata.service.security.JwtFilter
+      AUTHORIZER_ADMIN_PRINCIPALS: "[admin]"
+      AUTHORIZER_PRINCIPAL_DOMAIN: open-metadata.org
+      AUTHENTICATION_PROVIDER: basic
+      AUTHENTICATION_PUBLIC_KEYS: "[http://localhost:8585/api/v1/system/config/jwks]"
+      AUTHENTICATION_ENABLE_SELF_SIGNUP: "true"
+      SERVER_HOST_API_URL: http://openmetadata-server:8585/api
+      DB_DRIVER_CLASS: com.mysql.cj.jdbc.Driver
+      DB_SCHEME: mysql
+      DB_PARAMS: allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_USE_SSL: "false"
+      DB_USER: openmetadata_user
+      DB_USER_PASSWORD: openmetadata_password
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      OM_DATABASE: openmetadata_db
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_SCHEME: http
+      SEARCH_TYPE: elasticsearch
+      PIPELINE_SERVICE_CLIENT_CLASS_NAME: org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient
+      PIPELINE_SERVICE_CLIENT_ENDPOINT: http://localhost:8080
+      SECRET_MANAGER: db
+    depends_on:
+      mysql:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    restart: "no"
+
+  openmetadata-server:
+    image: docker.getcollate.io/openmetadata/server:1.5.11
+    ports:
+      - "127.0.0.1:8585:8585"
+    environment:
+      <<: *om_env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      openmetadata-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8585/api/v1/system/version || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 30
+      start_period: 180s
+
+  bern2:
+    profiles: ["bern2"]
+    build:
+      context: ./bern2
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8888:8888"
+    environment:
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-}
+    volumes:
+      - ${BERN2_RESOURCES:-./bern2/resources}:/app/resources
+      - ../data/foundation/enterprise_dictionary.yaml:/app/custom_dict/enterprise_dictionary.yaml:ro
+    # 官方最低约 63GB RAM；本机无 GPU 时 CPU 推理极慢
+    mem_limit: 56g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8888/plain -H 'Content-Type: application/json' -d '{\"text\":\"EGFR\"}' || exit 1"]
+      interval: 60s
+      timeout: 120s
+      retries: 30
+      start_period: 600s
+
+volumes:
+  graphdb-data:
+  om-mysql:
+  om-es:

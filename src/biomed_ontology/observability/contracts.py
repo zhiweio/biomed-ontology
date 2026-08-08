@@ -89,7 +89,7 @@ class ContractValidator:
     def _load(self, schema: str) -> dict[str, Any]:
         path = self.schema_dir / f"{schema}.schema.json"
         if not path.exists():
-            raise FileNotFoundError(f"契约未生成：{path}，请先执行 make gen")
+            raise FileNotFoundError(f"契约未生成：{path}，请先执行 task gen")
         return json.loads(path.read_text(encoding="utf-8"))
 
 

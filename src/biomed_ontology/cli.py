@@ -189,31 +189,35 @@ def gate_cmd(
 @app.command("eval")
 def eval_cmd(
     entitlements: str = typer.Option("", "--entitlements", help="逗号分隔的已采购源 ID"),
-    milvus: bool = typer.Option(False, "--milvus", help="连 Milvus 跑另外 6 个臂"),
-    embedder: str = typer.Option("fake", "--embedder", help="仅 --milvus 时生效"),
+    embedder: str = typer.Option(
+        "multimodal-bio",
+        "--embedder",
+        help="默认 multimodal-bio（五列最全）；接线验证用 fake + --allow-fake",
+    ),
     collection: str | None = typer.Option(None, "--collection"),
     reranker: str = typer.Option(
-        "", "--reranker", help="交叉编码器精排模型，留空则精排臂标为未运行"
+        "bge-reranker-v2-m3",
+        "--reranker",
+        help="交叉编码器精排；传空字符串可关掉精排臂",
     ),
     allow_fake: bool = typer.Option(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
 ) -> None:
-    """跑 gold set 评测：归一化准确率 + 检索消融 + 指标目标达成情况。"""
+    """跑 gold set 评测：归一化准确率 + 检索消融（默认 multimodal-bio + Milvus）。"""
     from biomed_ontology.eval import eval_normalization, eval_retrieval
     from biomed_ontology.eval.targets import check_targets, render_outcomes
     from biomed_ontology.pipeline import build_knowledge_base
     from biomed_ontology.rerank import get_reranker
 
-    if milvus:
-        _require_real_embedder(embedder, allow_fake=allow_fake)
+    _require_real_embedder(embedder, allow_fake=allow_fake)
 
     kb = build_knowledge_base()
     ents = frozenset(e.strip() for e in entitlements.split(",") if e.strip())
     console.print(eval_normalization(kb).as_table())
     console.print()
 
-    backend = _milvus_backend(embedder, collection) if milvus else None
+    backend = _milvus_backend(embedder, collection)
     ev = eval_retrieval(
         kb,
         entitlements=ents,
@@ -221,7 +225,7 @@ def eval_cmd(
         # 报的是模型真名（bge-m3+sapbert+qwen3-vl），不是命令行别名。
         # 别名说不清生医列到底装了什么，而这行字要给净值背书。
         embedder=backend.embedder.name if backend else "",
-        reranker=get_reranker(reranker) if reranker else None,
+        reranker=get_reranker(reranker) if reranker.strip() else None,
     )
     console.print(ev.as_table())
     console.print()
@@ -435,20 +439,22 @@ def parse_cmd(
 @app.command("index")
 def index_cmd(
     embedder: str = typer.Option(
-        "multimodal",
+        "multimodal-bio",
         "--embedder",
-        help="multimodal-bio | multimodal | dual | bge-m3 | sapbert | qwen3-vl | biomedclip | fake",
+        help="默认 multimodal-bio（五列最全）；接线验证用 fake + --allow-fake",
     ),
     collection: str | None = typer.Option(None, "--collection"),
     recreate: bool = typer.Option(False, "--recreate", help="先删表再建，用于换 embedder"),
     figure_typer: str = typer.Option(
-        "caption", "--figure-typer", help="biomedclip（零样本判图型）| caption（关键词兜底）"
+        "biomedclip",
+        "--figure-typer",
+        help="默认 biomedclip；无权重时可用 caption 关键词兜底",
     ),
     allow_fake: bool = typer.Option(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
 ) -> None:
-    """把知识库切片写入 Milvus。各向量列一次算完，不分次前向。"""
+    """把知识库切片写入 Milvus（默认 multimodal-bio 五列 + BiomedCLIP 图型）。"""
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
     from biomed_ontology.parse.figure_type import get_figure_typer
@@ -496,6 +502,152 @@ def index_cmd(
     for row in rows:
         by_tier[row["license_rank"]] = by_tier.get(row["license_rank"], 0) + 1
     console.print(f"许可分档 {dict(sorted(by_tier.items()))}")
+
+
+foundation_app = typer.Typer(
+    help="Enterprise Biomedical World Model（Foundation）",
+    no_args_is_help=True,
+)
+app.add_typer(foundation_app, name="foundation")
+
+
+@foundation_app.command("golden")
+def foundation_golden(
+    candidate: str = typer.Option("HMPL-504", "--candidate", help="候选药别名或企业 ID"),
+) -> None:
+    """金路径验收：DrugCandidate → Target → Disease → Evidence → Asset。"""
+    from biomed_ontology.foundation import FoundationApi, load_world_model
+
+    api = FoundationApi(load_world_model())
+    result = api.golden_path(candidate)
+    if not result.get("ok"):
+        console.print(f"[red]FAIL[/red] {result}")
+        raise typer.Exit(1)
+    ctx = result["context"]
+    table = Table(title=f"Golden Path · {result['canonical_entity']}")
+    table.add_column("层")
+    table.add_column("计数", justify="right")
+    table.add_row("relationships", str(len(ctx.get("relationships", []))))
+    table.add_row("related_entities", str(len(ctx.get("related_entities", []))))
+    table.add_row("evidence", str(len(ctx.get("evidence", []))))
+    table.add_row("assets", str(len(ctx.get("assets", []))))
+    console.print(table)
+    console.print(f"path = {result['path']}")
+
+
+@foundation_app.command("resolve")
+def foundation_resolve(
+    text: str = typer.Argument(..., help="待解析文本"),
+) -> None:
+    """resolve_entity：BERN2 词典/候选 → Enterprise Entity ID。"""
+    from biomed_ontology.foundation import FoundationApi, load_world_model
+
+    api = FoundationApi(load_world_model())
+    out = api.resolve_entity(text)
+    for row in out["resolved"]:
+        console.print(
+            f"{row['mention']!r} → {row.get('canonical_entity') or 'UNMAPPED'} "
+            f"[{row['resolution_method']}] conf={row['confidence']}"
+        )
+
+
+@foundation_app.command("bios-load")
+def foundation_bios_load(
+    full: bool = typer.Option(True, "--full/--subset", help="默认全量下载初始化"),
+) -> None:
+    """BIOS_v3 默认全量下载并灌 GraphDB（需 HMD_BIOS_LICENSE_ACK）。"""
+    import os
+
+    from biomed_ontology.foundation.bios import BiosLicenseGate, initialize_bios
+    from biomed_ontology.foundation.graphdb import GraphDbClient
+
+    # 与 initialize_bios 一致：HMD_BIOS_INIT=subset 可跳过全量闸门（CI / 无 ACK）
+    init_mode = os.environ.get("HMD_BIOS_INIT", "full" if full else "subset").lower()
+    want_full = full and init_mode != "subset"
+    if want_full and not os.environ.get("HMD_BIOS_LICENSE_ACK"):
+        console.print(
+            "[red]需要 HMD_BIOS_LICENSE_ACK=poc|evaluation|licensed[/red]\n"
+            "见 data/foundation/NOTICE_BIOS.md\n"
+            "仅子集：export HMD_BIOS_INIT=subset"
+        )
+        raise typer.Exit(2)
+    result = initialize_bios(
+        full=want_full,
+        graphdb=GraphDbClient(),
+        gate=BiosLicenseGate.from_env() if want_full else BiosLicenseGate(True, "poc"),
+    )
+    console.print(result)
+
+
+@foundation_app.command("sync")
+def foundation_sync() -> None:
+    """YAML seed → GraphDB Named Graphs + Milvus Evidence（必选）+ OM 探活。"""
+    import os
+
+    from biomed_ontology.foundation.graphdb import GraphDbClient
+    from biomed_ontology.foundation.sync import sync_world_model
+
+    os.environ.setdefault("HMD_ALLOW_FAKE_EVIDENCE", "1")
+    result = sync_world_model(
+        graphdb=GraphDbClient(),
+        openmetadata_url=os.environ.get("HMD_OPENMETADATA_URL", "http://localhost:8585"),
+        require_milvus=True,
+    )
+    for line in result.details:
+        console.print(line)
+    if not result.milvus_ok:
+        raise typer.Exit(1)
+
+
+@foundation_app.command("evolve-mine")
+def foundation_evolve_mine(
+    text: list[str] | None = typer.Argument(None, help="待挖掘查询；默认用内置未知词"),
+) -> None:
+    """P2：unmapped → KGCL 候选落库（不自动改本体）。"""
+    from biomed_ontology.foundation.evolve import mine_unmapped_candidates
+
+    queries = list(text or []) or ["unknownzyme-xyz-999", "HMPL-504"]
+    result = mine_unmapped_candidates(queries)
+    console.print(f"signals={result.signals}")
+    console.print(f"kgcl={result.kgcl_path}")
+    console.print(f"json={result.json_path}")
+
+
+@foundation_app.command("zingg-run")
+def foundation_zingg_run() -> None:
+    """Zingg 批处理桩：当前校验 matches 文件存在；完整 Spark 作业后续接入。"""
+    from pathlib import Path
+
+    matches = Path("data/foundation/zingg_matches.jsonl")
+    if not matches.exists():
+        console.print(f"[red]缺少 {matches}[/red]")
+        raise typer.Exit(1)
+    n = sum(1 for line in matches.read_text(encoding="utf-8").splitlines() if line.strip())
+    console.print(f"zingg matches file OK lines={n} path={matches}")
+    console.print("完整 Zingg Spark 作业：见计划 docker/zingg（预计算表已接入 Resolver）")
+
+
+@foundation_app.command("serve")
+def foundation_serve(
+    host: str = typer.Option("127.0.0.1", "--host"),
+    port: int = typer.Option(8100, "--port"),
+    bern2_url: str | None = typer.Option(None, "--bern2-url", help="BERN2 base URL"),
+) -> None:
+    """启动 Foundation Semantic API（默认 :8100，与既有 agentapi :8000 并行）。"""
+    import uvicorn
+
+    from biomed_ontology.foundation.service import create_foundation_app
+
+    application = create_foundation_app(bern2_url=bern2_url)
+    table = Table(title="Foundation Semantic API")
+    table.add_column("路径")
+    table.add_column("说明")
+    table.add_row(f"http://{host}:{port}/v1/*", "Semantic Ops")
+    table.add_row(f"http://{host}:{port}/v1/golden_path", "金路径")
+    table.add_row(f"http://{host}:{port}/docs", "OpenAPI")
+    table.add_row(f"http://{host}:{port}/health", "健康检查")
+    console.print(table)
+    uvicorn.run(application, host=host, port=port)
 
 
 @app.command("serve")

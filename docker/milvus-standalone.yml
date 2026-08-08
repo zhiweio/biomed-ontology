@@ -4,8 +4,9 @@
 # 而许可隔离恰恰依赖 partition key 做物理隔离（见 search/backends/base.py）。
 # 用 Lite 跑通的测试无法证明生产形态下的隔离有效。
 #
-# 起停：make milvus-up / make milvus-down
-name: hmd-milvus
+# 本文件是服务片段，由 docker-compose.foundation.yml include，项目名统一为
+# hmd-foundation。勿单独 `docker compose -f` 起第二套栈（会抢 9001/19530）。
+# 起停：task milvus:up（仅 etcd/minio/standalone）或 task foundation:up（全栈）。
 
 services:
   etcd:

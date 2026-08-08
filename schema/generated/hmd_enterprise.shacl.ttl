@@ -1,0 +1,534 @@
+@prefix biolink: <https://w3id.org/biolink/vocab/> .
+@prefix hmd: <https://w3id.org/asliva/biomed-ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+biolink:Disease a sh:NodeShape ;
+    rdfs:comment "企业适应症实体。" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:order 6 ;
+            sh:path hmd:related_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:aliases ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:definition ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:preferred_label_zh ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 10 ;
+            sh:path hmd:replaced_by ],
+        [ sh:description "企业实体主键，形如 HMD:ENT:DC:savolitinib" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 0 ;
+            sh:path hmd:enterprise_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 2 ;
+            sh:path hmd:preferred_label_en ],
+        [ sh:in ( "active" "deprecated" "draft" ) ;
+            sh:maxCount 1 ;
+            sh:order 8 ;
+            sh:path hmd:status ],
+        [ sh:description "与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 5 ;
+            sh:path hmd:exact_match_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:created_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:datatype xsd:string ;
+            sh:in ( "Indication" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 1 ;
+            sh:path hmd:entity_kind ] ;
+    sh:targetClass biolink:Disease .
+
+biolink:Drug a sh:NodeShape ;
+    rdfs:comment "企业候选药物 / 管线分子（可对应多个外部 Chemical 概念）。" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:order 2 ;
+            sh:path hmd:indications ],
+        [ sh:nodeKind sh:IRI ;
+            sh:order 11 ;
+            sh:path hmd:related_xrefs ],
+        [ sh:nodeKind sh:IRI ;
+            sh:order 1 ;
+            sh:path hmd:targets ],
+        [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 12 ;
+            sh:path hmd:aliases ],
+        [ sh:nodeKind sh:IRI ;
+            sh:order 0 ;
+            sh:path hmd:active_ingredient_xrefs ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 15 ;
+            sh:path hmd:replaced_by ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:modality ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:preferred_label_zh ],
+        [ sh:in ( "active" "deprecated" "draft" ) ;
+            sh:maxCount 1 ;
+            sh:order 13 ;
+            sh:path hmd:status ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:definition ],
+        [ sh:description "企业实体主键，形如 HMD:ENT:DC:savolitinib" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 5 ;
+            sh:path hmd:enterprise_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:preferred_label_en ],
+        [ sh:description "与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 10 ;
+            sh:path hmd:exact_match_xrefs ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 3 ;
+            sh:path hmd:program_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 14 ;
+            sh:path hmd:created_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:datatype xsd:string ;
+            sh:in ( "DrugCandidate" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 6 ;
+            sh:path hmd:entity_kind ] ;
+    sh:targetClass biolink:Drug .
+
+biolink:GeneOrGeneProduct a sh:NodeShape ;
+    rdfs:comment "企业视角的靶点实体（可 exactMatch 到基因/蛋白外部概念）。" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:order 6 ;
+            sh:path hmd:related_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:aliases ],
+        [ sh:in ( "active" "deprecated" "draft" ) ;
+            sh:maxCount 1 ;
+            sh:order 8 ;
+            sh:path hmd:status ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:definition ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:preferred_label_zh ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 10 ;
+            sh:path hmd:replaced_by ],
+        [ sh:description "企业实体主键，形如 HMD:ENT:DC:savolitinib" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 0 ;
+            sh:path hmd:enterprise_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 2 ;
+            sh:path hmd:preferred_label_en ],
+        [ sh:description "与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 5 ;
+            sh:path hmd:exact_match_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:created_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:datatype xsd:string ;
+            sh:in ( "Target" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 1 ;
+            sh:path hmd:entity_kind ] ;
+    sh:targetClass biolink:GeneOrGeneProduct .
+
+hmd:EnterpriseEntity a sh:NodeShape ;
+    rdfs:comment "企业世界模型实体基类。主键永不复用；废弃走 replaced_by。" ;
+    sh:closed false ;
+    sh:ignoredProperties ( rdf:type hmd:active_ingredient_xrefs hmd:asset_fqn hmd:candidate_id hmd:doi hmd:indication_ids hmd:indications hmd:mentions hmd:modality hmd:performed_on hmd:pmid hmd:program_id hmd:target_ids hmd:targets hmd:therapeutic_area ) ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:order 6 ;
+            sh:path hmd:related_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:aliases ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:definition ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:preferred_label_zh ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 10 ;
+            sh:path hmd:replaced_by ],
+        [ sh:description "企业实体主键，形如 HMD:ENT:DC:savolitinib" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 0 ;
+            sh:path hmd:enterprise_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 2 ;
+            sh:path hmd:preferred_label_en ],
+        [ sh:in ( "DrugCandidate" "Program" "Target" "Indication" "Experiment" "Publication" "Assay" "Compound" "Biomarker" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 1 ;
+            sh:path hmd:entity_kind ],
+        [ sh:in ( "active" "deprecated" "draft" ) ;
+            sh:maxCount 1 ;
+            sh:order 8 ;
+            sh:path hmd:status ],
+        [ sh:description "与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 5 ;
+            sh:path hmd:exact_match_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:created_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ;
+    sh:targetClass hmd:EnterpriseEntity .
+
+hmd:Experiment a sh:NodeShape ;
+    rdfs:comment "ELN / 内部实验批次。" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:order 2 ;
+            sh:path hmd:indication_ids ],
+        [ sh:nodeKind sh:IRI ;
+            sh:order 11 ;
+            sh:path hmd:related_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 12 ;
+            sh:path hmd:aliases ],
+        [ sh:nodeKind sh:IRI ;
+            sh:order 1 ;
+            sh:path hmd:target_ids ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:performed_on ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 15 ;
+            sh:path hmd:replaced_by ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:preferred_label_zh ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 0 ;
+            sh:path hmd:candidate_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:definition ],
+        [ sh:in ( "active" "deprecated" "draft" ) ;
+            sh:maxCount 1 ;
+            sh:order 13 ;
+            sh:path hmd:status ],
+        [ sh:description "企业实体主键，形如 HMD:ENT:DC:savolitinib" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 5 ;
+            sh:path hmd:enterprise_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:preferred_label_en ],
+        [ sh:description "与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 10 ;
+            sh:path hmd:exact_match_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 14 ;
+            sh:path hmd:created_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:datatype xsd:string ;
+            sh:description "OpenMetadata 资产 fullyQualifiedName" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:asset_fqn ],
+        [ sh:datatype xsd:string ;
+            sh:in ( "Experiment" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 6 ;
+            sh:path hmd:entity_kind ] ;
+    sh:targetClass hmd:Experiment .
+
+hmd:KnowledgeClaim a sh:NodeShape ;
+    rdfs:comment "带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:in ( "targets" "investigates" "treats" "belongsTo" "mentions" "supportedBy" "sameAsExternal" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 2 ;
+            sh:path hmd:predicate ],
+        [ sh:in ( "literature" "patent" "eln" "lims" "assay" "manual" "derived" ) ;
+            sh:maxCount 1 ;
+            sh:order 7 ;
+            sh:path hmd:source_type ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 10 ;
+            sh:path hmd:created_at ],
+        [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 1 ;
+            sh:path hmd:subject_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:object_value ],
+        [ sh:datatype xsd:float ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 5 ;
+            sh:path hmd:confidence ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 0 ;
+            sh:path hmd:claim_id ],
+        [ sh:datatype xsd:string ;
+            sh:description "Evidence Index（Milvus）中的证据条目 ID" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:evidence_ids ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 6 ;
+            sh:path hmd:source_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:extracted_by ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 3 ;
+            sh:path hmd:object_id ] ;
+    sh:targetClass hmd:KnowledgeClaim .
+
+hmd:Program a sh:NodeShape ;
+    rdfs:comment "研发项目 / 管线项目。" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:order 7 ;
+            sh:path hmd:related_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:preferred_label_zh ],
+        [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:aliases ],
+        [ sh:in ( "active" "deprecated" "draft" ) ;
+            sh:maxCount 1 ;
+            sh:order 9 ;
+            sh:path hmd:status ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 11 ;
+            sh:path hmd:replaced_by ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 0 ;
+            sh:path hmd:therapeutic_area ],
+        [ sh:description "企业实体主键，形如 HMD:ENT:DC:savolitinib" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 1 ;
+            sh:path hmd:enterprise_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 5 ;
+            sh:path hmd:definition ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 10 ;
+            sh:path hmd:created_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:preferred_label_en ],
+        [ sh:description "与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 6 ;
+            sh:path hmd:exact_match_xrefs ],
+        [ sh:datatype xsd:string ;
+            sh:in ( "Program" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 2 ;
+            sh:path hmd:entity_kind ] ;
+    sh:targetClass hmd:Program .
+
+hmd:Publication a sh:NodeShape ;
+    rdfs:comment "文献或专利在企业世界模型中的登记（证据入口，非全文）。" ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 10 ;
+            sh:path hmd:aliases ],
+        [ sh:nodeKind sh:IRI ;
+            sh:order 9 ;
+            sh:path hmd:related_xrefs ],
+        [ sh:in ( "active" "deprecated" "draft" ) ;
+            sh:maxCount 1 ;
+            sh:order 11 ;
+            sh:path hmd:status ],
+        [ sh:nodeKind sh:IRI ;
+            sh:order 2 ;
+            sh:path hmd:mentions ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 6 ;
+            sh:path hmd:preferred_label_zh ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:definition ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 0 ;
+            sh:path hmd:pmid ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 1 ;
+            sh:path hmd:doi ],
+        [ sh:description "企业实体主键，形如 HMD:ENT:DC:savolitinib" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 3 ;
+            sh:path hmd:enterprise_id ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 13 ;
+            sh:path hmd:replaced_by ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 5 ;
+            sh:path hmd:preferred_label_en ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 12 ;
+            sh:path hmd:created_in_release ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:datatype xsd:string ;
+            sh:in ( "Publication" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:entity_kind ],
+        [ sh:description "与外部标准概念的 exactMatch（BIOS/ChEBI/HGNC/DrugBank/…）" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 8 ;
+            sh:path hmd:exact_match_xrefs ] ;
+    sh:targetClass hmd:Publication .
+

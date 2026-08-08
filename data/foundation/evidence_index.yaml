@@ -1,0 +1,49 @@
+# Evidence Index（Milvus 逻辑模型的 YAML 投影）— 证据/引用优先
+evidence:
+  - evidence_id: ev:lit:savo_met_1
+    collection: literature
+    doc_id: DOC:pmid_demo_savo
+    chunk_id: DOC:pmid_demo_savo#p1
+    page: 1
+    pmid: "00000001"
+    entity_ids:
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:TGT:MET
+    text: >-
+      Savolitinib (HMPL-504) is a selective MET tyrosine kinase inhibitor
+      under investigation in MET-driven malignancies.
+    quote: >-
+      Savolitinib (HMPL-504) is a selective MET tyrosine kinase inhibitor
+    score: 0.96
+
+  - evidence_id: ev:lit:savo_nsclc_1
+    collection: literature
+    doc_id: DOC:pmid_demo_savo
+    chunk_id: DOC:pmid_demo_savo#p2
+    page: 1
+    pmid: "00000001"
+    entity_ids:
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:IND:nsclc
+    text: >-
+      Clinical studies have evaluated savolitinib in patients with
+      non-small cell lung cancer harboring MET alterations.
+    quote: >-
+      evaluated savolitinib in patients with non-small cell lung cancer
+    score: 0.94
+
+  - evidence_id: ev:eln:exp_2025_012
+    collection: internal_docs
+    doc_id: ELN:EXP-2025-012
+    chunk_id: ELN:EXP-2025-012#summary
+    page: 1
+    entity_ids:
+      - HMD:ENT:EXP:2025_012
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:TGT:MET
+    text: >-
+      EXP-2025-012: Internal MET biochemical assay confirmed nanomolar
+      inhibition by savolitinib (HMPL-504).
+    quote: >-
+      Internal MET biochemical assay confirmed nanomolar inhibition by savolitinib
+    score: 1.0

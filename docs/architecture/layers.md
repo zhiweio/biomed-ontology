@@ -20,14 +20,19 @@
 ```
 L0 Source        构建期联网拉快照 → 版本化存储（version / license / retrieved_on）
 L1 术语层        Concept / Synonym / Xref(SSSOM) / Hierarchy / ConceptLink
-L2 语义层        LinkML schema（Biolink 子集）→ OWL + SHACL + JSON Schema + Pydantic
-L3 归一化        文本 → 唯一 CURIE（词典 → 规则 → 向量 → 消歧）
+L2 语义层        LinkML（Biolink 子集 + Enterprise Ontology）→ OWL + SHACL + JSON Schema + Pydantic
+L3 归一化 / ER   文本 → CURIE；Foundation：BERN2 候选 → `HMD:ENT:*`
 L4 语料治理      文档标引 + 三模态抽取 → 结构化事实 + provenance
-L5 检索/查询     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；可选精排；Milvus 五列；SPARQL
-L6 Agent 接口    MCP + REST（11 个工具），返回体内建 provenance + trace_id + license_tier
+L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列 + Evidence Index（必选）
+L6 Agent 接口    :8000 AgentApi（11 tools）∥ :8100 Foundation Semantic Ops
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
-L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release → Impact → 回归守门
+L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release；Foundation evolve-mine 不自动改本体
 ```
+
+!!! tip "Foundation 横切"
+    GraphDB / OpenMetadata / Entity Resolution 不另起一层编号，而是把 L2–L6 接到企业 World Model。
+    详见 [Foundation 世界模型](foundation.md)。
+
 
 ```mermaid
 flowchart TB
@@ -51,13 +56,13 @@ flowchart TB
 |---|---|---|---|
 | L0 | `registry/` | 源从哪来、什么许可、是否启用 | `registry/sources.yaml` |
 | L1 | `ontology/`、`ingest/` | 概念、链接、发版、RDF | `ingest/seed.py`、`ontology/links.py` |
-| L2 | `schema/` → `_generated/` | LinkML 单一事实来源 | `schema/hmd_concept.yaml` |
-| L3 | `normalize/`、`alias/` | 文本到 CURIE | `normalize/__init__.py` |
+| L2 | `schema/` → `_generated/` | LinkML SSOT（含 `hmd_enterprise`） | `schema/hmd_enterprise.yaml` |
+| L3 | `normalize/`、`alias/`、`foundation/resolve` | 文本到 CURIE / Enterprise ID | `foundation/resolve.py` |
 | L4 | `parse/`、`corpus/` | PDF → 语义树 → 切片 → 事实 | `corpus/__init__.py` |
-| L5 | `search/`、`embed/`、`rerank/` | 混合检索 | `search/__init__.py` |
-| L6 | `agentapi/`、`service/` | 工具契约与入口 | `agentapi/__init__.py` |
+| L5 | `search/`、`embed/`、`rerank/`、`foundation/sync` | 混合检索 + Evidence Index | `search/__init__.py` |
+| L6 | `agentapi/`、`service/`、`foundation/api` | :8000 工具 ∥ :8100 Semantic Ops | `foundation/api.py` |
 | L7 | `observability/`、`quality/` | 四支柱与发版守门 | `observability/__init__.py` |
-| L8 | `evolution/` | 信号到 KGCL | `evolution/` |
+| L8 | `evolution/`、`foundation/evolve` | 信号到 KGCL（不自动改本体） | `foundation/evolve.py` |
 
 装配入口是 `pipeline.build_knowledge_base()` —— search / API / eval / demo **共用同一份 KB**。若各自装配，`release_id` 与归一化配置会悄悄漂移，评测分数和服务库对不上号。
 

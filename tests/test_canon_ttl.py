@@ -1,6 +1,6 @@
 """生成物的规范化序列化。
 
-`make gen` 曾经每跑一次就产生几千行 diff（上一次实测 6341 增 = 6341 删），
+`task gen` 曾经每跑一次就产生几千行 diff（上一次实测 6341 增 = 6341 删），
 内容一字未改，全是 rdflib 给空白节点重新编号导致的重排。
 
 这不只是难看：真实的 schema 变更会被淹没在噪声里，review 形同虚设；
@@ -27,9 +27,9 @@ _SPEC.loader.exec_module(canon_ttl)
 
 # 只取每类最小的一份。`to_canonical_graph` 是图同构算法，随空白节点数急剧变慢：
 # 全部 10 份跑一遍要 4 分半，而 hmd_agentapi.owl.ttl 一份就占 79 秒。
-# 把它塞进默认套件的真实后果不是"慢一点"，是大家不再跑 make check。
+# 把它塞进默认套件的真实后果不是"慢一点"，是大家不再跑 task check。
 #
-# 全量覆盖挂在 `make nightly`（= `make canon-check`，只判定不落盘）。
+# 全量覆盖挂在 `task nightly`（= `task canon-check`，只判定不落盘）。
 # 这里守的是**机制没坏**：规范化确实消除重排，且不改变图语义。
 TTL_FILES = [
     GENERATED / "hmd_concept.shacl.ttl",
@@ -46,16 +46,16 @@ def test_representative_files_exist():
 
 @pytest.mark.parametrize("ttl", TTL_FILES, ids=lambda p: p.name)
 def test_committed_output_is_already_canonical(ttl: Path, tmp_path: Path):
-    """已提交的生成物必须是规范形式，否则下一次 `make gen` 又会刷出巨型 diff。"""
+    """已提交的生成物必须是规范形式，否则下一次 `task gen` 又会刷出巨型 diff。"""
     copy = tmp_path / ttl.name
     copy.write_text(ttl.read_text(encoding="utf-8"), encoding="utf-8")
-    assert not canon_ttl.canonicalize(copy), f"{ttl.name} 未规范化，请跑 make canon-ttl"
+    assert not canon_ttl.canonicalize(copy), f"{ttl.name} 未规范化，请跑 task canon-ttl"
 
 
 @pytest.mark.parametrize("ttl", TTL_FILES, ids=lambda p: p.name)
 def test_reserialising_then_canonicalising_returns_the_same_bytes(ttl: Path, tmp_path: Path):
     """模拟"重新生成"：rdflib 重新序列化会换一批空白节点标签、换一种排列，
-    这正是 `make gen` 每次发生的事。规范化后必须回到同一份字节。"""
+    这正是 `task gen` 每次发生的事。规范化后必须回到同一份字节。"""
     graph = Graph()
     graph.parse(ttl, format="turtle")
     shuffled = tmp_path / ttl.name

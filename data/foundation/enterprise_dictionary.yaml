@@ -1,0 +1,15 @@
+# BERN2 自定义词典源（与 Enterprise Ontology 同源生成）
+# mention / aliases → enterprise_id + ChEBI/DrugBank 等外部 ID
+# 验收目标：下列专有名词识别/归一 100%
+version: "0.1.0"
+entries:
+  - mention: HMPL-504
+    type: chemical
+    enterprise_id: HMD:ENT:DC:savolitinib
+    external_ids: [CHEBI:DEMO_SAVO, DrugBank:DEMO_SAVO]
+    aliases: [HMPL-504, AZD6094, AZD-6094, volitinib, ORPATHYS, 沃瑞沙]
+  - mention: EXP-2025-012
+    type: experiment
+    enterprise_id: HMD:ENT:EXP:2025_012
+    external_ids: []
+    aliases: [EXP-2025-012]

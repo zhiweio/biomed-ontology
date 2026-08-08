@@ -39,6 +39,19 @@ flowchart LR
 2. 发版号进每个 tool 响应  
 3. 回归用同一套 `hmd eval` + targets，而不是另写「发版脚本数字」  
 
+## Foundation Data Loop（一期硬边界）
+
+```bash
+uv run hmd foundation evolve-mine "unknownzyme-xyz-999"
+```
+
+| 做 | 不做 |
+|---|---|
+| `resolve_entity` unmapped / 低置信 → `.kgcl` + candidates JSON | 自动改 GraphDB ontology |
+| 候选含建议别名 / suggested exactMatch | Agent 自动策展 / `evolve-apply` |
+
+见 [Foundation · Data Loop](../architecture/foundation.md)。
+
 ## 与质量层
 
 LLM/规则生成内容以 `PENDING` 入库，未经审校不得进 agent 返回体（D5）。演进提案同样不应绕过审校状态直接变「已发布事实」。

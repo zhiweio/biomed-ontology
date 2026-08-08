@@ -1,0 +1,21 @@
+# OpenMetadata 资产上下文的本地投影（Data Context Layer）
+assets:
+  - asset_fqn: asliva.eln.exp_2025_012
+    name: EXP-2025-012 MET inhibition assay
+    asset_type: eln_experiment
+    description: ELN batch testing savolitinib against MET for NSCLC program
+    entity_ids:
+      - HMD:ENT:EXP:2025_012
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:TGT:MET
+      - HMD:ENT:IND:nsclc
+    url: om://asliva/eln/exp_2025_012
+
+  - asset_fqn: asliva.dataset.met_assay_results
+    name: MET assay results warehouse table
+    asset_type: table
+    description: Curated assay results linked to MET program candidates
+    entity_ids:
+      - HMD:ENT:TGT:MET
+      - HMD:ENT:PRG:met_nsclc
+    url: om://asliva/dataset/met_assay_results

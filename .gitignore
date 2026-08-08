@@ -228,5 +228,9 @@ data/raw/*.pdf
 data/assets/
 data/cache/
 docker/volumes/
+# BERN2 源码克隆与 ~70GB resources（task foundation:bern2:fetch）
+docker/bern2/upstream/
+docker/bern2/resources/
+docker/bern2/resources_v1.1*.tar.gz
 
 logs/docs/

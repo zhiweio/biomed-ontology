@@ -1,10 +1,17 @@
-# Milvus 五列与融合不下推
+# Milvus：五列检索 + Evidence Index
 
-源码：`src/biomed_ontology/search/backends/milvus.py`，编排见 `docker/milvus-standalone.yml`。
+源码：`src/biomed_ontology/search/backends/milvus.py`。
+编排片段：`docker/milvus-standalone.yml`（由 `docker-compose.foundation.yml` include，项目名 `hmd-foundation`）。
+Foundation 证据集合：`foundation_evidence`（写入逻辑在 `foundation/sync.py`）。
 
-## 为什么要向量后端
+## 为什么要向量后端（且必选）
 
-LocalBackend 用内存稀疏/伪稠密验证接线；真模型 + 真 ANN 需要外置索引。Milvus 负责**列式召回**，不负责业务融合与 explain。
+LocalBackend 仅用于**纯算法单测**。产品路径上 Milvus 同时是：
+
+1. **文献检索五列**（`hmd index` / `hmd eval`，默认 `multimodal-bio`）  
+2. **Foundation Evidence Index**（回答 *Where is the evidence?*；`entity_ids` = Enterprise ID）  
+
+失败**不回落** LocalBackend。联调：`task milvus:up`（仅 Evidence Index）或 `task foundation:up`（同项目全栈）。
 
 ## 五列是什么
 
@@ -68,13 +75,13 @@ PROXY_MAXVECTORFIELDNUM: "6"
 
 ## 无静默回落
 
-`--milvus` 臂在容器不可达时标「未运行」，**绝不回落**到 LocalBackend 还写着 Milvus 列名。README 与测试都守这条。
+Milvus 臂在容器不可达时标「未运行」，**绝不回落**到 LocalBackend 还写着 Milvus 列名。README 与测试都守这条。
 
 ## 如何验证
 
 ```bash
-make milvus-up
-uv run hmd index --embedder multimodal-bio --recreate --figure-typer biomedclip
-uv run hmd eval --milvus --embedder multimodal-bio --entitlements MOCK_LICENSED
+task milvus:up
+uv run hmd index --recreate
+uv run hmd eval --entitlements MOCK_LICENSED
 uv run pytest tests/test_search_backend.py tests/test_milvus_license.py -q
 ```
