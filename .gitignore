@@ -232,5 +232,9 @@ docker/volumes/
 docker/bern2/upstream/
 docker/bern2/resources/
 docker/bern2/resources_v1.1*.tar.gz
+docker/bern2/resources_v1.1*.tar.gz*.part
+docker/bern2/.bern2.env
+docker/bern2/.bern2.pid
+docker/bern2/.venv-native/
 
 logs/docs/

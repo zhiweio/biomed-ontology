@@ -205,6 +205,7 @@ def _parse_claim(row: dict[str, Any]) -> KnowledgeClaim:
         source_type=row.get("source_type", "manual"),
         extracted_by=row.get("extracted_by", "seed"),
         evidence_ids=list(row.get("evidence_ids", [])),
+        span=row.get("span"),
         created_at=row.get("created_at"),
     )
 

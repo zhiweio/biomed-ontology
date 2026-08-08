@@ -11,6 +11,16 @@ assets:
       - HMD:ENT:IND:nsclc
     url: om://asliva/eln/exp_2025_012
 
+  - asset_fqn: asliva.lims.asy_001
+    name: ASY-001 MET IC50 assay
+    asset_type: lims_assay
+    description: LIMS assay results for savolitinib vs MET kinase
+    entity_ids:
+      - HMD:ENT:ASY:met_ic50
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:TGT:MET
+    url: om://asliva/lims/asy_001
+
   - asset_fqn: asliva.dataset.met_assay_results
     name: MET assay results warehouse table
     asset_type: table

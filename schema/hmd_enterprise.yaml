@@ -133,6 +133,7 @@ classes:
       - source_type
       - extracted_by
       - evidence_ids
+      - span
       - created_at
     slot_usage:
       claim_id:
@@ -227,7 +228,10 @@ slots:
   evidence_ids:
     range: string
     multivalued: true
-    description: Evidence Index（Milvus）中的证据条目 ID
+    description: Evidence Index（Milvus）中的证据条目 ID（ev:… / pubmed:… 等）
+  span:
+    range: string
+    description: 支撑 claim 的原文片段（可与 Evidence.quote 对齐）
   created_at:
     range: string
 
@@ -277,10 +281,16 @@ enums:
         description: 治疗关系（声明级，须带出处）
       belongsTo:
         description: 属于某项目
+      testedIn:
+        description: 候选药在某 ELN 实验中被测试
+      hasAssay:
+        description: 候选药关联某 LIMS / Assay
+      associatedWith:
+        description: 靶点与适应症等关联
       mentions:
         description: 文献提及实体
       supportedBy:
-        description: 断言被某证据支持
+        description: 断言被某证据条目支持（object 宜为 Evidence ID，勿倒置主体）
       sameAsExternal:
         description: 映射到外部概念
 

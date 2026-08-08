@@ -69,6 +69,17 @@ entities:
     performed_on: "2025-03-12"
     aliases: [EXP-2025-012]
 
+  - key: assay_met_ic50
+    entity_kind: Assay
+    enterprise_id: HMD:ENT:ASY:met_ic50
+    preferred_label_en: MET IC50 biochemical assay ASY-001
+    preferred_label_zh: MET IC50 生化检测 ASY-001
+    definition: LIMS assay measuring savolitinib IC50 against MET
+    aliases: [ASY-001, lims:ASY-001]
+    candidate_id: HMD:ENT:DC:savolitinib
+    target_ids: [HMD:ENT:TGT:MET]
+    asset_fqn: asliva.lims.asy_001
+
   - key: pmid_demo
     entity_kind: Publication
     enterprise_id: HMD:ENT:PUB:pmid_demo_savo

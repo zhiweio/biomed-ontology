@@ -341,7 +341,7 @@ hmd:KnowledgeClaim a sh:NodeShape ;
     rdfs:comment "带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:in ( "targets" "investigates" "treats" "belongsTo" "mentions" "supportedBy" "sameAsExternal" ) ;
+    sh:property [ sh:in ( "targets" "investigates" "treats" "belongsTo" "testedIn" "hasAssay" "associatedWith" "mentions" "supportedBy" "sameAsExternal" ) ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:order 2 ;
@@ -353,13 +353,24 @@ hmd:KnowledgeClaim a sh:NodeShape ;
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 10 ;
+            sh:order 11 ;
             sh:path hmd:created_at ],
+        [ sh:datatype xsd:string ;
+            sh:description "Evidence Index（Milvus）中的证据条目 ID（ev:… / pubmed:… 等）" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:evidence_ids ],
         [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 1 ;
             sh:path hmd:subject_id ],
+        [ sh:datatype xsd:string ;
+            sh:description "支撑 claim 的原文片段（可与 Evidence.quote 对齐）" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 10 ;
+            sh:path hmd:span ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -375,11 +386,6 @@ hmd:KnowledgeClaim a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 0 ;
             sh:path hmd:claim_id ],
-        [ sh:datatype xsd:string ;
-            sh:description "Evidence Index（Milvus）中的证据条目 ID" ;
-            sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:evidence_ids ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;

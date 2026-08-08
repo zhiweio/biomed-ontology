@@ -43,14 +43,23 @@ class AssetSearchBody(BaseModel):
     entity_ids: list[str] = Field(default_factory=list)
 
 
-def create_foundation_app(*, bern2_url: str | None = None) -> FastAPI:
+def create_foundation_app(
+    *,
+    bern2_url: str | None = None,
+    mcp_app: Any = None,
+) -> FastAPI:
     state: dict[str, Any] = {}
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         world = load_world_model(bern2_url=bern2_url)
         state["api"] = FoundationApi(world)
-        yield
+        if mcp_app is None:
+            yield
+        else:
+            # mount() 不会跑子应用 lifespan；与 PoC service/app.py 同样串起来。
+            async with mcp_app.router.lifespan_context(mcp_app):
+                yield
         state.clear()
 
     app = FastAPI(
@@ -74,6 +83,7 @@ def create_foundation_app(*, bern2_url: str | None = None) -> FastAPI:
             "ontology_release_id": a.world.release_id,
             "ops": [o["name"] for o in SEMANTIC_OPS],
             "entities": len(a.world.entities),
+            "mcp": mcp_app is not None,
         }
 
     @app.get("/v1/ops")
@@ -123,5 +133,8 @@ def create_foundation_app(*, bern2_url: str | None = None) -> FastAPI:
     @app.get("/v1/golden_path")
     def golden_path(candidate: str = "HMPL-504") -> dict[str, Any]:
         return api().golden_path(candidate)
+
+    if mcp_app is not None:
+        app.mount("/mcp", mcp_app)
 
     return app

@@ -514,25 +514,30 @@ app.add_typer(foundation_app, name="foundation")
 @foundation_app.command("golden")
 def foundation_golden(
     candidate: str = typer.Option("HMPL-504", "--candidate", help="候选药别名或企业 ID"),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
+    compact: bool = typer.Option(False, "--compact", help="仅 Trace 步骤条，不展开详情"),
 ) -> None:
-    """金路径验收：DrugCandidate → Target → Disease → Evidence → Asset。"""
+    """金路径验收：DrugCandidate → Target → Disease → Evidence → Asset。
+
+    默认用 Rich 分步展示推理过程（resolve / graph / citationware / assets）；
+    `--json` 给脚本，`--compact` 只要计数摘要。
+    """
+    import json
+
     from biomed_ontology.foundation import FoundationApi, load_world_model
+    from biomed_ontology.foundation.render import render_golden_path
 
     api = FoundationApi(load_world_model())
     result = api.golden_path(candidate)
+    if json_out:
+        console.print_json(json.dumps(result, ensure_ascii=False))
+        if not result.get("ok"):
+            raise typer.Exit(1)
+        return
     if not result.get("ok"):
-        console.print(f"[red]FAIL[/red] {result}")
+        render_golden_path(result, console=console)
         raise typer.Exit(1)
-    ctx = result["context"]
-    table = Table(title=f"Golden Path · {result['canonical_entity']}")
-    table.add_column("层")
-    table.add_column("计数", justify="right")
-    table.add_row("relationships", str(len(ctx.get("relationships", []))))
-    table.add_row("related_entities", str(len(ctx.get("related_entities", []))))
-    table.add_row("evidence", str(len(ctx.get("evidence", []))))
-    table.add_row("assets", str(len(ctx.get("assets", []))))
-    console.print(table)
-    console.print(f"path = {result['path']}")
+    render_golden_path(result, console=console, verbose=not compact)
 
 
 @foundation_app.command("resolve")
@@ -632,13 +637,17 @@ def foundation_serve(
     host: str = typer.Option("127.0.0.1", "--host"),
     port: int = typer.Option(8100, "--port"),
     bern2_url: str | None = typer.Option(None, "--bern2-url", help="BERN2 base URL"),
+    mcp: bool = typer.Option(True, "--mcp/--no-mcp", help="在 /mcp 挂载 Foundation MCP"),
 ) -> None:
     """启动 Foundation Semantic API（默认 :8100，与既有 agentapi :8000 并行）。"""
     import uvicorn
 
+    from biomed_ontology.foundation.mcp import create_foundation_mcp
     from biomed_ontology.foundation.service import create_foundation_app
 
-    application = create_foundation_app(bern2_url=bern2_url)
+    # MCP 子应用要先建好再交给 create_foundation_app —— lifespan 必须由父应用串起来。
+    mcp_app = create_foundation_mcp(bern2_url=bern2_url).http_app(path="/") if mcp else None
+    application = create_foundation_app(bern2_url=bern2_url, mcp_app=mcp_app)
     table = Table(title="Foundation Semantic API")
     table.add_column("路径")
     table.add_column("说明")
@@ -646,6 +655,8 @@ def foundation_serve(
     table.add_row(f"http://{host}:{port}/v1/golden_path", "金路径")
     table.add_row(f"http://{host}:{port}/docs", "OpenAPI")
     table.add_row(f"http://{host}:{port}/health", "健康检查")
+    if mcp:
+        table.add_row(f"http://{host}:{port}/mcp", "MCP streamable HTTP（get_entity_context）")
     console.print(table)
     uvicorn.run(application, host=host, port=port)
 

@@ -1,0 +1,6 @@
+# ChEBI ↔ Enterprise（最小示例；Golden Path 演示用 DEMO ID）
+version: "0.3.0"
+mappings:
+  - enterprise_id: HMD:ENT:DC:savolitinib
+    chebi_id: CHEBI:DEMO_SAVO
+    note: PoC placeholder；生产替换为真实 ChEBI ID

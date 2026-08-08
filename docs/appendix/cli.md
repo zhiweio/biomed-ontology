@@ -26,7 +26,8 @@
 | `hmd foundation bios-load` | BIOS 全量（默认）/ `--subset` | [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
 | `hmd foundation evolve-mine` | unmapped → KGCL 候选（不改本体） | [evolution](../evolution/loop.md) |
 | `hmd foundation zingg-run` | 校验 Zingg matches 桩 | [foundation](../architecture/foundation.md) |
-| `hmd foundation serve` | Semantic API（:8100） | 同上 |
+| `hmd foundation serve --mcp` | Semantic API + MCP（:8100，`get_entity_context`） | 同上 |
+| `task ontology:validate` | Ontology-as-Code + Golden Path 校验 | [toolchain](../ontology/toolchain.md) |
 
 ## 常用组合
 

@@ -1,9 +1,10 @@
 # Evidence Index（Milvus 逻辑模型的 YAML 投影）— 证据/引用优先
+# evidence_id 使用三层 ID 中的 Evidence 层（ev:…）；出处另见 pubmed:/patent:/eln:/lims:
 evidence:
   - evidence_id: ev:lit:savo_met_1
     collection: literature
-    doc_id: DOC:pmid_demo_savo
-    chunk_id: DOC:pmid_demo_savo#p1
+    doc_id: pubmed:00000001
+    chunk_id: pubmed:00000001#p1
     page: 1
     pmid: "00000001"
     entity_ids:
@@ -18,13 +19,14 @@ evidence:
 
   - evidence_id: ev:lit:savo_nsclc_1
     collection: literature
-    doc_id: DOC:pmid_demo_savo
-    chunk_id: DOC:pmid_demo_savo#p2
+    doc_id: pubmed:00000001
+    chunk_id: pubmed:00000001#p2
     page: 1
     pmid: "00000001"
     entity_ids:
       - HMD:ENT:DC:savolitinib
       - HMD:ENT:IND:nsclc
+      - HMD:ENT:TGT:MET
     text: >-
       Clinical studies have evaluated savolitinib in patients with
       non-small cell lung cancer harboring MET alterations.
@@ -32,10 +34,25 @@ evidence:
       evaluated savolitinib in patients with non-small cell lung cancer
     score: 0.94
 
+  - evidence_id: ev:pat:savo_met_1
+    collection: patents
+    doc_id: patent:US20260000001
+    chunk_id: patent:US20260000001#cl1
+    page: 1
+    entity_ids:
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:TGT:MET
+    text: >-
+      Patent US20260000001 discloses that compounds of the invention
+      inhibit MET kinase activity, including savolitinib analogs.
+    quote: >-
+      compounds of the invention inhibit MET kinase activity
+    score: 0.9
+
   - evidence_id: ev:eln:exp_2025_012
     collection: internal_docs
-    doc_id: ELN:EXP-2025-012
-    chunk_id: ELN:EXP-2025-012#summary
+    doc_id: eln:EXP-2025-012
+    chunk_id: eln:EXP-2025-012#summary
     page: 1
     entity_ids:
       - HMD:ENT:EXP:2025_012
@@ -46,4 +63,20 @@ evidence:
       inhibition by savolitinib (HMPL-504).
     quote: >-
       Internal MET biochemical assay confirmed nanomolar inhibition by savolitinib
+    score: 1.0
+
+  - evidence_id: ev:lims:asy_001
+    collection: lims
+    doc_id: lims:ASY-001
+    chunk_id: lims:ASY-001#result
+    page: 1
+    entity_ids:
+      - HMD:ENT:ASY:met_ic50
+      - HMD:ENT:DC:savolitinib
+      - HMD:ENT:TGT:MET
+    text: >-
+      LIMS ASY-001: savolitinib IC50 against MET kinase recorded for
+      program MET NSCLC.
+    quote: >-
+      LIMS ASY-001: savolitinib IC50 against MET kinase
     score: 1.0

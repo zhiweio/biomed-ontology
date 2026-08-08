@@ -156,7 +156,7 @@ tasks:
       - task: foundation:init
 
   foundation:bern2:fetch:
-    desc: 克隆 BERN2 源码并下载 ~70GB resources（可断点续传）
+    desc: 克隆 BERN2 源码并从 Google Drive 下载 ~70GB resources（gdown 断点续传）
     cmds:
       - |
         set -euo pipefail
@@ -169,14 +169,28 @@ tasks:
         mkdir -p "$ROOT/resources"
         if [ ! -f "$ROOT/resources/.fetched" ]; then
           ARCHIVE="$ROOT/resources_v1.1.b.tar.gz"
-          URL="http://nlp.dmis.korea.edu/projects/bern2-sung-et-al-2022/resources_v1.1.b.tar.gz"
-          GDRIVE_ID="147b3OhU4IdQi121ZBUSqO1XKdKoXE5DK"
-          if [ ! -f "$ARCHIVE" ] || [ "$(stat -f%z "$ARCHIVE" 2>/dev/null || echo 0)" -lt 1000000 ]; then
-            rm -f "$ARCHIVE"
-            echo "Downloading BERN2 resources (~70GB) → $ARCHIVE"
-            if ! curl -L --retry 5 --retry-delay 10 --continue-at - -o "$ARCHIVE" "$URL"; then
-              echo "官方 URL 失败，改试 Google Drive ($GDRIVE_ID)…"
-              uv run --with gdown python -c "import gdown; gdown.download(id='$GDRIVE_ID', output='$ARCHIVE', quiet=False)"
+          GDRIVE_ID="${BERN2_GDRIVE_ID:-147b3OhU4IdQi121ZBUSqO1XKdKoXE5DK}"
+          EXPECT_MD5="c0db4e303d1ccf6bf56b42eda2fe05d0"
+          need_download=1
+          if [ -f "$ARCHIVE" ]; then
+            got="$(md5 -q "$ARCHIVE" 2>/dev/null || md5sum "$ARCHIVE" | awk '{print $1}')"
+            if [ "$got" = "$EXPECT_MD5" ]; then
+              need_download=0
+              echo "Archive OK (md5=$got)，跳过下载"
+            else
+              echo "Archive md5 不匹配 ($got ≠ $EXPECT_MD5)，重新下载（断点续传）"
+              rm -f "$ARCHIVE"
+            fi
+          fi
+          if [ "$need_download" -eq 1 ]; then
+            echo "Downloading BERN2 resources (~70GB) ← Google Drive ($GDRIVE_ID)"
+            echo "  → $ARCHIVE"
+            echo "提示：配额满时会报 Too many users；可等 24h、换账号，或海外机下完后放到 $ARCHIVE。"
+            uv run --with gdown python -c "import gdown; gdown.download(id='$GDRIVE_ID', output='$ARCHIVE', quiet=False, resume=True)"
+            got="$(md5 -q "$ARCHIVE" 2>/dev/null || md5sum "$ARCHIVE" | awk '{print $1}')"
+            if [ "$got" != "$EXPECT_MD5" ]; then
+              echo "ERROR: md5 $got ≠ $EXPECT_MD5（文件不完整或损坏）" >&2
+              exit 1
             fi
           fi
           echo "Extracting…"
@@ -191,10 +205,59 @@ tasks:
           echo "BERN2 resources already fetched"
         fi
 
-  foundation:up:bern2:
-    desc: 构建并启动 BERN2（需先 foundation:bern2:fetch；建议 GPU）
+  foundation:bern2:detect:
+    desc: 探测 BERN2 加速后端（写入 .bern2.env：ACCEL/RUNTIME）
     cmds:
       - |
+        set -euo pipefail
+        # 覆盖：BERN2_ACCEL=cuda|cpu  BERN2_RUNTIME=docker|native
+        OS="$(uname -s)"
+        ARCH="$(uname -m)"
+        RUNTIME="${BERN2_RUNTIME:-}"
+        ACCEL="${BERN2_ACCEL:-}"
+        if [ -z "$RUNTIME" ]; then
+          if [ "$OS" = "Darwin" ] && [ "${BERN2_PREFER_NATIVE:-1}" = "1" ]; then
+            # Apple Silicon：Docker 无法透传 MPS，默认走原生以用 GPU
+            RUNTIME=native
+          else
+            RUNTIME=docker
+          fi
+        fi
+        if [ -z "$ACCEL" ]; then
+          if [ "$RUNTIME" = "native" ] && [ "$OS" = "Darwin" ]; then
+            ACCEL=mps
+          elif [ "$OS" = "Linux" ] && command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
+            ACCEL=cuda
+          else
+            ACCEL=cpu
+          fi
+        fi
+        # Darwin + docker 强制 cpu（Linux VM 无 MPS / 通常无 NVIDIA）
+        if [ "$RUNTIME" = "docker" ] && [ "$OS" = "Darwin" ] && [ "$ACCEL" != "cpu" ]; then
+          echo "WARN: macOS Docker 无法使用 CUDA/MPS，改用 BERN2_ACCEL=cpu（或 BERN2_RUNTIME=native 启用 MPS）"
+          ACCEL=cpu
+        fi
+        MEM="${BERN2_MEM_LIMIT:-}"
+        if [ -z "$MEM" ]; then
+          if [ "$ACCEL" = "cuda" ]; then MEM=56g; else MEM=24g; fi
+        fi
+        {
+          echo "BERN2_RUNTIME=$RUNTIME"
+          echo "BERN2_ACCEL=$ACCEL"
+          echo "BERN2_DEVICE=${BERN2_DEVICE:-auto}"
+          echo "BERN2_MEM_LIMIT=$MEM"
+          echo "BERN2_HOST_OS=$OS"
+          echo "BERN2_HOST_ARCH=$ARCH"
+        } > docker/bern2/.bern2.env
+        echo "BERN2 detect → runtime=$RUNTIME accel=$ACCEL mem=$MEM ($OS/$ARCH)"
+        cat docker/bern2/.bern2.env
+
+  foundation:up:bern2:
+    desc: 构建并启动 BERN2（自动 macOS MPS 原生 / Linux CUDA Docker）
+    deps: [foundation:bern2:detect]
+    cmds:
+      - |
+        set -euo pipefail
         if [ ! -f docker/bern2/resources/.fetched ] && [ -z "$(ls -A "${BERN2_RESOURCES:-docker/bern2/resources}" 2>/dev/null || true)" ]; then
           echo "缺少 BERN2 resources。请先：task foundation:bern2:fetch"
           exit 2
@@ -203,13 +266,51 @@ tasks:
           echo "缺少 BERN2 源码。请先：task foundation:bern2:fetch"
           exit 2
         fi
-      - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 build bern2
-      - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 up -d bern2
-      - 'echo "BERN2: http://localhost:8888  （首次就绪可能需数十分钟）"'
+        # shellcheck disable=SC1091
+        set -a; . docker/bern2/.bern2.env; set +a
+        if [ "${BERN2_RUNTIME}" = "native" ]; then
+          chmod +x docker/bern2/run_native.sh
+          mkdir -p docker/bern2/upstream/logs
+          echo "Starting BERN2 native (device auto → MPS on Apple Silicon)…"
+          echo "日志：docker/bern2/upstream/logs/  端口：http://127.0.0.1:8888"
+          nohup docker/bern2/run_native.sh > docker/bern2/upstream/logs/native_stdout.log 2>&1 &
+          echo $! > docker/bern2/.bern2.pid
+          echo "BERN2 native pid=$(cat docker/bern2/.bern2.pid)"
+        else
+          COMPOSE=(-f {{.FOUNDATION_COMPOSE}})
+          if [ "${BERN2_ACCEL}" = "cuda" ]; then
+            COMPOSE+=(-f docker/docker-compose.bern2-cuda.yml)
+          fi
+          export BERN2_ACCEL BERN2_DEVICE BERN2_MEM_LIMIT
+          docker compose "${COMPOSE[@]}" --profile bern2 build --build-arg "BERN2_ACCEL=${BERN2_ACCEL}" bern2
+          docker compose "${COMPOSE[@]}" --profile bern2 up -d bern2
+          echo "BERN2 docker (${BERN2_ACCEL}): http://localhost:8888  （首次就绪可能需数十分钟）"
+        fi
+
+  foundation:down:bern2:
+    desc: 停止 BERN2（docker profile 或 native pid）
+    cmds:
+      - |
+        set -euo pipefail
+        if [ -f docker/bern2/.bern2.pid ]; then
+          pid="$(cat docker/bern2/.bern2.pid || true)"
+          if [ -n "${pid:-}" ] && kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
+          fi
+          pkill -f 'multi_ner/ner_server.py' 2>/dev/null || true
+          pkill -f 'GNormPlusServer.main.jar' 2>/dev/null || true
+          pkill -f 'tmVar2Server.main.jar' 2>/dev/null || true
+          pkill -f 'python -u server.py' 2>/dev/null || true
+          rm -f docker/bern2/.bern2.pid
+          echo "BERN2 native stopped"
+        fi
+        docker compose -f {{.FOUNDATION_COMPOSE}} -f docker/docker-compose.bern2-cuda.yml --profile bern2 stop bern2 2>/dev/null || \
+          docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 stop bern2 2>/dev/null || true
 
   foundation:down:
     desc: 拆除 hmd-foundation 全栈（含 Milvus + BERN2 profile）
     cmds:
+      - task: foundation:down:bern2
       - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 down
 
   foundation:ps:
@@ -239,6 +340,20 @@ tasks:
           uv run hmd foundation bios-load --full
         fi
       - uv run hmd foundation sync
+
+  ontology:validate:
+    desc: Ontology-as-Code 校验（目录 / 映射 / Golden Path / 种子一致性）
+    cmds:
+      - uv run python scripts/ontology_validate.py
+
+  ontology:sync-artifacts:
+    desc: 将 generated OWL/SHACL 复制到 ontology/ 供 Protégé 离线打开（非 SSOT）
+    cmds:
+      - mkdir -p ontology/owl ontology/shapes
+      - cp -f schema/generated/*.owl.ttl ontology/owl/
+      - cp -f schema/generated/*.shacl.ttl ontology/shapes/
+      - cp -f schema/shapes/projection.shacl.ttl ontology/shapes/
+      - echo "Synced to ontology/owl and ontology/shapes (review-only; SSOT remains schema/)"
 
   corpus:
     cmds:

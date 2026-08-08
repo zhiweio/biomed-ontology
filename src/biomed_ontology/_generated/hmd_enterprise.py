@@ -622,13 +622,25 @@ class ClaimPredicateEnum(str, Enum):
     """
     属于某项目
     """
+    testedIn = "testedIn"
+    """
+    候选药在某 ELN 实验中被测试
+    """
+    hasAssay = "hasAssay"
+    """
+    候选药关联某 LIMS / Assay
+    """
+    associatedWith = "associatedWith"
+    """
+    靶点与适应症等关联
+    """
     mentions = "mentions"
     """
     文献提及实体
     """
     supportedBy = "supportedBy"
     """
-    断言被某证据支持
+    断言被某证据条目支持（object 宜为 Evidence ID，勿倒置主体）
     """
     sameAsExternal = "sameAsExternal"
     """
@@ -842,7 +854,8 @@ class KnowledgeClaim(ConfiguredBaseModel):
     source_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     source_type: Optional[ProvenanceSourceTypeEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     extracted_by: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
-    evidence_ids: Optional[list[str]] = Field(default=None, description="""Evidence Index（Milvus）中的证据条目 ID""", json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
+    evidence_ids: Optional[list[str]] = Field(default=None, description="""Evidence Index（Milvus）中的证据条目 ID（ev:… / pubmed:… 等）""", json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
+    span: Optional[str] = Field(default=None, description="""支撑 claim 的原文片段（可与 Evidence.quote 对齐）""", json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     created_at: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
 
 

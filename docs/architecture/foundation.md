@@ -61,22 +61,25 @@
 | Milvus | Where is the evidence? |
 | OpenMetadata | Where is the enterprise data? |
 
-## 双层 ID（禁止 BIOS 作企业主键）
+## 三层 ID（禁止 BIOS 作企业主键）
 
 ```text
               Enterprise Ontology ID  ← 对外语义锚点 / 主键
                      │
-        ┌────────────┴────────────┐
-        │                         │
-  Enterprise Entity         External Concept
-  HMD:ENT:DC:…              BIOS:…
-  HMD:ENT:PRG:…             ChEBI:… / HGNC:… / DrugBank:…
-  HMD:ENT:EXP:…             （skos:exactMatch / SSSOM）
+        ┌────────────┼────────────────────┐
+        │            │                    │
+  Enterprise     External Concept      Evidence
+  HMD:ENT:DC:…   BIOS:…                pubmed:…
+  HMD:ENT:PRG:…  ChEBI:… / HGNC:…      patent:…
+  HMD:ENT:EXP:…  DrugBank:…            eln:… / lims:… / ev:…
+                 （skos:exactMatch）
 ```
 
 - Milvus `entity_ids`、API `canonical_entity`、OM 资产关联：**优先 Enterprise ID**
 - BIOS URI：外部 biomedical concept identity，经映射挂接
+- Evidence ID：锚定出处与 Evidence Index 条目；**不是**企业实体主键
 - SSOT：`schema/hmd_enterprise.yaml` → `task gen` → `src/biomed_ontology/_generated/hmd_enterprise.py`
+- 工具链职责：[Ontology Toolchain](../ontology/toolchain.md)（LinkML SSOT；Protégé 只审阅；**不引入 Jena**）
 
 ## Entity Resolution
 
@@ -124,7 +127,7 @@ graph:inference    ← 推导关系（可选物化）
 | `search_assets` | OpenMetadata |
 | `get_entity_evidence` | PROV → Milvus |
 | `get_entity_assets` | OpenMetadata |
-| `get_entity_context` | 聚合：entity + relationships + evidence + assets |
+| `get_entity_context` | 聚合：entity + targets + diseases + evidence(claim/span) + internal_assets |
 
 ## 入湖流水线（目标形态）
 
@@ -146,7 +149,7 @@ PubMed / Patents / ELN / LIMS / Assay / Docs
 | Milvus | 19530 | Evidence Index，**始终必选** |
 | GraphDB | 7200 | 10 Free 默认无 license；SE/EE 见 `docker-compose.graphdb-license.yml` |
 | OpenMetadata | 8585 | Glossary / Asset 锚 `HMD:ENT:*` |
-| BERN2 | 8888 | 先 `task foundation:bern2:fetch`（~24–70GB），再 `task foundation:up:bern2`；建议 GPU，本机无 GPU 时极慢 |
+| BERN2 | 8888 | 先 `task foundation:bern2:fetch`（~70GB，Google Drive），再 `task foundation:up:bern2`。**自动切换**：macOS Apple Silicon → 原生 MPS；Linux + NVIDIA → CUDA Docker；否则 CPU Docker。覆盖：`BERN2_RUNTIME=docker\|native`、`BERN2_ACCEL=cuda\|cpu\|mps` |
 
 ```bash
 # 许可 ACK（BIOS 全量默认；CI 用 subset）
@@ -158,7 +161,9 @@ export HMD_BIOS_MAX_CONCEPTS=0   # 全量不截断（流式灌库，勿 list 进
 task foundation:up             # 单一 compose 项目 hmd-foundation + smoke + BIOS init + sync
 # BERN2 全量资源（另开终端，可长时间跑）：
 task foundation:bern2:fetch
+task foundation:bern2:detect   # Darwin→native/MPS；Linux+NVIDIA→docker/cuda
 task foundation:up:bern2
+# 强制 Docker CPU：BERN2_RUNTIME=docker BERN2_ACCEL=cpu task foundation:up:bern2
 export HMD_BERN2_URL=http://localhost:8888
 # 或仅起 Evidence Index（同项目子集，勿再起旧 hmd-milvus）：
 task milvus:up
@@ -212,15 +217,16 @@ Ontology → Knowledge →（仓外 Agent）→ New Evidence
 | 能力 | 选型 |
 |---|---|
 | 公共 Biomedical KG | BIOS_v3 |
-| 企业 Ontology | LinkML + SHACL（`hmd_enterprise`） |
-| Ontology 编辑 | Protégé（人工策展） |
+| 企业 Ontology | LinkML + SHACL（`hmd_enterprise`，唯一 SSOT） |
+| Ontology 审阅 | Protégé（只读生成 OWL，不回写 SSOT） |
+| RDF 工程层 | rdflib + pyshacl（**不引入 Jena**） |
 | Runtime | GraphDB |
 | NLU | BERN2 + 自定义词典 |
 | Entity Resolution | 词典 / SSSOM + Zingg |
 | Evidence Index | Milvus（默认 multimodal-bio 五列） |
 | Data Context | OpenMetadata |
 | Provenance | W3C PROV |
-| Agent 接口 | 薄 MCP / REST |
+| Agent 接口 | 薄 MCP / REST（`hmd foundation serve --mcp`，主契约 `get_entity_context`） |
 
 **自研 IP**：R&D Domain Ontology、BIOS↔Enterprise 映射、BERN2→Resolver 胶水、Semantic API、金路径数据与评测。
 
@@ -229,10 +235,11 @@ Ontology → Knowledge →（仓外 Agent）→ New Evidence
 | 路径 | 职责 |
 |---|---|
 | `schema/hmd_enterprise.yaml` | Enterprise Ontology SSOT |
+| `ontology/` | Ontology-as-Code 策展面（mappings / Protégé 入口 / Golden Path） |
 | `src/biomed_ontology/foundation/` | ids / bern2 / resolve / world / api / sync / bios / evolve / mcp |
 | `data/foundation/` | entities / dictionary / claims / evidence / assets / BIOS subset / Zingg |
 | `docker/docker-compose.foundation.yml` | 联调栈 |
-| `Taskfile.yml` | `foundation:*` / `milvus:*` / `gen` |
+| `Taskfile.yml` | `foundation:*` / `milvus:*` / `gen` / `ontology:validate` |
 
 ## 与既有 PoC 的演进关系
 

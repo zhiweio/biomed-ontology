@@ -1,0 +1,28 @@
+{
+  "canonical_entity": "HMD:ENT:DC:savolitinib",
+  "path": "DrugCandidate→Target→Disease→Evidence→Asset",
+  "targets": [
+    {
+      "id": "HMD:ENT:TGT:MET",
+      "external_ids_contains": ["HGNC:7029", "BIOS:MET_DEMO"]
+    }
+  ],
+  "diseases": [
+    {
+      "id": "HMD:ENT:IND:nsclc",
+      "external_ids_contains": ["MONDO:0005233", "BIOS:NSCLC_DEMO"]
+    }
+  ],
+  "evidence_min_count": 1,
+  "evidence_requires": ["span", "claim"],
+  "evidence_types_any_of": ["PubMed", "Patent", "ELN", "LIMS"],
+  "internal_assets_contains": [
+    "asliva.eln.exp_2025_012",
+    "asliva.lims.asy_001"
+  ],
+  "resolve_mentions": {
+    "HMPL-504": "HMD:ENT:DC:savolitinib",
+    "MET": "HMD:ENT:TGT:MET",
+    "NSCLC": "HMD:ENT:IND:nsclc"
+  }
+}

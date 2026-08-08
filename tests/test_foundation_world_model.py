@@ -14,8 +14,11 @@ from biomed_ontology.foundation.bios import (
 )
 from biomed_ontology.foundation.ids import (
     EnterpriseKind,
+    EvidenceId,
     is_enterprise_id,
+    is_evidence_id,
     mint_enterprise_id,
+    normalize_evidence_id,
 )
 from biomed_ontology.foundation.world import load_world_model
 
@@ -50,18 +53,32 @@ def test_proprietary_dictionary_100_percent() -> None:
         assert hit["resolution_method"] in {"dictionary", "enterprise_id", "xref"}
 
 
+def test_evidence_id_normalization() -> None:
+    assert normalize_evidence_id("PMID:00000001") == "pubmed:00000001"
+    assert normalize_evidence_id("EXP-2025-012") == "eln:EXP-2025-012"
+    assert normalize_evidence_id("lims:ASY-001") == "lims:ASY-001"
+    assert normalize_evidence_id("US20260000001") == "patent:US20260000001"
+    assert normalize_evidence_id("ev:lit:savo_met_1") == "ev:lit:savo_met_1"
+    assert is_evidence_id("pubmed:123")
+    assert str(EvidenceId("PMID:42")) == "pubmed:42"
+    assert not is_enterprise_id("pubmed:123")
+
+
 def test_golden_path_candidate_to_asset() -> None:
     api = FoundationApi(load_world_model(FOUNDATION))
     result = api.golden_path("HMPL-504")
     assert result["ok"] is True
     assert result["canonical_entity"] == "HMD:ENT:DC:savolitinib"
     ctx = result["context"]
+    assert any(t["id"] == "HMD:ENT:TGT:MET" for t in ctx["targets"])
+    assert any(d["id"] == "HMD:ENT:IND:nsclc" for d in ctx["diseases"])
+    assert any(e.get("span") for e in ctx["evidence"]), "证据必须带 span"
+    assert any(e.get("claim") for e in ctx["evidence"]), "Citationware 需要 claim"
+    assert any("exp_2025_012" in (a.get("id") or "") for a in ctx["internal_assets"])
+    assert any("asy_001" in (a.get("id") or "") for a in ctx["internal_assets"])
+    # 向后兼容
     kinds = {e["entity_kind"] for e in ctx["related_entities"]}
     assert "Target" in kinds
-    assert "Indication" in kinds or any(
-        c["object_id"] == "HMD:ENT:IND:nsclc" for c in ctx["relationships"]
-    )
-    assert any(e.get("quote") for e in ctx["evidence"]), "证据必须带 quote"
     assert any("exp_2025_012" in a["asset_fqn"] for a in ctx["assets"])
 
 
@@ -127,3 +144,54 @@ def test_get_entity_context_hides_backend_names() -> None:
     # Semantic API 载荷不应要求调用方拼 SPARQL
     assert "SELECT " not in blob
     assert ctx["entity"]["enterprise_id"] == "HMD:ENT:DC:savolitinib"
+    assert ctx["targets"]
+    assert ctx["diseases"]
+    assert ctx["internal_assets"]
+
+
+def test_golden_path_rich_render_smoke() -> None:
+    from io import StringIO
+
+    from rich.console import Console
+
+    from biomed_ontology.foundation.render import render_golden_path
+
+    api = FoundationApi(load_world_model(FOUNDATION))
+    result = api.golden_path("HMPL-504")
+    assert result.get("resolve")
+    buf = StringIO()
+    cons = Console(file=buf, force_terminal=True, width=100, color_system=None)
+    render_golden_path(result, console=cons, verbose=True)
+    text = buf.getvalue()
+    assert "HMD:ENT:DC:savolitinib" in text
+    assert "Trace" in text
+    assert "MET" in text
+    assert "Citationware" in text or "Evidence" in text
+    assert "asliva.eln.exp_2025_012" in text or "EXP-2025-012" in text
+
+
+def test_foundation_mcp_exposes_get_entity_context() -> None:
+    import asyncio
+
+    from biomed_ontology.foundation.mcp import create_foundation_mcp
+
+    tools = asyncio.run(create_foundation_mcp().list_tools())
+    names = {t.name for t in tools}
+    assert "get_entity_context" in names
+    assert "resolve_entity" in names
+    assert "graph_sparql" not in names
+    assert "vector_search" not in names
+
+
+def test_claims_use_tested_in_not_inverted_supported_by() -> None:
+    api = FoundationApi(load_world_model(FOUNDATION))
+    rel = api.get_relationships("HMD:ENT:DC:savolitinib")
+    predicates = {c["predicate"] for c in rel["claims"]}
+    assert "testedIn" in predicates
+    assert "hasAssay" in predicates
+    inverted = [
+        c
+        for c in rel["claims"]
+        if c["predicate"] == "supportedBy" and c.get("object_id", "").startswith("HMD:ENT:DC:")
+    ]
+    assert not inverted, "supportedBy 不得倒置为企业实体作为 object"

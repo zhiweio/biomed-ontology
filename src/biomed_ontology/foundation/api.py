@@ -111,7 +111,7 @@ SEMANTIC_OPS: list[dict[str, str]] = [
     },
     {
         "name": "get_entity_context",
-        "summary": "聚合：entity + relationships + evidence + assets",
+        "summary": "聚合：entity + targets + diseases + evidence(claim/span) + internal_assets",
     },
 ]
 
@@ -241,17 +241,79 @@ class FoundationApi:
         }
 
     def get_entity_context(self, enterprise_id: str) -> dict[str, Any]:
+        """World Model 聚合上下文（Citationware）：entity + 关系 + 证据 claim/span + 资产。"""
         ent = self.get_entity(enterprise_id)
         if not ent.get("found"):
             return ent
+
+        relationships = self.get_relationships(enterprise_id)["claims"]
+        related = self.find_related_entities(enterprise_id)["related"]
+        related_by_id = {e["enterprise_id"]: e for e in related}
+        entity = ent["entity"]
+
+        target_ids = list(entity.get("targets") or [])
+        for c in relationships:
+            oid = c.get("object_id")
+            if c.get("predicate") == "targets" and oid and oid not in target_ids:
+                target_ids.append(oid)
+
+        disease_ids = list(entity.get("indications") or [])
+        for c in relationships:
+            oid = c.get("object_id")
+            if c.get("predicate") == "investigates" and oid and oid not in disease_ids:
+                disease_ids.append(oid)
+
+        targets = [_entity_ref(related_by_id, tid, self.world) for tid in target_ids]
+        diseases = [_entity_ref(related_by_id, did, self.world) for did in disease_ids]
+
+        evidence_by_id = {e.evidence_id: e for e in self.world.evidence_for(enterprise_id)}
+        citation_evidence = _build_citation_evidence(
+            relationships,
+            evidence_by_id,
+            enterprise_id=enterprise_id,
+        )
+        # 补充仅挂在 entity_ids 上、尚未被 claim 引用的证据
+        claimed_eids = {row["id"] for row in citation_evidence if row.get("id")}
+        for hit in evidence_by_id.values():
+            if hit.evidence_id in claimed_eids:
+                continue
+            citation_evidence.append(
+                {
+                    "id": hit.evidence_id,
+                    "type": _evidence_type(hit),
+                    "claim": None,
+                    "span": hit.quote or hit.text,
+                    "doc_id": hit.doc_id,
+                    "score": hit.score,
+                    "entity_ids": list(hit.entity_ids),
+                }
+            )
+
+        assets = self.get_entity_assets(enterprise_id)["assets"]
+        internal_assets = [
+            {
+                "id": a.get("asset_fqn"),
+                "type": a.get("asset_type"),
+                "name": a.get("name"),
+                "entity_ids": a.get("entity_ids") or [],
+                "url": a.get("url"),
+                "description": a.get("description"),
+            }
+            for a in assets
+        ]
+
         return {
             "ontology_release_id": self.world.release_id,
             "enterprise_id": enterprise_id,
-            "entity": ent["entity"],
-            "relationships": self.get_relationships(enterprise_id)["claims"],
-            "related_entities": self.find_related_entities(enterprise_id)["related"],
-            "evidence": self.get_entity_evidence(enterprise_id)["evidence"],
-            "assets": self.get_entity_assets(enterprise_id)["assets"],
+            "entity": entity,
+            "targets": targets,
+            "diseases": diseases,
+            "evidence": citation_evidence,
+            "internal_assets": internal_assets,
+            # 向后兼容字段
+            "relationships": relationships,
+            "related_entities": related,
+            "assets": assets,
         }
 
     def dispatch(self, op: str, **kwargs: Any) -> dict[str, Any]:
@@ -261,7 +323,7 @@ class FoundationApi:
         return fn(**kwargs)
 
     def golden_path(self, candidate_key: str = "savolitinib") -> dict[str, Any]:
-        """金路径：DrugCandidate → Target → Disease → Evidence → ELN Asset。"""
+        """金路径：DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset。"""
         resolve = self.resolve_entity(candidate_key)
         canonical = next(
             (r["canonical_entity"] for r in resolve["resolved"] if r.get("canonical_entity")),
@@ -274,5 +336,96 @@ class FoundationApi:
             "ok": True,
             "path": "DrugCandidate→Target→Disease→Evidence→Asset",
             "canonical_entity": canonical,
+            "query": candidate_key,
+            "resolve": resolve,
             "context": ctx,
         }
+
+
+def _entity_ref(
+    related_by_id: dict[str, dict[str, Any]],
+    enterprise_id: str,
+    world: WorldModel,
+) -> dict[str, Any]:
+    row = related_by_id.get(enterprise_id)
+    if row is None:
+        ent = world.entity(enterprise_id)
+        row = ent.to_dict() if ent is not None else {"enterprise_id": enterprise_id}
+    return {
+        "id": row.get("enterprise_id", enterprise_id),
+        "type": row.get("entity_kind"),
+        "label": row.get("preferred_label_en"),
+        "external_ids": list(row.get("exact_match_xrefs") or []),
+    }
+
+
+def _build_citation_evidence(
+    relationships: list[dict[str, Any]],
+    evidence_by_id: dict[str, Any],
+    *,
+    enterprise_id: str,
+) -> list[dict[str, Any]]:
+    """Claim + Evidence span → Citationware 条目。"""
+    out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for claim in relationships:
+        if claim.get("subject_id") != enterprise_id and claim.get("object_id") != enterprise_id:
+            continue
+        eids = list(claim.get("evidence_ids") or [])
+        if not eids and claim.get("source_id"):
+            eids = [claim["source_id"]]
+        claim_label = (
+            f"{claim.get('subject_id')} {claim.get('predicate')} {claim.get('object_id') or ''}"
+        ).strip()
+        span = claim.get("span")
+        if not eids:
+            if span:
+                key = (claim.get("claim_id") or claim_label, span)
+                if key not in seen:
+                    seen.add(key)
+                    out.append(
+                        {
+                            "id": claim.get("source_id"),
+                            "type": claim.get("source_type"),
+                            "claim": claim_label,
+                            "span": span,
+                            "confidence": claim.get("confidence"),
+                            "predicate": claim.get("predicate"),
+                        }
+                    )
+            continue
+        for eid in eids:
+            hit = evidence_by_id.get(eid)
+            quote = span or (hit.quote if hit else None) or (hit.text if hit else None)
+            key = (eid, claim.get("claim_id") or claim_label)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(
+                {
+                    "id": eid,
+                    "type": _evidence_type(hit) if hit else claim.get("source_type"),
+                    "claim": claim_label,
+                    "span": quote,
+                    "confidence": claim.get("confidence"),
+                    "predicate": claim.get("predicate"),
+                    "doc_id": hit.doc_id if hit else claim.get("source_id"),
+                    "score": hit.score if hit else None,
+                    "entity_ids": list(hit.entity_ids) if hit else [],
+                }
+            )
+    return out
+
+
+def _evidence_type(hit: Any) -> str:
+    collection = (getattr(hit, "collection", None) or "").lower()
+    doc_id = (getattr(hit, "doc_id", None) or "").lower()
+    if collection == "patents" or doc_id.startswith("patent:"):
+        return "Patent"
+    if collection == "lims" or doc_id.startswith("lims:"):
+        return "LIMS"
+    if collection == "internal_docs" or doc_id.startswith("eln:"):
+        return "ELN"
+    if getattr(hit, "pmid", None) or doc_id.startswith("pubmed:"):
+        return "PubMed"
+    return collection or "Evidence"

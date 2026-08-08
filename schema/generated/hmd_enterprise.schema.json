@@ -25,6 +25,9 @@
                 "investigates",
                 "treats",
                 "belongsTo",
+                "testedIn",
+                "hasAssay",
+                "associatedWith",
                 "mentions",
                 "supportedBy",
                 "sameAsExternal"
@@ -539,7 +542,7 @@
                     ]
                 },
                 "evidence_ids": {
-                    "description": "Evidence Index\uff08Milvus\uff09\u4e2d\u7684\u8bc1\u636e\u6761\u76ee ID",
+                    "description": "Evidence Index\uff08Milvus\uff09\u4e2d\u7684\u8bc1\u636e\u6761\u76ee ID\uff08ev:\u2026 / pubmed:\u2026 \u7b49\uff09",
                     "items": {
                         "type": "string"
                     },
@@ -578,6 +581,13 @@
                 },
                 "source_type": {
                     "$ref": "#/$defs/ProvenanceSourceTypeEnum"
+                },
+                "span": {
+                    "description": "\u652f\u6491 claim \u7684\u539f\u6587\u7247\u6bb5\uff08\u53ef\u4e0e Evidence.quote \u5bf9\u9f50\uff09",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "subject_id": {
                     "pattern": "^HMD:ENT:(DC|PRG|TGT|IND|EXP|PUB|ASY|CMP|BMK):[A-Za-z0-9_-]+$",

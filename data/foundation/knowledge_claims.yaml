@@ -1,14 +1,17 @@
 # KnowledgeClaim + Provenance（Knowledge ≠ Truth）
+# source_id / evidence_ids 使用三层 ID 中的 Evidence 层（pubmed: / eln: / ev:）
 claims:
   - claim_id: claim:savo_targets_met
     subject_id: HMD:ENT:DC:savolitinib
     predicate: targets
     object_id: HMD:ENT:TGT:MET
     confidence: 0.95
-    source_id: PMID:00000001
+    source_id: pubmed:00000001
     source_type: literature
     extracted_by: seed
     evidence_ids: [ev:lit:savo_met_1]
+    span: >-
+      Savolitinib (HMPL-504) is a selective MET tyrosine kinase inhibitor
     created_at: "2026-08-08T00:00:00Z"
 
   - claim_id: claim:savo_investigates_nsclc
@@ -16,10 +19,25 @@ claims:
     predicate: investigates
     object_id: HMD:ENT:IND:nsclc
     confidence: 0.93
-    source_id: PMID:00000001
+    source_id: pubmed:00000001
     source_type: literature
     extracted_by: seed
     evidence_ids: [ev:lit:savo_nsclc_1]
+    span: >-
+      evaluated savolitinib in patients with non-small cell lung cancer
+    created_at: "2026-08-08T00:00:00Z"
+
+  - claim_id: claim:met_associated_nsclc
+    subject_id: HMD:ENT:TGT:MET
+    predicate: associatedWith
+    object_id: HMD:ENT:IND:nsclc
+    confidence: 0.9
+    source_id: pubmed:00000001
+    source_type: literature
+    extracted_by: seed
+    evidence_ids: [ev:lit:savo_nsclc_1]
+    span: >-
+      non-small cell lung cancer harboring MET alterations
     created_at: "2026-08-08T00:00:00Z"
 
   - claim_id: claim:savo_belongs_program
@@ -33,13 +51,41 @@ claims:
     evidence_ids: []
     created_at: "2026-08-08T00:00:00Z"
 
-  - claim_id: claim:exp_tests_savo
-    subject_id: HMD:ENT:EXP:2025_012
-    predicate: supportedBy
-    object_id: HMD:ENT:DC:savolitinib
+  - claim_id: claim:savo_tested_in_exp
+    subject_id: HMD:ENT:DC:savolitinib
+    predicate: testedIn
+    object_id: HMD:ENT:EXP:2025_012
     confidence: 1.0
-    source_id: EXP-2025-012
+    source_id: eln:EXP-2025-012
     source_type: eln
     extracted_by: seed
     evidence_ids: [ev:eln:exp_2025_012]
+    span: >-
+      Internal MET biochemical assay confirmed nanomolar inhibition by savolitinib
     created_at: "2025-03-12T00:00:00Z"
+
+  - claim_id: claim:savo_has_assay
+    subject_id: HMD:ENT:DC:savolitinib
+    predicate: hasAssay
+    object_id: HMD:ENT:ASY:met_ic50
+    confidence: 1.0
+    source_id: lims:ASY-001
+    source_type: lims
+    extracted_by: seed
+    evidence_ids: [ev:lims:asy_001]
+    span: >-
+      LIMS ASY-001: savolitinib IC50 against MET kinase
+    created_at: "2025-03-15T00:00:00Z"
+
+  - claim_id: claim:savo_targets_met_patent
+    subject_id: HMD:ENT:DC:savolitinib
+    predicate: targets
+    object_id: HMD:ENT:TGT:MET
+    confidence: 0.88
+    source_id: patent:US20260000001
+    source_type: patent
+    extracted_by: seed
+    evidence_ids: [ev:pat:savo_met_1]
+    span: >-
+      compounds of the invention inhibit MET kinase activity
+    created_at: "2026-01-01T00:00:00Z"

@@ -1,0 +1,16 @@
+# BERN2 mention type → EnterpriseKind / 解析提示
+version: "0.3.0"
+type_map:
+  drug: DrugCandidate
+  chemical: Compound
+  gene: Target
+  protein: Target
+  disease: Indication
+  species: null
+  cell_line: null
+  DNA: Gene
+  RNA: Gene
+
+notes: |
+  BERN2 只产出 mention + 候选标准 ID；企业主键由 EntityResolver 解析为 HMD:ENT:*。
+  专有名词（HMPL-504 等）走 enterprise_dictionary，不依赖公共 BERN2。

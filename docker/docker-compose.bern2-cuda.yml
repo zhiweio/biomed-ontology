@@ -1,0 +1,16 @@
+# Linux + NVIDIA 覆盖：task foundation:up:bern2 在探测到 GPU 时自动附加
+# 需要宿主机 nvidia-container-toolkit
+services:
+  bern2:
+    environment:
+      BERN2_ACCEL: cuda
+      BERN2_DEVICE: ${BERN2_DEVICE:-cuda}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

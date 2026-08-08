@@ -36,19 +36,21 @@ task docs          # mkdocs build --strict
 | OpenMetadata | **Data Context**（资产在哪） |
 
 ```bash
-# 联调栈：Milvus + GraphDB + OpenMetadata（BERN2 为 profile）
+# 联调栈：Milvus + GraphDB + OpenMetadata（BERN2 profile：macOS→MPS 原生 / Linux→CUDA Docker）
 export HMD_BIOS_LICENSE_ACK=poc          # BIOS 全量默认；CI: HMD_BIOS_INIT=subset
 # GraphDB 10 Free 无需 license；SE/EE 见 docker/docker-compose.graphdb-license.yml
 task foundation:up
 
 uv run hmd foundation resolve "HMPL-504"
-uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN
+uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
 uv run hmd foundation sync
 uv run hmd foundation evolve-mine                    # 候选落库，不自动改本体
-uv run hmd foundation serve                          # Semantic API :8100
+uv run hmd foundation serve --mcp                    # Semantic API + MCP :8100
+task ontology:validate                               # Ontology-as-Code + Golden Path
 ```
 
 金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。
+Ontology 工程工具链（LinkML SSOT / Protégé 审阅 / rdflib+pyshacl / SHACL / GraphDB）：见 [`ontology/`](ontology/) 与 [toolchain](docs/ontology/toolchain.md)。**不引入 Jena**。
 
 ---
 
@@ -618,8 +620,9 @@ uv run hmd serve --port 8000
 | 路径 | 职责 |
 |---|---|
 | `schema/` | LinkML SSOT（含 `hmd_enterprise`） |
+| `ontology/` | Ontology-as-Code 策展面（mappings / Protégé 入口 / Golden Path 样例） |
 | `Taskfile.yml` | 统一任务入口（替代 Makefile） |
-| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic API |
+| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic API + MCP |
 | `src/biomed_ontology/registry/` | 数据源注册表 + 许可分层 |
 | `src/biomed_ontology/ontology/` | 等价团构建、ID 分配、发版、RDF |
 | `src/biomed_ontology/parse/` | PDF → 语义树（衍生自 knowhere，见 NOTICE） |

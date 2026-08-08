@@ -26,7 +26,7 @@
 | 你是谁 | 建议阅读顺序 |
 |---|---|
 | 第一次接触本仓库 | [快速开始](getting-started.md) → [分层架构](architecture/layers.md) → [Foundation](architecture/foundation.md) → [设计不变量](invariants.md) |
-| 要做企业世界模型 / Foundation | [Foundation 架构](architecture/foundation.md) → `task foundation:up` → `hmd foundation golden` |
+| 要做企业世界模型 / Foundation | [Foundation 架构](architecture/foundation.md) → [Toolchain](ontology/toolchain.md) → [Golden Path](ontology/golden-path.md) → `hmd foundation golden` |
 | 要改检索 / 本体 | [类型化链接](ontology/links.md) → [三通道与 RRF](retrieval/hybrid.md) → [查询改写 vs 图通道](retrieval/ontology-paths.md) → [评测消融](eval/arms.md) |
 | 要接 agent / 对外服务 | [11 工具](agent/tools.md) + Foundation Semantic Ops → [Citationware](agent/citationware.md) → [许可](licensing/tiers.md) |
 | 要接视觉 / Evidence Index | [资产路径](parse/assets.md) → [Milvus](retrieval/milvus.md) → [图型](parse/figure-type.md) → [嵌入器](retrieval/embedders.md) |

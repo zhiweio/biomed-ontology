@@ -8,6 +8,10 @@ biomed-ontology/
 ├── mkdocs.yml                # 本手册
 ├── docs/                     # 手册源码
 ├── schema/                   # LinkML SSOT（含 hmd_enterprise）
+├── ontology/                 # Ontology-as-Code 策展面（非 SSOT）
+│   ├── mappings/             # BIOS / BERN2 / ChEBI
+│   ├── owl/ + shapes/        # Protégé / SHACL 入口说明
+│   └── examples/golden_path/ # HMPL-504 金路径样例
 ├── data/
 │   ├── seed/                 # 概念与歧义登记
 │   ├── foundation/           # 企业实体 / 词典 / claims / evidence / BIOS 子集

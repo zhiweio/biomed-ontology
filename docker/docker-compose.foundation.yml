@@ -2,7 +2,7 @@
 # 含：Milvus（etcd/minio/standalone）+ GraphDB + OpenMetadata
 # 启动全栈：task foundation:up（GraphDB 10 Free 默认无 license；BIOS 全量需 HMD_BIOS_LICENSE_ACK）
 # 仅 Milvus：task milvus:up（同一项目，子集服务）
-# BERN2：task foundation:up:bern2（需预先下载 ~70GB resources）
+# BERN2：task foundation:up:bern2（需预先 download resources；自动 macOS MPS / Linux CUDA）
 # SE/EE license：把文件放到 docker/secrets/graphdb.license 后
 #   docker compose -f docker/docker-compose.foundation.yml -f docker/docker-compose.graphdb-license.yml up -d graphdb
 name: hmd-foundation
@@ -127,15 +127,24 @@ services:
     build:
       context: ./bern2
       dockerfile: Dockerfile
+      args:
+        BERN2_ACCEL: ${BERN2_ACCEL:-cpu}
+        BERN2_TORCH_CUDA: ${BERN2_TORCH_CUDA:-cu118}
     ports:
       - "127.0.0.1:8888:8888"
     environment:
+      BERN2_ACCEL: ${BERN2_ACCEL:-cpu}
+      BERN2_DEVICE: ${BERN2_DEVICE:-auto}
       CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-}
+      BERN2_JAVA_XMX_GNORM: ${BERN2_JAVA_XMX_GNORM:-}
+      BERN2_JAVA_XMS_GNORM: ${BERN2_JAVA_XMS_GNORM:-}
+      BERN2_JAVA_XMX_TMVAR: ${BERN2_JAVA_XMX_TMVAR:-}
+      BERN2_JAVA_XMS_TMVAR: ${BERN2_JAVA_XMS_TMVAR:-}
     volumes:
       - ${BERN2_RESOURCES:-./bern2/resources}:/app/resources
       - ../data/foundation/enterprise_dictionary.yaml:/app/custom_dict/enterprise_dictionary.yaml:ro
-    # 官方最低约 63GB RAM；本机无 GPU 时 CPU 推理极慢
-    mem_limit: 56g
+    # 官方 GPU 最低约 63GB RAM；Mac / CPU 可调低 BERN2_MEM_LIMIT
+    mem_limit: ${BERN2_MEM_LIMIT:-56g}
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8888/plain -H 'Content-Type: application/json' -d '{\"text\":\"EGFR\"}' || exit 1"]
       interval: 60s

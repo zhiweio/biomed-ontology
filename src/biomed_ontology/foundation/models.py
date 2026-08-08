@@ -60,6 +60,7 @@ class KnowledgeClaim:
     source_type: str = "manual"
     extracted_by: str = "seed"
     evidence_ids: list[str] = field(default_factory=list)
+    span: str | None = None
     created_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:

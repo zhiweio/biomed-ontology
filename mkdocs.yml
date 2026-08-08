@@ -100,6 +100,8 @@ nav:
       - 端到端数据流: architecture/pipeline.md
       - LinkML 与生成物: architecture/linkml.md
   - 本体与语义层:
+      - Ontology 工程工具链: ontology/toolchain.md
+      - Golden Path: ontology/golden-path.md
       - 种子与 BuiltConcept: ontology/seed.md
       - 归一化级联: ontology/normalize.md
       - 类型化链接与 search-around: ontology/links.md
