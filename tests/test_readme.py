@@ -13,7 +13,7 @@ import pytest
 
 from biomed_ontology.demo import DEMOS
 from biomed_ontology.eval import eval_retrieval
-from biomed_ontology.pipeline import build_knowledge_base
+from biomed_ontology.pipeline import build_literature_base
 from biomed_ontology.tools import TOOL_SPECS
 
 README = Path(__file__).resolve().parents[1] / "README.md"
@@ -27,7 +27,7 @@ def readme() -> str:
 
 @pytest.fixture(scope="module")
 def ev():
-    return eval_retrieval(build_knowledge_base(), entitlements=LICENSED)
+    return eval_retrieval(build_literature_base(with_graph=False), entitlements=LICENSED)
 
 
 @pytest.mark.parametrize("arm", ["bm25_only", "dense_only", "ontology_hybrid"])

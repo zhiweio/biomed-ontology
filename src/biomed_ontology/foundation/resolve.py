@@ -12,11 +12,11 @@ from pathlib import Path
 from biomed_ontology.foundation.bern2 import Bern2Client, Bern2Mention
 from biomed_ontology.foundation.ids import is_enterprise_id, normalize_alias_key
 from biomed_ontology.foundation.models import EnterpriseEntity, ResolveHit
+from biomed_ontology.foundation.paths import ZINGG_MATCHES_PATH
 
 __all__ = ["EntityResolver", "ResolutionIndex", "load_zingg_matches"]
 
-_REPO = Path(__file__).resolve().parents[3]
-_DEFAULT_ZINGG = _REPO / "data" / "foundation" / "zingg_matches.jsonl"
+_DEFAULT_ZINGG = ZINGG_MATCHES_PATH
 
 
 def _bios_ids(xrefs: list[str]) -> list[str]:

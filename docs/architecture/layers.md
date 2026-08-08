@@ -69,7 +69,8 @@ flowchart TB
 | L7 | `observability/`、`quality/` | 四支柱与发版守门 | `observability/__init__.py` |
 | L8 | `evolution/`、`foundation/evolve` | 信号到 KGCL（不自动改本体） | `foundation/evolve.py` |
 
-装配入口是 `pipeline.build_knowledge_base()` —— search / API / eval / demo **共用同一份 KB**。若各自装配，`release_id` 与归一化配置会悄悄漂移，评测分数和服务库对不上号。
+运行时装配入口是 `runtime.open_dual_surface()`（文献 `ToolApi.from_backends` + `FoundationApi`）。
+`build_knowledge_base()` 仅用于离线语料装配与过渡期文献句柄；身份权威在 `ontology/` 策展 + ER，不在 `data/seed/`。
 
 ## 混层的典型症状（对照自查）
 
@@ -77,8 +78,8 @@ flowchart TB
 |---|---|---|
 | 检索打分里写 `if tier >= 2: score *= 0` | L5 + 许可策略 | `LicenseScope` 在候选生成期过滤 |
 | 语料 YAML 里塞模型生成的「摘要结论」当正文 | L4 + 模型推断 | 推断进事实层且 `PENDING`，正文只存解析结果 |
-| Semantic Access 里手写一份别名表 | L6 + L1 | 只调 `Normalizer` / `expand` |
-| 评测脚本自己 `build` 另一套概念 | L5/eval + L1 | 一律 `build_knowledge_base()` |
+| Semantic Access 里手写一份别名表 | L6 + L1 | ER：`FoundationApi.resolve_entity` / dictionary |
+| 评测/服务各自再装配一套库 | L5/eval + L1 | 一律 `open_dual_surface()` |
 | SPARQL 模板里硬编码可见源列表 | L5 + L0 | `GraphStore` 按 entitlement 注入命名图 |
 
 ## 与 Palantir 式「操作本体」的对照

@@ -14,7 +14,8 @@ uv run hmd serve --mcp          # 默认 :8000
 - Foundation Semantic Ops（GraphDB / Milvus / OM）
 - MCP：`/mcp`
 
-二者共用 `dispatch`（KB）与 `FoundationApi`（世界模型），避免「REST 过闸门、MCP 不过」的分叉。
+二者经 `build_state()` → `open_dual_surface()` 同进程装配（`ToolApi.from_backends` + `FoundationApi`），
+避免「REST 过闸门、MCP 不过」或两套 KB 分叉。`/v1/golden_path` 会带上文献腿。
 
 ## 凭据
 

@@ -62,17 +62,17 @@ def test_decision_captures_candidates_and_state():
         ctx.record_decision(
             stage="DICTIONARY",
             justification="LexicalMatching",
-            chosen="HMD:SUB:0000001",
+            chosen="HMD:ENT:DC:savolitinib",
             candidates=[
-                Candidate("HMD:SUB:0000001", 0.98, "dictionary"),
-                Candidate("HMD:SUB:0000002", 0.41, "vector"),
+                Candidate("HMD:ENT:DC:savolitinib", 0.98, "dictionary"),
+                Candidate("HMD:ENT:DC:fruquintinib", 0.41, "vector"),
             ],
             state_before={"text": "沃利替尼"},
-            state_after={"concept_id": "HMD:SUB:0000001"},
+            state_after={"concept_id": "HMD:ENT:DC:savolitinib"},
             confidence=0.98,
         )
     d = ctx.decisions[0]
-    assert d.chosen == "HMD:SUB:0000001"
+    assert d.chosen == "HMD:ENT:DC:savolitinib"
     assert len(d.candidates) == 2
     assert d.state_before["text"] == "沃利替尼"
     assert d.span_id is not None
@@ -168,7 +168,7 @@ def test_contract_validator_rejects_bad_enum():
 
 
 def test_citation_fidelity_penalises_unsupported_claims():
-    returned = {"D1": {"HMD:SUB:0000001"}, "D2": {"HMD:TGT:0000001"}}
+    returned = {"D1": {"HMD:ENT:DC:savolitinib"}, "D2": {"HMD:ENT:TGT:MET"}}
     assert citation_fidelity([("D1", None), ("D2", None)], returned) == 1.0
     # 引用了不在返回集里的文档
     assert citation_fidelity([("D1", None), ("D9", None)], returned) == 0.5
@@ -177,6 +177,6 @@ def test_citation_fidelity_penalises_unsupported_claims():
 
 def test_citation_fidelity_catches_right_doc_wrong_concept():
     """引用了正确文档但归因到错误概念 —— 这是最难人工发现的一类错误。"""
-    returned = {"D1": {"HMD:SUB:0000001"}}
-    assert citation_fidelity([("D1", "HMD:SUB:0000001")], returned) == 1.0
-    assert citation_fidelity([("D1", "HMD:TGT:0000001")], returned) == 0.0
+    returned = {"D1": {"HMD:ENT:DC:savolitinib"}}
+    assert citation_fidelity([("D1", "HMD:ENT:DC:savolitinib")], returned) == 1.0
+    assert citation_fidelity([("D1", "HMD:ENT:TGT:MET")], returned) == 0.0

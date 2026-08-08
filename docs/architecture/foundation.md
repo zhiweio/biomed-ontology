@@ -90,8 +90,10 @@ enterprise_id → dictionary → xref → zingg_table → bern2_candidate → un
 
 - **BERN2**：识别 + 候选归一（含企业自定义词典：内部代号 → 标准 ID；专有名词金标 100%）
 - **Resolver**：词典 / SSSOM / Zingg 预计算表；大表联动可后续评估 Splink
-- 种子词典：`data/foundation/enterprise_dictionary.yaml`
-- Zingg matches：`data/foundation/zingg_matches.jsonl`
+- 种子词典：`ontology/dictionary/enterprise_dictionary.yaml`
+- 企业实体：`ontology/entities/enterprise_entities.yaml`
+- Zingg matches：`ontology/mappings/zingg_matches.jsonl`
+- evidence / assets 样例：`data/foundation/`（运行投影，非身份 SSOT）
 
 ## Knowledge = Claim + Provenance + Evidence
 
@@ -121,7 +123,8 @@ graph:inference    ← 推导关系（可选物化）
 | `get_entity_assets` | OpenMetadata |
 | `get_entity_context` | GraphDB + Milvus + OM（**禁止 YAML fallback**） |
 
-入库：`data/foundation/*.yaml` 为离线资源 → `ontology:validate` → `hmd foundation sync`（幂等）写入 GraphDB + Milvus + OM。查询层不读 YAML。
+入库：策展 YAML 在 `ontology/{entities,dictionary,claims}/`；evidence/assets 样例在 `data/foundation/`。
+经 `ontology:validate` → `hmd foundation sync`（幂等）写入 GraphDB + Milvus + OM。查询层不读 YAML。
 
 ## 入湖流水线（目标形态）
 

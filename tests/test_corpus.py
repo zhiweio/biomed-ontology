@@ -9,8 +9,8 @@ import pytest
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology._generated.hmd_fact import ModalityChannelEnum
 
-SAVOLITINIB = "HMD:SUB:0000001"
-MET = "HMD:TGT:0000001"
+SAVOLITINIB = "HMD:ENT:DC:savolitinib"
+MET = "HMD:ENT:TGT:MET"
 
 
 def test_corpus_loads_all_modalities(kb):

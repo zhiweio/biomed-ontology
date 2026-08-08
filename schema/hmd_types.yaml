@@ -33,8 +33,10 @@ types:
     typeof: uriorcurie
     uri: xsd:anyURI
     repr: str
-    description: 内部概念 CURIE，形如 HMD:SUB:0000042
-    pattern: '^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\d{7}$'
+    description: >-
+      概念 CURIE。权威形态为 HMD:ENT:*（企业 ID）；
+      仍接受遗留 HMD:SUB|TGT|DIS:#######（ledger 单测对照）。
+    pattern: '^HMD:((TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\d{7}|ENT:(DC|PRG|TGT|IND|EXP|PUB|ASY|CMP|BMK):[A-Za-z0-9_-]+)$'
 
   ExternalCurie:
     typeof: uriorcurie

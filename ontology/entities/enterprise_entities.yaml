@@ -51,6 +51,7 @@ entities:
       - ORPATHYS
       - 沃瑞沙
       - 赛沃替尼
+      - 沃利替尼
     targets: [HMD:ENT:TGT:MET]
     indications: [HMD:ENT:IND:nsclc]
     program_id: HMD:ENT:PRG:met_nsclc

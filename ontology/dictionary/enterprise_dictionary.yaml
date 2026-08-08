@@ -1,0 +1,38 @@
+# Enterprise Dictionary — ER Exact Resolution 层（策展 SSOT）
+# mention / aliases → enterprise_id + 外部标准 ID
+# 原 data/seed 内部别名迁入此处；身份权威为 HMD:ENT:*（不再铸造 HMD:SUB）
+version: "0.2.0"
+entries:
+  - mention: HMPL-504
+    type: chemical
+    enterprise_id: HMD:ENT:DC:savolitinib
+    external_ids: [CHEBI:DEMO_SAVO, DrugBank:DEMO_SAVO]
+    aliases:
+      - HMPL-504
+      - AZD6094
+      - AZD-6094
+      - volitinib
+      - ORPATHYS
+      - 沃瑞沙
+      - savolitinib
+      - 赛沃替尼
+      - 沃利替尼
+  - mention: MET
+    type: gene
+    enterprise_id: HMD:ENT:TGT:MET
+    external_ids: [HGNC:7029]
+    aliases: [MET, c-Met, c-MET, HGFR, 间质上皮转化因子]
+  - mention: NSCLC
+    type: disease
+    enterprise_id: HMD:ENT:IND:nsclc
+    external_ids: [MONDO:0005233]
+    aliases:
+      - NSCLC
+      - non-small cell lung cancer
+      - non-small cell lung carcinoma
+      - 非小细胞肺癌
+  - mention: EXP-2025-012
+    type: experiment
+    enterprise_id: HMD:ENT:EXP:2025_012
+    external_ids: []
+    aliases: [EXP-2025-012]

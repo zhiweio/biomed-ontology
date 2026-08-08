@@ -26,12 +26,20 @@ from biomed_ontology.foundation.models import (
     EvidenceHit,
     KnowledgeClaim,
 )
+from biomed_ontology.foundation.paths import (
+    ASSETS_PATH,
+    CLAIMS_PATH,
+    DICTIONARY_PATH,
+    ENTITIES_PATH,
+    EVIDENCE_INDEX_PATH,
+    FOUNDATION_DATA,
+)
 from biomed_ontology.foundation.resolve import EntityResolver, ResolutionIndex
 
-__all__ = ["WorldModel", "load_world_model"]
+__all__ = ["DEFAULT_FOUNDATION", "WorldModel", "load_world_model"]
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_FOUNDATION = REPO_ROOT / "data" / "foundation"
+# 运行时数据根（evidence/assets）；策展实体/词典在 ontology/
+DEFAULT_FOUNDATION = FOUNDATION_DATA
 
 
 @dataclass
@@ -102,12 +110,29 @@ def load_world_model(
     *,
     bern2_url: str | None = None,
 ) -> WorldModel:
+    """装配 WorldModel。
+
+    默认分层路径：``ontology/{entities,dictionary,claims}``
+    + ``data/foundation/{evidence,assets}``。
+    若 ``root`` 下仍有完整 monolithic YAML（测试夹具），则全部从 ``root`` 读取。
+    """
     base = root or DEFAULT_FOUNDATION
-    entities_path = base / "enterprise_entities.yaml"
-    dict_path = base / "enterprise_dictionary.yaml"
-    claims_path = base / "knowledge_claims.yaml"
-    evidence_path = base / "evidence_index.yaml"
-    assets_path = base / "assets.yaml"
+    if (base / "enterprise_entities.yaml").exists():
+        entities_path = base / "enterprise_entities.yaml"
+        dict_path = base / "enterprise_dictionary.yaml"
+        claims_path = base / "knowledge_claims.yaml"
+        evidence_path = base / "evidence_index.yaml"
+        assets_path = base / "assets.yaml"
+    else:
+        entities_path = ENTITIES_PATH
+        dict_path = DICTIONARY_PATH
+        claims_path = CLAIMS_PATH
+        evidence_path = (
+            base / "evidence_index.yaml"
+            if (base / "evidence_index.yaml").exists()
+            else EVIDENCE_INDEX_PATH
+        )
+        assets_path = base / "assets.yaml" if (base / "assets.yaml").exists() else ASSETS_PATH
 
     raw = yaml.safe_load(entities_path.read_text(encoding="utf-8")) or {}
     release_id = str(raw.get("release_id", "0.1.0-foundation"))
@@ -135,6 +160,8 @@ def load_world_model(
                     "aliases": [alias],
                 }
             )
+    # 文献 catalog → ER 词典（与 build_literature_base 同一 ENT 空间）
+    _augment_dictionary_from_catalog(dictionary)
     dictionary.__post_init__()
 
     bern2 = Bern2Client(base_url=bern2_url, dictionary=dictionary)
@@ -155,6 +182,41 @@ def _load_list(path: Path, key: str) -> list[dict[str, Any]]:
         return []
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return list(raw.get(key, []))
+
+
+def _augment_dictionary_from_catalog(dictionary: EnterpriseDictionary) -> None:
+    """把 ontology/catalog 别名并入 ER 词典（确定性 HMD:ENT:*）。"""
+    try:
+        from biomed_ontology.ingest.seed import enterprise_id_for, load_seed_file
+        from biomed_ontology.pipeline import catalog_files
+    except Exception:
+        return
+    type_map = {"SUBSTANCE": "chemical", "TARGET": "gene", "DISEASE": "disease"}
+    for path in catalog_files():
+        if path.name == "ambiguity.yaml":
+            continue
+        try:
+            seed = load_seed_file(path)
+        except Exception:
+            continue
+        et = seed.entity_type
+        for sc in seed.concepts:
+            eid = enterprise_id_for(et, sc.key)
+            aliases = [
+                sc.preferred_label_en,
+                sc.preferred_label_zh,
+                *(a.raw for a in sc.aliases),
+            ]
+            for alias in {a for a in aliases if a}:
+                dictionary.entries.append(
+                    {
+                        "mention": alias,
+                        "type": type_map.get(et.value, et.value.lower()),
+                        "enterprise_id": eid,
+                        "external_ids": [],
+                        "aliases": [alias],
+                    }
+                )
 
 
 def _parse_entity(row: dict[str, Any]) -> EnterpriseEntity:

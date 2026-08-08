@@ -1,0 +1,733 @@
+# PoC 种子切片 —— 阿斯利华自研管线 + 直接竞品。
+#
+# 这个文件承载的是「买不到的部分」：概念范围划定与企业内部别名
+# （研发代号、合作方代号、中文商品名）。外部 ID 由 loader 从真实快照解析，
+# 不在此处硬编码 —— 手抄的外部 ID 无法保证与快照版本一致。
+#
+# xref_hints 是给 loader 的检索线索，不是权威 ID。
+# verified: false 表示尚未经真实快照核对，不得进入发版。
+
+seed_version: "0.1.0"
+entity_type: SUBSTANCE
+
+concepts:
+  # ------------------------------------------------------------ 阿斯利华自研
+  - key: savolitinib
+    preferred_label_en: savolitinib
+    preferred_label_zh: 赛沃替尼
+    definition: 选择性 MET 酪氨酸激酶抑制剂，与阿斯利康共同开发
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: savolitinib }
+      CHEMBL: { by: pref_name, value: SAVOLITINIB }
+      DRUGCENTRAL: { by: name, value: savolitinib }
+    aliases:
+      # D4 旗舰用例：以下全部写法必须归一到同一个 HMD:SUB code。
+      - { raw: savolitinib,  lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: volitinib,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: HMPL-504,     lang: en, scope: EXACT, type: INTERNAL_CODE, source: SEED_INTERNAL }
+      - { raw: AZD6094,      lang: en, scope: EXACT, type: PARTNER_CODE,  source: SEED_INTERNAL }
+      - { raw: AZD-6094,     lang: en, scope: EXACT, type: PARTNER_CODE,  source: SEED_INTERNAL }
+      - { raw: ORPATHYS,     lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 沃瑞沙,       lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 赛沃替尼,     lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+      - { raw: 沃利替尼,     lang: zh, scope: EXACT, type: LEGACY,        source: SEED_INTERNAL }
+    targets: [MET]
+    indications: [nsclc, prcc, gastric_cancer]
+    modality: small_molecule
+
+  - key: fruquintinib
+    preferred_label_en: fruquintinib
+    preferred_label_zh: 呋喹替尼
+    definition: 高选择性 VEGFR-1/2/3 抑制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: fruquintinib }
+      CHEMBL: { by: pref_name, value: FRUQUINTINIB }
+    aliases:
+      - { raw: fruquintinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: HMPL-013,     lang: en, scope: EXACT, type: INTERNAL_CODE, source: SEED_INTERNAL }
+      - { raw: FRUZAQLA,     lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 爱优特,       lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 呋喹替尼,     lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [FLT1, KDR, FLT4]
+    indications: [mcrc]
+    modality: small_molecule
+
+  - key: surufatinib
+    preferred_label_en: surufatinib
+    preferred_label_zh: 索凡替尼
+    definition: VEGFR / FGFR1 / CSF-1R 三靶点抑制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: surufatinib }
+    aliases:
+      - { raw: surufatinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: sulfatinib,  lang: en, scope: EXACT, type: MISSPELLING,   source: SEED_INTERNAL }
+      - { raw: HMPL-012,    lang: en, scope: EXACT, type: INTERNAL_CODE, source: SEED_INTERNAL }
+      - { raw: SULSA,       lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 苏泰达,      lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 索凡替尼,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [FLT1, KDR, FLT4, FGFR1, CSF1R]
+    indications: [net]
+    modality: small_molecule
+
+  - key: sovleplenib
+    preferred_label_en: sovleplenib
+    preferred_label_zh: 索乐匹尼布
+    definition: 选择性 Syk 抑制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: sovleplenib }
+    aliases:
+      - { raw: sovleplenib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: HMPL-523,    lang: en, scope: EXACT, type: INTERNAL_CODE, source: SEED_INTERNAL }
+      - { raw: 索乐匹尼布,  lang: zh, scope: EXACT, type: TRANSLATION,   source: CDE }
+    targets: [SYK]
+    indications: [itp, waiha]
+    modality: small_molecule
+
+  - key: amdizalisib
+    preferred_label_en: amdizalisib
+    preferred_label_zh: 安迪利塞
+    definition: 选择性 PI3Kδ 抑制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: amdizalisib }
+    aliases:
+      - { raw: amdizalisib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: HMPL-689,    lang: en, scope: EXACT, type: INTERNAL_CODE, source: SEED_INTERNAL }
+      - { raw: 安迪利塞,    lang: zh, scope: EXACT, type: TRANSLATION,   source: CDE }
+    targets: [PIK3CD]
+    indications: [lymphoma]
+    modality: small_molecule
+
+  # ------------------------------------------------------------ 竞品
+  # 竞争格局分析（get_landscape）需要竞品与自研在同一套 code 体系下可比。
+  - key: capmatinib
+    preferred_label_en: capmatinib
+    preferred_label_zh: 卡马替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: capmatinib }
+    aliases:
+      - { raw: capmatinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: INC280,     lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: INCB28060,  lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: TABRECTA,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 卡马替尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: SEED_INTERNAL }
+    targets: [MET]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: tepotinib
+    preferred_label_en: tepotinib
+    preferred_label_zh: 特泊替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: tepotinib }
+    aliases:
+      - { raw: tepotinib,      lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: MSC2156119J,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: EMD1214063,     lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: TEPMETKO,       lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 特泊替尼,       lang: zh, scope: EXACT, type: TRANSLATION,   source: SEED_INTERNAL }
+    targets: [MET]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: regorafenib
+    preferred_label_en: regorafenib
+    preferred_label_zh: 瑞戈非尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: regorafenib }
+    aliases:
+      - { raw: regorafenib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: BAY73-4506,  lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: STIVARGA,    lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 拜万戈,      lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 瑞戈非尼,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [KDR, FLT4, FGFR1]
+    indications: [mcrc]
+    modality: small_molecule
+
+  - key: trifluridine_tipiracil
+    preferred_label_en: trifluridine/tipiracil
+    preferred_label_zh: 曲氟尿苷替匹嘧啶
+    verified: false
+    aliases:
+      - { raw: "trifluridine/tipiracil", lang: en, scope: EXACT,  type: INN,           source: UNII }
+      - { raw: TAS-102,                  lang: en, scope: EXACT,  type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: LONSURF,                  lang: en, scope: EXACT,  type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 爱谱沙,                   lang: zh, scope: EXACT,  type: BRAND,         source: NMPA }
+      # trifluridine 单独是复方的一个组分，不是复方本身 —— 标 NARROW 而非 EXACT。
+      # 标成 EXACT 会让查复方时召回所有单药文献。
+      - { raw: trifluridine,             lang: en, scope: NARROW, type: CHEMICAL_NAME, source: SEED_INTERNAL }
+    indications: [mcrc]
+    modality: small_molecule
+
+  # ============================================================ 语料同步批次
+  #
+  # 这批不是竞品盘点，而是把 9 篇真实文献正文里反复出现的药收进来 ——
+  # 语料里讲了一整节的药却不在本体中，检索时它就只是一串字符：
+  # 别名归一不了，图谱扩展够不着，引用里也标不出实体。
+  #
+  # 纳入线是「正文出现 ≥3 次」。低于这条线的（binimetinib 2 次、tarlatamab 2 次）
+  # 一律不收：本体是要维护的，收一个没人查的概念，成本在往后每一次核对里。
+  #
+  # 中文商品名标 source: NMPA 的是国内已上市的；未在国内上市的（如 lazertinib、
+  # zanzalintinib）只给音译通用名并标 SEED_INTERNAL，不编造商品名。
+
+  # -------------------------------------------------------- EGFR 通路
+  - key: osimertinib
+    preferred_label_en: osimertinib
+    preferred_label_zh: 奥希替尼
+    definition: 第三代不可逆 EGFR-TKI，对 T790M 耐药突变有活性
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: osimertinib }
+      CHEMBL: { by: pref_name, value: OSIMERTINIB }
+    aliases:
+      - { raw: osimertinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: AZD9291,     lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: TAGRISSO,    lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 泰瑞沙,      lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 奥希替尼,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [EGFR]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: gefitinib
+    preferred_label_en: gefitinib
+    preferred_label_zh: 吉非替尼
+    definition: 第一代可逆 EGFR-TKI
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: gefitinib }
+    aliases:
+      - { raw: gefitinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: ZD1839,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: IRESSA,    lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 易瑞沙,    lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 吉非替尼,  lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [EGFR]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: erlotinib
+    preferred_label_en: erlotinib
+    preferred_label_zh: 厄洛替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: erlotinib }
+    aliases:
+      - { raw: erlotinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: OSI-774,   lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: TARCEVA,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 特罗凯,    lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 厄洛替尼,  lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [EGFR]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: afatinib
+    preferred_label_en: afatinib
+    preferred_label_zh: 阿法替尼
+    definition: 第二代不可逆泛 HER 抑制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: afatinib }
+    aliases:
+      - { raw: afatinib,  lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: BIBW2992,  lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: GILOTRIF,  lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: GIOTRIF,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 吉泰瑞,    lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 阿法替尼,  lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [EGFR, ERBB2]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: dacomitinib
+    preferred_label_en: dacomitinib
+    preferred_label_zh: 达可替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: dacomitinib }
+    aliases:
+      - { raw: dacomitinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: PF-00299804, lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: VIZIMPRO,    lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 多泽润,      lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 达可替尼,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [EGFR, ERBB2]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: lazertinib
+    preferred_label_en: lazertinib
+    preferred_label_zh: 拉泽替尼
+    definition: 第三代 EGFR-TKI，与 amivantamab 联用
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: lazertinib }
+    aliases:
+      - { raw: lazertinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: YH25448,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: JNJ-73841937, lang: en, scope: EXACT, type: PARTNER_CODE, source: SEED_INTERNAL }
+      - { raw: LAZCLUZE,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 拉泽替尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: SEED_INTERNAL }
+    targets: [EGFR]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: poziotinib
+    preferred_label_en: poziotinib
+    preferred_label_zh: 波齐替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: poziotinib }
+    aliases:
+      - { raw: poziotinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: HM781-36B,  lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: NOV120101,  lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: 波齐替尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: SEED_INTERNAL }
+    targets: [EGFR, ERBB2]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: amivantamab
+    preferred_label_en: amivantamab
+    preferred_label_zh: 埃万妥单抗
+    definition: EGFR × MET 双特异性抗体
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: amivantamab }
+    aliases:
+      - { raw: amivantamab,   lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: JNJ-61186372,  lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: JNJ-372,       lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: RYBREVANT,     lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 埃万妥单抗,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [EGFR, MET]
+    indications: [nsclc]
+    modality: bispecific_antibody
+
+  # -------------------------------------------------------- ALK / ROS1 通路
+  - key: crizotinib
+    preferred_label_en: crizotinib
+    preferred_label_zh: 克唑替尼
+    definition: 第一代 ALK / ROS1 / MET 抑制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: crizotinib }
+    aliases:
+      - { raw: crizotinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: PF-02341066, lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: XALKORI,    lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 赛可瑞,     lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 克唑替尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [ALK, ROS1, MET]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: alectinib
+    preferred_label_en: alectinib
+    preferred_label_zh: 阿来替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: alectinib }
+    aliases:
+      - { raw: alectinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: CH5424802, lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: RO5424802, lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: ALECENSA,  lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 安圣莎,    lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 阿来替尼,  lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [ALK]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: ceritinib
+    preferred_label_en: ceritinib
+    preferred_label_zh: 塞瑞替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: ceritinib }
+    aliases:
+      - { raw: ceritinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: LDK378,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: ZYKADIA,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 赞可达,    lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 塞瑞替尼,  lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [ALK]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: brigatinib
+    preferred_label_en: brigatinib
+    preferred_label_zh: 布格替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: brigatinib }
+    aliases:
+      - { raw: brigatinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: AP26113,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: ALUNBRIG,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 布格替尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [ALK]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: lorlatinib
+    preferred_label_en: lorlatinib
+    preferred_label_zh: 洛拉替尼
+    definition: 第三代 ALK / ROS1 抑制剂，可透过血脑屏障
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: lorlatinib }
+    aliases:
+      - { raw: lorlatinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: PF-06463922, lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: LORBRENA,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 瑞波切,     lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 洛拉替尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [ALK, ROS1]
+    indications: [nsclc, brain_metastasis]
+    modality: small_molecule
+
+  - key: entrectinib
+    preferred_label_en: entrectinib
+    preferred_label_zh: 恩曲替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: entrectinib }
+    aliases:
+      - { raw: entrectinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: RXDX-101,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: ROZLYTREK,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 罗圣全,      lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 恩曲替尼,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [ROS1, ALK]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: repotrectinib
+    preferred_label_en: repotrectinib
+    preferred_label_zh: 瑞普替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: repotrectinib }
+    aliases:
+      - { raw: repotrectinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: TPX-0005,      lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: AUGTYRO,       lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 瑞普替尼,      lang: zh, scope: EXACT, type: TRANSLATION,   source: SEED_INTERNAL }
+    targets: [ROS1, ALK]
+    indications: [nsclc]
+    modality: small_molecule
+
+  # -------------------------------------------------------- BRAF / MEK 通路
+  - key: dabrafenib
+    preferred_label_en: dabrafenib
+    preferred_label_zh: 达拉非尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: dabrafenib }
+    aliases:
+      - { raw: dabrafenib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: GSK2118436, lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: TAFINLAR,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 泰菲乐,     lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 达拉非尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [BRAF]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: trametinib
+    preferred_label_en: trametinib
+    preferred_label_zh: 曲美替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: trametinib }
+    aliases:
+      - { raw: trametinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: GSK1120212, lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: MEKINIST,   lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 迈吉宁,     lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 曲美替尼,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [MAP2K1]
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: cobimetinib
+    preferred_label_en: cobimetinib
+    preferred_label_zh: 考比替尼
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: cobimetinib }
+    aliases:
+      - { raw: cobimetinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: GDC-0973,    lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: XL518,       lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: COTELLIC,    lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 考比替尼,    lang: zh, scope: EXACT, type: TRANSLATION,   source: SEED_INTERNAL }
+    targets: [MAP2K1]
+    indications: [nsclc]
+    modality: small_molecule
+
+  # -------------------------------------------------------- 抗血管生成
+  - key: bevacizumab
+    preferred_label_en: bevacizumab
+    preferred_label_zh: 贝伐珠单抗
+    definition: 抗 VEGF-A 单克隆抗体
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: bevacizumab }
+    aliases:
+      - { raw: bevacizumab,  lang: en, scope: EXACT, type: INN,         source: UNII }
+      - { raw: AVASTIN,      lang: en, scope: EXACT, type: BRAND,       source: SEED_INTERNAL }
+      - { raw: 安维汀,       lang: zh, scope: EXACT, type: BRAND,       source: NMPA }
+      - { raw: 贝伐珠单抗,   lang: zh, scope: EXACT, type: TRANSLATION, source: NMPA }
+      - { raw: 贝伐单抗,     lang: zh, scope: EXACT, type: LEGACY,      source: SEED_INTERNAL }
+    targets: [VEGFA]
+    indications: [nsclc, mcrc]
+    modality: monoclonal_antibody
+
+  - key: ramucirumab
+    preferred_label_en: ramucirumab
+    preferred_label_zh: 雷莫西尤单抗
+    definition: 抗 VEGFR-2 单克隆抗体
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: ramucirumab }
+    aliases:
+      - { raw: ramucirumab,   lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: IMC-1121B,     lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: CYRAMZA,       lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 希冉择,        lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 雷莫西尤单抗,  lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [KDR]
+    indications: [nsclc, gastric_cancer]
+    modality: monoclonal_antibody
+
+  - key: sunitinib
+    preferred_label_en: sunitinib
+    preferred_label_zh: 舒尼替尼
+    definition: 多靶点 VEGFR / PDGFR 抑制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: sunitinib }
+    aliases:
+      - { raw: sunitinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: SU11248,   lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: SUTENT,    lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 索坦,      lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 舒尼替尼,  lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [FLT1, KDR, FLT4]
+    indications: [net, nephrotic_syndrome]
+    modality: small_molecule
+
+  - key: zanzalintinib
+    preferred_label_en: zanzalintinib
+    preferred_label_zh: 赞扎替尼
+    definition: 第三代 VEGFR / MET / TAM 多靶点抑制剂，在研
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: zanzalintinib }
+    aliases:
+      - { raw: zanzalintinib, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: XL092,         lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      # 在研，未在国内上市，因此没有 NMPA 商品名。「赞扎替尼」是行业通行译名而非
+      # 监管核定名，所以标 SEED_INTERNAL —— source 字段记的是"这个名字从哪来"，
+      # 把行业译名记成 NMPA，等以后监管定了另一个名字就没人查得出是哪一步错的。
+      - { raw: 赞扎替尼,      lang: zh, scope: EXACT, type: TRANSLATION,   source: SEED_INTERNAL }
+    targets: [KDR, MET]
+    indications: [mcrc]
+    modality: small_molecule
+
+  # -------------------------------------------------------- 免疫检查点抑制剂
+  - key: pembrolizumab
+    preferred_label_en: pembrolizumab
+    preferred_label_zh: 帕博利珠单抗
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: pembrolizumab }
+    aliases:
+      - { raw: pembrolizumab,  lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: MK-3475,        lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: KEYTRUDA,       lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 可瑞达,         lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 帕博利珠单抗,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [PDCD1]
+    indications: [nsclc]
+    modality: monoclonal_antibody
+
+  - key: nivolumab
+    preferred_label_en: nivolumab
+    preferred_label_zh: 纳武利尤单抗
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: nivolumab }
+    aliases:
+      - { raw: nivolumab,      lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: BMS-936558,     lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: OPDIVO,         lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 欧狄沃,         lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 纳武利尤单抗,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [PDCD1]
+    indications: [nsclc]
+    modality: monoclonal_antibody
+
+  - key: ipilimumab
+    preferred_label_en: ipilimumab
+    preferred_label_zh: 伊匹木单抗
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: ipilimumab }
+    aliases:
+      - { raw: ipilimumab,   lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: MDX-010,      lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: YERVOY,       lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 逸沃,         lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 伊匹木单抗,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [CTLA4]
+    indications: [nsclc]
+    modality: monoclonal_antibody
+
+  - key: atezolizumab
+    preferred_label_en: atezolizumab
+    preferred_label_zh: 阿替利珠单抗
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: atezolizumab }
+    aliases:
+      - { raw: atezolizumab,   lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: MPDL3280A,      lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: TECENTRIQ,      lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 泰圣奇,         lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 阿替利珠单抗,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [CD274]
+    indications: [nsclc, sclc]
+    modality: monoclonal_antibody
+
+  - key: durvalumab
+    preferred_label_en: durvalumab
+    preferred_label_zh: 度伐利尤单抗
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: durvalumab }
+    aliases:
+      - { raw: durvalumab,      lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: MEDI4736,        lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: IMFINZI,         lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 英飞凡,          lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 度伐利尤单抗,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [CD274]
+    indications: [nsclc, sclc]
+    modality: monoclonal_antibody
+
+  - key: tislelizumab
+    preferred_label_en: tislelizumab
+    preferred_label_zh: 替雷利珠单抗
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: tislelizumab }
+    aliases:
+      - { raw: tislelizumab,    lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: BGB-A317,        lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: TEVIMBRA,        lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 百泽安,          lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 替雷利珠单抗,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [PDCD1]
+    indications: [nsclc]
+    modality: monoclonal_antibody
+
+  - key: camrelizumab
+    preferred_label_en: camrelizumab
+    preferred_label_zh: 卡瑞利珠单抗
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: camrelizumab }
+    aliases:
+      - { raw: camrelizumab,    lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: SHR-1210,        lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: 艾瑞卡,          lang: zh, scope: EXACT, type: BRAND,         source: NMPA }
+      - { raw: 卡瑞利珠单抗,    lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    targets: [PDCD1]
+    indications: [nsclc]
+    modality: monoclonal_antibody
+
+  # -------------------------------------------------------- 化疗骨架
+  - key: gemcitabine
+    preferred_label_en: gemcitabine
+    preferred_label_zh: 吉西他滨
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: gemcitabine }
+    aliases:
+      - { raw: gemcitabine, lang: en, scope: EXACT, type: INN,         source: UNII }
+      - { raw: GEMZAR,      lang: en, scope: EXACT, type: BRAND,       source: SEED_INTERNAL }
+      - { raw: 健择,        lang: zh, scope: EXACT, type: BRAND,       source: NMPA }
+      - { raw: 吉西他滨,    lang: zh, scope: EXACT, type: TRANSLATION, source: NMPA }
+    indications: [pdac, nsclc]
+    modality: small_molecule
+
+  - key: nab_paclitaxel
+    preferred_label_en: nab-paclitaxel
+    preferred_label_zh: 白蛋白结合型紫杉醇
+    definition: 白蛋白结合型紫杉醇纳米制剂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: paclitaxel protein-bound }
+    aliases:
+      # 剂型不同就是不同的药：nab-paclitaxel 与紫杉醇的剂量、输注方式、
+      # 前驱用药都不一样。两者互不挂别名，各自独立成概念。
+      - { raw: nab-paclitaxel,          lang: en, scope: EXACT, type: INN,         source: UNII }
+      - { raw: albumin-bound paclitaxel, lang: en, scope: EXACT, type: CHEMICAL_NAME, source: SEED_INTERNAL }
+      - { raw: ABRAXANE,                lang: en, scope: EXACT, type: BRAND,       source: SEED_INTERNAL }
+      - { raw: 白蛋白结合型紫杉醇,      lang: zh, scope: EXACT, type: TRANSLATION, source: NMPA }
+    indications: [pdac]
+    modality: small_molecule
+
+  - key: paclitaxel
+    preferred_label_en: paclitaxel
+    preferred_label_zh: 紫杉醇
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: paclitaxel }
+    aliases:
+      - { raw: paclitaxel, lang: en, scope: EXACT, type: INN,         source: UNII }
+      - { raw: TAXOL,      lang: en, scope: EXACT, type: BRAND,       source: SEED_INTERNAL }
+      - { raw: 紫杉醇,     lang: zh, scope: EXACT, type: TRANSLATION, source: NMPA }
+    indications: [nsclc]
+    modality: small_molecule
+
+  - key: oxaliplatin
+    preferred_label_en: oxaliplatin
+    preferred_label_zh: 奥沙利铂
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: oxaliplatin }
+    aliases:
+      - { raw: oxaliplatin, lang: en, scope: EXACT, type: INN,         source: UNII }
+      - { raw: ELOXATIN,    lang: en, scope: EXACT, type: BRAND,       source: SEED_INTERNAL }
+      - { raw: 艾恒,        lang: zh, scope: EXACT, type: BRAND,       source: NMPA }
+      - { raw: 奥沙利铂,    lang: zh, scope: EXACT, type: TRANSLATION, source: NMPA }
+    indications: [mcrc, pdac]
+    modality: small_molecule
+
+  - key: irinotecan
+    preferred_label_en: irinotecan
+    preferred_label_zh: 伊立替康
+    verified: false
+    xref_hints:
+      UNII: { by: name, value: irinotecan }
+    aliases:
+      - { raw: irinotecan, lang: en, scope: EXACT, type: INN,           source: UNII }
+      - { raw: CPT-11,     lang: en, scope: EXACT, type: RESEARCH_CODE, source: SEED_INTERNAL }
+      - { raw: CAMPTOSAR,  lang: en, scope: EXACT, type: BRAND,         source: SEED_INTERNAL }
+      - { raw: 伊立替康,   lang: zh, scope: EXACT, type: TRANSLATION,   source: NMPA }
+    indications: [mcrc, pdac]
+    modality: small_molecule

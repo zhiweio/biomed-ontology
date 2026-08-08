@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 ONTOLOGY = ROOT / "ontology"
 SCHEMA = ROOT / "schema"
 FOUNDATION = ROOT / "data" / "foundation"
+ENTITIES = ONTOLOGY / "entities" / "enterprise_entities.yaml"
+CLAIMS = ONTOLOGY / "claims" / "knowledge_claims.yaml"
 EXPECTED = ONTOLOGY / "examples" / "golden_path" / "hmpl504" / "expected_context.json"
 
 
@@ -33,6 +35,10 @@ def check_tree() -> None:
         ONTOLOGY / "mappings" / "bios.yaml",
         ONTOLOGY / "mappings" / "bern2.yaml",
         ONTOLOGY / "mappings" / "chebi.yaml",
+        ONTOLOGY / "mappings" / "zingg_matches.jsonl",
+        ENTITIES,
+        ONTOLOGY / "dictionary" / "enterprise_dictionary.yaml",
+        CLAIMS,
         EXPECTED,
         SCHEMA / "hmd_enterprise.yaml",
         SCHEMA / "shapes" / "projection.shacl.ttl",
@@ -45,7 +51,7 @@ def check_tree() -> None:
 
 
 def check_mappings_align_seed() -> None:
-    entities = yaml.safe_load((FOUNDATION / "enterprise_entities.yaml").read_text(encoding="utf-8"))
+    entities = yaml.safe_load(ENTITIES.read_text(encoding="utf-8"))
     by_id = {e["enterprise_id"]: e for e in entities.get("entities", [])}
     bios = yaml.safe_load((ONTOLOGY / "mappings" / "bios.yaml").read_text(encoding="utf-8"))
     for row in bios.get("mappings", []):
@@ -59,7 +65,7 @@ def check_mappings_align_seed() -> None:
 
 
 def check_claims() -> None:
-    claims = yaml.safe_load((FOUNDATION / "knowledge_claims.yaml").read_text(encoding="utf-8"))
+    claims = yaml.safe_load(CLAIMS.read_text(encoding="utf-8"))
     for c in claims.get("claims", []):
         if c.get("predicate") == "supportedBy" and str(c.get("object_id", "")).startswith(
             "HMD:ENT:DC:"

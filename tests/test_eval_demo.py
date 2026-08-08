@@ -214,9 +214,10 @@ def test_entitlement_gated_queries_are_skipped_without_the_entitlement(kb):
 @pytest.mark.parametrize("demo_id", sorted(DEMOS))
 def test_demo_passes(kb, demo_id):
     from biomed_ontology.demo import run_demo
-    from biomed_ontology.tools import ToolApi
+    from biomed_ontology.runtime import open_dual_surface
 
-    result = run_demo(demo_id, kb, ToolApi.from_kb(kb))
+    surface = open_dual_surface(literature_kb=kb, prefer_milvus=False)
+    result = run_demo(demo_id, surface.kb, surface.tools, foundation=surface.foundation)
     assert result.passed, result.render()
 
 
@@ -228,7 +229,10 @@ def test_all_demos_pass_together(kb):
     修好它的是查询改写 —— `Normalizer.expand()` 的输出终于下发给了词法通道，
     于是"AZD6094"这条 query 同时带上了沃利替尼的其余写法。
     """
-    results = run_all(kb)
+    from biomed_ontology.runtime import open_dual_surface
+
+    surface = open_dual_surface(literature_kb=kb, prefer_milvus=False)
+    results = run_all(surface.kb, surface.tools, foundation=surface.foundation)
     failed = {r.demo_id for r in results if not r.passed}
     assert not failed, [r.render() for r in results if not r.passed]
     assert len(results) == len(DEMOS)

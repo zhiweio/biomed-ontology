@@ -32,6 +32,7 @@ from biomed_ontology.foundation.world import load_world_model
 
 ROOT = Path(__file__).resolve().parents[1]
 FOUNDATION = ROOT / "data" / "foundation"
+ONTOLOGY = ROOT / "ontology"
 
 
 def _backends_ready() -> bool:
@@ -381,7 +382,7 @@ def test_evolve_mine_writes_candidates_only(tmp_path: Path) -> None:
 
 
 def test_zingg_matches_file_present() -> None:
-    path = FOUNDATION / "zingg_matches.jsonl"
+    path = ONTOLOGY / "mappings" / "zingg_matches.jsonl"
     assert path.exists()
     lines = [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
     assert lines

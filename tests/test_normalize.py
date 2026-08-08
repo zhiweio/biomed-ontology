@@ -22,8 +22,8 @@ from biomed_ontology.normalize.matchers import (
     zh_segment_bounded,
 )
 
-SAVOLITINIB = "HMD:SUB:0000001"
-MET = "HMD:TGT:0000001"
+SAVOLITINIB = "HMD:ENT:DC:savolitinib"
+MET = "HMD:ENT:TGT:MET"
 
 
 @pytest.mark.parametrize(
@@ -131,14 +131,14 @@ def test_document_mode_honours_caller_context(kb, ctx):
 
 
 def test_expansion_includes_descendants(kb, ctx):
-    terms = kb.normalizer.expand("HMD:DIS:0000003", ctx=ctx)
+    terms = kb.normalizer.expand("HMD:ENT:IND:lung_cancer", ctx=ctx)
     ids = {t.concept_id for t in terms}
-    assert "HMD:DIS:0000001" in ids, "肺癌应扩展到非小细胞肺癌"
+    assert "HMD:ENT:IND:nsclc" in ids, "肺癌应扩展到非小细胞肺癌"
 
 
 def test_descendants_are_transitive(kb):
-    d = kb.normalizer.descendants("HMD:DIS:0000003", max_depth=3)
-    assert "HMD:DIS:0000002" in d, "应经由 NSCLC 到达肺腺癌"
+    d = kb.normalizer.descendants("HMD:ENT:IND:lung_cancer", max_depth=3)
+    assert "HMD:ENT:IND:lung_adenocarcinoma" in d, "应经由 NSCLC 到达肺腺癌"
 
 
 # ------------------------------------------------------------------ 跨度识别

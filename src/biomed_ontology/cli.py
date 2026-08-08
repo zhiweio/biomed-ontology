@@ -160,10 +160,10 @@ def build_seed(
 
 @app.command("kb")
 def kb_stats() -> None:
-    """构建完整知识库并打印统计。"""
-    from biomed_ontology.pipeline import build_knowledge_base
+    """构建文献知识库（ENT）并打印统计。"""
+    from biomed_ontology.pipeline import build_literature_base
 
-    kb = build_knowledge_base()
+    kb = build_literature_base(with_graph=False)
     table = Table(title=f"知识库 release={kb.release_id}")
     table.add_column("指标")
     table.add_column("值", justify="right")
@@ -179,10 +179,10 @@ def gate_cmd(
     accuracy: float = typer.Option(0.94, "--accuracy", help="人工抽检准确率（各实体类型同值）"),
 ) -> None:
     """跑发版质量守门。"""
-    from biomed_ontology.pipeline import build_knowledge_base
+    from biomed_ontology.pipeline import build_literature_base
     from biomed_ontology.quality import QualityGate
 
-    kb = build_knowledge_base()
+    kb = build_literature_base(with_graph=True)
     manual = dict.fromkeys(["SUBSTANCE", "TARGET", "DISEASE"], accuracy)
     result = QualityGate().evaluate(kb, manual_accuracy=manual)
     console.print(result.explain())
@@ -206,19 +206,25 @@ def eval_cmd(
     allow_fake: bool = typer.Option(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
+    compact: bool = typer.Option(False, "--compact", help="仅 Trace 摘要，不展开详情"),
 ) -> None:
-    """跑 gold set 评测：归一化准确率 + 检索消融（默认 multimodal-bio + Milvus）。"""
+    """双面 gold 评测：文献（归一化+检索+targets）+ WM resolve 探针。
+
+    默认用 Rich 分步展示；`--json` 给脚本，`--compact` 只要 Trace 摘要。
+    """
     from biomed_ontology.eval import eval_normalization, eval_retrieval
-    from biomed_ontology.eval.targets import check_targets, render_outcomes
-    from biomed_ontology.pipeline import build_knowledge_base
+    from biomed_ontology.eval.render import render_eval, summary_json
+    from biomed_ontology.eval.targets import check_targets
     from biomed_ontology.rerank import get_reranker
+    from biomed_ontology.runtime import open_dual_surface
 
     _require_real_embedder(embedder, allow_fake=allow_fake)
 
-    kb = build_knowledge_base()
+    surface = open_dual_surface()
+    kb = surface.kb
     ents = frozenset(e.strip() for e in entitlements.split(",") if e.strip())
-    console.print(eval_normalization(kb).as_table())
-    console.print()
+    norm = eval_normalization(kb)
 
     backend = _milvus_backend(embedder, collection)
     ev = eval_retrieval(
@@ -230,10 +236,53 @@ def eval_cmd(
         embedder=backend.embedder.name if backend else "",
         reranker=get_reranker(reranker) if reranker.strip() else None,
     )
-    console.print(ev.as_table())
-    console.print()
-    # 目标与实测同屏输出：把"没达成"和数字摆在一起，避免只有好消息被转述出去
-    console.print(render_outcomes(check_targets(ev)))
+    outcomes = check_targets(ev)
+
+    # WM resolve 探针（ENT）；失败写入 console，不静默跳过
+    resolve_probe = _eval_resolve_probe(surface.foundation)
+
+    if json_out:
+        payload = summary_json(norm, ev, outcomes)
+        import json as _json
+
+        data = _json.loads(payload)
+        data["world_model_resolve"] = resolve_probe
+        console.print_json(_json.dumps(data, ensure_ascii=False))
+        return
+
+    render_eval(norm, ev, outcomes, console=console, verbose=not compact)
+    console.print(
+        f"[cyan]WM resolve probe[/]  "
+        f"passed={resolve_probe['passed']}/{resolve_probe['total']}  "
+        f"failed={resolve_probe['failed']}"
+    )
+
+
+def _eval_resolve_probe(foundation) -> dict:
+    """World Model resolve 探针：别名 → HMD:ENT:*（与文献 eval 同屏）。"""
+    cases = [
+        ("HMPL-504", "HMD:ENT:DC:savolitinib"),
+        ("savolitinib", "HMD:ENT:DC:savolitinib"),
+        ("MET", "HMD:ENT:TGT:MET"),
+        ("NSCLC", "HMD:ENT:IND:nsclc"),
+    ]
+    failed: list[str] = []
+    for mention, expect in cases:
+        try:
+            out = foundation.resolve_entity(mention)
+            got = next(
+                (
+                    h.get("canonical_entity")
+                    for h in out.get("resolved") or []
+                    if h.get("canonical_entity")
+                ),
+                None,
+            )
+            if got != expect:
+                failed.append(f"{mention!r}→{got} (期望 {expect})")
+        except Exception as exc:
+            failed.append(f"{mention!r} error={exc}")
+    return {"total": len(cases), "passed": len(cases) - len(failed), "failed": failed}
 
 
 def _require_real_embedder(name: str, *, allow_fake: bool) -> None:
@@ -315,10 +364,9 @@ def demo_cmd(
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Trace 摘要，不展开详情"),
 ) -> None:
-    """World Model / Ontology Semantic Layer 能力验收（自带可证伪断言）。
+    """双面能力验收：文献 ToolApi（K*）+ World Model（W*）+ Bridge（B*）。
 
-    默认用 Rich 分步展示（对齐 `hmd foundation golden`）；
-    `--json` 给脚本，`--compact` 只要 Trace 摘要。
+    默认用 Rich 分步展示；`--json` 给脚本，`--compact` 只要 Trace 摘要。
     """
     from biomed_ontology.demo import (
         DEMOS,
@@ -327,17 +375,23 @@ def demo_cmd(
         run_demo,
         summary_json,
     )
-    from biomed_ontology.pipeline import build_knowledge_base
-    from biomed_ontology.tools import ToolApi
+    from biomed_ontology.runtime import open_dual_surface
 
-    kb = build_knowledge_base()
+    surface = open_dual_surface()
     if demo_id:
         if demo_id not in DEMOS:
             console.print(f"[red]未知场景 {demo_id}，可用：{sorted(DEMOS)}[/red]")
             raise typer.Exit(2)
-        results = [run_demo(demo_id, kb, ToolApi.from_kb(kb))]
+        results = [
+            run_demo(
+                demo_id,
+                surface.kb,
+                surface.tools,
+                foundation=surface.foundation,
+            )
+        ]
     else:
-        results = run_all(kb)
+        results = run_all(surface.kb, surface.tools, foundation=surface.foundation)
 
     passed = sum(r.passed for r in results)
     ok = passed == len(results)
@@ -365,11 +419,11 @@ def signals_cmd(
         plan_release,
         write_release_artifacts,
     )
-    from biomed_ontology.pipeline import build_knowledge_base
+    from biomed_ontology.pipeline import build_literature_base
     from biomed_ontology.quality import QualityGate
     from biomed_ontology.tools import ToolApi
 
-    kb = build_knowledge_base()
+    kb = build_literature_base(with_graph=True)
     api = ToolApi.from_kb(kb)
     # 先跑一遍 demo 制造真实使用痕迹：没有使用就没有信号，
     # 这正是"信号必须来自真实使用"这条设计约束的直接体现。
@@ -477,14 +531,14 @@ def index_cmd(
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
     from biomed_ontology.parse.figure_type import get_figure_typer
-    from biomed_ontology.pipeline import DATA_ROOT, build_knowledge_base
+    from biomed_ontology.pipeline import DATA_ROOT, build_literature_base
     from biomed_ontology.registry import load_registry
     from biomed_ontology.search import HybridSearcher
     from biomed_ontology.search.backends.milvus import MilvusBackend, chunk_to_row
 
     _require_real_embedder(embedder, allow_fake=allow_fake)
 
-    kb = build_knowledge_base()
+    kb = build_literature_base(with_graph=False)
     searcher = HybridSearcher(kb)
     registry = load_registry()
 
@@ -536,20 +590,19 @@ def foundation_golden(
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Trace 步骤条，不展开详情"),
 ) -> None:
-    """金路径验收：按实体类型走 Drug / Target / Indication 路径。
+    """金路径双面验收：WM resolve/context + KB search_documents/restore。
 
-    默认用 Rich 分步展示推理过程（resolve / graph / citationware / assets）；
-    `--json` 给脚本，`--compact` 只要计数摘要。
+    默认用 Rich 分步展示；`--json` 给脚本，`--compact` 只要计数摘要。
     """
     import json
 
-    from biomed_ontology.foundation import FoundationApi, load_world_model
     from biomed_ontology.foundation.obs_log import configure_foundation_logging
     from biomed_ontology.foundation.render import render_golden_path
+    from biomed_ontology.runtime import open_dual_surface
 
     configure_foundation_logging(json_logs=True)
-    api = FoundationApi(load_world_model())
-    result = api.golden_path(candidate)
+    surface = open_dual_surface()
+    result = surface.foundation.golden_path(candidate, tools=surface.tools)
     if json_out:
         console.print_json(json.dumps(result, ensure_ascii=False))
         if not result.get("ok"):
@@ -568,14 +621,20 @@ def foundation_golden_eval(
         help="候选列表；默认 HMPL-504/savolitinib/AZD6094/MET/c-MET/NSCLC",
     ),
 ) -> None:
-    """多 Golden Path JSON 评估：GraphDB(+BIOS) / Milvus / OM，禁止 YAML。"""
+    """多 Golden Path 双面评估：WM 三后端 + KB 文献腿，禁止 YAML。"""
     import json
 
     from biomed_ontology.foundation.golden_eval import DEFAULT_CANDIDATES, eval_golden_paths
     from biomed_ontology.foundation.obs_log import configure_foundation_logging
+    from biomed_ontology.runtime import open_dual_surface
 
     configure_foundation_logging(json_logs=True)
-    summary = eval_golden_paths(list(candidate) if candidate else list(DEFAULT_CANDIDATES))
+    surface = open_dual_surface()
+    summary = eval_golden_paths(
+        list(candidate) if candidate else list(DEFAULT_CANDIDATES),
+        api=surface.foundation,
+        tools=surface.tools,
+    )
     console.print_json(json.dumps(summary, ensure_ascii=False))
     if summary["passed"] != summary["total"]:
         raise typer.Exit(1)
@@ -690,9 +749,10 @@ def foundation_evolve_mine(
 @foundation_app.command("zingg-run")
 def foundation_zingg_run() -> None:
     """Zingg 批处理桩：当前校验 matches 文件存在；完整 Spark 作业后续接入。"""
-    from pathlib import Path
 
-    matches = Path("data/foundation/zingg_matches.jsonl")
+    from biomed_ontology.foundation.paths import ZINGG_MATCHES_PATH
+
+    matches = ZINGG_MATCHES_PATH
     if not matches.exists():
         console.print(f"[red]缺少 {matches}[/red]")
         raise typer.Exit(1)

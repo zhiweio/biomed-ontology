@@ -14,7 +14,7 @@ from biomed_ontology.search import HybridSearcher, rrf_fuse
 from biomed_ontology.tools import TOOL_SPECS
 
 LICENSED = frozenset({"MOCK_LICENSED"})
-SAVOLITINIB = "HMD:SUB:0000001"
+SAVOLITINIB = "HMD:ENT:DC:savolitinib"
 
 
 @pytest.fixture(scope="session")
@@ -140,7 +140,7 @@ def test_every_declared_tool_is_dispatchable(api):
     [
         ("normalize_entity", {"text": "沃利替尼"}),
         ("resolve_alias", {"alias": "AZD6094"}),
-        ("expand_concept", {"concept_id": "HMD:DIS:0000003"}),
+        ("expand_concept", {"concept_id": "HMD:ENT:IND:lung_cancer"}),
         ("get_concept", {"concept_id": SAVOLITINIB}),
         ("search_documents", {"query": "savolitinib NSCLC"}),
         ("get_facts", {"subject_id": SAVOLITINIB}),
@@ -219,7 +219,7 @@ def test_feedback_is_persisted_and_linked_to_a_trace(api):
         verdict="WRONG_CONCEPT",
         source_trace_id=src["trace_id"],
         offending_concept_id=SAVOLITINIB,
-        expected_concept_id="HMD:SUB:0000002",
+        expected_concept_id="HMD:ENT:DC:fruquintinib",
         free_text="召回错了",
     )
     assert env["warnings"] == []
@@ -232,5 +232,5 @@ def test_unknown_concept_reports_an_error_rather_than_an_empty_success(api):
 
     静默返回空结果会让调用方把"本体里没有这个概念"读成"这个概念没有属性"。
     """
-    env = api.get_concept(concept_id="HMD:SUB:9999999")
+    env = api.get_concept(concept_id="HMD:ENT:DC:__missing__")
     assert _failed(env)

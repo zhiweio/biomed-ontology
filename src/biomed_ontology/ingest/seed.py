@@ -39,9 +39,34 @@ __all__ = [
     "SeedConcept",
     "SeedFile",
     "build_from_seed",
+    "enterprise_id_for",
     "load_ambiguity_registry",
     "load_seed_file",
 ]
+
+# seed_key → HMD:ENT:*（身份权威；不再铸造 HMD:SUB|TGT|DIS）
+_ENT_SEGMENTS: dict[EntityTypeEnum, str] = {
+    EntityTypeEnum.SUBSTANCE: "DC",
+    EntityTypeEnum.TARGET: "TGT",
+    EntityTypeEnum.DISEASE: "IND",
+}
+# 与 ontology/entities/enterprise_entities.yaml 金路径 ID 对齐
+_ENT_OVERRIDES: dict[tuple[str, EntityTypeEnum], str] = {
+    ("savolitinib", EntityTypeEnum.SUBSTANCE): "HMD:ENT:DC:savolitinib",
+    ("MET", EntityTypeEnum.TARGET): "HMD:ENT:TGT:MET",
+    ("nsclc", EntityTypeEnum.DISEASE): "HMD:ENT:IND:nsclc",
+}
+
+
+def enterprise_id_for(entity_type: EntityTypeEnum, seed_key: str) -> str:
+    """确定性企业 ID：同 key 永远同一 ENT，无需 IdLedger。"""
+    override = _ENT_OVERRIDES.get((seed_key, entity_type))
+    if override:
+        return override
+    seg = _ENT_SEGMENTS.get(entity_type)
+    if not seg:
+        raise ValueError(f"无 ENT 段映射的实体类型：{entity_type}")
+    return f"HMD:ENT:{seg}:{seed_key}"
 
 # 种子内部引用的伪源，不在 registry 中；构建时映射为 SEED_INTERNAL 的许可 tier。
 _SEED_SOURCE = "SEED_INTERNAL"
@@ -230,15 +255,25 @@ def build_from_seed(
     seed_files: list[Path],
     *,
     registry: SourceRegistry,
-    id_ledger: IdLedger,
+    id_ledger: IdLedger | None = None,
     alias_ledger: SequenceLedger,
     ambiguity: AmbiguityRegistry | None = None,
     generate_variants: bool = True,
+    id_mode: str = "enterprise",
 ) -> SeedBuildResult:
-    """从种子文件构建概念与别名。
+    """从目录 YAML 构建概念与别名。
 
-    ID 通过 ledger 分配，因此重复调用产出相同 ID —— 这是离线可重放构建的前提。
+    Parameters
+    ----------
+    id_mode:
+        ``enterprise``（默认）→ 确定性 ``HMD:ENT:*``，运行时/文献权威路径。
+        ``ledger`` → 旧 ``HMD:SUB|TGT|DIS`` 铸造（仅单测 / 迁移对照）。
     """
+    if id_mode not in {"enterprise", "ledger"}:
+        raise ValueError(f"未知 id_mode：{id_mode}")
+    if id_mode == "ledger" and id_ledger is None:
+        raise ValueError("id_mode=ledger 需要 id_ledger")
+
     ambiguity_index = ambiguity.norm_index() if ambiguity else {}
     concepts: list[BuiltConcept] = []
     synonyms: list[BuiltSynonym] = []
@@ -249,10 +284,13 @@ def build_from_seed(
         seed = load_seed_file(path)
         for sc in seed.concepts:
             tier = _concept_tier(sc, registry)
-            # 种子 key 参与建团，保证概念在外部 ID 解析出来之前就有稳定锚点。
-            anchor = f"seedkey:{seed.entity_type.value.lower()}:{sc.key}"
-            mint = id_ledger.mint(seed.entity_type, {anchor})
-            concept_id = mint.concept_id
+            if id_mode == "enterprise":
+                concept_id = enterprise_id_for(seed.entity_type, sc.key)
+            else:
+                assert id_ledger is not None
+                # 种子 key 参与建团，保证概念在外部 ID 解析出来之前就有稳定锚点。
+                anchor = f"seedkey:{seed.entity_type.value.lower()}:{sc.key}"
+                concept_id = id_ledger.mint(seed.entity_type, {anchor}).concept_id
 
             concepts.append(
                 BuiltConcept(

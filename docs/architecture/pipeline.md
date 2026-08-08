@@ -2,7 +2,8 @@
 
 源码：`src/biomed_ontology/pipeline.py`。
 
-`build_knowledge_base()` 是整仓的**唯一装配入口**。检索、Semantic Access、评测、demo 都必须吃同一份 `KnowledgeBase`；各自装配会让「评测库」和「服务库」在 `release_id`、别名表、链接解析上悄悄分叉。
+运行时双面入口是 `runtime.open_dual_surface()`（`ToolApi` 文献面 + `FoundationApi` World Model）。  
+`build_knowledge_base()` 仍是**离线/过渡**语料装配（`hmd kb` / index / 测试夹具）；CLI 的 `demo` / `eval` / `serve` 与 golden 经双面 harness，不再各自再写一套装配。文献检索经 `ToolApi.from_backends`；身份走 ER → `HMD:ENT:*`，不经 seed 铸造。
 
 ## 为什么存在这个模块
 
@@ -91,14 +92,14 @@ ch.labels = 文档级 taxonomy 标签
 - `concept_ids_expanded` 服务别名/层级扩展场景；图通道的 search-around 用的是 `LinkIndex`，两者**不要合并**（见 [links](../ontology/links.md)）。  
 - `min_confidence=0.6` 与检索期 `_seed_concepts` 同一阈值 —— 各写一份迟早对不上。
 
-## 调用方应当怎么拿 KB
+## 调用方应当怎么拿双面句柄
 
 | 入口 | 用法 |
 |---|---|
-| CLI `hmd kb` / `demo` / `eval` | 内部调 `build_knowledge_base()` |
-| `hmd serve` | 进程启动时装一次，注入 `ToolApi` |
-| 测试 | fixture 调同一函数；不要手搓概念列表「模拟 KB」除非测的是装配本身 |
-| 索引 `hmd index` | 先有 KB，再交给 `MilvusBackend` + embedder |
+| CLI `hmd demo` / `eval` / `foundation golden` | `open_dual_surface()` |
+| `hmd serve` | `build_state()` → `open_dual_surface()` |
+| CLI `hmd kb` / `gate` / `index` | 离线仍可调 `build_knowledge_base()`（语料装配） |
+| 测试 | fixture 可直接 `build_knowledge_base()`；运行时路径测 `open_dual_surface` |
 
 ## 如何验证
 
@@ -107,4 +108,4 @@ uv run hmd kb          # 看 stats + warnings
 uv run pytest tests/test_seed_build.py tests/test_eval_demo.py -q
 ```
 
-读代码时从 `build_knowledge_base` 跟到 `HybridSearcher(kb)` 与 `ToolApi(kb)` —— 不应再出现第二条装配路径。
+读代码时从 `open_dual_surface` → `ToolApi.from_backends` / `FoundationApi`；`build_knowledge_base` 仅作过渡文献句柄。

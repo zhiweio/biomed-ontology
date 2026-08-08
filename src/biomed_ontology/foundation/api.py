@@ -532,11 +532,17 @@ class FoundationApi:
             raise KeyError(f"未知语义操作：{op}")
         return fn(**kwargs)
 
-    def golden_path(self, candidate_key: str = "savolitinib") -> dict[str, Any]:
+    def golden_path(
+        self,
+        candidate_key: str = "savolitinib",
+        *,
+        tools: Any | None = None,
+    ) -> dict[str, Any]:
+        """WM 金路径；若传入 ToolApi，追加文献 search + restore 腿。"""
         with observe_retrieval(
             "golden_path",
             op="golden_path",
-            input_summary={"candidate": candidate_key},
+            input_summary={"candidate": candidate_key, "with_kb": tools is not None},
         ) as obs:
             resolve = self.resolve_entity(candidate_key)
             canonical = next(
@@ -551,6 +557,10 @@ class FoundationApi:
             kind = str(ctx.get("entity_kind") or ctx.get("entity", {}).get("entity_kind") or "")
             path = _path_for_kind(kind)
             backends = ctx.get("backends") or {}
+            kb_leg = _kb_golden_leg(tools, candidate_key) if tools is not None else None
+            # WM 段走完即基础 ok；传入 tools 时必须文献腿也过
+            kb_ok = True if kb_leg is None else bool(kb_leg.get("ok"))
+            ok = kb_ok and bool(ctx.get("entity") or ctx.get("found", True))
             obs["backends"] = backends
             obs["why"] = {
                 "yaml_fallback": False,
@@ -558,18 +568,20 @@ class FoundationApi:
                 "entity_kind": kind,
                 "path": path,
                 "bios_used": bool(ctx.get("bios_bridges")),
+                "kb_leg": kb_leg,
             }
             obs["output"] = {
-                "ok": True,
+                "ok": ok,
                 "targets": len(ctx.get("targets") or []),
                 "diseases": len(ctx.get("diseases") or []),
                 "drugs": len(ctx.get("drugs") or []),
                 "evidence": len(ctx.get("evidence") or []),
                 "assets": len(ctx.get("internal_assets") or []),
                 "bios": len(ctx.get("bios_bridges") or []),
+                "kb_hits": (kb_leg or {}).get("hit_count"),
             }
             return {
-                "ok": True,
+                "ok": ok,
                 "path": path,
                 "canonical_entity": canonical,
                 "entity_kind": kind,
@@ -577,6 +589,7 @@ class FoundationApi:
                 "resolve": resolve,
                 "context": ctx,
                 "backends": backends,
+                "kb": kb_leg,
                 "evaluation": {
                     "yaml_fallback": False,
                     "backends_ok": _backends_ok(backends),
@@ -584,8 +597,43 @@ class FoundationApi:
                     "milvus_evidence": len(ctx.get("evidence") or []) > 0,
                     "openmetadata_assets": len(ctx.get("internal_assets") or []) > 0
                     or kind not in {"DrugCandidate"},
+                    "kb_search_nonempty": kb_ok if kb_leg is not None else None,
+                    "kb_restore_ok": (kb_leg or {}).get("restore_ok"),
                 },
             }
+
+
+def _kb_golden_leg(tools: Any, query: str) -> dict[str, Any]:
+    """文献腿：search_documents → restore_context。"""
+    try:
+        search = tools.search_documents(query, top_k=5)
+        hits = search.get("results") or []
+        restore_ok = False
+        chunk_id = None
+        if hits:
+            chunk_id = hits[0].get("chunk_id")
+            if chunk_id:
+                restored = tools.restore_context(chunk_id)
+                restore_ok = not bool(restored.get("error")) and (
+                    bool(restored.get("document") or restored.get("sections") or restored.get("text"))
+                    or restored.get("ok") is True
+                    or "chunk_id" in restored
+                )
+        return {
+            "ok": len(hits) >= 1,
+            "hit_count": len(hits),
+            "chunk_id": chunk_id,
+            "restore_ok": restore_ok,
+            "query": query,
+        }
+    except Exception as exc:  # noqa: BLE001 — 金路径必须显式失败
+        return {
+            "ok": False,
+            "error": str(exc),
+            "hit_count": 0,
+            "restore_ok": False,
+            "query": query,
+        }
 
 
 def _path_for_kind(kind: str) -> str:

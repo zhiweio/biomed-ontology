@@ -20,10 +20,16 @@ DEFAULT_CANDIDATES = [
 ]
 
 
-def eval_one(api: FoundationApi, candidate: str) -> dict[str, Any]:
-    result = api.golden_path(candidate)
+def eval_one(
+    api: FoundationApi,
+    candidate: str,
+    *,
+    tools: Any | None = None,
+) -> dict[str, Any]:
+    result = api.golden_path(candidate, tools=tools)
     ctx = result.get("context") or {}
     backends = result.get("backends") or ctx.get("backends") or {}
+    kb = result.get("kb") or {}
     checks = {
         "ok": bool(result.get("ok")),
         "no_yaml": all(v != "yaml" for v in backends.values() if isinstance(v, str)),
@@ -36,6 +42,9 @@ def eval_one(api: FoundationApi, candidate: str) -> dict[str, Any]:
         "assets_nonempty": len(ctx.get("internal_assets") or []) > 0,
         "bios_backend": str(backends.get("bios") or "").startswith("graphdb_biomedical"),
     }
+    if tools is not None:
+        checks["kb_search_nonempty"] = bool(kb.get("ok"))
+        checks["kb_restore_ok"] = bool(kb.get("restore_ok"))
     return {
         "candidate": candidate,
         "passed": all(checks.values()),
@@ -62,10 +71,11 @@ def eval_golden_paths(
     candidates: list[str] | None = None,
     *,
     api: FoundationApi | None = None,
+    tools: Any | None = None,
 ) -> dict[str, Any]:
     log = get_logger("hmd.golden_eval")
     api = api or FoundationApi(load_world_model())
-    rows = [eval_one(api, c) for c in (candidates or list(DEFAULT_CANDIDATES))]
+    rows = [eval_one(api, c, tools=tools) for c in (candidates or list(DEFAULT_CANDIDATES))]
     summary = {
         "total": len(rows),
         "passed": sum(1 for r in rows if r["passed"]),

@@ -4,6 +4,7 @@ from biomed_ontology.ingest.seed import (
     AmbiguityRegistry,
     SeedBuildResult,
     build_from_seed,
+    enterprise_id_for,
     load_ambiguity_registry,
     load_seed_file,
 )
@@ -12,6 +13,7 @@ __all__ = [
     "AmbiguityRegistry",
     "SeedBuildResult",
     "build_from_seed",
+    "enterprise_id_for",
     "load_ambiguity_registry",
     "load_seed_file",
 ]

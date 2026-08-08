@@ -142,7 +142,7 @@ services:
       BERN2_JAVA_XMS_TMVAR: ${BERN2_JAVA_XMS_TMVAR:-}
     volumes:
       - ${BERN2_RESOURCES:-./bern2/resources}:/app/resources
-      - ../data/foundation/enterprise_dictionary.yaml:/app/custom_dict/enterprise_dictionary.yaml:ro
+      - ../ontology/dictionary/enterprise_dictionary.yaml:/app/custom_dict/enterprise_dictionary.yaml:ro
     # 官方 GPU 最低约 63GB RAM；Mac / CPU 可调低 BERN2_MEM_LIMIT
     mem_limit: ${BERN2_MEM_LIMIT:-56g}
     healthcheck:

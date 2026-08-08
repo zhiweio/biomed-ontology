@@ -1,5 +1,5 @@
 # BIOS / 外部概念 ↔ Enterprise Entity（可审映射表）
-# SSOT 仍在 data/foundation/enterprise_entities.yaml 的 exact_match_xrefs；
+# SSOT 在 ontology/entities/enterprise_entities.yaml 的 exact_match_xrefs；
 # 本文件是策展投影，便于 PR 审阅，不替代实体种子。
 version: "0.3.0"
 mappings:

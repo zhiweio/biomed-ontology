@@ -1,13 +1,14 @@
-"""端到端装配：种子 → 术语层 → 语料 → 标引 → 抽取 → 事实层 → RDF。
+"""端到端装配：企业目录（ENT）→ 术语层 → 语料 → 标引 → 抽取 → 事实层。
 
-单独抽出来是因为检索、agent 工具、评测、demo 都需要同一个"已就绪的知识库"。
-若各自装配，四处的 release_id 与归一化配置会悄悄漂移，
-届时评测跑出来的分数和 agent 实际用到的库对不上号。
+运行时文献面入口是 ``build_literature_base()``（``HMD:ENT:*``，无 seed 铸造）。
+``build_knowledge_base()`` 为其兼容别名；``legacy_seed_ids=True`` 仅供单测对照。
+oxigraph ``GraphStore`` 默认关闭（``with_graph=False``）；单测可显式打开。
 """
 
 from __future__ import annotations
 
 import tempfile
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -27,16 +28,22 @@ from biomed_ontology.ontology.ids import IdLedger, SequenceLedger
 from biomed_ontology.ontology.rdf import GraphStore
 from biomed_ontology.registry import SourceRegistry, load_registry
 
-__all__ = ["DATA_ROOT", "KnowledgeBase", "build_knowledge_base"]
+__all__ = [
+    "DATA_ROOT",
+    "ONTOLOGY_CATALOG",
+    "KnowledgeBase",
+    "build_knowledge_base",
+    "build_literature_base",
+    "catalog_files",
+]
 
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
-DEFAULT_RELEASE = "0.1.0"
+REPO_ROOT = DATA_ROOT.parent
+ONTOLOGY_CATALOG = REPO_ROOT / "ontology" / "catalog"
+DEFAULT_RELEASE = "0.3.0-ent"
 
-# 内部构建产物的归属源。术语层来自 SEED_INTERNAL，
-# 语料与事实各自归属其原始源，因此许可边界在图这一级就成立。
-_SEED_SOURCE = "SEED_INTERNAL"
-# 种子断言的类型化链接另立一源，于是它在图 URI 上就和术语层、事实层分得开。
-_SEED_LINKS_SOURCE = "SEED_LINKS"
+_CATALOG_SOURCE = "SEED_INTERNAL"
+_CATALOG_LINKS_SOURCE = "SEED_LINKS"
 
 
 @dataclass
@@ -82,14 +89,35 @@ class KnowledgeBase:
         }
 
 
-def build_knowledge_base(
+def catalog_files(data_root: Path | None = None) -> list[Path]:
+    """优先 ``ontology/catalog/*.yaml``；否则回落 ``data/seed``（已退役对照）。"""
+    root = data_root or DATA_ROOT
+    catalog = ONTOLOGY_CATALOG
+    if catalog.is_dir():
+        files = sorted(
+            p for p in catalog.glob("*.yaml") if p.name not in {"ambiguity.yaml", "DEPRECATED.md"}
+        )
+        if files:
+            return files
+    seed = root / "seed"
+    return sorted(p for p in seed.glob("*.yaml") if p.name != "ambiguity.yaml")
+
+
+def build_literature_base(
     *,
     data_root: Path | None = None,
     release_id: str = DEFAULT_RELEASE,
     ledger_dir: Path | None = None,
     hub: ObservabilityHub | None = None,
     with_corpus: bool = True,
+    with_graph: bool = False,
+    id_mode: str = "enterprise",
 ) -> KnowledgeBase:
+    """装配文献面：ENT 目录 + corpus（身份不经 HMD:SUB 铸造）。
+
+    ``with_graph=True`` 时写入 oxigraph（仅单测 / 离线校验）；运行时默认关闭，
+    图扩展走 GraphDB / ENT LinkIndex。
+    """
     root = data_root or DATA_ROOT
     hub = hub or ObservabilityHub()
     ledgers = ledger_dir or Path(tempfile.mkdtemp(prefix="hmd-ledger-"))
@@ -100,32 +128,39 @@ def build_knowledge_base(
         if (root / "registry" / "sources.yaml").exists()
         else None
     )
-    ambiguity = load_ambiguity_registry(root / "seed" / "ambiguity.yaml")
-    seed_files = sorted(p for p in (root / "seed").glob("*.yaml") if p.name != "ambiguity.yaml")
+    amb_path = ONTOLOGY_CATALOG / "ambiguity.yaml"
+    if not amb_path.exists():
+        amb_path = root / "seed" / "ambiguity.yaml"
+    ambiguity = load_ambiguity_registry(amb_path) if amb_path.exists() else None
+
+    id_ledger = None
+    if id_mode == "ledger":
+        id_ledger = IdLedger(ledgers / "concept_ids.json", release=release_id)
+
     built = build_from_seed(
-        seed_files,
+        catalog_files(root),
         registry=registry,
-        id_ledger=IdLedger(ledgers / "concept_ids.json", release=release_id),
+        id_ledger=id_ledger,
         alias_ledger=SequenceLedger(ledgers / "alias_ids.json", prefix="HMDA"),
         ambiguity=ambiguity,
+        id_mode=id_mode,
     )
 
     normalizer = Normalizer(
         concepts=built.concepts,
         synonyms=built.synonyms,
-        ambiguity_index=ambiguity.norm_index(),
+        ambiguity_index=ambiguity.norm_index() if ambiguity else {},
         release_id=release_id,
     )
 
     graph = GraphStore()
-    graph.load_concepts(
-        built.concepts, built.synonyms, source_id=_SEED_SOURCE, tier=LicenseTierEnum.TIER_0
-    )
-    # 类型化链接单独一个图：谓词与事实层同名，但证据强度完全不同
-    # （事实层每条边挂着 reifier 与出处，种子链接只是一句人工断言）。
-    graph.load_concept_links(
-        built.concepts, source_id=_SEED_LINKS_SOURCE, tier=LicenseTierEnum.TIER_0
-    )
+    if with_graph:
+        graph.load_concepts(
+            built.concepts, built.synonyms, source_id=_CATALOG_SOURCE, tier=LicenseTierEnum.TIER_0
+        )
+        graph.load_concept_links(
+            built.concepts, source_id=_CATALOG_LINKS_SOURCE, tier=LicenseTierEnum.TIER_0
+        )
 
     kb = KnowledgeBase(
         release_id=release_id,
@@ -152,8 +187,6 @@ def build_knowledge_base(
     classifier = TaxonomyClassifier(taxonomy)
     kb.taxonomy_version = taxonomy.taxonomy_version
 
-    # `parsed/` 是 `hmd parse` 的落点。不递归的话，机器解析出来的真实文献
-    # 会安静地被排除在知识库外，而 `hmd kb` 的计数看上去一切正常。
     corpus_files = sorted((root / "corpus").glob("*.yaml")) + sorted(
         (root / "corpus" / "parsed").glob("*.yaml")
     )
@@ -178,7 +211,6 @@ def build_knowledge_base(
     facts = TriModalPipeline().run(documents, chunks, normalizer=normalizer, ctx=ctx)
     for f in facts:
         tiers = [kb_doc_tier(documents, e.doc_id) for e in f.evidence]
-        # 事实的许可等级取证据中最严的一档：混合来源的结论不能按最宽松的那份开放。
         f.license_tier = max(tiers, key=_tier_rank) if tiers else LicenseTierEnum.TIER_0
 
     kb.documents = documents
@@ -186,25 +218,61 @@ def build_knowledge_base(
     kb.labels = labels
     kb.facts = facts
 
-    for source_id, tier in _partition(documents):
-        docs = [d for d in documents if d.source_id == source_id]
-        doc_ids = {d.doc_id for d in docs}
-        graph.load_corpus(
-            docs,
-            [c for c in chunks if c.doc_id in doc_ids],
-            source_id=source_id,
-            tier=tier,
-        )
-        graph.load_facts(
-            [f for f in facts if any(e.doc_id in doc_ids for e in f.evidence)],
-            source_id=source_id,
-            tier=tier,
-        )
+    if with_graph:
+        for source_id, tier in _partition(documents):
+            docs = [d for d in documents if d.source_id == source_id]
+            doc_ids = {d.doc_id for d in docs}
+            graph.load_corpus(
+                docs,
+                [c for c in chunks if c.doc_id in doc_ids],
+                source_id=source_id,
+                tier=tier,
+            )
+            graph.load_facts(
+                [f for f in facts if any(e.doc_id in doc_ids for e in f.evidence)],
+                source_id=source_id,
+                tier=tier,
+            )
 
-    # 等价簇构建需要跨源 mapping 边，种子期没有外部词表可对齐 ——
-    # 采购 UMLS/MedDRA 后由 CliqueBuilder 在 mapping 阶段单独跑，不属于本装配链路。
     hub.commit(ctx, _pipeline_io(ctx, release_id, kb))
     return kb
+
+
+def build_knowledge_base(
+    *,
+    data_root: Path | None = None,
+    release_id: str | None = None,
+    ledger_dir: Path | None = None,
+    hub: ObservabilityHub | None = None,
+    with_corpus: bool = True,
+    with_graph: bool | None = None,
+    legacy_seed_ids: bool = False,
+) -> KnowledgeBase:
+    """兼容入口 → ``build_literature_base``。
+
+    ``legacy_seed_ids=True`` 保留旧 SUB 铸造（``test_seed_build`` / ``test_ids``）。
+    新代码请直接调用 ``build_literature_base``。
+    """
+    if not legacy_seed_ids:
+        warnings.warn(
+            "build_knowledge_base() 已降为文献装配别名；运行时请用 "
+            "runtime.open_dual_surface() / build_literature_base()",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    mode = "ledger" if legacy_seed_ids else "enterprise"
+    # 遗留单测常依赖 oxigraph；ENT 默认路径关闭图库
+    graph = True if with_graph is None and legacy_seed_ids else bool(with_graph)
+    rid = release_id or ("0.1.0" if legacy_seed_ids else DEFAULT_RELEASE)
+    return build_literature_base(
+        data_root=data_root,
+        release_id=rid,
+        ledger_dir=ledger_dir,
+        hub=hub,
+        with_corpus=with_corpus,
+        with_graph=graph,
+        id_mode=mode,
+    )
 
 
 def kb_doc_tier(documents: list[Document], doc_id: str) -> LicenseTierEnum:
@@ -239,7 +307,7 @@ def _pipeline_io(ctx: TraceContext, release_id: str, kb: KnowledgeBase):
     total = sum(s.duration_ms or 0.0 for s in ctx.spans if s.parent_id is None)
     return ToolIoRecord(
         trace_id=ctx.trace_id,
-        tool_name="build_knowledge_base",
+        tool_name="build_literature_base",
         ontology_release_id=release_id,
         input_json="{}",
         output_json=str(kb.stats()),

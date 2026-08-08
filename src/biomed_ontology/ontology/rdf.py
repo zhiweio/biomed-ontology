@@ -1,7 +1,7 @@
 """RDF 三元组库装载与许可感知查询（L2，设计决策 D10 / D11）。
 
-构建期用 Oxigraph（嵌入式、Rust、秒级），服务期换 GraphDB —— 换的是 `GraphStore`
-的实现，SPARQL 与命名图布局不变。这里刻意只用标准 SPARQL 1.1，不用任何厂商扩展。
+**oxigraph 仅单测 / 离线校验**；运行时图走 GraphDB。文献装配默认
+``with_graph=False``。SPARQL 与命名图布局与 GraphDB 对齐，不用厂商扩展。
 
 命名图布局是许可隔离的执行点：
     https://w3id.org/asliva/biomed-ontology/graph/{tier}/{source}

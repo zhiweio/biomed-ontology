@@ -82,6 +82,12 @@ def render_golden_path(
         out.print(_assets_table(ctx.get("internal_assets") or []))
         out.print()
 
+        kb = result.get("kb")
+        if kb is not None:
+            out.print(Rule("[dim]⑥ Literature · ToolApi[/]", style="dim"))
+            out.print(_kb_panel(kb))
+            out.print()
+
     out.print(_footer(ctx, canonical=canonical))
     out.print()
 
@@ -336,6 +342,25 @@ def _assets_table(assets: list[dict[str, Any]]) -> RenderableType:
     if desc_lines:
         body = Group(table, Text.from_markup("\n".join(desc_lines)))
     return Panel(body, title="OpenMetadata · Data Context", border_style="green", box=box.ROUNDED)
+
+
+def _kb_panel(kb: dict[str, Any]) -> Panel:
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(style="dim", justify="right", min_width=10)
+    grid.add_column()
+    ok = bool(kb.get("ok"))
+    grid.add_row("status", "[bold green]OK[/]" if ok else "[bold red]FAIL[/]")
+    grid.add_row("query", escape(str(kb.get("query") or "")))
+    grid.add_row("hits", str(kb.get("hit_count") or 0))
+    if kb.get("chunk_id"):
+        grid.add_row("chunk", escape(str(kb["chunk_id"])))
+    restore = kb.get("restore_ok")
+    if restore is not None:
+        grid.add_row("restore", "[green]ok[/]" if restore else "[yellow]skip/fail[/]")
+    if kb.get("error"):
+        grid.add_row("error", f"[red]{escape(str(kb['error']))}[/]")
+    border = "green" if ok else "red"
+    return Panel(grid, title="KB Literature Leg", border_style=border, box=box.ROUNDED)
 
 
 def _footer(ctx: dict[str, Any], *, canonical: str) -> Panel:

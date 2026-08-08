@@ -32,6 +32,9 @@ __all__ = [
     "eval_retrieval",
     "load_gold",
     "paired_significance",
+    "render_eval",
+    "render_eval_compact",
+    "summary_json",
 ]
 
 GOLD_DIR = Path(__file__).resolve().parents[3] / "data" / "gold"
@@ -1040,3 +1043,21 @@ def eval_retrieval(
         embedder=embedder,
         reranker=getattr(reranker, "name", ""),
     )
+
+
+def render_eval(*args, **kwargs):
+    from biomed_ontology.eval.render import render_eval as _render
+
+    return _render(*args, **kwargs)
+
+
+def render_eval_compact(*args, **kwargs):
+    from biomed_ontology.eval.render import render_eval_compact as _render
+
+    return _render(*args, **kwargs)
+
+
+def summary_json(*args, **kwargs):
+    from biomed_ontology.eval.render import summary_json as _summary
+
+    return _summary(*args, **kwargs)

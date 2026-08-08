@@ -30,7 +30,7 @@ from biomed_ontology.observability import (
 from biomed_ontology.observability.contracts import ContractValidator, LicenseGate
 from biomed_ontology.pipeline import KnowledgeBase
 from biomed_ontology.search import OPEN_RANK, HybridSearcher
-from biomed_ontology.search.backends import LicenseScope
+from biomed_ontology.search.backends import LicenseScope, SearchBackend
 from biomed_ontology.tools.citation import build_evidence_tree
 
 __all__ = ["TOOL_SPECS", "Feedback", "ToolApi", "ToolError"]
@@ -115,10 +115,31 @@ class ToolApi:
     searcher: HybridSearcher
     validator: ContractValidator = field(default_factory=ContractValidator)
     feedback_log: list[Feedback] = field(default_factory=list)
+    foundation: Any | None = None  # FoundationApi：ER / GraphDB 扩展
 
     @classmethod
     def from_kb(cls, kb: KnowledgeBase) -> ToolApi:
-        return cls(kb=kb, searcher=HybridSearcher(kb))
+        """本地 HybridSearcher。运行时入口优先 ``from_backends``。"""
+        return cls.from_backends(kb=kb)
+
+    @classmethod
+    def from_backends(
+        cls,
+        *,
+        kb: KnowledgeBase,
+        backend: SearchBackend | None = None,
+        foundation: Any | None = None,
+    ) -> ToolApi:
+        """文献面装配：语料句柄 + 可插拔检索后端（Local / Milvus）。
+
+        身份：``normalize_entity`` 走 ENT Normalizer（与 ER 同目录）；
+        若挂了 ``foundation`` 且 GraphDB 可达，``expand_concept`` 优先 GraphDB 邻居。
+        """
+        return cls(
+            kb=kb,
+            searcher=HybridSearcher(kb, backend=backend),
+            foundation=foundation,
+        )
 
     @property
     def hub(self) -> ObservabilityHub:
@@ -231,6 +252,7 @@ class ToolApi:
         }
 
         def handler(ctx: TraceContext):
+            # ENT catalog Normalizer（与 ontology/catalog 同源，输出 HMD:ENT:*）
             res = self.kb.normalizer.normalize(
                 text,
                 ctx=ctx,
@@ -291,6 +313,19 @@ class ToolApi:
         }
 
         def handler(ctx: TraceContext):
+            graphdb_terms = _expand_via_foundation(
+                self.foundation, concept_id, languages=languages
+            )
+            if graphdb_terms is not None:
+                return (
+                    {
+                        "concept_id": concept_id,
+                        "expansion_size": len(graphdb_terms),
+                        "expansion_terms": graphdb_terms,
+                    },
+                    0,
+                    LicenseTierEnum.TIER_0,
+                )
             if self.kb.concept(concept_id) is None:
                 raise ToolError(f"概念不存在：{concept_id}", code="NOT_FOUND")
             terms = self.kb.normalizer.expand(
@@ -645,6 +680,74 @@ class ToolApi:
 
 
 # ---------------------------------------------------------------- 序列化
+
+
+def _expand_via_foundation(
+    foundation: Any | None,
+    concept_id: str,
+    *,
+    languages: list[str] | None = None,
+) -> list[dict[str, Any]] | None:
+    """GraphDB 可达时用 ENT 邻居 + 标签做扩展；不可用则返回 None 回落 catalog。"""
+    if foundation is None or not str(concept_id).startswith("HMD:ENT:"):
+        return None
+    try:
+        if not foundation.graphdb.health():
+            return None
+        related = foundation.find_related_entities(concept_id).get("related") or []
+        root = foundation.get_entity(concept_id)
+        if not root.get("found"):
+            return None
+        entity = root.get("entity") or {}
+        langs = set(languages or [])
+        terms: list[dict[str, Any]] = []
+        seen: set[str] = set()
+
+        def _add(eid: str, label: str | None, *, depth: int, weight: float) -> None:
+            if not label or label in seen:
+                return
+            is_zh = any("\u4e00" <= ch <= "\u9fff" for ch in label)
+            if langs:
+                if ("zh" in langs and is_zh) or ("en" in langs and not is_zh):
+                    pass
+                else:
+                    return
+            seen.add(label)
+            terms.append(
+                {
+                    "term": label,
+                    "weight": weight,
+                    "concept_id": eid,
+                    "alias_id": None,
+                    "scope": "RELATED",
+                    "depth": depth,
+                    "lang": "zh" if is_zh else "en",
+                }
+            )
+
+        for lab in filter(
+            None,
+            [
+                entity.get("preferred_label_en"),
+                entity.get("preferred_label_zh"),
+                *(entity.get("aliases") or []),
+            ],
+        ):
+            _add(concept_id, lab, depth=0, weight=1.0)
+        for rel in related:
+            eid = str(rel.get("enterprise_id") or "")
+            for lab in filter(
+                None,
+                [
+                    rel.get("preferred_label_en"),
+                    rel.get("preferred_label_zh"),
+                    *(rel.get("aliases") or []),
+                ],
+            ):
+                _add(eid, lab, depth=1, weight=0.8)
+        return terms
+    except Exception:
+        return None
 
 
 def _match_json(m: Any) -> dict[str, Any]:

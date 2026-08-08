@@ -85,8 +85,10 @@ task ontology:validate                                       # Ontology-as-Code 
 task foundation:golden-eval                                  # GraphDB(+BIOS)/Milvus/OM，禁止 YAML
 ```
 
-金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。  
-**YAML 只是离线资源**（`data/foundation/*.yaml`），经 `ontology:validate` + `foundation sync` 入库后，查询只走 GraphDB / Milvus / OpenMetadata，**禁止 fallback 到 YAML**。  
+金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`（+ 文献 search/restore）。  
+**策展 YAML** 在 `ontology/{entities,dictionary,claims}/`；evidence/assets 样例在 `data/foundation/`。
+经 `ontology:validate` + `foundation sync` 入库后，查询只走 GraphDB / Milvus / OpenMetadata，**禁止 fallback 到 YAML**。  
+
 OM / GraphDB / Milvus 等联调参数统一走 `biomed_ontology.config.Settings`（pydantic-settings，`.env` 前缀 `HMD_`）。  
 Ontology 工程工具链：见 [`ontology/`](ontology/) 与 [toolchain](docs/ontology/toolchain.md)。**不引入 Jena**。
 
@@ -98,9 +100,10 @@ Ontology 工程工具链：见 [`ontology/`](ontology/) 与 [toolchain](docs/ont
 uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --extra service
 
 uv run hmd kb        # 构建知识库并打印统计
-uv run hmd demo              # 跑 8 个演示场景（Rich 分步展示 + 可证伪断言）
+uv run hmd demo              # 跑 12 个演示场景（K/W/B 双面；Rich + 可证伪断言）
 uv run hmd demo --compact    # 仅 Trace 摘要（对齐 hmd foundation golden）
-uv run hmd eval --entitlements MOCK_LICENSED   # 默认 multimodal-bio + 精排
+uv run hmd eval --entitlements MOCK_LICENSED   # Rich：归一化 + 检索消融 + targets
+uv run hmd eval --entitlements MOCK_LICENSED --compact  # 仅 Trace
 uv run hmd serve     # 起 REST + MCP 服务（:8000）
 task check           # ruff + 全量测试
 ```
@@ -284,9 +287,9 @@ gold：**14 篇 / 37 query**（en 26 / zh 11；文本 25 / 图像 12），每条
 |---|---|---|---|---|---|---|
 | 纯 BM25（无本体） | 0.269 | **0.259** | 0.333 | 0.528 | 0.201 | 1.000 |
 | 纯向量（无本体） | 0.233 | 0.238 | 0.305 | 0.470 | 0.181 | 1.000 |
-| 本体增强混合 | **0.271** | 0.254 | **0.338** | **0.532** | **0.201** | 1.000 |
+| 本体增强混合 | **0.274** | 0.254 | **0.340** | **0.532** | **0.201** | 1.000 |
 
-全量 Recall 相对提升仍是 **+0.8%**，但已被图像意图与英文对照 query 稀释，
+全量 Recall 相对提升仍是 **+1.9%**（ENT 接地后），但已被图像意图与英文对照 query 稀释，
 **不再作为产品门槛** —— 只作回归诊断。
 
 **分语种** —— 只报总平均会把结论抹平：
@@ -294,8 +297,8 @@ gold：**14 篇 / 37 query**（en 26 / zh 11；文本 25 / 图像 12），每条
 | 臂 | en Recall | en nDCG | zh Recall | zh nDCG |
 |---|---|---|---|---|
 | 纯 BM25 | 0.248 | **0.343** | **0.317** | 0.311 |
-| 纯向量 | 0.242 | 0.322 | 0.212 | 0.265 |
-| 本体增强混合 | **0.261** | 0.322 | 0.293 | **0.375** |
+| 纯向量 | 0.242 | 0.323 | 0.212 | 0.264 |
+| 本体增强混合 | **0.266** | 0.325 | 0.293 | **0.375** |
 
 #### 消融阶梯：本体经由哪条路起作用
 
@@ -677,7 +680,9 @@ uv run hmd serve --mcp --port 8000
 | `src/biomed_ontology/observability/` | 四支柱埋点与契约校验 |
 | `src/biomed_ontology/evolution/` | 信号挖掘 → KGCL → 发版守门 |
 | `src/biomed_ontology/eval/` | 消融评测 + 指标目标 |
-| `data/foundation/` | 企业实体 / 词典 / claims / evidence / BIOS 子集 |
+| `ontology/` | 策展 SSOT：entities / dictionary / claims / mappings |
+| `data/foundation/` | evidence / assets / BIOS 子集等运行投影 |
+| `data/seed/` | **已退役**（见 `DEPRECATED.md`）；勿作身份权威 |
 | `data/gold/` | gold set 与指标目标 |
 | `docker/docker-compose.foundation.yml` | GraphDB + OM + Milvus 联调栈 |
 | `docs/` | mkdocs-material 完整手册（`task docs:serve`） |
@@ -689,8 +694,9 @@ uv run hmd serve --mcp --port 8000
 
 完整 PR 检查清单见 [手册 · 设计不变量](docs/invariants.md)。
 
-- **Enterprise Ontology ID（`HMD:ENT:*`）是世界模型主键**；BIOS/ChEBI/HGNC 只做 External Concept xref
-- **内部 CURIE 是检索底座主键**，外部 ID 一律作为 xref 挂靠（供应商中立）
+- **Enterprise Ontology ID（`HMD:ENT:*`）是世界模型与身份主键**；BIOS/ChEBI/HGNC 只做 External Concept xref
+- **身份走 ER**（BERN2 → dictionary → Zingg → xref → ENT）；`data/seed` / `HMD:SUB` 铸造已退役
+- **文献语料**在 `data/corpus/` → Milvus；外部 ID 一律作为 xref 挂靠（供应商中立）
 - **Milvus = Evidence Index（必选）**；失败不回落；`fake` 需 `--allow-fake`
 - **Knowledge = Claim + Provenance + Evidence**（Knowledge ≠ Truth）
 - **Semantic Ops 隐藏后端**；不对 Agent 默认暴露裸 SPARQL / 原始向量 API

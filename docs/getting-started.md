@@ -23,12 +23,17 @@ uv run hmd demo --compact    # 仅 Trace 摘要
 uv run hmd demo --id D7      # 单场景
 task milvus:up
 uv run hmd index --recreate                    # 默认 multimodal-bio
-uv run hmd eval --entitlements MOCK_LICENSED   # 默认精排开
+uv run hmd eval --entitlements MOCK_LICENSED   # Rich：归一化+检索+targets
+uv run hmd eval --entitlements MOCK_LICENSED --compact  # 仅 Trace
 uv run hmd serve --port 8000
 task check           # ruff + 全量测试
 ```
 
-`hmd kb` 若出现未解析链接 / 未登记歧义，先看 [种子](ontology/seed.md)，再谈调检索。
+`hmd kb` 仍构建过渡文献 KB（corpus + 本地检索）。身份权威已迁到
+[`ontology/`](../ontology/README.md)（entities / dictionary / claims）+ ER，
+[`data/seed/`](../data/seed/DEPRECATED.md) 已退役，勿再当 CURIE SSOT。
+
+`hmd demo` / `eval` / `serve` 经 `open_dual_surface()`：文献 ToolApi + Foundation WM。
 
 ## Foundation 世界模型闭环
 
@@ -41,12 +46,12 @@ export HMD_BIOS_LICENSE_ACK=poc
 
 task foundation:up
 uv run hmd foundation resolve "HMPL-504"
-uv run hmd foundation golden --candidate HMPL-504
+uv run hmd foundation golden --candidate HMPL-504   # WM + 文献 search/restore
 uv run hmd foundation evolve-mine
 uv run hmd serve --mcp
 ```
 
-金路径：`DrugCandidate → Target → Disease → Evidence → ELN Asset`。
+金路径：`DrugCandidate → Target → Disease → Evidence → ELN Asset`（+ 文献腿）。
 
 ## Milvus（Evidence Index，必选）
 

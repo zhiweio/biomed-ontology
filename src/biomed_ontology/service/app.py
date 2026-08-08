@@ -199,7 +199,8 @@ def _register_foundation_routes(app: FastAPI) -> None:
 
     @app.get("/v1/golden_path")
     def golden_path(candidate: str = "HMPL-504") -> dict[str, Any]:
-        return _foundation().golden_path(candidate)
+        st = get_state()
+        return _foundation().golden_path(candidate, tools=st.api)
 
 
 def _merged_openapi() -> dict[str, Any]:

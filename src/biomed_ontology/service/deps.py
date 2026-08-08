@@ -5,7 +5,8 @@ KB 构建要读全部语料、建索引、跑 SHACL，每请求重建会让 P95 
 否则每个请求各写各的内存，本体演化信号一条也挖不出来 ——
 而"形成 data loop"正是世界模型可演进的理由。
 
-Foundation WorldModel 与 ToolApi 同进程：单一 Semantic Access Layer。
+Foundation WorldModel 与 ToolApi 同进程：单一 Semantic Access Layer，
+经 ``open_dual_surface`` 装配（不在此处直接调用 ``build_knowledge_base``）。
 """
 
 from __future__ import annotations
@@ -40,21 +41,19 @@ def build_state(
     bern2_url: str | None = None,
     load_foundation: bool = True,
 ) -> ServiceState:
-    from biomed_ontology.pipeline import build_knowledge_base
+    from biomed_ontology.runtime import open_dual_surface
 
     cfg = config or settings
-    kb = build_knowledge_base()
-    foundation = None
-    world = None
-    if load_foundation:
-        from biomed_ontology.foundation.api import FoundationApi
-        from biomed_ontology.foundation.world import load_world_model
-
-        world = load_world_model(bern2_url=bern2_url)
-        foundation = FoundationApi(world)
+    surface = open_dual_surface(
+        bern2_url=bern2_url,
+        load_literature=True,
+        prefer_milvus=True,
+    )
+    foundation = surface.foundation if load_foundation else None
+    world = surface.world if load_foundation else None
     return ServiceState(
-        api=ToolApi.from_kb(kb),
-        kb=kb,
+        api=surface.tools,
+        kb=surface.kb,
         config=cfg,
         foundation=foundation,
         world=world,

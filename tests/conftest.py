@@ -37,6 +37,7 @@ def ledgers(tmp_path: Path):
 
 @pytest.fixture
 def build(registry, seed_files, ambiguity, ledgers):
+    """ledger 模式：专测旧 HMD:SUB 铸造（test_seed_build / test_ids）。"""
     id_ledger, alias_ledger = ledgers
     return build_from_seed(
         seed_files,
@@ -44,15 +45,16 @@ def build(registry, seed_files, ambiguity, ledgers):
         id_ledger=id_ledger,
         alias_ledger=alias_ledger,
         ambiguity=ambiguity,
+        id_mode="ledger",
     )
 
 
 @pytest.fixture(scope="session")
 def kb():
-    """完整知识库。session 级：构建要装 RDF 图，逐测试重建会把套件拖慢一个数量级。"""
-    from biomed_ontology.pipeline import build_knowledge_base
+    """文献 KB（ENT）。session 级；单测开 oxigraph 供 RDF/demo 许可图断言。"""
+    from biomed_ontology.pipeline import build_literature_base
 
-    return build_knowledge_base()
+    return build_literature_base(with_graph=True)
 
 
 @pytest.fixture

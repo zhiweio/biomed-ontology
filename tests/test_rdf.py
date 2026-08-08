@@ -89,7 +89,7 @@ def test_skos_broader_never_points_at_a_literal(kb):
 def test_every_template_runs(kb, name):
     sparql = SPARQL_TEMPLATES[name]
     if "%(" in sparql:
-        sparql = sparql % {"concept_uri": curie_to_iri("HMD:DIS:0000003")}
+        sparql = sparql % {"concept_uri": curie_to_iri("HMD:ENT:IND:lung_cancer")}
     kb.graph.query(sparql, entitlements=LICENSED)
 
 
@@ -98,7 +98,7 @@ def test_curie_to_iri_rejects_injection():
         curie_to_iri("x> } DROP ALL #")
     with pytest.raises(ValueError):
         curie_to_iri("no-colon")
-    assert curie_to_iri("HMD:SUB:0000001").startswith("https://")
+    assert curie_to_iri("HMD:ENT:DC:savolitinib").startswith("https://")
     assert curie_to_iri("https://example.org/x") == "https://example.org/x"
 
 
