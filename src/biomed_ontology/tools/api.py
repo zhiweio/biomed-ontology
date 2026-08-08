@@ -1,4 +1,4 @@
-"""Semantic Tool API（L6）：8 个工具的统一实现。
+"""Ontology Semantic Layer / KB tools（L6 Semantic Access）：统一实现。
 
 每次调用都强制走同一条包裹链：
     契约校验入参 → 起 trace → 执行 → license 闸门 → 契约校验出参 → 落 I/O 记录

@@ -90,7 +90,7 @@ def openapi_spec(*, base_url: str = "/v1") -> dict[str, Any]:
         }
     return {
         "openapi": "3.1.0",
-        "info": {"title": "HMD Biomed Ontology Semantic Tool API", "version": "0.1.0"},
+        "info": {"title": "HMD Ontology Semantic Access", "version": "0.1.0"},
         "paths": paths,
         "components": {"schemas": defs},
     }

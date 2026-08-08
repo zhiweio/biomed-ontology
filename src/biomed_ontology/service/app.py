@@ -77,7 +77,10 @@ def create_app(
     app = FastAPI(
         title="Asliva Semantic Access Layer",
         version="0.3.0",
-        description="Data foundation tools for external agents（非 Agent Runtime）",
+        description=(
+            "Enterprise Biomedical World Model — Ontology Semantic Layer + Foundation ops "
+            "for external agents（非 Agent Runtime）"
+        ),
         lifespan=lifespan,
     )
 

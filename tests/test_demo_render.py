@@ -21,7 +21,7 @@ def test_rich_render_shows_header_trace_and_status():
     console = Console(file=buf, width=100, force_terminal=True, color_system=None)
     render_demo_results(_sample(), console=console, verbose=True)
     text = buf.getvalue()
-    assert "Semantic Tools Demo" in text
+    assert "Semantic Layer Demo" in text
     assert "D1" in text and "D2" in text
     assert "PASS" in text and "FAIL" in text
     assert "claim-a" in text and "detail a" in text

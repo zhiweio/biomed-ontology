@@ -229,7 +229,7 @@ VISUAL_DELTA = ("milvus_hybrid_4col", "milvus_hybrid_3col")
 # 生医专用塔，还能多拿到什么"。拿五列去减三列会把两条视觉列的贡献混记成一笔。
 VISUAL_BIO_DELTA = ("milvus_hybrid_5col", "milvus_hybrid_4col")
 
-# 本体敏感探针：别名归一 + 中文→英文桥接。数据底座的主 KPI 读这一集，
+# 本体敏感探针：别名归一 + 中文→英文桥接。企业实体身份桥接能力验收读这一集，
 # 不读被图像意图与英文对照 query 稀释的全量 hybrid R@10。
 ONTOLOGY_PROBES = ("bridge_zh", "alias")
 

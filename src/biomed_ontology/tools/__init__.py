@@ -1,4 +1,4 @@
-"""Semantic Tool API — MCP/REST tools for external agents (not an agent runtime)."""
+"""Ontology Semantic Layer access — MCP/REST tools for external agents (not an agent runtime)."""
 
 from biomed_ontology.tools.api import TOOL_SPECS, Feedback, ToolApi, ToolError
 from biomed_ontology.tools.dispatch import (

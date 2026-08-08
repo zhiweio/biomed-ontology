@@ -3,7 +3,7 @@
 KB 构建要读全部语料、建索引、跑 SHACL，每请求重建会让 P95 变成秒级。
 但更要紧的是 `feedback_log` 与 `hub`：它们必须**跨请求共享**，
 否则每个请求各写各的内存，本体演化信号一条也挖不出来 ——
-而"形成 data loop"正是这套底座存在的理由。
+而"形成 data loop"正是世界模型可演进的理由。
 
 Foundation WorldModel 与 ToolApi 同进程：单一 Semantic Access Layer。
 """

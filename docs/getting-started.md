@@ -4,17 +4,15 @@
 
 ## 你在搭什么
 
-不是 chatbot。你在搭：
+不是 chatbot，也不是「加了别名的检索引擎」。你在搭：
 
-1. 一份可遍历的本体（概念 + 类型化链接；Foundation 侧为 Enterprise Ontology）  
-2. 一份带许可的语料切片与 **Evidence Index**（Milvus 必选）  
-3. 一条可解释的混合检索 + 世界模型 Semantic Ops  
-4. 一组带 provenance 的 Semantic tools（单一 `hmd serve`）  
-
+1. **Enterprise World Model**：`HMD:ENT:*` + GraphDB / Evidence Index / OpenMetadata  
+2. **Ontology Semantic Layer**：术语与身份、层级、类型化关系、事实、证据、Citationware、许可与演进  
+3. **Semantic Access**：单一 `hmd serve`（MCP/REST）把上述能力交给仓外 Agent  
 
 跑通下面闭环，再读机制章。
 
-## 最小闭环（检索底座）
+## 最小闭环（语义层 + 检索）
 
 ```bash
 uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --extra service

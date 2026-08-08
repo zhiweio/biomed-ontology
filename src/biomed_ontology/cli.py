@@ -18,7 +18,10 @@ from biomed_ontology.licensing import POLICIES
 from biomed_ontology.ontology.ids import IdLedger, SequenceLedger
 from biomed_ontology.registry import Track, load_registry
 
-app = typer.Typer(help="生物医药语义层数据基座", no_args_is_help=True)
+app = typer.Typer(
+    help="Enterprise Biomedical World Model / AI Data Foundation",
+    no_args_is_help=True,
+)
 sources_app = typer.Typer(help="数据源注册表", no_args_is_help=True)
 build_app = typer.Typer(help="术语层构建", no_args_is_help=True)
 app.add_typer(sources_app, name="sources")
@@ -312,7 +315,7 @@ def demo_cmd(
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Trace 摘要，不展开详情"),
 ) -> None:
-    """基座能力验收场景（自带可证伪断言）。
+    """World Model / Ontology Semantic Layer 能力验收（自带可证伪断言）。
 
     默认用 Rich 分步展示（对齐 `hmd foundation golden`）；
     `--json` 给脚本，`--compact` 只要 Trace 摘要。

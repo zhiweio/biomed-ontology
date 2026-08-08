@@ -1,10 +1,14 @@
 # Enterprise Biomedical World Model（Foundation）
 
-面向创新药研发的**企业级 AI Data Foundation**：以 **Enterprise Ontology** 为核心，将 BIOS 等公共生物医学知识与企业内部研发数据、知识和证据统一到可查询、可追溯的 World Model，为仓外 AI Agents 提供可信的**实体、关系、证据与数据资产**访问能力。
+面向创新药研发的 **Enterprise Biomedical World Model / AI Data Foundation**：
+以 **Enterprise Ontology**（`HMD:ENT:*`）为锚，把公共生物医学概念、企业关系、可引用证据与
+ELN/LIMS 资产连成可查询、可追溯的语义世界，经 `hmd serve`（MCP/REST）供仓外 Agent 使用。
 
 > **BIOS provides the biomedical world. Enterprise Ontology provides the company's world.**
 
-单一 Semantic Access Layer（`hmd serve`）同时暴露 KB 检索工具与 Foundation Semantic Ops；概念权威收敛到 `HMD:ENT:*`。
+`hmd serve` 同时暴露 KB 侧 Ontology Semantic Layer（术语 / 层级 / 事实 / 检索 / Citationware…）
+与 Foundation Semantic Ops（实体 / 关系 / 证据 / 资产 / `get_entity_context`）。
+别名与检索只是语义层中的两项，不是产品定义。
 
 ## 非目标
 
@@ -24,33 +28,21 @@
 | **Milvus** | **Evidence Index**（证据在哪） | 不是普通「向量库」话术 |
 | **OpenMetadata** | **Enterprise Data Context**（资产在哪） | 不是仅 Glossary 打 BIOS 标签 |
 
-## 五层运行时
+## 运行时栈
 
 ```text
-┌──────────────────────────────────────────────┐
-│           AI Agents（仓外）                    │
-└──────────────────────┬───────────────────────┘
-                       │ MCP / REST
-┌──────────────────────▼───────────────────────┐
-│         Semantic Access Layer                 │
-│  resolve_entity / get_entity /                │
-│  get_relationships / search_evidence /        │
-│  search_assets / get_entity_context           │
-└───────────┬─────────────┬───────────┬────────┘
-            ▼             ▼           ▼
-        GraphDB        Evidence     OpenMetadata
-      World Model       Index      Data Context
-      Ontology+PROV     Milvus     Glossary+Assets
-            ▲             ▲           ▲
-            └──────┬──────┴─────┬─────┘
-                   │            │
-         Enterprise Semantic Foundation
-         LinkML + SHACL + W3C PROV
-         Entity Resolution（BERN2 + Dict + Zingg）
-                   ▲
-          ┌────────┴────────┐
-       BIOS_v3           Other xref
-                         ChEBI/HGNC/DrugBank
+External Agents
+      │ MCP / REST
+      ▼
+Semantic Access (hmd serve)
+  KB tools + Foundation ops
+      ├─► GraphDB        关系 / 本体 / PROV
+      ├─► Milvus         Evidence Index
+      └─► OpenMetadata   Data Context
+            ▲
+   Enterprise Ontology + LinkML / SHACL / PROV
+            ▲
+   BIOS (xref) · BERN2 · Dict · Zingg → HMD:ENT:*
 ```
 
 三层职责对照：
@@ -58,7 +50,7 @@
 | Layer | 核心问题 |
 |---|---|
 | GraphDB | What is related to what? |
-| Milvus | Where is the evidence? |
+| Milvus | Where is the evidence? / Why believe? |
 | OpenMetadata | Where is the enterprise data? |
 
 ## 三层 ID（禁止 BIOS 作企业主键）
@@ -228,7 +220,7 @@ Ontology → Knowledge →（仓外 Agent）→ New Evidence
 | Evidence Index | Milvus（默认 multimodal-bio 五列） |
 | Data Context | OpenMetadata |
 | Provenance | W3C PROV |
-| Semantic Tool API | 薄 MCP / REST（`hmd serve --mcp`，主契约 `get_entity_context`） |
+| Semantic Access | 薄 MCP / REST（`hmd serve --mcp`，主契约 `get_entity_context`） |
 
 **自研 IP**：R&D Domain Ontology、BIOS↔Enterprise 映射、BERN2→Resolver 胶水、Semantic API、金路径数据与评测。
 

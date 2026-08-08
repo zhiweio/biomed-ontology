@@ -1,15 +1,48 @@
 # biomed-ontology
 
-面向阿斯利华创新药研发场景的**企业级 AI Data Foundation / 生物医药语义层** PoC。
+面向阿斯利华创新药研发的 **Enterprise Biomedical World Model / AI Data Foundation** PoC。
 
-**单一 Semantic Access Layer**（`hmd serve`，默认 `:8000`）：
-
-1. **检索基座**：Ontology + 事实 + 多模态文献检索 + Citationware  
-2. **Foundation 世界模型**：以 **Enterprise Ontology ID**（`HMD:ENT:*`）为锚，统一实体 / 关系 / 证据 / 企业资产  
+用企业内部实体 ID（`HMD:ENT:*`）锚定候选药、靶点、项目等对象，挂上关系、可引用证据与
+ELN/LIMS 资产，经 MCP/REST（`hmd serve`）暴露给仓外 Agent。公共生物医学知识（BIOS 等）是
+挂靠层，不是企业主键。
 
 > BIOS provides the biomedical world. Enterprise Ontology provides the company's world.
 
-**本仓库不包含 AI agent 本身** —— 不做意图解析与编排；只提供 REST/MCP tools，供仓外 GPT / Codex 等调用。
+**不做 Agent 编排**（无意图解析 / 多步 runtime）。本仓库交付的是 Agent 依赖的语义世界与访问面。
+
+### Ontology Semantic Layer（能力面，不是产品口号）
+
+世界模型可查询，靠的是完整语义层，而不是「多几个同义词」：
+
+| 能力群 | 做什么 |
+|---|---|
+| 术语与身份 | 别名 / 消歧 / 归一化 → 稳定 code 或 Enterprise ID |
+| 层级与扩展 | 上下位、`expand_concept` 加权扩展 |
+| 类型化关系 | 药↔靶点↔适应症；GraphDB 关系遍历 |
+| 外部挂靠 | SSSOM / BIOS / ChEBI… 挂靠企业主键 |
+| 结构化事实 | 带出处与许可的 claim |
+| 证据检索 | 混合检索 + Evidence Index（含多模态） |
+| Citationware | 证据树与 `restore_context`（许可同源） |
+| 企业资产 | OpenMetadata：ELN/LIMS「数据在哪」 |
+| 聚合上下文 | `get_entity_context`（禁止 YAML fallback） |
+| 许可与合规 | Tier / entitlement；组件闸门；BIOS ACK |
+| 可观测与演进 | Trace 四支柱；feedback → KGCL 候选（不自动改本体） |
+| Schema 治理 | LinkML SSOT → OWL / SHACL / Pydantic |
+
+```text
+External Agents
+      │ MCP / REST
+      ▼
+hmd serve  (Semantic Access: KB tools + Foundation ops)
+      ├─► GraphDB        关系 / 本体 / PROV
+      ├─► Milvus         Evidence Index
+      └─► OpenMetadata   企业资产
+            ▲
+   Enterprise Ontology (HMD:ENT:*)
+   LinkML + SHACL + PROV
+            ▲
+   BIOS (外挂) · BERN2 · Entity Resolution
+```
 
 **完整手册**（机制、事故教训、设计不变量）：见 [`docs/`](docs/index.md)，本地预览：
 
@@ -22,7 +55,7 @@ task docs          # mkdocs build --strict
 命令与**实测数字只维护在本 README**（有测试守着）；手册讲为什么，不抄表。
 构建入口是 **[Taskfile](Taskfile.yml)**（`task …`），不再维护 Makefile。
 
-### Foundation（企业世界模型）
+### 运行时组件
 
 手册详述：[`docs/architecture/foundation.md`](docs/architecture/foundation.md)。
 
@@ -151,7 +184,7 @@ L2 语义层        LinkML（Biolink 子集 + hmd_enterprise）→ OWL + SHACL +
 L3 归一化 / ER   文本 → CURIE；Foundation：BERN2 候选 → Enterprise ID
 L4 语料治理      文档标引分类 + 三模态抽取（文本/表格/图像）→ 结构化事实 + provenance
 L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列检索 + Evidence Index
-L6 Tool API      唯一 REST/MCP：KB 工具 + Foundation Semantic Ops（`hmd serve`）
+L6 Semantic Access  唯一 REST/MCP：KB 工具 + Foundation Semantic Ops（`hmd serve`）
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)；dual obs（Hub + foundation obs_log）
 L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release；Foundation evolve-mine 不自动改本体
 ```
@@ -165,7 +198,7 @@ flowchart LR
     KB --> S[search<br/>BM25 ⊕ dense ⊕ graph]
     KB --> M[(Milvus<br/>Evidence Index)]
     M --> S
-    S --> API[ToolApi<br/>KB tools]
+    S --> API[Semantic Access<br/>KB tools]
     ENT[Enterprise Ontology] --> GDB[(GraphDB<br/>Named Graphs)]
     ENT --> RES[Entity Resolution]
     RES --> FAPI[Foundation<br/>Semantic Ops]

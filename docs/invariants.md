@@ -48,7 +48,7 @@
 | 读不到像素要可见 | 禁止静默改编码 caption 还当视觉列成功 |
 | `parsed/` 进库 | corpus 装配必须包含 `corpus/parsed/` |
 
-## Agent 与观测
+## Semantic Access 与观测
 
 | 不变量 | 说明 |
 |---|---|

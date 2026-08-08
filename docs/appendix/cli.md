@@ -7,7 +7,7 @@
 | 命令 | 作用 | 相关手册 |
 |---|---|---|
 | `hmd kb` | 构建知识库并打印统计 / warnings | [pipeline](../architecture/pipeline.md) |
-| `hmd demo [--id …] [--compact] [--json]` | 基座能力验收（Rich，对齐 golden） | [tools](../tools/tools.md) |
+| `hmd demo [--id …] [--compact] [--json]` | 语义层能力验收（Rich，对齐 golden） | [tools](../tools/tools.md) |
 | `hmd eval` | 归一化 + 检索消融 + targets（默认 multimodal-bio + 精排） | [ARMS](../eval/arms.md) |
 | `hmd index` | 写入 Milvus（默认 multimodal-bio；盖 embedder 戳） | [milvus](../retrieval/milvus.md) |
 | `hmd serve [--mcp]` | 唯一 HTTP 入口：REST + MCP（默认 :8000） | [serve](../tools/serve.md) |

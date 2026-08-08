@@ -2,7 +2,7 @@
 
 源码：`src/biomed_ontology/pipeline.py`。
 
-`build_knowledge_base()` 是整仓的**唯一装配入口**。检索、Tool API、评测、demo 都必须吃同一份 `KnowledgeBase`；各自装配会让「评测库」和「服务库」在 `release_id`、别名表、链接解析上悄悄分叉。
+`build_knowledge_base()` 是整仓的**唯一装配入口**。检索、Semantic Access、评测、demo 都必须吃同一份 `KnowledgeBase`；各自装配会让「评测库」和「服务库」在 `release_id`、别名表、链接解析上悄悄分叉。
 
 ## 为什么存在这个模块
 

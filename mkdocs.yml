@@ -1,5 +1,5 @@
 site_name: biomed-ontology 手册
-site_description: 生物医药语义层数据基座 —— 本体理论落地为创新药研发场景的企业实践
+site_description: Enterprise Biomedical World Model / AI Data Foundation —— 企业生物医学世界模型与 Ontology Semantic Layer
 site_url: https://zhiweio.github.io/biomed-ontology/
 repo_name: zhiweio/biomed-ontology
 repo_url: https://github.com/zhiweio/biomed-ontology
@@ -118,8 +118,8 @@ nav:
       - 模态与图型过滤: retrieval/filters.md
       - 交叉编码器精排: retrieval/rerank.md
       - 嵌入器与权重解析: retrieval/embedders.md
-  - Semantic Tool API 与 Citationware:
-      - 工具面与包裹链: tools/tools.md
+  - Foundation Semantic API 与 Citationware:
+      - Semantic Access 与契约: tools/tools.md
       - 证据树与 restore_context: tools/citationware.md
       - REST / MCP 与凭据边界: tools/serve.md
   - 许可与合规:

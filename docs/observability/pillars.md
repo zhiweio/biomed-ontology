@@ -25,7 +25,7 @@ State 最容易被省掉，排障时却最不可替代：只记结果不记候�
 
 ## Tool 包裹链中的位置
 
-见 [Semantic Tool API](../tools/tools.md)：`_invoke` 强制起 trace、落 I/O。`trace_id` 随返回体回传，反馈接口以它为主键（D6）。
+见 [Semantic Access](../tools/tools.md)：`_invoke` 强制起 trace、落 I/O。`trace_id` 随返回体回传，反馈接口以它为主键（D6）。
 
 ## Explain 是 WHY 的用户可见面
 

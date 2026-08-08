@@ -8,9 +8,9 @@
 uv run hmd serve --mcp          # 默认 :8000
 ```
 
-同一进程暴露：
+同一进程暴露 **Semantic Access**（世界模型访问面）：
 
-- KB Semantic Tools（契约包裹链）
+- Ontology Semantic Layer（KB tools：术语 / 扩展 / 事实 / 检索 / Citationware / feedback）
 - Foundation Semantic Ops（GraphDB / Milvus / OM）
 - MCP：`/mcp`
 

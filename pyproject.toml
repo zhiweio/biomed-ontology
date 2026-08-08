@@ -1,7 +1,7 @@
 [project]
 name = "biomed-ontology"
 version = "0.1.0"
-description = "Biomedical semantic data foundation and MCP/REST tools for external agents (Asliva PoC)"
+description = "Enterprise Biomedical World Model / AI Data Foundation with Ontology Semantic Layer (Asliva PoC)"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = { text = "Proprietary" }

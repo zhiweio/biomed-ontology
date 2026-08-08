@@ -24,7 +24,7 @@ def render_demo_results(
     console: Console | None = None,
     verbose: bool = True,
 ) -> None:
-    """分场景展示基座能力验收（别名 / 扩展 / 许可 / Citationware …）。"""
+    """分场景展示语义层能力验收（术语 / 扩展 / 许可 / Citationware …）。"""
     out = console or Console()
     passed = sum(1 for r in results if r.passed)
     total = len(results)
@@ -57,9 +57,9 @@ def render_demo_results_compact(
 
 def _header_panel(*, passed: int, total: int, all_ok: bool) -> Panel:
     title = Text()
-    title.append("Semantic Tools Demo", style="bold bright_white")
+    title.append("Semantic Layer Demo", style="bold bright_white")
     title.append("  ·  ", style="dim")
-    title.append("capability assertions", style="dim cyan")
+    title.append("world-model capabilities", style="dim cyan")
 
     body = Text()
     body.append(f"{passed}/{total}", style="bold bright_cyan" if all_ok else "bold yellow")
@@ -121,10 +121,10 @@ def _footer(*, passed: int, total: int, all_ok: bool) -> Panel:
     text = Text()
     if all_ok:
         text.append("✓ ", style="bold green")
-        text.append("Tool surface ready", style="bold")
+        text.append("Semantic layer ready", style="bold")
     else:
         text.append("✗ ", style="bold red")
-        text.append("Tool surface regressions", style="bold")
+        text.append("Semantic layer regressions", style="bold")
     text.append(
         f"  ·  passed={passed}/{total}  ·  next  ",
         style="dim",
