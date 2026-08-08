@@ -346,9 +346,10 @@ tasks:
       - |
         set -euo pipefail
         MARKER=data/cache/bios_v3/.initialized
-        if [ "${HMD_BIOS_FORCE:-}" != "1" ] && [ -f "$MARKER" ]; then
-          echo "BIOS marker 已存在 → $MARKER（跳过重灌；强制：HMD_BIOS_FORCE=1）"
-          # 仍走 bios-load：内部会再确认 GraphDB 是否还有 Concept；库被清空时自动重灌
+        if [ -f "$MARKER" ]; then
+          echo "BIOS marker → $MARKER"
+          # 是否跳过由 bios-load 判定（防 subset marker 误导；GraphDB 已有全量也会跳过）
+          python3 -c "import json; m=json.load(open('$MARKER')); print(f\"  source={m.get('source')} concepts={m.get('concepts')}\")" 2>/dev/null || true
         fi
         if [ "${HMD_BIOS_INIT:-full}" = "subset" ]; then
           uv run hmd foundation bios-load --subset
@@ -363,7 +364,7 @@ tasks:
             fi
           fi
           export HMD_BIOS_MAX_CONCEPTS="${HMD_BIOS_MAX_CONCEPTS:-0}"
-          echo "BIOS load max_concepts=${HMD_BIOS_MAX_CONCEPTS} (0=full)"
+          echo "BIOS load max_concepts=${HMD_BIOS_MAX_CONCEPTS} (0=full; 强制重灌 HMD_BIOS_FORCE=1)"
           uv run hmd foundation bios-load --full
         fi
       - uv run hmd foundation sync

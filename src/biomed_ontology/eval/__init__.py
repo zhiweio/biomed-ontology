@@ -23,6 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 __all__ = [
     "ARMS",
+    "ONTOLOGY_PROBES",
     "ArmResult",
     "NormalizationEval",
     "RetrievalEval",
@@ -228,6 +229,9 @@ VISUAL_DELTA = ("milvus_hybrid_4col", "milvus_hybrid_3col")
 # 生医专用塔，还能多拿到什么"。拿五列去减三列会把两条视觉列的贡献混记成一笔。
 VISUAL_BIO_DELTA = ("milvus_hybrid_5col", "milvus_hybrid_4col")
 
+# 本体敏感探针：别名归一 + 中文→英文桥接。数据底座的主 KPI 读这一集，
+# 不读被图像意图与英文对照 query 稀释的全量 hybrid R@10。
+ONTOLOGY_PROBES = ("bridge_zh", "alias")
 
 # `ArmResult` 字段名 → `_QueryScore` 字段名。两侧命名不同是历史遗留
 # （聚合值带 @K 后缀、逐条值不带），但对外只暴露一套 —— 就是 `ArmResult` 那套。
@@ -374,6 +378,9 @@ class ArmResult:
     # 检索侧改造的效果会被"文本检索答不了看图的问题"这部分常数项稀释，
     # 视觉列的效果反过来也会被 25 条文本 query 摊平 —— 两边都读不出来。
     by_intent: dict[str, ArmResult] = field(default_factory=dict)
+    # 按探针拆分（bridge_zh / alias / hierarchy / control / image / license）。
+    # 产品主 KPI 读 bridge_zh+alias；全量平均只作诊断。
+    by_probe: dict[str, ArmResult] = field(default_factory=dict)
 
     def per_query_metric(self, metric: str) -> dict[str, float]:
         """取某个指标的逐 query 分数。`metric` 用 `ArmResult` 的字段名
@@ -405,16 +412,33 @@ class RetrievalEval:
         target: str | None = None,
         baseline: str | None = None,
         lang: str | None = None,
+        probes: tuple[str, ...] | None = None,
     ) -> float:
-        base = self._metric(baseline or self.baseline, metric, lang)
-        tgt = self._metric(target or self.target, metric, lang)
+        base = self._metric(baseline or self.baseline, metric, lang, probes)
+        tgt = self._metric(target or self.target, metric, lang, probes)
         return (tgt - base) / base if base else float("inf")
 
-    def _metric(self, arm: str, metric: str, lang: str | None) -> float:
-        result = self.arms[arm]
-        if lang is not None:
-            result = result.by_lang[lang]
-        return float(getattr(result, metric))
+    def absolute_gain(
+        self,
+        metric: str = "ndcg_at_10",
+        *,
+        target: str | None = None,
+        baseline: str | None = None,
+        probes: tuple[str, ...] | None = None,
+    ) -> float:
+        """绝对增益（主 KPI 口径）。相对提升在基线很低时会被放大，这里不用。"""
+        return self._metric(target or self.target, metric, None, probes) - self._metric(
+            baseline or self.baseline, metric, None, probes
+        )
+
+    def _metric(
+        self,
+        arm: str,
+        metric: str,
+        lang: str | None,
+        probes: tuple[str, ...] | None = None,
+    ) -> float:
+        return float(getattr(self._result(arm, lang, probes=probes), metric))
 
     def delta(
         self,
@@ -437,29 +461,77 @@ class RetrievalEval:
         baseline: str | None = None,
         lang: str | None = None,
         intent: str | None = None,
+        probes: tuple[str, ...] | None = None,
     ) -> Significance:
         """配对显著性：target − baseline 的 95% CI 与置换检验 p 值。
 
         n=28 上任何不带区间的差值都不可解读。这个方法存在的意义就是让
         "本体增强涨了 0.013" 这句话必须连同 "CI 跨零、p=0.41" 一起说出口。
         """
-        tgt = self._result(target or self.target, lang, intent)
-        base = self._result(baseline or self.baseline, lang, intent)
+        tgt = self._result(target or self.target, lang, intent, probes)
+        base = self._result(baseline or self.baseline, lang, intent, probes)
         return paired_significance(tgt.per_query_metric(metric), base.per_query_metric(metric))
 
-    def _result(self, arm: str, lang: str | None, intent: str | None = None) -> ArmResult:
+    def _result(
+        self,
+        arm: str,
+        lang: str | None,
+        intent: str | None = None,
+        probes: tuple[str, ...] | None = None,
+    ) -> ArmResult:
         result = self.arms[arm]
+        if probes:
+            # 多探针取并集后微平均；单探针走 by_probe。
+            if len(probes) == 1:
+                return result.by_probe[probes[0]]
+            scores: dict[str, dict[str, float]] = {}
+            for p in probes:
+                sub = result.by_probe.get(p)
+                if sub is None:
+                    continue
+                scores.update(sub.per_query)
+            if not scores:
+                return ArmResult(
+                    arm=arm,
+                    label=result.label,
+                    recall_at_10=0.0,
+                    precision_at_5=0.0,
+                    ndcg_at_10=0.0,
+                    mrr=0.0,
+                )
+            n = len(scores) or 1
+            return ArmResult(
+                arm=arm,
+                label=result.label,
+                recall_at_10=sum(s.get("recall", 0.0) for s in scores.values()) / n,
+                precision_at_5=sum(s.get("precision", 0.0) for s in scores.values()) / n,
+                ndcg_at_10=sum(s.get("ndcg", 0.0) for s in scores.values()) / n,
+                mrr=sum(s.get("rr", 0.0) for s in scores.values()) / n,
+                map_score=sum(s.get("ap", 0.0) for s in scores.values()) / n,
+                query_count=len(scores),
+                per_query=scores,
+            )
         if intent is not None:
             result = result.by_intent[intent]
         return result if lang is None else result.by_lang[lang]
 
     def as_table(self) -> str:
         lines = [self._block(None, "全部 query")]
+        # 主 KPI 切片靠前：读表的人不应先被全量 +0.8% 带偏。
+        if any(ONTOLOGY_PROBES[0] in a.by_probe for a in self.arms.values()):
+            lines.append(
+                self._probes_block(ONTOLOGY_PROBES, "本体敏感探针（bridge_zh + alias，主 KPI）")
+            )
+        for probe in sorted({p for a in self.arms.values() for p in a.by_probe}):
+            lines.append(self._block(probe, f"探针 {probe}", axis="by_probe"))
         for intent in sorted({i for a in self.arms.values() for i in a.by_intent}):
             lines.append(self._block(intent, f"意图 {intent}", axis="by_intent"))
         for lang in sorted({lg for a in self.arms.values() for lg in a.by_lang}):
             lines.append(self._block(lang, f"仅 {lang}"))
-        lines.append(f"\n本体增强 vs 纯 BM25 Recall@10 提升：{self.lift():+.1%}")
+        if any(ONTOLOGY_PROBES[0] in a.by_probe for a in self.arms.values()):
+            gain = self.absolute_gain(probes=ONTOLOGY_PROBES)
+            lines.append(f"\n本体敏感探针 nDCG@10 绝对增益：{gain:+.3f}（主 KPI）")
+        lines.append(f"全量 Recall@10 相对提升：{self.lift():+.1%}（诊断，含图像/对照稀释）")
         lines.extend(self._significance_block())
         lines.extend(self._pool_note())
 
@@ -524,9 +596,14 @@ class RetrievalEval:
         if self.baseline not in self.arms or self.target not in self.arms:
             return []
         rows = [f"\n配对显著性（{self.target} − {self.baseline}，10k 次重采样，种子固定）："]
+        if any(ONTOLOGY_PROBES[0] in a.by_probe for a in self.arms.values()):
+            rows.append("  本体敏感探针（bridge_zh + alias，主 KPI）：")
+            for metric in ("ndcg_at_10", "recall_at_10", "precision_at_5"):
+                sig = self.significance(metric, probes=ONTOLOGY_PROBES)
+                rows.append(f"    {metric:<14} {sig.render()}")
         for metric in ("ndcg_at_10", "recall_at_10", "precision_at_5"):
             sig = self.significance(metric)
-            rows.append(f"  {metric:<16} {sig.render()}")
+            rows.append(f"  全量 {metric:<11} {sig.render()}")
         # 图像意图那 12 条上，本体臂与无本体臂逐位相同（概念挂不到图切片），
         # 它们只是往总平均里灌了 12 个恒等于零的差值，把区间往零压。
         # 检索侧改造该在哪批 query 上读，这一段就是答案。
@@ -549,7 +626,7 @@ class RetrievalEval:
         读者无法判断本体那部分是不是可以直接砍掉。这里的减法是：
         `bm25_rerank − bm25_only` 是精排单独的贡献，
         `ontology_hybrid_rerank − bm25_rerank` 是本体在已经有精排之后**还多给的**那部分 ——
-        后者才是"本体值不值得留着"的答案，也正是 T1 waiver 要的那种可归因证据。
+        后者才是"本体值不值得留着"的答案，也正是敏感探针 KPI 要的那种可归因证据。
         """
         pairs = [
             ("bm25_rerank", "bm25_only", "精排单独的贡献"),
@@ -624,6 +701,19 @@ class RetrievalEval:
             )
         return "\n".join(rows)
 
+    def _probes_block(self, probes: tuple[str, ...], title: str) -> str:
+        """多探针并集的微平均表。与单探针 `_block(..., axis=by_probe)` 不同。"""
+        cols = f"{'Recall@10':>11}{'P@5':>9}{'nDCG@10':>10}{'MRR':>8}{'MAP':>8}{'P50ms':>8}{'n':>5}"
+        rows = [f"【{title}】", _pad("臂", 20) + cols, "-" * (20 + len(cols))]
+        for arm_name, arm in self.arms.items():
+            r = self._result(arm_name, None, probes=probes)
+            rows.append(
+                _pad(arm.label, 20)
+                + f"{r.recall_at_10:>11.3f}{r.precision_at_5:>9.3f}{r.ndcg_at_10:>10.3f}"
+                + f"{r.mrr:>8.3f}{r.map_score:>8.3f}{r.latency_p50_ms:>8.1f}{r.query_count:>5d}"
+            )
+        return "\n".join(rows)
+
 
 def _display_width(text: str) -> int:
     """CJK 字符占两列。按 len() 对齐会让中文表头整体错位，表就没法读了。"""
@@ -671,6 +761,8 @@ class _Case(NamedTuple):
     rel: dict[str, int]
     # 该 query 问的是哪个模态。只有专用通道的臂看这一项，其余臂一律全跑。
     modality_intent: str | None = None
+    # 机制探针：bridge_zh / alias / hierarchy / control / image / license。
+    probe: str = "control"
 
 
 @dataclass
@@ -690,6 +782,7 @@ class _QueryScore:
     # 候选池召回。未测（臂没设 candidate_k）时为 None，与"测了但是 0.0"要分开 ——
     # 后者是结果，前者是没问过这个问题。
     pool_recall: float | None = None
+    probe: str = "control"
 
 
 def _aggregate(arm: str, label: str, scores: list[_QueryScore], *, pool_k: int = 0) -> ArmResult:
@@ -810,7 +903,15 @@ def eval_retrieval(
         rel = {cid: v for k, v in labels.items() if k in index for cid in index[k]}
         if rel:
             cases.append(
-                _Case(q["id"], q["text"], q.get("lang", "und"), rel, q.get("modality_intent"))
+                _Case(
+                    q["id"],
+                    q["text"],
+                    q.get("lang", "und"),
+                    rel,
+                    q.get("modality_intent"),
+                    q.get("probe")
+                    or ("image" if q.get("modality_intent") == "IMAGE" else "control"),
+                )
             )
 
     if dangling:
@@ -856,7 +957,7 @@ def eval_retrieval(
         candidate_k = cfg.get("candidate_k")
 
         scores: list[_QueryScore] = []
-        for qid, text, lang, rel, q_intent in selected:
+        for qid, text, lang, rel, q_intent, probe in selected:
             started = time.perf_counter()
             hits, _ = searcher.search(
                 text,
@@ -912,6 +1013,7 @@ def eval_retrieval(
                     judged,
                     min(top_k, len(rel)) / len(rel),
                     pool_recall,
+                    probe,
                 )
             )
 
@@ -927,6 +1029,9 @@ def eval_retrieval(
             for intent_key in intents:
                 subset = [s for s in scores if s.intent == intent_key]
                 result.by_intent[intent_key] = _aggregate(arm, cfg["label"], subset, pool_k=pool_k)
+        for probe_key in sorted({s.probe for s in scores}):
+            subset = [s for s in scores if s.probe == probe_key]
+            result.by_probe[probe_key] = _aggregate(arm, cfg["label"], subset, pool_k=pool_k)
         results[arm] = result
 
     return RetrievalEval(

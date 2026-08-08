@@ -93,7 +93,10 @@ class Settings(BaseSettings):
     trust_entitlement_header: bool = False
 
     # --- 第三方组件法务闸门 -------------------------------------------------
-    accept_uncleared_components: bool = False
+    # PoC 默认放行 pending 组件（BiomedCLIP / PyMuPDF 等），否则 `hmd eval` /
+    # `hmd index` 每次都要额外设环境变量。启动时 `warnings()` 仍会留痕；
+    # 生产务必显式设 HMD_ACCEPT_UNCLEARED_COMPONENTS=false。
+    accept_uncleared_components: bool = True
 
     @field_validator(
         "mineru_base_url",

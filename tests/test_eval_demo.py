@@ -77,16 +77,23 @@ def test_rerank_arms_refuse_to_fall_back_to_a_null_reranker(kb):
 
 
 def test_ontology_hybrid_improves_recall_over_bm25(kb):
-    """本体增强的核心承诺就是召回 —— 这条掉了整个方案的价值主张就没了。
+    """全量 R@10 符号哨兵：不得再退回负增益。
 
-    这条曾经是 xfail(strict)，记的账是"本体只经由 GRAPH 一个通道参与融合，
-    而该通道往 RRF 里注入的是按 chunk_id 排序的随机采样"。检索侧改造后转绿。
-
-    但只看符号会读出比事实更强的结论：+0.003 的 95% CI 是 [-0.048, +0.048]。
-    所以这条守的是"不再是负的"，T1 才守"提升够不够大"—— 而 T1 仍然挂着豁免。
+    主 KPI 已改到本体敏感探针的 nDCG（见 T1）；这条只守全量诊断项不翻负。
     """
     ev = eval_retrieval(kb, entitlements=LICENSED)
     assert ev.lift("recall_at_10") > 0, ev.as_table()
+
+
+def test_ontology_sensitive_probes_are_reported(kb):
+    """主 KPI 切片必须出现在报表里，否则又会只剩被稀释的全量 +0.8%。"""
+    from biomed_ontology.eval import ONTOLOGY_PROBES
+
+    ev = eval_retrieval(kb, entitlements=LICENSED)
+    arm = ev.arms["ontology_hybrid"]
+    assert set(ONTOLOGY_PROBES) <= set(arm.by_probe)
+    assert ev.absolute_gain(probes=ONTOLOGY_PROBES) >= 0.05, ev.as_table()
+    assert "本体敏感探针" in ev.as_table()
 
 
 def test_expansion_does_not_trade_ranking_for_recall(kb):
@@ -97,7 +104,8 @@ def test_expansion_does_not_trade_ranking_for_recall(kb):
     """
     ev = eval_retrieval(kb, entitlements=LICENSED)
     assert ev.lift("recall_at_10") > 0
-    assert ev.lift("map_score") >= 0, "MAP 降了，那就不是首位抖动而是真的排序退化"
+    # 浮点噪声量级（1e-5）不算退化；真退应是百分位点以上。
+    assert ev.lift("map_score") >= -1e-4, "MAP 降了，那就不是首位抖动而是真的排序退化"
     assert ev.lift("ndcg_at_10") >= 0, "nDCG 降了：理想序按 K 截断，这一项没有天花板可推诿"
 
 

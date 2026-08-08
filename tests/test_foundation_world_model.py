@@ -395,7 +395,7 @@ def test_bios_license_gate_blocks_by_default() -> None:
 
 
 def test_bios_load_satisfied_skips_when_marker_and_graph_ready() -> None:
-    from biomed_ontology.foundation.bios import _bios_load_satisfied
+    from biomed_ontology.foundation.bios import _bios_load_satisfied, _marker_rank
 
     marker = {
         "source": "full_download_concepts_tsv",
@@ -411,12 +411,22 @@ def test_bios_load_satisfied_skips_when_marker_and_graph_ready() -> None:
         max_concepts=0,
         graph_ready=True,
     )
-    # subset marker 不能满足 full
+    # subset marker 不能满足 full（除非 GraphDB 已有近全量）
     assert not _bios_load_satisfied(
         full=True,
         marker={"source": "subset", "concepts": 50, "max_concepts": 0},
         max_concepts=0,
         graph_ready=True,
+    )
+    assert _bios_load_satisfied(
+        full=True,
+        marker={"source": "subset", "concepts": 3, "max_concepts": 0},
+        max_concepts=0,
+        graph_ready=True,
+        graph_count=22_104_562,
+    )
+    assert _marker_rank(marker) > _marker_rank(
+        {"source": "subset", "concepts": 3, "max_concepts": 0}
     )
 
 

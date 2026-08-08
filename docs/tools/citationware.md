@@ -11,5 +11,6 @@ Citationware 负责：文档 → 章节 → 碎片的证据树，以及 `restore
 
 ```bash
 uv run pytest tests/test_citation.py -q
-uv run hmd demo --id D7
+uv run hmd demo --id D7           # Rich 面板
+uv run hmd demo --id D7 --compact # 仅 Trace
 ```

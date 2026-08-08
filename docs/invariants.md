@@ -55,7 +55,7 @@
 | `_invoke` 唯一入口 | 契约 → trace → 执行 → license → 落盘 |
 | Provenance / trace_id 一等公民 | D6 |
 | 还原共用 permits | 禁止还原旁路 |
-| 组件 pending 要闸门 | `assert_component_cleared`；accept 须显式留痕 |
+| 组件 pending 要闸门 | `assert_component_cleared`；PoC 默认 accept，启动告警留痕；生产显式关闭 |
 
 ## PR 自检（最短）
 

@@ -214,7 +214,7 @@ COMPONENTS: dict[str, ComponentObligation] = {
 def assert_component_cleared(component_id: str, *, accept_uncleared: bool = False) -> None:
     """启用第三方组件前的法务闸门。
 
-    `accept_uncleared` 只应由显式配置（HMD_ACCEPT_UNCLEARED_COMPONENTS）驱动，
+    `accept_uncleared` 只应由配置（HMD_ACCEPT_UNCLEARED_COMPONENTS，PoC 默认 true）驱动，
     且会在启动告警里留痕 —— 允许本地试用，但不允许无声地带进生产。
     """
     ob = COMPONENTS.get(component_id)

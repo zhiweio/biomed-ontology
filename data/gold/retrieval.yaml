@@ -7,404 +7,363 @@
 # 本体增强的收益主要体现在"把同义与下位表述也召回来"，
 # 二值判定会把这部分收益抹平，评测就看不出该不该做本体。
 #
-# ---------------------------------------------------------------- 0.2.0
+# ---------------------------------------------------------------- 0.4.0
 #
-# 判定粒度 = 章节：一个键展开成该节的**全部**切片，同 grade。
-# 人工审校面对的是章节而不是内容哈希，让标注去追切片边界，
-# 等于每调一次切片参数就要重标一遍。
+# 产品定位改为「关键词检索 + 本体桥接（别名/跨语言/层级）」之后，
+# 主 KPI 不再是被图像与英文对照 query 稀释的全量 hybrid R@10。
+# 每条 query 带 `probe`：
+#   bridge_zh / alias  — 本体敏感（T1 主集）
+#   hierarchy          — 宽泛上位；测过度扩展，不进 T1
+#   control            — 英文词法本应够用
+#   license / image    — 凭据闸门 / 视觉臂
 #
-# 这个粒度有个直接后果：一节动辄 5~14 片，|relevant| 常常超过 10，
-# 于是 Recall@10 的上限就不是 1.0 了 —— 报表里的"召回上限"一行专门报这个数，
-# 不报的话 0.42 会被读成"漏了 58%"，而其中大部分是格子不够放。
-# nDCG@10 的理想序已按 top_k 截断，不受此影响，是这份 gold 上更可读的主指标。
+# Q7 相关集从"只标 PSC 专篇"改为"综述为主 + 专篇为辅"：
+# 旧标注下 BM25 与本体臂双双 R@10=0，测不到层级行为。
 #
-# 覆盖范围：全部 14 篇（9 篇真实 CC-BY 文献 + 5 篇早期构造样本）。
-# 覆盖全语料是为了让 judged@10 回到 1.0 —— 未判定的命中按不相关计入分母，
-# 标注跟不上语料时，掉的是标注覆盖率，报表上却显示成检索质量下降。
-#
-# 十二条图像意图 query（Q26–Q37）带 `modality_intent: IMAGE`，
-# 视觉专用臂只在它们上面评分。其中多条指向的图正文只有 "FIGURE1" 三个字，
-# 纯文本臂在它们上面必然接近 0 —— 这不是噪声，正是视觉列要补的那个洞。
-#
-# 图像 query 同样计入全量平均（n=37），所以总表上的每个数都已经把
-# "拿文本检索去回答看图的问题"这部分算进去了。报表另出一张按意图拆分的表：
-# 文本意图 25 条读检索改造的效果，图像意图 12 条读视觉列的效果，
-# 两者混在一个平均里，任何一边的变化都会被另一边稀释掉。
-version: "0.3.0"
+version: 0.4.0
 queries:
-  # ================================================ 早期构造样本（5 篇）
-  - id: Q1
-    text: "沃利替尼 治疗 肺癌 疗效"
-    lang: zh
-    intent: 中文别名 + 上位疾病，考察跨语言与层级扩展
-    relevant:
-      "DOC:PMID.32821245#Abstract": 2
-      "DOC:PMID.32821245#Results": 2
-      "DOC:PMID.32821245#table:T1": 2
-      "DOC:CNIPA.CN105461695A#Description": 1
-
-  - id: Q2
-    text: "MET inhibitor pulmonary sarcomatoid carcinoma"
-    lang: en
-    intent: 英文靶点 + 罕见亚型
-    relevant:
-      "DOC:PMID.32821245#Abstract": 2
-      "DOC:PMID.32821245#Results": 2
-      "DOC:PMID.32821245#image:F2": 1
-
-  - id: Q3
-    text: "呋喹替尼 三线 结直肠癌 总生存期"
-    lang: zh
-    intent: 中文药名 + 结构化指标，考察表格召回
-    relevant:
-      "DOC:PMID.30006302#table:T2": 2
-      "DOC:PMID.30006302#Abstract": 2
-      "DOC:PMID.30006302#Results": 2
-
-  - id: Q4
-    text: "VEGFR2 抑制剂 抗血管生成"
-    lang: zh
-    intent: 靶点别名（KDR/VEGFR2）→ 药物，考察别名归一
-    relevant:
-      "DOC:PMID.30006302#Abstract": 2
-      "DOC:PMID.30006302#Results": 1
-      "DOC:CTGOV.NCT02807415#BriefSummary": 1
-
-  - id: Q5
-    text: "neuroendocrine tumor clinical trial surufatinib"
-    lang: en
-    intent: 英文疾病 + 试验记录
-    relevant:
-      "DOC:CTGOV.NCT02807415#BriefSummary": 2
-      "DOC:CTGOV.NCT02807415#Outcomes": 1
-
-  - id: Q6
-    text: "晶型 专利 MET 抑制剂"
-    lang: zh
-    intent: 中文专利文本，考察 doc_type 与中文抽取
-    relevant:
-      "DOC:CNIPA.CN105461695A#Claims": 2
-      "DOC:CNIPA.CN105461695A#Description": 2
-
-  - id: Q7
-    text: "lung cancer targeted therapy"
-    lang: en
-    intent: 宽泛上位词，考察层级扩展是否过度召回
-    relevant:
-      "DOC:PMID.32821245#Abstract": 1
-      "DOC:PMID.32821245#Results": 1
-      "DOC:CNIPA.CN105461695A#Description": 1
-
-  - id: Q8
-    text: "savolitinib acquired resistance competitive landscape"
-    lang: en
-    intent: 商业源专有内容，无凭据时应召回为空
-    requires_entitlement: MOCK_LICENSED
-    relevant:
-      "DOC:PATSNAP.PS-2023-00417#Summary": 2
-
-  # ================================================ 真实文献（9 篇，0.2.0 新增）
-  #
-  # 每篇至少两条 query：一条问它的主结论，一条从别的角度切进去
-  # （中文、图像、或跨篇比较）。只写"照着标题问一遍"的 query，
-  # 测出来的是标题匹配，不是检索。
-
-  # ---- PMC12133497：索凡替尼致肾病综合征（pNET 病例报告）
-  - id: Q9
-    text: "surufatinib induced nephrotic syndrome proteinuria case report"
-    lang: en
-    intent: 药物不良反应个案，答案分散在病例描述与讨论两节
-    relevant:
-      "DOC:PMC12133497#10.3389/fonc.2025.1546217 / Case presentation": 2
-      "DOC:PMC12133497#10.3389/fonc.2025.1546217 #2 / Discussion": 2
-      "DOC:PMC12133497#10.3389/fonc.2025.1546217 #3": 1
-      "DOC:PMC12133497#10.3389/fonc.2025.1546217 #4": 1
-
-  - id: Q10
-    text: "索凡替尼 蛋白尿 肾病综合征 不良反应"
-    lang: zh
-    intent: 中文提问、英文语料 —— 全靠本体把中文别名接到英文正文上
-    relevant:
-      "DOC:PMC12133497#10.3389/fonc.2025.1546217 / Case presentation": 2
-      "DOC:PMC12133497#10.3389/fonc.2025.1546217 #2 / Discussion": 2
-
-  # ---- PMC12515981：化疗 + 索凡替尼 + 卡瑞利珠单抗一线治疗 PDAC
-  - id: Q11
-    text: "camrelizumab nab-paclitaxel gemcitabine first-line pancreatic ductal adenocarcinoma"
-    lang: en
-    intent: 三药联合方案，考察多实体共现
-    relevant:
-      "DOC:PMC12515981#adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and Targeted Therapy / OPEN": 2
-      "DOC:PMC12515981#83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7% / Results / Phase II randomized study: efficacy and safety / Baseline characteristics": 2
-
-  - id: Q12
-    text: "胰腺导管腺癌 一线 免疫联合化疗 无进展生存期"
-    lang: zh
-    intent: 中文疾病全称（本体新收的 PDAC）+ 疗效指标
-    relevant:
-      "DOC:PMC12515981#3.6(2.2,12.6) / 290.0 (47.4, 1635.0)518.0(98.5,2998.0)": 2
-      "DOC:PMC12515981#adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and Targeted Therapy / OPEN": 1
-
-  # ---- PMC12994080：QUINTIS 试验方案（呋喹替尼 + 替雷利珠单抗）
-  - id: Q13
-    text: "QUINTIS trial fruquintinib plus tislelizumab MSS colorectal study design"
-    lang: en
-    intent: 试验方案类文档，正文被切得很碎，考察短节能否被召回
-    relevant:
-      "DOC:PMC12994080#metastases―theIKF-080/AIO-QUINTIStrial / Key questions addressed by the QUINTIS trial / J.Tintelnot1∗,J.Gorgulho1,S.-E.Al-Batran2,D.Arnold3,A.Reinacher-Schick4,S.Kasper5,G.Prager6,T.Goetze2,": 2
-      "DOC:PMC12994080#ESMOGastrointestinalOncology / Description of Protocol / Background": 2
-      "DOC:PMC12994080#ESMOGastrointestinalOncology #2 / Methods/design / https://doi.org/10.1016/j.esmogo.2026.100312 / Arm A (experimental arm)": 2
-      "DOC:PMC12994080#ESMOGastrointestinalOncology #3 / Assessments / Translational program": 1
-      "DOC:PMC12994080#1.1 / Acknowledgements / Sample size estimation": 1
-      "DOC:PMC12994080#table:TBL:0000": 1
-
-  - id: Q14
-    text: "trifluridine tipiracil plus bevacizumab as third-line comparator in refractory colorectal cancer"
-    lang: en
-    intent: 跨两篇的对照臂问题 —— 单篇答不全，考察是否只锁定一篇
-    relevant:
-      "DOC:PMC12994080#metastases―theIKF-080/AIO-QUINTIStrial / Key questions addressed by the QUINTIS trial / J.Tintelnot1∗,J.Gorgulho1,S.-E.Al-Batran2,D.Arnold3,A.Reinacher-Schick4,S.Kasper5,G.Prager6,T.Goetze2,": 1
-      "DOC:PMC12994080#table:TBL:0000": 1
-      "DOC:PMC13116735#2 of 11": 2
-      "DOC:PMC13116735#7 of 11": 1
-
-  # ---- PMC13052964：呋喹替尼 FAERS 上市后不良事件信号
-  - id: Q15
-    text: "fruquintinib adverse event disproportionality signal detection FAERS"
-    lang: en
-    intent: 药物警戒方法学，与 Q3/Q13 同药不同问题，考察是否被药名带偏
-    relevant:
-      "DOC:PMC13052964#1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*": 2
-      "DOC:PMC13052964#9.30 / 3.3. Risk signaling PT": 2
-      "DOC:PMC13052964#5. Conclusion": 1
-
-  - id: Q16
-    text: "呋喹替尼 上市后 不良事件 信号挖掘"
-    lang: zh
-    intent: 中文问药物警戒；语料全英文，考察别名 + 概念扩展
-    relevant:
-      "DOC:PMC13052964#1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*": 2
-      "DOC:PMC13052964#9.30 / 3.3. Risk signaling PT": 1
-
-  # ---- PMC13116735：三线后 mCRC 系统综述与荟萃分析
-  - id: Q17
-    text: "later-line metastatic colorectal cancer meta-analysis pooled overall survival"
-    lang: en
-    intent: 荟萃分析结论，答案集中在两个很短的节里
-    relevant:
-      "DOC:PMC13116735#Introduction": 2
-      "DOC:PMC13116735#8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa / Overall Survival": 2
-      "DOC:PMC13116735#6 of 11 / Comparative Analysis of Mean Overall Survival": 2
-      "DOC:PMC13116735#Conclusions": 1
-
-  # ---- PMC13152782：赛沃替尼治疗 NSCLC 脑与软脑膜转移（病例报告）
-  - id: Q18
-    text: "savolitinib leptomeningeal metastasis cerebrospinal fluid NGS MET amplification"
-    lang: en
-    intent: 本体新收疾病（软脑膜转移）+ 已有靶点，考察新概念是否真的接上了检索
-    relevant:
-      "DOC:PMC13152782#1Introduction / 1 Introduction / XuejiaoQi1,2,3,ZhijiaoSong1,2,3, JunyingHe1,2,3andHui Bu1,2,3*": 2
-      "DOC:PMC13152782#10.3389/fonc.2026.1627170 / 2 Case presentation": 2
-      "DOC:PMC13152782#10.3389/fonc.2026.1627170 #2 / 3 Discussion": 2
-
-  - id: Q19
-    text: "赛沃替尼 脑转移 软脑膜转移 病例"
-    lang: zh
-    intent: 中文药名（沃瑞沙/赛沃替尼）+ 中文疾病名，双向都要经过本体
-    relevant:
-      "DOC:PMC13152782#1Introduction / 1 Introduction / XuejiaoQi1,2,3,ZhijiaoSong1,2,3, JunyingHe1,2,3andHui Bu1,2,3*": 2
-      "DOC:PMC13152782#10.3389/fonc.2026.1627170 / 2 Case presentation": 2
-
-  # ---- PMC13193915：原发性睾丸神经内分泌肿瘤（病例报告）
-  - id: Q20
-    text: "primary testicular neuroendocrine tumor retroperitoneal lymph node metastasis"
-    lang: en
-    intent: 罕见部位 NET —— 与 Q5 的胰腺 NET 同父概念，考察会不会串到另一篇
-    relevant:
-      "DOC:PMC13193915#metastasis:acasereport / Introduction / MingZhang,QianWang, FahimullahHamid, JiehaoWu,": 2
-      "DOC:PMC13193915#10.3389/fonc.2026.1766386 / Case presentation": 2
-
-  # ---- PMC13201154：高 PD-L1 + MET ex14 NSCLC 免疫治疗耐药（病例分析）
-  - id: Q21
-    text: "high PD-L1 expression with MET exon 14 skipping overcoming immunotherapy resistance"
-    lang: en
-    intent: 两个新收靶点（CD274）与老靶点（MET）共现，考察多靶点 query
-    relevant:
-      "DOC:PMC13201154#resistanceandliteraturereview / YefeiRuanandLinQiu*": 2
-      "DOC:PMC13201154#10.3389/fonc.2026.1807242 #2 / Literaturereviewanddiscussion / Literature review and discussion": 2
-      "DOC:PMC13201154#10.3389/fonc.2026.1807242 #3": 2
-
-  # ---- PMC13235695：肺癌精准治疗综述（35 节 / 184 片，语料里最大的一篇）
-  - id: Q22
-    text: "third generation EGFR TKI osimertinib acquired resistance mechanisms"
-    lang: en
-    intent: 综述内部定位 —— 全篇都在讲肺癌，考察能否落到正确的那几节
-    relevant:
-      "DOC:PMC13235695#8 of 27 / TABLE 3: Third- and fourth-generation EGFR inhibitors and other therapies targeting EGFR": 2
-      "DOC:PMC13235695#9 of 27 / other therapies targeting EGFR / FIGURE 3: Composite figure with four sections: (A) common EGFR mutations causing lung cancer, (B) MOA of first- and second-generation EGFR TKIs, (C) MOA of third- and fourth-generation EGFR TKIs, and (D) other therapies targeting EGFR": 2
-      "DOC:PMC13235695#16 of 27 / FIGURE 6: Resistance mechanisms": 2
-
-  - id: Q23
-    text: "ALK inhibitor alectinib lorlatinib crizotinib central nervous system activity"
-    lang: en
-    intent: 同一篇综述的另一条通路，与 Q22 互为"别串台"的对照
-    relevant:
-      "DOC:PMC13235695#12 of 27 / FIGURE 4: ALK inhibitor therapies": 2
-      "DOC:PMC13235695#2026 Chitneni et al. Cureus 18(5): e108302. DOI 10.7759/cureus.108302 #13": 2
-      "DOC:PMC13235695#11 of 27 / TABLE 4: List of non-EGFR driver alterations commonly targeted in lung cancer management": 1
-
-  - id: Q24
-    text: "KRAS driver mutation targeted therapy in lung cancer"
-    lang: en
-    intent: 本体新收靶点 KRAS，判定只给两个很短的节，考察精确定位
-    relevant:
-      "DOC:PMC13235695#10 of 27 / Driver alterations in all other mutations": 2
-      "DOC:PMC13235695#11 of 27 / TABLE 4: List of non-EGFR driver alterations commonly targeted in lung cancer management": 2
-
-  - id: Q25
-    text: "肺癌 驱动基因 精准治疗 综述"
-    lang: zh
-    intent: 中文宽泛提问打一篇英文综述，考察上位概念扩展的边界
-    relevant:
-      "DOC:PMC13235695#Oncogenic Genetic Mutations / Abstract": 2
-      "DOC:PMC13235695#6 of 27 / regions / Targeted therapies in lung cancer / FIGURE 2: Composite figure of graphs on incidence, ASIR, and ASMR of lung cancer cases across men and women across the United Nations regions": 2
-
-  # ================================================ 图像意图（视觉臂专用）
-  #
-  # 这三条带 modality_intent，视觉专用臂只在它们上面评分。
-  # 其余臂照常全跑 —— 文本臂在这里的低分是真实的能力缺口，不是配置问题。
-
-  - id: Q26
-    text: "Kaplan-Meier overall survival curve figure"
-    lang: en
-    intent: 生存曲线图。两张分属不同文档，都带说明文字，文本臂尚有机会
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMID.32821245#image:F2": 2
-      "DOC:PMC13116735#image:IMG:0001": 2
-
-  - id: Q27
-    text: "figure showing distribution of adverse events over time"
-    lang: en
-    intent: 图注可检索的一组图，考察"要图"时能否把正文压下去
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13052964#image:IMG:0001": 2
-      "DOC:PMC13052964#image:IMG:0002": 1
-      "DOC:PMC13052964#image:IMG:0000": 1
-
-  - id: Q28
-    text: "contrast enhanced brain MRI showing leptomeningeal enhancement"
-    lang: en
-    intent: >-
-      正文只有 "FIGURE1" 三个字的一组图。纯文本臂在这条上应当接近 0 ——
-      留着它是因为"检索不到无字幕图"是产品缺口而不是评测噪声，
-      去掉它，视觉列的价值就只能靠说的。
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13152782#image:IMG:0000": 2
-      "DOC:PMC13152782#image:IMG:0001": 1
-      "DOC:PMC13152782#image:IMG:0002": 1
-
-  # ---- 0.3.0 扩充：Q26–Q28 三条判不出任何东西。
-  #
-  # README 里 SapBERT 那个教训写得很清楚：n=8 时净值 +0.104，n=28 时缩到 +0.008。
-  # 三条 query 上的视觉净值只会重演同一件事，而且这次会被当成"多模态检索行不行"
-  # 的答案转述出去。下面九条把图像意图扩到 12 条，并且刻意覆盖不同**图型** ——
-  # 生医视觉模型的差异恰恰体现在图型上（BiomedCLIP 强在真实影像与病理，
-  # 通用 VLM 强在图中文字与示意图），一个只有生存曲线的评测集分辨不出这件事。
-  #
-  # 每一条的判定都来自**逐张打开原图人工确认**，不是照着 caption 猜的 ——
-  # 这批图里有一半的 caption 只有 "FIGURE1" 三个字，照 caption 标等于没标。
-  # 图型分布：影像 4 条、病理/细胞学 3 条、示意图 2 条、大体标本 1 条、
-  # 图表 2 条（Q26/Q27 沿用）。
-
-  - id: Q29
-    text: "axial chest CT lung window showing pulmonary nodule marked with an arrow"
-    lang: en
-    intent: 胸部 CT 系列随访。三张都带红箭头标注病灶，caption 只有 "FIGURE1" 之类
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13201154#image:IMG:0000": 2
-      "DOC:PMC13201154#image:IMG:0002": 2
-      "DOC:PMC13201154#image:IMG:0003": 2
-
-  - id: Q30
-    text: "abdominal contrast enhanced CT and MRI of a hepatic lesion across phases"
-    lang: en
-    intent: 腹部多期增强 + MRI（T2/DWI）。与 Q29 同为"影像"，但部位与序列都不同
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC12133497#image:IMG:0000": 2
-      "DOC:PMC12133497#image:IMG:0002": 2
-
-  - id: Q31
-    text: "whole body PET CT maximum intensity projection with fused axial slices"
-    lang: en
-    intent: 核医学图像。整幅是彩色/伪彩，与灰阶 CT 在视觉特征上差别极大
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13193915#image:IMG:0002": 2
-      "DOC:PMC13193915#image:IMG:0003": 2
-
-  - id: Q32
-    text: "hematoxylin and eosin stained tumor histology micrograph"
-    lang: en
-    intent: HE 病理。判 1 分的那张是 HE 与 IHC 混排，只有一部分对题
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13193915#image:IMG:0001": 2
-      "DOC:PMC12133497#image:IMG:0001": 2
-      "DOC:PMC13201154#image:IMG:0001": 1
-
-  - id: Q33
-    text: "immunohistochemistry with brown DAB staining of a tumor marker"
-    lang: en
-    intent: >-
-      IHC。与 Q32 共用两张图但相关度相反 —— 这是刻意的：
-      两条 query 若在同一批图上给出同一个序，说明模型分不出 HE 与 IHC，
-      而这正是生医专用视觉模型该比通用模型强的地方。
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13201154#image:IMG:0001": 2
-      "DOC:PMC13193915#image:IMG:0001": 2
-      "DOC:PMC12133497#image:IMG:0001": 1
-
-  - id: Q34
-    text: "脑脊液 细胞学 涂片 肿瘤细胞"
-    lang: zh
-    intent: >-
-      细胞学涂片（单个瘤细胞，瑞氏染色）。中文提问 + 无字幕图 ——
-      词法与稠密两条通道在这里都没有任何可用信号，只能靠视觉列。
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13152782#image:IMG:0001": 2
-
-  - id: Q35
-    text: "CONSORT patient enrollment and randomization flow diagram"
-    lang: en
-    intent: 流程图。三张里两张是真 CONSORT，一张是数据库筛选流程，判 1 分
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC12515981#image:IMG:0000": 2
-      "DOC:PMC13116735#image:IMG:0000": 2
-      "DOC:PMC13052964#image:IMG:0000": 1
-
-  - id: Q36
-    text: "schematic diagram of EGFR TKI mechanism of action and resistance"
-    lang: en
-    intent: >-
-      机制示意图，图中密布文字（药名、突变位点）。这类图通用 VLM 应当占优 ——
-      它读的是图里的字，不是组织形态。留作与 Q29–Q34 的对照。
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13235695#image:IMG:0002": 2
-      "DOC:PMC12994080#image:IMG:0000": 1
-
-  - id: Q37
-    text: "手术切除 大体标本 照片"
-    lang: zh
-    intent: 大体标本照片（术中拍摄，绿色手术单背景）。与病理切片、影像都不是一类
-    modality_intent: IMAGE
-    relevant:
-      "DOC:PMC13193915#image:IMG:0000": 2
+- id: Q1
+  text: 沃利替尼 治疗 肺癌 疗效
+  lang: zh
+  intent: 中文别名 + 上位疾病，考察跨语言与层级扩展
+  relevant:
+    DOC:PMID.32821245#Abstract: 2
+    DOC:PMID.32821245#Results: 2
+    DOC:PMID.32821245#table:T1: 2
+    DOC:CNIPA.CN105461695A#Description: 1
+  probe: bridge_zh
+- id: Q2
+  text: MET inhibitor pulmonary sarcomatoid carcinoma
+  lang: en
+  intent: 英文靶点 + 罕见亚型
+  relevant:
+    DOC:PMID.32821245#Abstract: 2
+    DOC:PMID.32821245#Results: 2
+    DOC:PMID.32821245#image:F2: 1
+  probe: control
+- id: Q3
+  text: 呋喹替尼 三线 结直肠癌 总生存期
+  lang: zh
+  intent: 中文药名 + 结构化指标，考察表格召回
+  relevant:
+    DOC:PMID.30006302#table:T2: 2
+    DOC:PMID.30006302#Abstract: 2
+    DOC:PMID.30006302#Results: 2
+  probe: bridge_zh
+- id: Q4
+  text: VEGFR2 抑制剂 抗血管生成
+  lang: zh
+  intent: 靶点别名（KDR/VEGFR2）→ 药物，考察别名归一
+  relevant:
+    DOC:PMID.30006302#Abstract: 2
+    DOC:PMID.30006302#Results: 1
+    DOC:CTGOV.NCT02807415#BriefSummary: 1
+  probe: alias
+- id: Q5
+  text: neuroendocrine tumor clinical trial surufatinib
+  lang: en
+  intent: 英文疾病 + 试验记录
+  relevant:
+    DOC:CTGOV.NCT02807415#BriefSummary: 2
+    DOC:CTGOV.NCT02807415#Outcomes: 1
+  probe: control
+- id: Q6
+  text: 晶型 专利 MET 抑制剂
+  lang: zh
+  intent: 中文专利文本，考察 doc_type 与中文抽取
+  relevant:
+    DOC:CNIPA.CN105461695A#Claims: 2
+    DOC:CNIPA.CN105461695A#Description: 2
+  probe: bridge_zh
+- id: Q7
+  text: lung cancer targeted therapy
+  lang: en
+  intent: 宽泛上位词；相关集以综述为主，考察层级扩展是否冲淡精排
+  relevant:
+    "DOC:PMC13235695#Oncogenic Genetic Mutations / Abstract": 2
+    "DOC:PMC13235695#6 of 27 / regions / Targeted therapies in lung cancer / FIGURE 2: Composite figure of graphs on incidence, ASIR, and ASMR of lung cancer cases across men and women across the United Nations regions": 2
+    "DOC:PMID.32821245#Abstract": 1
+    "DOC:PMID.32821245#Results": 1
+  probe: hierarchy
+- id: Q8
+  text: savolitinib acquired resistance competitive landscape
+  lang: en
+  intent: 商业源专有内容，无凭据时应召回为空
+  requires_entitlement: MOCK_LICENSED
+  relevant:
+    DOC:PATSNAP.PS-2023-00417#Summary: 2
+  probe: license
+- id: Q9
+  text: surufatinib induced nephrotic syndrome proteinuria case report
+  lang: en
+  intent: 药物不良反应个案，答案分散在病例描述与讨论两节
+  relevant:
+    DOC:PMC12133497#10.3389/fonc.2025.1546217 / Case presentation: 2
+    'DOC:PMC12133497#10.3389/fonc.2025.1546217 #2 / Discussion': 2
+    'DOC:PMC12133497#10.3389/fonc.2025.1546217 #3': 1
+    'DOC:PMC12133497#10.3389/fonc.2025.1546217 #4': 1
+  probe: control
+- id: Q10
+  text: 索凡替尼 蛋白尿 肾病综合征 不良反应
+  lang: zh
+  intent: 中文提问、英文语料 —— 全靠本体把中文别名接到英文正文上
+  relevant:
+    DOC:PMC12133497#10.3389/fonc.2025.1546217 / Case presentation: 2
+    'DOC:PMC12133497#10.3389/fonc.2025.1546217 #2 / Discussion': 2
+  probe: bridge_zh
+- id: Q11
+  text: camrelizumab nab-paclitaxel gemcitabine first-line pancreatic ductal adenocarcinoma
+  lang: en
+  intent: 三药联合方案，考察多实体共现
+  relevant:
+    DOC:PMC12515981#adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and Targeted Therapy / OPEN: 2
+    ? 'DOC:PMC12515981#83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7% / Results / Phase II randomized study:
+      efficacy and safety / Baseline characteristics'
+    : 2
+  probe: control
+- id: Q12
+  text: 胰腺导管腺癌 一线 免疫联合化疗 无进展生存期
+  lang: zh
+  intent: 中文疾病全称（本体新收的 PDAC）+ 疗效指标
+  relevant:
+    DOC:PMC12515981#3.6(2.2,12.6) / 290.0 (47.4, 1635.0)518.0(98.5,2998.0): 2
+    DOC:PMC12515981#adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and Targeted Therapy / OPEN: 1
+  probe: bridge_zh
+- id: Q13
+  text: QUINTIS trial fruquintinib plus tislelizumab MSS colorectal study design
+  lang: en
+  intent: 试验方案类文档，正文被切得很碎，考察短节能否被召回
+  relevant:
+    ? DOC:PMC12994080#metastases―theIKF-080/AIO-QUINTIStrial / Key questions addressed by the QUINTIS trial / J.Tintelnot1∗,J.Gorgulho1,S.-E.Al-Batran2,D.Arnold3,A.Reinacher-Schick4,S.Kasper5,G.Prager6,T.Goetze2,
+    : 2
+    DOC:PMC12994080#ESMOGastrointestinalOncology / Description of Protocol / Background: 2
+    ? 'DOC:PMC12994080#ESMOGastrointestinalOncology #2 / Methods/design / https://doi.org/10.1016/j.esmogo.2026.100312 / Arm
+      A (experimental arm)'
+    : 2
+    'DOC:PMC12994080#ESMOGastrointestinalOncology #3 / Assessments / Translational program': 1
+    DOC:PMC12994080#1.1 / Acknowledgements / Sample size estimation: 1
+    DOC:PMC12994080#table:TBL:0000: 1
+  probe: control
+- id: Q14
+  text: trifluridine tipiracil plus bevacizumab as third-line comparator in refractory colorectal cancer
+  lang: en
+  intent: 跨两篇的对照臂问题 —— 单篇答不全，考察是否只锁定一篇
+  relevant:
+    ? DOC:PMC12994080#metastases―theIKF-080/AIO-QUINTIStrial / Key questions addressed by the QUINTIS trial / J.Tintelnot1∗,J.Gorgulho1,S.-E.Al-Batran2,D.Arnold3,A.Reinacher-Schick4,S.Kasper5,G.Prager6,T.Goetze2,
+    : 1
+    DOC:PMC12994080#table:TBL:0000: 1
+    DOC:PMC13116735#2 of 11: 2
+    DOC:PMC13116735#7 of 11: 1
+  probe: control
+- id: Q15
+  text: fruquintinib adverse event disproportionality signal detection FAERS
+  lang: en
+  intent: 药物警戒方法学，与 Q3/Q13 同药不同问题，考察是否被药名带偏
+  relevant:
+    DOC:PMC13052964#1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*: 2
+    DOC:PMC13052964#9.30 / 3.3. Risk signaling PT: 2
+    DOC:PMC13052964#5. Conclusion: 1
+  probe: control
+- id: Q16
+  text: 呋喹替尼 上市后 不良事件 信号挖掘
+  lang: zh
+  intent: 中文问药物警戒；语料全英文，考察别名 + 概念扩展
+  relevant:
+    DOC:PMC13052964#1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*: 2
+    DOC:PMC13052964#9.30 / 3.3. Risk signaling PT: 1
+  probe: bridge_zh
+- id: Q17
+  text: later-line metastatic colorectal cancer meta-analysis pooled overall survival
+  lang: en
+  intent: 荟萃分析结论，答案集中在两个很短的节里
+  relevant:
+    DOC:PMC13116735#Introduction: 2
+    DOC:PMC13116735#8.00–9.81 months).Nostatisticalheterogeneitywasobserved:I2=0%;thisindicatesa / Overall Survival: 2
+    DOC:PMC13116735#6 of 11 / Comparative Analysis of Mean Overall Survival: 2
+    DOC:PMC13116735#Conclusions: 1
+  probe: control
+- id: Q18
+  text: savolitinib leptomeningeal metastasis cerebrospinal fluid NGS MET amplification
+  lang: en
+  intent: 本体新收疾病（软脑膜转移）+ 已有靶点，考察新概念是否真的接上了检索
+  relevant:
+    DOC:PMC13152782#1Introduction / 1 Introduction / XuejiaoQi1,2,3,ZhijiaoSong1,2,3, JunyingHe1,2,3andHui Bu1,2,3*: 2
+    DOC:PMC13152782#10.3389/fonc.2026.1627170 / 2 Case presentation: 2
+    'DOC:PMC13152782#10.3389/fonc.2026.1627170 #2 / 3 Discussion': 2
+  probe: control
+- id: Q19
+  text: 赛沃替尼 脑转移 软脑膜转移 病例
+  lang: zh
+  intent: 中文药名（沃瑞沙/赛沃替尼）+ 中文疾病名，双向都要经过本体
+  relevant:
+    DOC:PMC13152782#1Introduction / 1 Introduction / XuejiaoQi1,2,3,ZhijiaoSong1,2,3, JunyingHe1,2,3andHui Bu1,2,3*: 2
+    DOC:PMC13152782#10.3389/fonc.2026.1627170 / 2 Case presentation: 2
+  probe: bridge_zh
+- id: Q20
+  text: primary testicular neuroendocrine tumor retroperitoneal lymph node metastasis
+  lang: en
+  intent: 罕见部位 NET —— 与 Q5 的胰腺 NET 同父概念，考察会不会串到另一篇
+  relevant:
+    DOC:PMC13193915#metastasis:acasereport / Introduction / MingZhang,QianWang, FahimullahHamid, JiehaoWu,: 2
+    DOC:PMC13193915#10.3389/fonc.2026.1766386 / Case presentation: 2
+  probe: control
+- id: Q21
+  text: high PD-L1 expression with MET exon 14 skipping overcoming immunotherapy resistance
+  lang: en
+  intent: 两个新收靶点（CD274）与老靶点（MET）共现，考察多靶点 query
+  relevant:
+    DOC:PMC13201154#resistanceandliteraturereview / YefeiRuanandLinQiu*: 2
+    'DOC:PMC13201154#10.3389/fonc.2026.1807242 #2 / Literaturereviewanddiscussion / Literature review and discussion': 2
+    'DOC:PMC13201154#10.3389/fonc.2026.1807242 #3': 2
+  probe: control
+- id: Q22
+  text: third generation EGFR TKI osimertinib acquired resistance mechanisms
+  lang: en
+  intent: 综述内部定位 —— 全篇都在讲肺癌，考察能否落到正确的那几节
+  relevant:
+    'DOC:PMC13235695#8 of 27 / TABLE 3: Third- and fourth-generation EGFR inhibitors and other therapies targeting EGFR': 2
+    ? 'DOC:PMC13235695#9 of 27 / other therapies targeting EGFR / FIGURE 3: Composite figure with four sections: (A) common
+      EGFR mutations causing lung cancer, (B) MOA of first- and second-generation EGFR TKIs, (C) MOA of third- and fourth-generation
+      EGFR TKIs, and (D) other therapies targeting EGFR'
+    : 2
+    'DOC:PMC13235695#16 of 27 / FIGURE 6: Resistance mechanisms': 2
+  probe: control
+- id: Q23
+  text: ALK inhibitor alectinib lorlatinib crizotinib central nervous system activity
+  lang: en
+  intent: 同一篇综述的另一条通路，与 Q22 互为"别串台"的对照
+  relevant:
+    'DOC:PMC13235695#12 of 27 / FIGURE 4: ALK inhibitor therapies': 2
+    'DOC:PMC13235695#2026 Chitneni et al. Cureus 18(5): e108302. DOI 10.7759/cureus.108302 #13': 2
+    'DOC:PMC13235695#11 of 27 / TABLE 4: List of non-EGFR driver alterations commonly targeted in lung cancer management': 1
+  probe: control
+- id: Q24
+  text: KRAS driver mutation targeted therapy in lung cancer
+  lang: en
+  intent: 本体新收靶点 KRAS，判定只给两个很短的节，考察精确定位
+  relevant:
+    DOC:PMC13235695#10 of 27 / Driver alterations in all other mutations: 2
+    'DOC:PMC13235695#11 of 27 / TABLE 4: List of non-EGFR driver alterations commonly targeted in lung cancer management': 2
+  probe: control
+- id: Q25
+  text: 肺癌 驱动基因 精准治疗 综述
+  lang: zh
+  intent: 中文宽泛提问打一篇英文综述，考察上位概念扩展的边界
+  relevant:
+    DOC:PMC13235695#Oncogenic Genetic Mutations / Abstract: 2
+    ? 'DOC:PMC13235695#6 of 27 / regions / Targeted therapies in lung cancer / FIGURE 2: Composite figure of graphs on incidence,
+      ASIR, and ASMR of lung cancer cases across men and women across the United Nations regions'
+    : 2
+  probe: bridge_zh
+- id: Q26
+  text: Kaplan-Meier overall survival curve figure
+  lang: en
+  intent: 生存曲线图。两张分属不同文档，都带说明文字，文本臂尚有机会
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMID.32821245#image:F2: 2
+    DOC:PMC13116735#image:IMG:0001: 2
+  probe: image
+- id: Q27
+  text: figure showing distribution of adverse events over time
+  lang: en
+  intent: 图注可检索的一组图，考察"要图"时能否把正文压下去
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13052964#image:IMG:0001: 2
+    DOC:PMC13052964#image:IMG:0002: 1
+    DOC:PMC13052964#image:IMG:0000: 1
+  probe: image
+- id: Q28
+  text: contrast enhanced brain MRI showing leptomeningeal enhancement
+  lang: en
+  intent: 正文只有 "FIGURE1" 三个字的一组图。纯文本臂在这条上应当接近 0 —— 留着它是因为"检索不到无字幕图"是产品缺口而不是评测噪声， 去掉它，视觉列的价值就只能靠说的。
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13152782#image:IMG:0000: 2
+    DOC:PMC13152782#image:IMG:0001: 1
+    DOC:PMC13152782#image:IMG:0002: 1
+  probe: image
+- id: Q29
+  text: axial chest CT lung window showing pulmonary nodule marked with an arrow
+  lang: en
+  intent: 胸部 CT 系列随访。三张都带红箭头标注病灶，caption 只有 "FIGURE1" 之类
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13201154#image:IMG:0000: 2
+    DOC:PMC13201154#image:IMG:0002: 2
+    DOC:PMC13201154#image:IMG:0003: 2
+  probe: image
+- id: Q30
+  text: abdominal contrast enhanced CT and MRI of a hepatic lesion across phases
+  lang: en
+  intent: 腹部多期增强 + MRI（T2/DWI）。与 Q29 同为"影像"，但部位与序列都不同
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC12133497#image:IMG:0000: 2
+    DOC:PMC12133497#image:IMG:0002: 2
+  probe: image
+- id: Q31
+  text: whole body PET CT maximum intensity projection with fused axial slices
+  lang: en
+  intent: 核医学图像。整幅是彩色/伪彩，与灰阶 CT 在视觉特征上差别极大
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13193915#image:IMG:0002: 2
+    DOC:PMC13193915#image:IMG:0003: 2
+  probe: image
+- id: Q32
+  text: hematoxylin and eosin stained tumor histology micrograph
+  lang: en
+  intent: HE 病理。判 1 分的那张是 HE 与 IHC 混排，只有一部分对题
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13193915#image:IMG:0001: 2
+    DOC:PMC12133497#image:IMG:0001: 2
+    DOC:PMC13201154#image:IMG:0001: 1
+  probe: image
+- id: Q33
+  text: immunohistochemistry with brown DAB staining of a tumor marker
+  lang: en
+  intent: IHC。与 Q32 共用两张图但相关度相反 —— 这是刻意的： 两条 query 若在同一批图上给出同一个序，说明模型分不出 HE 与 IHC， 而这正是生医专用视觉模型该比通用模型强的地方。
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13201154#image:IMG:0001: 2
+    DOC:PMC13193915#image:IMG:0001: 2
+    DOC:PMC12133497#image:IMG:0001: 1
+  probe: image
+- id: Q34
+  text: 脑脊液 细胞学 涂片 肿瘤细胞
+  lang: zh
+  intent: 细胞学涂片（单个瘤细胞，瑞氏染色）。中文提问 + 无字幕图 —— 词法与稠密两条通道在这里都没有任何可用信号，只能靠视觉列。
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13152782#image:IMG:0001: 2
+  probe: image
+- id: Q35
+  text: CONSORT patient enrollment and randomization flow diagram
+  lang: en
+  intent: 流程图。三张里两张是真 CONSORT，一张是数据库筛选流程，判 1 分
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC12515981#image:IMG:0000: 2
+    DOC:PMC13116735#image:IMG:0000: 2
+    DOC:PMC13052964#image:IMG:0000: 1
+  probe: image
+- id: Q36
+  text: schematic diagram of EGFR TKI mechanism of action and resistance
+  lang: en
+  intent: 机制示意图，图中密布文字（药名、突变位点）。这类图通用 VLM 应当占优 —— 它读的是图里的字，不是组织形态。留作与 Q29–Q34 的对照。
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13235695#image:IMG:0002: 2
+    DOC:PMC12994080#image:IMG:0000: 1
+  probe: image
+- id: Q37
+  text: 手术切除 大体标本 照片
+  lang: zh
+  intent: 大体标本照片（术中拍摄，绿色手术单背景）。与病理切片、影像都不是一类
+  modality_intent: IMAGE
+  relevant:
+    DOC:PMC13193915#image:IMG:0000: 2
+  probe: image

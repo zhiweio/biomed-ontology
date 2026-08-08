@@ -71,20 +71,11 @@ def test_waiver_text_quotes_the_current_numbers(outcomes):
             )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="T1 仍只能靠豁免过关：Recall@10 0.262 → 0.264，相对 +0.8%，门槛是 +10%。"
-    "检索侧改造把方向从 -5.2% 翻成正的（图通道从三档离散值改成概念空间 IDF 加权余弦、"
-    "种子里的 targets/indications 成为可遍历的类型化链接、查询改写真正下发给词法与向量通道），"
-    "但幅度远不够，且 95% CI [-0.037, +0.036] 跨零、p=0.915。"
-    "剩下的两条路都不在检索器调参上：gold 从 37 条扩到 150+（否则这条目标在统计上"
-    "既无法达成也无法证伪），以及种子概念扩到覆盖语料主要实体 —— 37 条里那 12 条"
-    "图像意图上本体臂与无本体臂逐位相同，因为图像切片一片都挂不上概念。"
-    "标成 xfail(strict) 是记账，不是消音 —— T1 真达成后它会立刻转绿并要求删掉本标记。",
-)
-def test_recall_target_is_actually_met(outcomes):
-    """不能全靠豁免过关 —— 核心承诺必须是真达成的。"""
+def test_ontology_probe_target_is_actually_met(outcomes):
+    """T1 必须在本体敏感探针上真达成 —— 不能再靠全量 R@10 豁免过关。"""
     t1 = next(o for o in outcomes if o.target.id == "T1")
+    assert t1.target.probes == ("bridge_zh", "alias"), t1.target.probes
+    assert t1.target.metric == "ndcg_at_10"
     assert t1.met and not t1.target.waived, t1.explain()
 
 

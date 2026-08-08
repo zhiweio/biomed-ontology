@@ -20,8 +20,12 @@ def test_security_sensitive_defaults_are_closed():
     s = load_settings({})
     assert s.trust_entitlement_header is False
     assert s.layout_fallback is False
-    # milvus 默认不触发「非 milvus」告警
-    assert s.warnings() == []
+    # PoC 默认可试用 pending 组件，但必须留下告警；生产显式关。
+    assert s.accept_uncleared_components is True
+    assert any("法务闸门" in w for w in s.warnings())
+    # 关掉 accept 后，milvus 默认本身不应再触发其它告警
+    closed = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "false"})
+    assert closed.warnings() == []
 
 
 def test_local_search_backend_emits_milvus_warning():
@@ -53,7 +57,12 @@ def test_cloud_mineru_warns_about_corpus_leaving_the_network():
 
 def test_self_hosted_mineru_does_not_warn_about_network():
     s = load_settings(
-        {"HMD_LAYOUT_BACKEND": "mineru", "HMD_MINERU_BASE_URL": "http://localhost:8000"}
+        {
+            "HMD_LAYOUT_BACKEND": "mineru",
+            "HMD_MINERU_BASE_URL": "http://localhost:8000",
+            # PoC 默认 accept=true 会有法务告警；这里只测"自托管不出网"。
+            "HMD_ACCEPT_UNCLEARED_COMPONENTS": "false",
+        }
     )
     assert not s.mineru_is_cloud
     assert s.warnings() == []

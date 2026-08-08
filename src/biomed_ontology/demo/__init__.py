@@ -21,7 +21,14 @@ from biomed_ontology.pipeline import KnowledgeBase
 from biomed_ontology.quality import QualityGate
 from biomed_ontology.tools import ToolApi
 
-__all__ = ["DEMOS", "DemoResult", "run_all", "run_demo"]
+__all__ = [
+    "DEMOS",
+    "DemoResult",
+    "render_demo_results",
+    "render_demo_results_compact",
+    "run_all",
+    "run_demo",
+]
 
 _LICENSED = frozenset({"MOCK_LICENSED"})
 
@@ -398,9 +405,27 @@ def run_all(kb: KnowledgeBase, api: ToolApi | None = None) -> list[DemoResult]:
 def summary_json(results: list[DemoResult]) -> str:
     return json.dumps(
         [
-            {"demo_id": r.demo_id, "title": r.title, "passed": r.passed, "lines": r.lines}
+            {
+                "demo_id": r.demo_id,
+                "title": r.title,
+                "claim": r.claim,
+                "passed": r.passed,
+                "lines": r.lines,
+            }
             for r in results
         ],
         ensure_ascii=False,
         indent=2,
     )
+
+
+def render_demo_results(results: list[DemoResult], **kwargs):
+    from biomed_ontology.demo.render import render_demo_results as _render
+
+    return _render(results, **kwargs)
+
+
+def render_demo_results_compact(results: list[DemoResult], **kwargs):
+    from biomed_ontology.demo.render import render_demo_results_compact as _render
+
+    return _render(results, **kwargs)

@@ -29,7 +29,9 @@ assert_component_cleared(id):
   pending → LicenseViolation
 ```
 
-`HMD_ACCEPT_UNCLEARED_COMPONENTS=true` 允许本地试用，**不允许**无声带进生产。
+PoC 默认 `accept_uncleared_components=true`（`hmd eval` / `hmd index` 可直接跑），
+启动时 `warnings()` 留痕。生产务必 `HMD_ACCEPT_UNCLEARED_COMPONENTS=false`，
+**不允许**无声带进生产。
 
 调用点示例：PyMuPDF 渲染路径、MinerU 客户端、BiomedCLIP 嵌入/图型。
 

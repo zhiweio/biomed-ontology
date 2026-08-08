@@ -41,6 +41,9 @@
 ## 如何验证
 
 ```bash
-uv run pytest tests/test_tools.py tests/test_service.py -q
+uv run pytest tests/test_tools.py tests/test_service.py tests/test_eval_demo.py -q
+uv run hmd demo              # Rich：Trace + 分场景面板（对齐 foundation golden）
+uv run hmd demo --compact    # 仅 Trace
+uv run hmd demo --json       # 机器可读
 uv run hmd serve --mcp
 ```

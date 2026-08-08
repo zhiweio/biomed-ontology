@@ -15,9 +15,12 @@ from biomed_ontology.parse.layout import LayoutBlock, LayoutResult, get_layout_b
 
 
 def test_enabling_a_backend_requires_legal_clearance():
-    """默认后端 PyMuPDF 的 AGPL 义务同样未结论，闸门对它一视同仁。"""
+    """默认后端 PyMuPDF 的 AGPL 义务同样未结论，闸门对它一视同仁。
+
+    PoC 默认 accept_uncleared=true；这条测的是显式关闭后闸门仍生效。
+    """
     with pytest.raises(LicenseViolation, match="尚未经法务结论"):
-        get_layout_backend(config=load_settings({}))
+        get_layout_backend(config=load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "false"}))
 
 
 def test_explicit_acknowledgement_reaches_the_implementation():

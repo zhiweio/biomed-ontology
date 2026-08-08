@@ -309,9 +309,21 @@ def _milvus_backend(embedder: str, collection: str | None):
 @app.command("demo")
 def demo_cmd(
     demo_id: str | None = typer.Option(None, "--id", help="只跑某个场景，如 D3"),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
+    compact: bool = typer.Option(False, "--compact", help="仅 Trace 摘要，不展开详情"),
 ) -> None:
-    """跑演示场景。"""
-    from biomed_ontology.demo import DEMOS, run_all, run_demo
+    """基座能力验收场景（自带可证伪断言）。
+
+    默认用 Rich 分步展示（对齐 `hmd foundation golden`）；
+    `--json` 给脚本，`--compact` 只要 Trace 摘要。
+    """
+    from biomed_ontology.demo import (
+        DEMOS,
+        render_demo_results,
+        run_all,
+        run_demo,
+        summary_json,
+    )
     from biomed_ontology.pipeline import build_knowledge_base
     from biomed_ontology.tools import ToolApi
 
@@ -323,12 +335,16 @@ def demo_cmd(
         results = [run_demo(demo_id, kb, ToolApi.from_kb(kb))]
     else:
         results = run_all(kb)
-    for r in results:
-        console.print(r.render())
-        console.print()
+
     passed = sum(r.passed for r in results)
-    console.print(f"通过 {passed}/{len(results)}")
-    raise typer.Exit(0 if passed == len(results) else 1)
+    ok = passed == len(results)
+
+    if json_out:
+        console.print_json(summary_json(results))
+        raise typer.Exit(0 if ok else 1)
+
+    render_demo_results(results, console=console, verbose=not compact)
+    raise typer.Exit(0 if ok else 1)
 
 
 @app.command("signals")

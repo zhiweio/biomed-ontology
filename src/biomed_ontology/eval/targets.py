@@ -40,6 +40,9 @@ class MetricTarget:
     threshold: float
     baseline_arm: str | None = None
     lang: str | None = None
+    # 探针过滤：只在这些 probe 的并集上读数（微平均）。
+    # 数据底座主 KPI 用 bridge_zh+alias，不再用被图像/对照稀释的全量平均。
+    probes: tuple[str, ...] | None = None
     rationale: str = ""
     waiver: str = ""
     waiver_owner: str = ""
@@ -74,9 +77,14 @@ class TargetOutcome:
             return f"{self.target.id} 未运行：{self.target.arm} 臂不可用"
         verdict = "达成" if self.met else ("未达成（已豁免）" if self.waived else "未达成")
         base = f"（基线 {self.baseline:.3f}）" if self.baseline is not None else ""
+        scope = ""
+        if self.target.probes:
+            scope = "@" + "+".join(self.target.probes)
+        elif self.target.lang:
+            scope = "@" + self.target.lang
         return (
             f"{self.target.id} {verdict}｜{self.target.arm}.{self.target.metric}"
-            f"{'@' + self.target.lang if self.target.lang else ''} = {self.actual:.3f}{base}"
+            f"{scope} = {self.actual:.3f}{base}"
             f"｜{self.target.comparison} 阈值 {self.target.threshold:+.3f}"
             f"｜实测 {self.observed:+.3f}"
         )
@@ -90,7 +98,23 @@ def load_targets(path: Path | None = None) -> list[MetricTarget]:
         comparison = item["comparison"]
         if comparison not in _COMPARISONS:
             raise ValueError(f"未知比较方式 {comparison!r}，可选：{sorted(_COMPARISONS)}")
-        targets.append(MetricTarget(**item))
+        probes = item.get("probes")
+        targets.append(
+            MetricTarget(
+                id=item["id"],
+                metric=item["metric"],
+                arm=item["arm"],
+                comparison=comparison,
+                threshold=float(item["threshold"]),
+                baseline_arm=item.get("baseline_arm"),
+                lang=item.get("lang"),
+                probes=tuple(probes) if probes else None,
+                rationale=item.get("rationale") or "",
+                waiver=item.get("waiver") or "",
+                waiver_owner=item.get("waiver_owner") or "",
+                waiver_review_by=item.get("waiver_review_by") or "",
+            )
+        )
     return targets
 
 
@@ -105,9 +129,9 @@ def check_targets(
             outcomes.append(TargetOutcome(target, 0.0, None, 0.0, met=False, unavailable=True))
             continue
 
-        actual = _read(ev, target.arm, target.metric, target.lang)
+        actual = _read(ev, target.arm, target.metric, target.lang, target.probes)
         baseline = (
-            _read(ev, target.baseline_arm, target.metric, target.lang)
+            _read(ev, target.baseline_arm, target.metric, target.lang, target.probes)
             if target.baseline_arm
             else None
         )
@@ -116,13 +140,14 @@ def check_targets(
     return outcomes
 
 
-def _read(ev: RetrievalEval, arm: str, metric: str, lang: str | None) -> float:
-    result = ev.arms[arm]
-    if lang is not None:
-        sub = result.by_lang.get(lang)
-        if sub is None:
-            return 0.0
-        result = sub
+def _read(
+    ev: RetrievalEval,
+    arm: str,
+    metric: str,
+    lang: str | None,
+    probes: tuple[str, ...] | None,
+) -> float:
+    result = ev._result(arm, lang, probes=probes)
     return float(getattr(result, metric))
 
 

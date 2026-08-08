@@ -20,7 +20,9 @@
 uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --extra service
 
 uv run hmd kb        # 构建知识库：看 stats + warnings
-uv run hmd demo      # 8 个演示场景（自带断言，不是打印）
+uv run hmd demo              # 8 个演示场景（Rich + 可证伪断言）
+uv run hmd demo --compact    # 仅 Trace 摘要
+uv run hmd demo --id D7      # 单场景
 task milvus:up
 uv run hmd index --recreate                    # 默认 multimodal-bio
 uv run hmd eval --entitlements MOCK_LICENSED   # 默认精排开
@@ -66,7 +68,7 @@ uv run hmd eval --entitlements MOCK_LICENSED
 | Milvus 臂「未运行」 | 容器没起或集合不存在 | 期待静默回落到本地 |
 | `fake` 被拒绝 | 报告口径必须用真模型 | 验证接线时请显式 `--allow-fake` |
 | 建表「最多 4 向量列」 | Milvus 默认上限 | 配 `PROXY_MAXVECTORFIELDNUM`（见 docker compose） |
-| `LicenseViolation` 组件 | pending 未 accept | 本地设 `HMD_ACCEPT_UNCLEARED_COMPONENTS=true` |
+| `LicenseViolation` 组件 | pending 且显式 `accept=false` | PoC 默认已放行；生产保持 `HMD_ACCEPT_UNCLEARED_COMPONENTS=false` |
 | BIOS 全量被拒 | 未设 `HMD_BIOS_LICENSE_ACK` | 跳过闸门硬灌；应 ACK 或用 `HMD_BIOS_INIT=subset` |
 | GraphDB 起不来 / `/rest/repositories` 404 | `docker/secrets/graphdb.license` 被 Docker 建成空目录，或 SE/EE license 不可读 | GraphDB 10 Free **不需要** license；删掉空目录后重启。SE/EE 才挂真实 license 文件 |
 | eval 直接拒绝出数 | gold 键 dangling | 用 `scripts/dump_sections.py` 对照 |

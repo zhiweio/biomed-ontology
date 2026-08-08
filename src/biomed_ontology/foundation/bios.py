@@ -182,6 +182,10 @@ def _bios_batch_size(cfg: Settings | None = None) -> int:
     return max(50, (cfg or settings).bios_batch_size)
 
 
+# 全量 BIOS ~2.2e7；图中已超过此阈值则视为已灌过（防 marker 被 subset 冲掉后误重灌）
+_FULL_GRAPH_MIN_CONCEPTS = 1_000_000
+
+
 def read_bios_init_marker(cache_dir: Path | None = None) -> dict[str, Any] | None:
     """读取 ``data/cache/bios_v3/.initialized``；不存在或损坏则返回 None。"""
     marker = (cache_dir or DEFAULT_CACHE) / INIT_MARKER
@@ -194,8 +198,61 @@ def read_bios_init_marker(cache_dir: Path | None = None) -> dict[str, Any] | Non
     return data if isinstance(data, dict) else None
 
 
-def _graph_has_bios_concepts(client: GraphDbClient) -> bool:
-    """GraphDB biomedical 图是否已有 BIOS Concept（体积探测，非全量 COUNT）。"""
+def _marker_is_full(marker: dict[str, Any]) -> bool:
+    source = str(marker.get("source") or "")
+    if source == "subset" or source.startswith("subset"):
+        return False
+    return "full" in source or int(marker.get("concepts") or 0) >= _FULL_GRAPH_MIN_CONCEPTS
+
+
+def _marker_rank(marker: dict[str, Any]) -> tuple[int, int]:
+    """越大表示越“完整”，用于防止 subset 覆盖全量 marker。"""
+    return (1 if _marker_is_full(marker) else 0, int(marker.get("concepts") or 0))
+
+
+def _write_init_marker(
+    cache: Path,
+    meta: dict[str, Any],
+    *,
+    force: bool = False,
+) -> None:
+    cache.mkdir(parents=True, exist_ok=True)
+    marker_path = cache / INIT_MARKER
+    existing = read_bios_init_marker(cache)
+    if existing and not force and _marker_rank(existing) > _marker_rank(meta):
+        print(
+            "[bios] keep stronger init marker "
+            f"(existing concepts={existing.get('concepts')} source={existing.get('source')}; "
+            f"not overwriting with concepts={meta.get('concepts')} source={meta.get('source')})",
+            flush=True,
+        )
+        return
+    marker_path.write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _graph_bios_concept_count(client: GraphDbClient) -> int | None:
+    """COUNT biomedical skos:Concept；失败返回 None（勿当成 0）。"""
+    sparql = f"""
+SELECT (COUNT(*) AS ?n) WHERE {{
+  GRAPH <{GRAPH_BIOMEDICAL}> {{
+    ?s a <http://www.w3.org/2004/02/skos/core#Concept> .
+  }}
+}}
+"""
+    try:
+        rows = client.query(sparql)
+        if not rows:
+            return 0
+        return int(float(rows[0].get("n") or 0))
+    except Exception:
+        return None
+
+
+def _graph_has_bios_concepts(client: GraphDbClient) -> bool | None:
+    """GraphDB biomedical 图是否已有 BIOS Concept。None=探测失败。"""
     sparql = f"""
 ASK {{
   GRAPH <{GRAPH_BIOMEDICAL}> {{
@@ -213,17 +270,29 @@ ASK {{
             r.raise_for_status()
             return bool(r.json().get("boolean"))
     except Exception:
-        return False
+        return None
 
 
 def _bios_load_satisfied(
     *,
     full: bool,
-    marker: dict[str, Any],
+    marker: dict[str, Any] | None,
     max_concepts: int,
     graph_ready: bool | None,
+    graph_count: int | None = None,
 ) -> bool:
-    """marker +（可选）GraphDB 是否已满足当前初始化意图。"""
+    """marker / GraphDB 是否已满足当前初始化意图。"""
+    # GraphDB 已有近全量 → 即使 marker 被 subset 冲掉也跳过，并可由调用方修复 marker
+    if (
+        full
+        and graph_count is not None
+        and graph_count >= _FULL_GRAPH_MIN_CONCEPTS
+        and (max_concepts == 0 or graph_count >= max_concepts)
+    ):
+        return True
+
+    if not marker:
+        return False
     concepts = int(marker.get("concepts") or 0)
     if concepts < 10:
         return False
@@ -241,7 +310,7 @@ def _bios_load_satisfied(
             return False
         if max_concepts > 0 and 0 < done_max_i < max_concepts:
             return False
-    # GraphDB 不可达时仅信 marker（避免 foundation:up 因探测失败反复重灌）
+    # graph_ready False=确认空库需重灌；None=探测失败时信 marker
     return graph_ready is not False
 
 
@@ -457,32 +526,70 @@ def initialize_bios(
 
     if not force:
         marker = read_bios_init_marker(cache)
-        if marker is not None:
-            graph_ready: bool | None = None
-            if client.health():
+        graph_ready: bool | None = None
+        graph_count: int | None = None
+        if client.health():
+            # 先 COUNT：可识别「marker 被 subset 冲掉但库里仍是全量」
+            graph_count = _graph_bios_concept_count(client)
+            if graph_count is None:
                 graph_ready = _graph_has_bios_concepts(client)
-            if _bios_load_satisfied(
-                full=full,
-                marker=marker,
-                max_concepts=max_concepts,
-                graph_ready=graph_ready,
+            else:
+                graph_ready = graph_count > 0
+        if _bios_load_satisfied(
+            full=full,
+            marker=marker,
+            max_concepts=max_concepts,
+            graph_ready=graph_ready,
+            graph_count=graph_count,
+        ):
+            marker_concepts = int((marker or {}).get("concepts") or 0)
+            concepts_out = (
+                int(graph_count)
+                if graph_count is not None and graph_count > marker_concepts
+                else marker_concepts
+            )
+            source_out = str((marker or {}).get("source") or "graphdb_cached")
+            # 修复被 subset 冲掉的 marker，避免下次再误重灌
+            if (
+                full
+                and graph_count is not None
+                and graph_count >= _FULL_GRAPH_MIN_CONCEPTS
+                and (marker is None or not _marker_is_full(marker))
             ):
-                print(
-                    "[bios] already initialized — skip load "
-                    f"(concepts={marker.get('concepts')}, source={marker.get('source')}; "
-                    "pass force=True / --force to reload)",
-                    flush=True,
+                _write_init_marker(
+                    cache,
+                    {
+                        "source": "full_download_concepts_tsv",
+                        "concepts": graph_count,
+                        "max_concepts": max_concepts,
+                        "license": BIOS_LICENSE,
+                        "repaired_from": (marker or {}).get("source"),
+                    },
+                    force=True,
                 )
-                return {
-                    "source": marker.get("source", "cached"),
-                    "concepts": int(marker.get("concepts") or 0),
-                    "index": str(idx_path),
-                    "graph_loaded": int(marker.get("concepts") or 0)
-                    if graph_ready is not False
-                    else 0,
-                    "cache": str(cache),
-                    "skipped": True,
-                }
+                source_out = "full_download_concepts_tsv"
+            print(
+                "[bios] already initialized — skip load "
+                f"(marker_concepts={(marker or {}).get('concepts')}, "
+                f"graph_count={graph_count}, source={source_out}; "
+                "pass force=True / --force to reload)",
+                flush=True,
+            )
+            return {
+                "source": source_out,
+                "concepts": concepts_out,
+                "index": str(idx_path),
+                "graph_loaded": concepts_out if graph_ready is not False else 0,
+                "cache": str(cache),
+                "skipped": True,
+            }
+        if marker is not None:
+            print(
+                "[bios] init marker present but not sufficient — reload "
+                f"(source={marker.get('source')}, concepts={marker.get('concepts')}, "
+                f"graph_count={graph_count})",
+                flush=True,
+            )
 
     # 真正灌库前再校验 ACK（跳过路径不要求）
     if full:
@@ -546,21 +653,15 @@ def initialize_bios(
             loaded += 1
         source += "+graphdb_skipped"
 
-    marker = cache / INIT_MARKER
-    cache.mkdir(parents=True, exist_ok=True)
-    marker.write_text(
-        json.dumps(
-            {
-                "source": source,
-                "concepts": loaded,
-                "max_concepts": max_concepts,
-                "license": BIOS_LICENSE,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
+    _write_init_marker(
+        cache,
+        {
+            "source": source,
+            "concepts": loaded,
+            "max_concepts": max_concepts,
+            "license": BIOS_LICENSE,
+        },
+        force=force,
     )
     return {
         "source": source,
