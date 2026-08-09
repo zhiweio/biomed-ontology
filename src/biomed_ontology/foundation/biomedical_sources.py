@@ -57,12 +57,7 @@ def load_biomedical_source(
             f"已注册: {sorted(SOURCE_REGISTRY)}（UMLS 子集后续按需 register_source）"
         )
     if source_id == "bios_v3":
-        from biomed_ontology.foundation import bios as bios_mod
-
-        # 兼容既有 initialize_bios / load 路径
-        if hasattr(bios_mod, "initialize_bios"):
-            return {"source_id": source_id, "result": "use hmd foundation bios-load", **kwargs}
-        return {"source_id": source_id, "ok": True}
+        return {"source_id": source_id, "result": "use hmd foundation bios-load", **kwargs}
     loader = _LOADERS.get(source_id)
     if loader is None:
         raise NotImplementedError(

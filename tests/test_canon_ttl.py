@@ -1,11 +1,7 @@
-"""生成物的规范化序列化。
+"""生成物 TTL 的规范化序列化。
 
-`task gen` 曾经每跑一次就产生几千行 diff（上一次实测 6341 增 = 6341 删），
-内容一字未改，全是 rdflib 给空白节点重新编号导致的重排。
-
-这不只是难看：真实的 schema 变更会被淹没在噪声里，review 形同虚设；
-而且工作区永远是脏的，久了大家就习惯性 `git checkout -- schema/generated`，
-连带真变更一起丢。所以规范化必须有测试守着，不能靠"当时跑通了"。
+rdflib 默认会重编空白节点标签，导致 `task gen` 在内容未变时产生巨量噪声 diff。
+规范化后序列化须稳定，真实 schema 变更才可审查。
 """
 
 from __future__ import annotations

@@ -53,9 +53,8 @@ def open_dual_surface(
     milvus_backend: Any | None = None,
     neighborhood: Any | None = None,
     searcher: Any | None = None,
-    prefer_milvus: bool = True,
 ) -> DualSurface:
-    """装配双面 API。
+    """装配双面 API（ToolApi + FoundationApi）；文献检索要求 Milvus。
 
     Parameters
     ----------
@@ -63,10 +62,7 @@ def open_dual_surface(
         测试夹具可注入已装好的文献 KB。
     milvus_backend / neighborhood / searcher:
         显式注入（``hmd eval`` / 单测）；未注入时要求本机 Milvus 集合已建好。
-    prefer_milvus:
-        保留兼容旧调用；产品路径始终要求 Milvus，不再回落内存词法。
     """
-    del prefer_milvus  # 兼容形参；行为固定为 Milvus-only
     from biomed_ontology.foundation.api import FoundationApi
     from biomed_ontology.foundation.world import load_world_model
     from biomed_ontology.tools import ToolApi
@@ -99,7 +95,7 @@ def open_dual_surface(
 
 
 def _require_milvus_literature_backend(kb: Any) -> Any:
-    """集合已存在且可达时返回 MilvusBackend，否则硬失败（禁内存词法回落）。"""
+    """集合已存在且可达时返回 MilvusBackend，否则硬失败。"""
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
     from biomed_ontology.search.backends.milvus import MilvusBackend

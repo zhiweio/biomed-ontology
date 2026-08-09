@@ -44,7 +44,7 @@ __all__ = [
     "load_seed_file",
 ]
 
-# seed_key → HMD:ENT:*（身份权威；不再铸造 HMD:SUB|TGT|DIS）
+# seed_key → HMD:ENT:*（enterprise 模式身份权威）
 _ENT_SEGMENTS: dict[EntityTypeEnum, str] = {
     EntityTypeEnum.SUBSTANCE: "DC",
     EntityTypeEnum.TARGET: "TGT",
@@ -205,9 +205,7 @@ class BuiltConcept:
     parents: list[str] = field(default_factory=list)
     license_tier: LicenseTierEnum = LicenseTierEnum.TIER_0
     review_status: ReviewStatusEnum = ReviewStatusEnum.PENDING
-    # 类型化链接（药→靶点、药→适应症）。种子里一直写着这些关系，
-    # 但此前只有 parents 会被 copy 过来，它们在 ingest 阶段被静默丢掉，
-    # 于是「本体」在检索期实际只剩一条 skos:broader 可走。
+    # 类型化链接（药→靶点、药→适应症等），与 parents 一并进入 BuiltConcept。
     links: list[ConceptLink] = field(default_factory=list)
 
 

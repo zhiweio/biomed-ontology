@@ -1,4 +1,4 @@
-"""检索单测替身：Seed 邻域 + stub 后端（符号名不得为 LocalBackend/Bm25Index）。"""
+"""检索单测替身：Seed 邻域 + stub SearchBackend。"""
 
 from __future__ import annotations
 

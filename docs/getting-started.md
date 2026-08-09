@@ -1,93 +1,144 @@
 # 快速开始
 
-本页是检查清单与「第一天会踩的坑」。完整命令与实测数字见仓库 [README](https://github.com/zhiweio/biomed-ontology/blob/main/README.md)。构建入口是 **Taskfile**（`task …`）。
+本页是**第一天操作清单**与常见踩坑索引。完整命令说明、环境变量与实测数字见仓库 [README](https://github.com/zhiweio/biomed-ontology/blob/main/README.md)。构建入口统一为 **Taskfile**（`task …`）。
 
-## 你在搭什么
+---
 
-不是 chatbot，也不是「加了别名的检索引擎」。你在搭：
+## 1. 为什么存在
 
-1. **Enterprise World Model**：`HMD:ENT:*` + GraphDB / Evidence Index / OpenMetadata  
-2. **Ontology Semantic Layer**：术语与身份、层级、类型化关系、事实、证据、Citationware、许可与演进  
-3. **Semantic Access**：单一 `hmd serve`（MCP/REST）把上述能力交给仓外 Agent  
+本仓库不是 chatbot，也不是「加了别名的检索引擎」。你在搭的是三层能力：
 
-跑通下面闭环，再读机制章。
+| 层 | 一句话 | 主键 / 锚点 |
+|---|---|---|
+| **Enterprise World Model** | 企业研发世界的可查询语义图 | `HMD:ENT:*` |
+| **Ontology Semantic Layer** | 术语、层级、类型化关系、事实、证据、许可与演进 | 目录 `BuiltConcept` + GraphDB 边 |
+| **Semantic Access** | 单一 `hmd serve`（MCP/REST）把上述能力交给仓外 Agent | `ToolApi` + `FoundationApi` |
 
-## 最小闭环（语义层 + 检索）
+跑通下面两条闭环，再深入机制章。机制细节见 [分层架构](architecture/layers.md)、[Foundation](architecture/foundation.md)。
+
+---
+
+## 2. 设计取舍
+
+| 取舍 | 选择 | 代价 |
+|---|---|---|
+| 运行时入口 | `runtime.open_dual_surface()` 统一装配 | 离线 `hmd kb` 与在线 `serve` 必须走同一套文献构建逻辑 |
+| 身份权威 | `ontology/catalog/` + `HMD:ENT:*`（`enterprise_id_for`） | 不再以 `data/seed/` 或 `HMD:SUB` 铸造为主路径 |
+| 文献检索后端 | Milvus 必选，禁止内存词法回落 | 本地必须先 `task milvus:up` + `hmd index` |
+| 图通道边权威 | GraphDB + `ensure_catalog_graphs` | 含 GRAPH 臂的评测/服务需要 GraphDB 可达 |
+| 评测口径 | 失败标「未运行」，不静默冒充成功臂 | Milvus/精排不可达时整臂拒绝出数 |
+
+---
+
+## 3. 设计与实现
+
+### 3.1 最小闭环（语义层 + 检索）
 
 ```bash
 uv sync --extra docs --extra dev
 
-uv run hmd kb        # 构建知识库：看 stats + warnings
+uv run hmd kb        # 构建文献 KB：stats + warnings
 uv run hmd demo              # 8 个演示场景（Rich + 可证伪断言）
 uv run hmd demo --compact    # 仅 Trace 摘要
 uv run hmd demo --id D7      # 单场景
 task milvus:up
 uv run hmd index --recreate                    # 默认 multimodal-bio
 uv run hmd eval --entitlements MOCK_LICENSED   # Rich：归一化+检索+targets
-uv run hmd eval --entitlements MOCK_LICENSED --compact  # 仅 Trace
+uv run hmd eval --entitlements MOCK_LICENSED --compact
 uv run hmd serve --port 8000
 task check           # ruff + 全量测试
 ```
 
-`hmd kb` 仍构建过渡文献 KB（corpus + 本地检索）。身份权威已迁到
-[`ontology/`](../ontology/README.md)（entities / dictionary / claims）+ ER，
-[`data/seed/`](../data/seed/DEPRECATED.md) 已退役，勿再当 CURIE SSOT。
+**调用链（文献面）：**
 
-`hmd demo` / `eval` / `serve` 经 `open_dual_surface()`：文献 ToolApi + Foundation WM。
+```text
+hmd kb / demo / eval / serve
+    → runtime.open_dual_surface()
+        → pipeline.build_literature_base()     # ENT 目录 + corpus
+        → search.HybridSearcher                # Milvus + GraphDbNeighborhood
+        → tools.ToolApi.from_backends()
+        → foundation.FoundationApi             # World Model Semantic Ops
+```
 
-KB 图投影（`GraphStore`）后端为 GraphDB：`hmd gate` / `build_literature_base(with_graph=True)` 需 `task foundation:up`。默认构建不灌命名图；`rdflib` / `pyshacl` 已在默认依赖中（SHACL 与导出辅助）。
+- `build_literature_base`：读 `ontology/catalog/*.yaml`（缺失时仅单测回落 `data/seed/`），默认 `id_mode=enterprise`，身份为确定性 `HMD:ENT:*`。
+- `hmd demo` / `eval` / `serve` 经 `open_dual_surface()`，不再各自装配第二套库。
+- KB 图投影（`GraphStore`）后端为 GraphDB；`with_graph=True` 或含 GRAPH 通道时需 `task foundation:up`。默认构建 `with_graph=False`。
 
-## Foundation 世界模型闭环
-
-手册：[Foundation 架构](architecture/foundation.md)。
+### 3.2 Foundation 世界模型闭环
 
 ```bash
-# 需 docker/secrets/graphdb.license；BIOS 全量需 ACK
-export HMD_BIOS_LICENSE_ACK=poc
-# CI / 无许可证：export HMD_BIOS_INIT=subset
+export HMD_BIOS_LICENSE_ACK=poc   # 全量 BIOS；CI 用 export HMD_BIOS_INIT=subset
 
 task foundation:up
 uv run hmd foundation resolve "HMPL-504"
-uv run hmd foundation golden --candidate HMPL-504   # WM + 文献 search/restore
+uv run hmd foundation golden --candidate HMPL-504
 uv run hmd foundation evolve-mine
 uv run hmd serve --mcp
 ```
 
-金路径：`DrugCandidate → Target → Disease → Evidence → ELN Asset`（+ 文献腿）。
+**调用链（Foundation 面）：**
 
-## Milvus（Evidence Index，必选）
-
-```bash
-task milvus:up
-uv run hmd index --recreate
-uv run hmd eval --entitlements MOCK_LICENSED
+```text
+hmd foundation *
+    → foundation.world.load_world_model()
+    → foundation.resolve.EntityResolver
+    → foundation.api.FoundationApi
+    → foundation.sync.sync_world_model()   # YAML → GraphDB + Milvus + OM
 ```
 
-- 默认 embedder = **multimodal-bio**（五列最全），无需再选  
-- 权重解析：本地 → `HMD_MODEL_HUB` → Gitee 兜底。见 [嵌入器](retrieval/embedders.md)
+金路径：`DrugCandidate → Target → Disease → Evidence → ELN Asset`（+ 文献检索腿）。详见 [Golden Path](ontology/golden-path.md)。
 
-## 验收时你会碰到的纪律
+### 3.3 关键目录
 
-| 现象 | 原因 | 不要做的事 |
+| 路径 | 职责 |
+|---|---|
+| `ontology/catalog/` | 文献/检索 ENT 目录 SSOT（`substances.yaml` 等） |
+| `ontology/entities/` | 金路径企业实体策展 |
+| `ontology/dictionary/` | ER 企业词典 |
+| `data/corpus/` | 语料 YAML（含 `parsed/` 子目录） |
+| `schema/*.yaml` | LinkML SSOT → `task gen` |
+
+---
+
+## 4. 不变量与失败模式
+
+| 现象 | 根因 | 正确做法 |
 |---|---|---|
-| Milvus 臂「未运行」 | 容器没起或集合不存在 | 期待静默回落到本地 |
-| `fake` 被拒绝 | 报告口径必须用真模型 | 验证接线时请显式 `--allow-fake` |
+| Milvus 臂「未运行」 | 容器未起或集合不存在 | `task milvus:up` + `hmd index --recreate`；**不要**期待静默回落 |
+| `fake` 被拒绝 | 报告口径要求真模型 | 接线验证时显式 `--allow-fake` |
 | 建表「最多 4 向量列」 | Milvus 默认上限 | 配 `PROXY_MAXVECTORFIELDNUM`（见 docker compose） |
-| `LicenseViolation` 组件 | pending 且显式 `accept=false` | PoC 默认已放行；生产保持 `HMD_ACCEPT_UNCLEARED_COMPONENTS=false` |
-| BIOS 全量被拒 | 未设 `HMD_BIOS_LICENSE_ACK` | 跳过闸门硬灌；应 ACK 或用 `HMD_BIOS_INIT=subset` |
-| GraphDB 起不来 / `/rest/repositories` 404 | `docker/secrets/graphdb.license` 被 Docker 建成空目录，或 SE/EE license 不可读 | GraphDB 10 Free **不需要** license；删掉空目录后重启。SE/EE 才挂真实 license 文件 |
-| eval 直接拒绝出数 | gold 键 dangling | 用 `scripts/dump_sections.py` 对照 |
+| `LicenseViolation` | pending 组件且 `accept=false` | PoC 默认放行；生产设 `HMD_ACCEPT_UNCLEARED_COMPONENTS=false` |
+| BIOS 全量被拒 | 未设 `HMD_BIOS_LICENSE_ACK` | ACK 或 `HMD_BIOS_INIT=subset` |
+| GraphDB `/rest/repositories` 404 | `docker/secrets/graphdb.license` 被建成空目录 | Free 版删空目录重启；SE/EE 挂真实 license |
+| eval 拒绝出数 | gold 键 dangling | 用 `scripts/dump_sections.py` 对照 |
+| GRAPH 通道无结果 | GraphDB 未灌目录图 | `ensure_catalog_graphs` 失败会硬报错 |
 
 !!! warning "待法务核实"
     PyMuPDF、MinerU、BiomedCLIP：`review=pending`。BIOS_v3 为 CC-BY-NC-ND 4.0。
-    详见 [组件闸门](licensing/components.md) 与
-    [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md)。
+    详见 [组件闸门](licensing/components.md) 与 [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md)。
 
-## 建议阅读顺序（第一周）
+---
 
-1. [Foundation 世界模型](architecture/foundation.md) + [分层 L0–L8](architecture/layers.md)  
-2. [links / search-around](ontology/links.md) + [hybrid RRF](retrieval/hybrid.md)  
-3. [ARMS](eval/arms.md) + [不变量](invariants.md)  
-4. 按任务选：Semantic tools / Evidence Index / 许可  
+## 5. 如何验证
+
+```bash
+# 文献闭环
+uv run hmd kb
+uv run pytest tests/test_seed_build.py tests/test_eval_demo.py -q
+
+# Foundation 闭环
+task foundation:smoke
+uv run hmd foundation golden --candidate HMPL-504 --json
+
+# 全量守门
+task check
+```
+
+**建议阅读顺序（第一周）：**
+
+1. [Foundation 世界模型](architecture/foundation.md) + [分层 L0–L8](architecture/layers.md)
+2. [企业身份与目录 SSOT](ontology/seed.md) + [links / search-around](ontology/links.md) + [hybrid RRF](retrieval/hybrid.md)
+3. [ARMS](eval/arms.md) + [不变量](invariants.md)
+4. 按任务选：Semantic tools / Evidence Index / 许可
 
 手册预览：`uv sync --extra docs && task docs:serve`。

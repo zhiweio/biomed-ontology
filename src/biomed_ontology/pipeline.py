@@ -1,7 +1,7 @@
 """端到端装配：企业目录（ENT）→ 术语层 → 语料 → 标引 → 抽取 → 事实层。
 
-运行时文献面入口是 ``build_literature_base()``（``HMD:ENT:*``，无 seed 铸造）。
-``build_knowledge_base()`` 为其兼容别名；``legacy_seed_ids=True`` 仅供单测对照。
+运行时文献面入口：``build_literature_base()``（默认 ``HMD:ENT:*``）。
+``build_knowledge_base()`` 为薄别名；``legacy_seed_ids=True`` 仅供单测 ledger 对照。
 ``with_graph=True`` 时把 KB 投影同步进 GraphDB；默认关闭。
 """
 
@@ -108,7 +108,7 @@ class KnowledgeBase:
 
 
 def catalog_files(data_root: Path | None = None) -> list[Path]:
-    """优先 ``ontology/catalog/*.yaml``；否则回落 ``data/seed``（已退役对照）。"""
+    """优先 ``ontology/catalog/*.yaml``；缺失时回落 ``data/seed``（测试对照）。"""
     root = data_root or DATA_ROOT
     catalog = ONTOLOGY_CATALOG
     if catalog.is_dir():
@@ -267,14 +267,14 @@ def build_knowledge_base(
     with_graph: bool | None = None,
     legacy_seed_ids: bool = False,
 ) -> KnowledgeBase:
-    """兼容入口 → ``build_literature_base``。
+    """``build_literature_base`` 的薄别名。
 
-    ``legacy_seed_ids=True`` 保留旧 SUB 铸造（``test_seed_build`` / ``test_ids``）。
+    ``legacy_seed_ids=True`` → ``id_mode=ledger``（单测对照）。
     新代码请直接调用 ``build_literature_base``。
     """
     if not legacy_seed_ids:
         warnings.warn(
-            "build_knowledge_base() 已降为文献装配别名；运行时请用 "
+            "build_knowledge_base() 是文献装配别名；请用 "
             "runtime.open_dual_surface() / build_literature_base()",
             DeprecationWarning,
             stacklevel=2,

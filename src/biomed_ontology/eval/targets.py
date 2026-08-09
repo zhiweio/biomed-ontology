@@ -40,8 +40,7 @@ class MetricTarget:
     threshold: float
     baseline_arm: str | None = None
     lang: str | None = None
-    # 探针过滤：只在这些 probe 的并集上读数（微平均）。
-    # 身份桥接能力验收用 bridge_zh+alias，不再用被图像/对照稀释的全量平均。
+    # 探针过滤：只在这些 probe 的并集上读数（微平均）。主 KPI 用 bridge_zh+alias。
     probes: tuple[str, ...] | None = None
     rationale: str = ""
     waiver: str = ""

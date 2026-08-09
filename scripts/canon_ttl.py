@@ -1,15 +1,8 @@
 """把 gen-shacl / gen-owl 产出的 TTL 规范化后原地重写。
 
-LinkML 经 rdflib 序列化时，空白节点的标签是每次新生成的，
-于是 `sh:property [ ... ]` 这类匿名块的排列每次都不同：
-内容一字未改，diff 却有几千行（上一次实测 6341 增 = 6341 删，纯 ordering）。
-
-后果不是"难看"，而是**生成物失去可审查性** —— 真正的 schema 变更被淹没在噪声里，
-而且每跑一次 `task gen` 工作区就变脏，久而久之大家习惯性 checkout 掉生成物，
-连带真实变更也一起丢。
-
-`to_canonical_graph()` 按图同构给空白节点算出确定性标签（URDNA2015 思路），
-之后 turtle 序列化就稳定了。N-Triples 不行：它按集合迭代序直接倾倒，不排序。
+rdflib 默认空白节点标签不稳定，内容未变也会产生巨量 ordering diff。
+``to_canonical_graph()``（URDNA2015 思路）给出确定性标签后再序列化为 turtle。
+勿用无序倾倒的 N-Triples。
 """
 
 from __future__ import annotations

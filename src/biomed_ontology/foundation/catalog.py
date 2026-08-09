@@ -51,11 +51,6 @@ class OpenMetadataClient:
             password=cfg.openmetadata_password.get_secret_value() or None,
         )
 
-    @classmethod
-    def from_env(cls) -> OpenMetadataClient:
-        """兼容别名 → ``from_settings``（读 pydantic-settings）。"""
-        return cls.from_settings()
-
     def ensure_auth(self, *, force: bool = False) -> None:
         if not self.enabled:
             return

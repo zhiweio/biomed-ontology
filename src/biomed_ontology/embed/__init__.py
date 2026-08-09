@@ -171,9 +171,7 @@ def _from_gitee(model_id: str) -> str:
     _require_git_lfs()
     target.parent.mkdir(parents=True, exist_ok=True)
 
-    # 先 clone 到临时目录再原子改名。clone 中断时留下的半份目录里 config.json
-    # 一定在（它不是 LFS 文件），会被下一次 resolve_model 当成"本地已有"直接返回 ——
-    # 那是一份 LFS 指针没拉下来的坏模型，要到加载时才炸，且看不出是哪来的。
+    # 先 clone 到临时目录再原子改名，避免中断留下仅有 config.json、无 LFS 权重的坏缓存。
     with tempfile.TemporaryDirectory(dir=target.parent) as staging:
         staged = Path(staging) / "repo"
         # 仓库名取自上面的固定表，不是外部输入；且不经 shell。
@@ -183,20 +181,11 @@ def _from_gitee(model_id: str) -> str:
 
 
 def resolve_model(model_id: str, *, marker: str = "config.json") -> str:
-    """返回可直接喂给 transformers 的本地目录（或仓库 ID）。
+    """返回可喂给 transformers 的本地目录（或仓库 ID）。
 
-    顺序：**本地已有 → 选定的 hub → Gitee 兜底**。
-
-    本地优先是为了让手工放进 `data/cache/models/models/<仓库名>` 的权重直接生效 ——
-    内网里手动拷权重是常态，应该走"放对位置"而不是"改代码"。
-
-    `marker` 是"这个目录里确实有一份模型"的判据文件。默认 `config.json` 覆盖所有
-    transformers 模型；BiomedCLIP 是 `open_clip` 格式，它的仓库里根本没有 config.json，
-    判据写死就会每次都重新下载一份已经在盘上的权重。
-
-    兜底只在下载失败时触发，且**会打印实际用了哪个源**：权重来源必须可追溯，
-    否则同一份代码在两台机器上可能加载到不同的模型，而报告里看不出来。
-    未登记镜像属配置错误，直接抛出，不被兜底掩盖。
+    顺序：本地已有 → 选定 hub → Gitee 兜底。``marker`` 判定目录是否完整
+    （默认 ``config.json``；BiomedCLIP 等需换 marker）。兜底须打印实际源；
+    未登记镜像直接报错。
     """
     from biomed_ontology.config import settings
 
@@ -408,9 +397,8 @@ class VisualEmbedder:
     图表切片同时喂 caption 与像素（模型接受混合模态）；纯文本切片只喂文本。
     两者共享一个向量空间，跨模态比较才有意义。
 
-    **必须用官方 `Qwen3VLEmbedder`**（随权重目录一起下发的 `scripts/`）：
-    它取的是 **last-token** 池化。自己写一遍很容易顺手写成 mean 或 CLS，
-    那样不报错，只是悄悄换成另一个模型 —— 这个坑本仓库在 SapBERT 上踩过一次。
+    **必须用官方 `Qwen3VLEmbedder`**（权重目录 `scripts/`）：**last-token** 池化。
+    自写 mean/CLS 池化不会报错，但向量空间已变，报告无法区分。
     """
 
     name = "qwen3-vl"

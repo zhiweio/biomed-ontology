@@ -1,88 +1,200 @@
-# 种子与 BuiltConcept
+# 企业身份与目录 SSOT
 
-源码：`src/biomed_ontology/ingest/seed.py`。
+源码：`src/biomed_ontology/ingest/seed.py`、`src/biomed_ontology/pipeline.py`（`catalog_files`、`build_literature_base`）。
 
-## 为什么存在种子层
+本文档描述**文献/检索面的企业身份与术语目录**——不是 Foundation 金路径实体的唯一文档（后者见 `ontology/entities/`），但与之共享 `HMD:ENT:*` 命名规则。
 
-外部本体（MONDO / HGNC / ChEMBL…）买得到「公共世界里谁是谁」。买不到的是：
+---
 
-- **概念范围**：阿斯利华管线关心哪些药 / 靶点 / 适应症  
-- **企业别名**：内部代号、中文商品名、历史写法  
-- **跨类型断言**：药→靶点、药→适应症（在公共源里往往分散或缺失）  
+## 1. 为什么存在
 
-种子 YAML 只承载这些；外部 ID 以 `xref_hints` 提示，由 loader 从**真实快照**解析 —— 手抄 DrugBank ID 无法与快照版本对齐。
+外部本体（MONDO / HGNC / ChEMBL…）提供公共世界里「谁是谁」。企业研发还需要：
 
-## 从 SeedConcept 到 BuiltConcept
+- **概念范围**：管线关心的药 / 靶点 / 适应症子集
+- **企业别名**：内部代号、中文商品名、历史写法
+- **跨类型断言**：药→靶点、药→适应症（公共源分散或缺失）
+- **稳定主键**：停订外部源后，历史报告与索引仍有效
+
+这些由 **Ontology-as-Code 目录**承载，构建为 `BuiltConcept` + `BuiltSynonym`，供 `Normalizer`、图通道与 Milvus 索引消费。
+
+---
+
+## 2. 设计取舍
+
+| 决策 | 理由 | 放弃 |
+|---|---|---|
+| **主路径 `ontology/catalog/`** | 与金路径实体同仓策展、可 PR 审查 | `data/seed/` 运行时权威 |
+| **确定性 `HMD:ENT:*`**（`enterprise_id_for`） | 同 seed_key 永远同一 ID，无需 IdLedger | `HMD:SUB` 递增铸造 |
+| **`id_mode=enterprise` 默认** | 生产/文献/评测一致 | 每环境重新 mint |
+| **外部 ID 仅 xref_hints** | 与 registry 快照版本对齐 | 手抄 DrugBank ID |
+| **`data/seed/` 仅单测** | 迁移对照、`id_mode=ledger` | 新概念写入 seed |
+
+> 脚注：`data/seed/DEPRECATED.md` 声明该目录已退役为运行时 SSOT，仅作迁移对照与 `id_mode=ledger` 单测输入。新概念请写入 `ontology/catalog/` 或金路径 `ontology/entities/`。
+
+---
+
+## 3. 设计与实现
+
+### 3.1 目录解析优先级
 
 ```text
-data/seed/*.yaml  ──load_seed_file──►  SeedFile / SeedConcept
-                              │
-                     build_from_seed
-                              │
-                              ▼
-              BuiltConcept + BuiltSynonym + warnings
+pipeline.catalog_files(data_root)
+    │
+    ├─ ontology/catalog/*.yaml 存在且非空？
+    │       YES → 返回 catalog 文件列表（排除 ambiguity.yaml）
+    │
+    └─ NO → 回落 data/seed/*.yaml（仅测试/对照）
 ```
 
-关键字段：
+常量：
+
+| 符号 | 路径 |
+|---|---|
+| `ONTOLOGY_CATALOG` | `ontology/catalog/` |
+| `catalog` 文件 | `substances.yaml`、`targets.yaml`、`diseases.yaml` 等 |
+| 歧义表 | `ontology/catalog/ambiguity.yaml`（缺失时回落 `data/seed/ambiguity.yaml`） |
+
+### 3.2 从 SeedConcept 到 BuiltConcept
+
+```text
+ontology/catalog/*.yaml
+    │ load_seed_file()
+    ▼
+SeedFile / SeedConcept
+    │ build_from_seed(id_mode=enterprise)
+    ▼
+BuiltConcept + BuiltSynonym + warnings
+```
+
+**SeedConcept 关键字段：**
 
 | 字段 | 含义 |
 |---|---|
-| `key` | 种子内稳定键（如 `savolitinib`），分配内部 CURIE 的输入 |
+| `key` | 种子内稳定键（如 `savolitinib`），ENT 段 slug 来源 |
 | `preferred_label_en/zh` | 首选标签 |
-| `aliases[]` | 带 `lang` / `scope` / `type` / `source` |
+| `aliases[]` | `lang` / `scope` / `type` / `source` |
 | `parents[]` | 层级（种子键或已解析 id） |
-| `targets[]` / `indications[]` | 跨类型链接（经 `LINK_PREDICATES` 变成谓词） |
+| `targets[]` / `indications[]` | 跨类型链接 |
 
-`LINK_PREDICATES`：
+**BuiltConcept 关键字段：**
+
+| 字段 | 含义 |
+|---|---|
+| `concept_id` | `HMD:ENT:{DC\|TGT\|DIS\|…}:{key}` |
+| `seed_key` | 原始 key |
+| `links` | `ConceptLink` 列表（正向谓词） |
+| `license_tier` | 别名来源最高 tier |
+
+### 3.3 企业 ID 分配
+
+`ingest/seed.py` 的 `enterprise_id_for(entity_type, seed_key)`：
+
+```text
+HMD:ENT:{segment}:{seed_key}
+
+segment 映射示例：
+  DRUG/substance → DC
+  TARGET         → TGT
+  DISEASE        → IND
+```
+
+- `_ENT_OVERRIDES`：少数金路径实体显式覆盖
+- `id_mode=ledger`：旧 `IdLedger.mint` → `HMD:SUB|TGT|DIS`（**仅单测**）
+
+### 3.4 类型化链接谓词
+
+种子 YAML 字段 → 运行时谓词（`LINK_PREDICATES`）：
 
 ```text
 targets     → (has_target, targeted_by)
 indications → (treats, treated_by)
 ```
 
-谓词名与事实层抽取对齐，于是 SPARQL 里同一谓词、靠命名图区分「人工种子断言」与「正文抽取」。
+只存**正向**；反向在 `GraphDbNeighborhood` 邻接查询时合成。谓词与事实层抽取对齐，靠命名图 URI 区分「目录断言」与「正文抽取」。
 
-## 构建期必须做的三件事
+装载：
 
-### 1. 内部 CURIE 分配（D1）
+- 术语节点：`source_id=SEED_INTERNAL`（`_CATALOG_SOURCE`）
+- 类型化链接：`source_id=SEED_LINKS`（`_CATALOG_LINKS_SOURCE`）
 
-`IdLedger` 把 `seed_key` → `HMDCxxxx`。外部 ID **绝不**当主键。停订 DrugBank 只失去一组 xref，历史报告里的内部 ID 仍有效。
+### 3.5 构建期三件必做事
 
-### 2. 别名归一与变体展开（D2）
+**1. 别名归一与变体展开（D2）**
 
-`normalize_alias` + `generate_code_variants`：让索引侧 `AZD-6094` / `AZD6094` 都能命中。注意：变体是给**索引**用的；查询改写侧必须按 `normalize_alias` **去重**，否则 BM25 会给同一代号投三票（见 [查询改写](../retrieval/ontology-paths.md)）。
+`normalize_alias` + `generate_code_variants`：索引侧 `AZD-6094` / `AZD6094` 均可命中。查询改写侧须按 `normalize_alias` **去重**（见 [查询改写](../retrieval/ontology-paths.md)）。
 
-### 3. 跨概念 alias_norm 碰撞检测
+**2. alias_norm 碰撞检测**
 
-人工歧义表（`ambiguity.yaml`）总会漏。构建时扫描「同一 `alias_norm` 指向多个概念」→ `unregistered_collisions`。未登记的碰撞进 `kb.warnings`，而不是静默让词典后写覆盖先写。
+人工歧义表（`ambiguity.yaml`）总会漏。构建扫描「同一 `alias_norm` → 多 concept_id」→ `unregistered_collisions`，进入 `kb.warnings`。
 
-## ConceptLink 长什么样
+**3. 父节点与链接解析**
+
+| 警告字段 | 含义 |
+|---|---|
+| `unresolved_parents` | parent 键不在本批概念里 |
+| `unresolved_links` | target/indication 端点未解析 |
+| `unregistered_collisions` | 未登记歧义 |
+
+构建**不因警告失败**（PoC 先跑通），但 `hmd kb` 与发版前应清零未解析链接。
+
+### 3.6 与 Foundation ER 的关系
+
+| 面 | 身份来源 | 解析入口 |
+|---|---|---|
+| 文献/检索 | `BuiltConcept.concept_id`（`HMD:ENT:*`） | `normalize.Normalizer` |
+| Foundation WM | `ontology/entities/` 策展实体 | `foundation.resolve.EntityResolver` |
+
+两者 ID 规则一致（`HMD:ENT:*`），但 ER 链含 BERN2 / Zingg / 词典，目录构建走 `build_from_seed`。金路径实体以 `ontology/entities/enterprise_entities.yaml` 为准，经 `hmd foundation sync` 入 GraphDB。
+
+### 3.7 调用链（文献装配）
 
 ```text
-ConceptLink(predicate="has_target", object_id="HMDC…", object_key="met")
+build_literature_base()
+    → catalog_files()
+    → build_from_seed(..., id_mode="enterprise")
+    → Normalizer(concepts, synonyms, ambiguity_index)
+    → KnowledgeBase(warnings=...)
 ```
 
-只存**正向**；反向在 `GraphDbNeighborhood` 邻接查询时合成。种子作者不必写 `targeted_by` 边 —— 写了反而会双倍。
+含 GRAPH 通道时：
 
-## 未解析怎么办
+```text
+ensure_catalog_graphs(graph, concepts, synonyms)
+    → GraphStore.load_concepts(SEED_INTERNAL)
+    → GraphStore.load_concept_links(SEED_LINKS)
+```
 
-| 警告 | 含义 | 后果 |
-|---|---|---|
-| `unresolved_parents` | parent 键不在本批概念里 | 层级断边，`expand` / broader 失效 |
-| `unresolved_links` | target/indication 键未解析 | search-around 少边，Q4 类查询走不通 |
-| `unregistered_collisions` | 同别名多义未登记 | 归一化可能随机落到一个义项 |
+---
 
-构建**不会**因警告失败（PoC 要能先跑起来），但 `hmd kb` 与评测前应扫一眼。生产发版应把「零未解析链接」当成守门。
+## 4. 不变量与失败模式
 
-## 与 registry 的关系
+| 不变量 | 说明 |
+|---|---|
+| 运行时权威是 catalog + ENT | 不得再铸造 `HMD:SUB` 作主键 |
+| 外部 ID 不当主键 | xref 从快照解析，手抄不可版本化 |
+| BROAD 不进精确归一 | scope 必填（D2） |
+| 链接只写正向 | 反向查询侧合成 |
+| warnings 必须可见 | 静默丢边 → Q4 召不回 |
+| seed 伪源 tier | `SEED_INTERNAL` 构建时 `TIER_0` |
 
-种子伪源 `SEED_INTERNAL` 不在采购 registry 里；tier 在装图时显式定为 `TIER_0`。真实文献源的 tier 来自 `sources.yaml`，跟文档走。
+| 失败模式 | 表现 |
+|---|---|
+| 用 `data/seed/` 跑生产 | 与 Foundation 实体分裂 |
+| 未解析 `targets:met` | search-around 少边 |
+| 未登记歧义碰撞 | 归一化随机落义项 |
+| catalog 与 entities 不同步 | resolve 与 normalize 命中不同 ID |
 
-## 如何验证
+---
+
+## 5. 如何验证
 
 ```bash
 uv run pytest tests/test_seed_build.py -q
-uv run hmd kb   # 看 concepts / warnings
+uv run hmd kb                    # concepts 计数 + warnings
+uv run pytest tests/test_walk_neighbors.py -q
+uv run hmd eval --entitlements MOCK_LICENSED --compact
 ```
 
-改种子后：先看 warnings，再跑 `hmd eval` 相关臂 —— 尤其是带跨类型意图的 gold（如 VEGFR2 → 药）。
+改目录后：先看 `hmd kb` warnings，再跑含跨类型意图的 eval gold（如 VEGFR2 → 药）。
+
+相关：[Pipeline](../architecture/pipeline.md)、[归一化](normalize.md)、[链接与 search-around](links.md)、[RDF 命名图](rdf.md)。

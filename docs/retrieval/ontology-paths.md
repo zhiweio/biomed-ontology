@@ -1,86 +1,183 @@
-# 查询改写 vs 图通道
+# 本体双路径：查询改写与图通道
 
-本体经由**两条互相独立**的路径参与检索。缺一条，「本体增强」这个臂名就不成立。早先只有图通道时，`expand` 开与不开对总分差别可以小到噪声（代码注释里记过 +0.002 量级）—— 因为分数主要来自词法/向量，而那两条完全没吃到本体。
+源码：`src/biomed_ontology/search/__init__.py`（`_rewrite_queries`、`_graph_channel`）  
+邻域：`src/biomed_ontology/ontology/neighborhood.py`（`ConceptNeighborhood`）  
+遍历：`src/biomed_ontology/ontology/links.py`（`walk_neighbors`）  
+扩展：`src/biomed_ontology/normalize/__init__.py`（`Normalizer.expand`）
 
-## 两条路径对照
+相关文档：[hybrid.md](hybrid.md) · [../ontology/links.md](../ontology/links.md) · [../ontology/normalize.md](../ontology/normalize.md)
 
-| | 图通道 | 查询改写 |
-|---|---|---|
-| 开关 | `channels` 含 GRAPH；`expand` 控制是否 search-around | `rewrite`（默认跟随 `expand`） |
-| 作用点 | 概念倒排 → chunk 得分 | 改写下发给 BM25 / DENSE 的查询串 |
-| 依赖 | GraphDB 邻域 + IDF + 模长 | `Normalizer.expand` + `normalize_alias` |
-| 消融臂 | ② 仅种子 / ③ + hops | ④ 仅改写（无图） |
-| 典型收益场景 | 跨类型：「VEGFR2 抑制剂」→ 药 | 中文别名、代号 ↔ 通用名 |
-| 典型伤害场景 | 链接噪声、IDF 失效时的并列 | 英文原词本已命中时，别名稀释 BM25 |
+---
 
-拆成两个开关的唯一理由：**归因**。一次全开时，涨跌都说不清是哪条路。
+## 1. 为什么存在
 
-## 图通道打分（实现级）
+本体参与检索若只有「沿图找邻居」一条路径，对 BM25/向量通道的 query 毫无影响，消融时 `expand` 开与不开总分差异可忽略。生物医学检索需要本体在**两个正交位置**同时起作用：
 
-查询侧概念向量 \(q\)：种子权重 1.0，邻居为关系衰减后的 weight。  
-文档侧：切片挂载的概念集合，按概念 IDF 加权，模长为 \(\|d\|\)。
+1. **查询改写（rewrite）** — 把种子概念的别名喂回词法与稠密通道，让「非 small cell lung cancer」能命中写「NSCLC」的段落。  
+2. **图通道（GRAPH）** — 在概念 IDF 加权空间做 search-around，召回仅通过类型化链接与查询概念相关的切片，而不依赖正文用词重合。
 
-对概念 \(c\) 的贡献累加：
+两条路径共用同一套 `Normalizer` 与 GraphDB 邻接，但开关独立（`rewrite` vs `expand`），以便评测归因。
 
-\[
-\mathrm{gain}(c) = q_c \cdot \mathrm{idf}(c)^2
-\]
+---
 
-再 \(\mathrm{score}(d) \leftarrow \mathrm{score}(d) / \|d\|\)。  
-这与稠密通道同一数学形式（余弦），向量空间从字符 n-gram 换成了概念图。
+## 2. 设计取舍
 
-IDF 下界 0.1：概念挂满全库时 \(\log(N/df)=0\)，若直接归零会抹掉整条路径，连带稀有邻居一起消失。
+| 决策 | 理由 |
+|------|------|
+| 改写与图扩展分离 | `rewrite=False, expand=True` 可测纯图增量 |
+| 改写深度 `max_depth=1` | 更深会把泛化词稀释进 query |
+| `min_weight=0.35` 扩展阈值 | 压住 broad/related 噪声 |
+| 图遍历 `max_hops=2` | 平衡召回与主题漂移 |
+| 类型化边 + SKOS broader/narrower | 企业 search-around 边权威在 GraphDB |
+| 概念 IDF + 文档模长 | 防高频概念（如「肿瘤」）淹没稀有邻居 |
+| IDF 下界 0.1 | 全库挂载概念 IDF→0 会断开路径 |
+| `NullNeighborhood` | 仅索引写行、不需 GRAPH 时使用 |
 
-## 查询改写的三条约束
+---
 
-`_rewrite_queries` 每条对应一种具体失败：
+## 3. 设计与实现
 
-### 1. 按 `normalize_alias` 去重
+### 3.1 路径对照
 
-别名表里 `AZD-6094` / `AZD 6094` / `AZD6094` 是三行（给**索引侧**任意写法匹配）。原样拼进查询串 → BM25 词频×3。索引侧已归一，查询侧只需一种写法。
+| 维度 | 查询改写 `rewrite` | 图通道 `expand` + GRAPH |
+|------|-------------------|-------------------------|
+| 触发 | BM25/DENSE ∈ channels 且 `rewrite` 真 | GRAPH ∈ channels |
+| 输入 | `normalize(query, detect=True)` → seeds | 同 seeds（或 rewrite 已算则复用） |
+| 本体操作 | `expand(cid, depth=1)` 取别名 | `neighborhood.neighbors(seeds, hops=2)` |
+| 输出 | 改写 query 串 → Milvus | `(chunk_id, score)[]` → RRF |
+| 关断效果 | 词法/向量只吃原 query | 图通道仍可用 seeds，但不扩展邻居 |
 
-### 2. 词法拼接、向量取 max
-
-- **词法**：多一个词多一条命中路径，BM25 自带 IDF 压烂大街扩展词。改写串 = `原查询 + 选中别名`。  
-- **向量**：把八个别名拼进一句话 → 质心偏离原意。因此 dense 拿到 `(原串, 改写串)` 两条，各自编码后取最高分 —— **原串始终在集合里**，改写只能加分，不能把语义拽走。
-
-### 3. `max_terms=8` 封顶
-
-gold 里考察「层级扩展是否过度召回」的 query：肺癌子树别名可以灌进几十个。不封顶时原始查询词被稀释到不起作用。
-
-另外会去掉原查询里已有的词 —— 重复只抬词频，不是扩展。
-
-## 消融时如何读
-
-建议顺序（Milvus 臂）：
-
-1. `bm25_dense` —— 无本体基线  
-2. `bm25_dense_graph` —— 只加图通道、**不** search-around（`expand=False`）  
-3. `bm25_dense_hops` —— +search-around，`rewrite=False`  
-4. `bm25_dense_expand` —— 仅改写，无图  
-5. `ontology_hybrid` —— 全开  
-
-若 ② 为负而 ③ 转正：旧「哈希并列」类问题或链接开始起作用。  
-若 ④ 中文大涨、英文微跌：符合「英文原词本已命中」的机制预期，不要用总平均一刀切。
-
-!!! info "数字在 README"
-    具体抬升/显著性只维护在 README；这里只教读法。
-
-## 概念注入索引文本
-
-`hmd index` 经 `chunk_to_row(..., label_terms=…)` 写入 Milvus 的文本是：
+### 3.2 查询改写细节
 
 ```text
-chunk.text + " " + preferred_label_en/zh（该片挂载概念）
+seeds ← normalize(detect=True, min_confidence=0.6).concept_ids
+
+for cid in seeds:
+  for exp in expand(cid, max_depth=1, min_weight=0.35):
+    key = normalize_alias(exp.term)
+    保留权重更高的 (weight, surface_form)
+
+去掉 surface_form 已出现在 query 中的项
+terms ← top 8 by weight
+
+lexical_query = query + " " + join(terms)   # 可 None（无新词）
+dense_queries = (query, lexical_query)     # 去重后各编码，merge_best
 ```
 
-让文中写 ORPATHYS、查询写「沃利替尼」时，`sparse_lexical` 仍有机会命中。这与查询改写互补：一个改索引侧可见字符串，一个改查询侧。
+约束：
 
-## 如何验证
+- 同义词多种写法只计一次（`normalize_alias`）  
+- 原 query 必须始终在 dense 集合内  
+- 无 seeds 时不改写（`lexical_query=None`, `dense_queries=()`）
 
-改 `_rewrite_queries` 或 `_graph_channel` 后：
+### 3.3 图通道：walk_neighbors
+
+**邻接来源** — `GraphDbNeighborhood.adjacency_many`：
+
+```text
+SPARQL VALUES ?s { seed IRIs }
+UNION:
+  ?s skos:broader ?o  → predicate "broader"
+  ?o skos:broader ?s  → "narrower"
+  ?s hmd:{fwd} ?o     → 企业正向谓词
+  ?o hmd:{fwd} ?s     → 逆向谓词（INVERSE_PREDICATES）
+```
+
+`walk_neighbors` 在进程内 BFS，按谓词类型衰减权重，过滤 `min_weight`。
+
+**打分**（`_graph_channel`）：
+
+```text
+query_vec[seed] = 1.0
+if expand:
+  for neighbor in neighbors(seeds, max_hops=2):
+    query_vec[neighbor.id] = max(existing, neighbor.weight)
+
+for cid, qw in query_vec.items():
+  gain = qw * IDF(cid)^2
+  for chunk_id in inverted_index[cid]:
+    if chunk_id in allowed:
+      score[chunk_id] += gain
+
+score[chunk_id] /= concept_norm[chunk_id]
+```
+
+`allowed` = `_graph_allowed`：与 Milvus 相同的许可、labels、modality、figure_type。
+
+决策写入 `TraceContext`：`stage=GRAPH_RETRIEVAL`，top 候选带 `graph:{predicate}:{concept}` 通道标签。
+
+### 3.4 数据流总览
+
+```mermaid
+flowchart TB
+  Q[用户 query]
+  Q --> N[Normalizer.normalize detect]
+  N --> S[seeds: concept_ids]
+
+  S --> R{rewrite?}
+  R -->|yes| E[expand aliases]
+  E --> L[lexical_query]
+  E --> D[dense_queries]
+  L & D --> M[Milvus BM25/DENSE]
+
+  S --> G{GRAPH channel?}
+  G -->|yes| W{expand?}
+  W -->|yes| NB[walk_neighbors GraphDB]
+  W -->|no| V[仅 seeds 向量]
+  NB --> V
+  V --> I[IDF × 倒排 chunk]
+  I --> F[RRF 融合]
+
+  M --> F
+```
+
+### 3.5 索引侧概念字段
+
+| 字段 | 用途 |
+|------|------|
+| `Chunk.concept_ids` | 精确过滤、图通道文档向量 |
+| `Chunk.concept_ids_expanded` | Milvus 标量（子树扩展召回） |
+| `chunk_to_row(..., label_terms)` | 稀疏列注入 preferred label，与改写互补 |
+
+图通道读的是**直接命中** `concept_ids` 倒排；扩展集合主要用于标量过滤与入库一致性。
+
+---
+
+## 4. 不变量与失败模式
+
+**不变量**
+
+1. GraphDB 不可用时，运行时装配应使 GRAPH 臂标 unavailable，而非静默空结果冒充成功。  
+2. `expand` 关闭时图通道仍执行，但 `query_vec` 仅含 seeds。  
+3. `rewrite` 关闭时不得向 `RetrievalRequest` 传递 `lexical_query`/`dense_queries`。  
+4. 邻居权重合并取 `max`，避免多路径重复累加同一概念。  
+5. LLM 消歧选中的概念若不在候选集，检索层不得返回未索引概念（归一化层约束）。
+
+**失败模式**
+
+| 现象 | 原因 |
+|------|------|
+| 改写无效 | seeds 空；扩展词已在 query；`min_weight` 过高 |
+| 图通道爆炸 | 高频概念未 IDF 降权（应用 `_concept_idf`） |
+| 图通道旁路许可 | `_graph_allowed` 未与 `LicenseScope` 同步 — 属 bug |
+| 邻居为空 | GraphDB 未同步链接；或 `NullNeighborhood` |
+| 评测 expand 无差异 | 只开了改写或只开了 BM25 — 臂配置检查 |
+
+---
+
+## 5. 如何验证
 
 ```bash
+uv run pytest tests/test_normalize.py tests/test_alias.py -q
+uv run pytest tests/test_eval_demo.py -k "ontology or expansion" -q
+uv run pytest tests/test_graphstore_graphdb.py -q
 uv run hmd eval --entitlements MOCK_LICENSED
-# 对照臂 ②③④ 与 by_lang 拆分，不要只看 overall
 ```
+
+关键用例名：
+
+- `test_exact_expands_at_full_weight` / `test_narrow_expands_downweighted`
+- `test_ontology_hybrid_improves_recall_over_bm25`
+- `test_expansion_does_not_trade_ranking_for_recall`
+- `test_ontology_sensitive_probes_are_reported`
+- `test_rewrite_hides_tier3_without_entitlement`（GraphDB 许可，非检索但同源）

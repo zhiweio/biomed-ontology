@@ -127,7 +127,7 @@ class HybridSearcher:
         neighborhood: ConceptNeighborhood,
     ) -> None:
         if backend is None:  # type: ignore[comparison-overlap]
-            raise ValueError("检索 backend 必填（Milvus）；已移除 LocalBackend")
+            raise ValueError("检索 backend 必填（Milvus）")
         self.kb = kb
         self.backend = backend
         self.neighborhood = neighborhood
@@ -148,17 +148,11 @@ class HybridSearcher:
         return self._concept_terms(chunk)
 
     def _build_concept_idf(self) -> dict[str, float]:
-        """概念的判别力：log(N / df)，索引期算一次。
+        """概念 IDF：``log(N / df)``，索引期算一次。
 
-        这是图通道能不能用的第一件事。84 个概念挂在 588 个切片上，
-        「肺癌」出现在几百片里、「肾病综合征」只出现在 5 片里 ——
-        不区分这两者，一条归一出「肺癌」的查询会让图通道吐出几百个同分候选，
-        次级排序键落到 chunk_id 上，而 chunk_id 是 SHA-1 前缀。
-        那时候进入 RRF 的前 30 名实际上是**按哈希抽的一个随机样本**，
-        却带着和 BM25 相同的权重。这是本体臂 P@5 掉 0.029 的直接来源。
-
-        下界 0.1：概念挂满全部切片时 IDF 为 0，会把它整条路径的贡献抹成零，
-        连带把从它出发走到的稀有概念也一起抹掉。留一个小正数让路径仍然连通。
+        高频概念若不降权，图通道会吐出大量同分候选，次级键落到 ``chunk_id``
+        （哈希前缀）上，RRF 池变成近似随机样本。下界 0.1：全库挂载时 IDF 为 0
+        会抹掉整条路径及沿途稀有邻居，留小正数保持连通。
         """
         total = max(len(self._chunks), 1)
         return {
@@ -168,16 +162,11 @@ class HybridSearcher:
         }
 
     def _build_concept_norms(self) -> dict[str, float]:
-        """每个切片概念向量的模长，用于图通道的余弦归一化。
+        """切片概念向量模长，供图通道余弦归一化。
 
-        这是第二件事，而且单靠 IDF 补不上：IDF 区分的是**概念**，
-        同一个概念的倒排表内部所有切片仍然完全同分。一条只归一出「肺癌」的查询，
-        挂着「肺癌」的两百片依旧并列 —— 哈希排序原地复活。
-
-        分母让"这一片是在讲这个主题"和"这一片顺带提了一句"分开：
-        只挂「肺癌」一个概念的切片，模长小、得分高；同时挂着二十个概念的综述段落，
-        模长大、得分被压下去。这与稠密通道做的是同一件事（余弦相似度），
-        只不过向量空间从字符 3-gram 换成了概念。
+        IDF 只区分概念频率；同一倒排内切片仍可能同分。除以模长后，
+        专论该主题的短切片得分高于挂满概念的综述段（与稠密通道同形，
+        向量空间为概念图而非字符 n-gram）。
         """
         norms: dict[str, float] = {}
         for chunk_id, chunk in self._chunks.items():
@@ -287,14 +276,11 @@ class HybridSearcher:
 
             fused = rrf_fuse(results, weights=CHANNEL_WEIGHTS)
             if modalities:
-                # 主过滤已经下推到各后端（本地走 allow_list，Milvus 走标量表达式），
-                # 这里是最后一道闸：`SearchBackend` 是个 Protocol，
-                # 一个忽略 modalities 的实现不该让"只看图"悄悄退化成混排。
-                # 放在截断之前，否则会连带把 top_k 也砍薄。
+                # 后端已下推过滤；此处兜底 Protocol 实现忽略 modalities 的情况。
+                # 必须在截断前执行，避免 top_k 被误砍薄。
                 wanted = set(modalities)
                 fused = [f for f in fused if self._chunks[f[0]].modality.value in wanted]
             if figure_types:
-                # 与 modalities 同一道闸、同一条理由：图型是布尔条件，不是偏好。
                 wanted_ft = set(figure_types)
                 fused = [
                     f
@@ -323,26 +309,10 @@ class HybridSearcher:
     ) -> tuple[str | None, tuple[str, ...]]:
         """用本体别名改写下发给词法/向量通道的查询串。
 
-        `Normalizer.expand()` 一直能产出带权双语别名集，但此前没有任何调用方
-        把它交给检索后端 —— 它只在图通道内部打转。于是「本体增强」这个臂名
-        对词法与向量两条通道完全不成立，而那两条才是分数的主要来源。
-
-        三条约束，每条都对应一种具体的失败：
-
-        **按 `normalize_alias` 去重。** 别名表里 `AZD-6094` / `AZD 6094` /
-        `AZD6094` 是三行（规则生成的写法变体，为的是让**索引侧**任意写法都能匹配）。
-        原样拼进查询串，BM25 会把这个代号的查询词频算成 3 —— 那不是扩展，
-        是给同一个词投三票。索引侧本来就做了归一，查询侧只需要一种写法。
-
-        **词法拼接、向量取 max。** 词法通道多一个词就多一条命中路径，
-        BM25 自带的 IDF 会压住烂大街的扩展词。向量通道不行：把八个别名
-        拼进一句话，编出来的是这八个词的质心，离原始查询反而更远。
-        所以向量拿到的是 (原串, 改写串) 两条，各自编码后取最高分 ——
-        原串始终在集合里，改写只能加分，不会把语义拽走。
-
-        **`max_terms=8` 封顶。** gold 里 Q7「lung cancer targeted therapy」的
-        intent 写的就是"考察层级扩展是否过度召回"：「肺癌」下面挂着一整棵子树，
-        不设上限会把几十个别名灌进 BM25，原始查询词在其中稀释到不起作用。
+        约束：
+        - 按 ``normalize_alias`` 去重，避免同一代号多种写法抬高 BM25 词频；
+        - 词法侧拼接扩展词；向量侧取 (原串, 改写串) 两条编码的 max，原串始终在集合内；
+        - ``max_terms`` 封顶，防止层级扩展把原始查询词稀释掉。
         """
         if not seeds:
             return None, ()
@@ -413,26 +383,11 @@ class HybridSearcher:
         expand: bool,
         seeds: list[str] | None = None,
     ) -> tuple[list[tuple[str, float]], list[str]]:
-        """图通道：查询 → 概念 → search-around → 挂载了这些概念的 chunk。
+        """图通道：查询 → 概念 → search-around → 挂载这些概念的 chunk。
 
-        打分是**概念空间里的 IDF 加权余弦**：查询侧是"种子概念 + 沿链接走到的
-        邻居（带衰减权重）"，文档侧是切片实际挂的概念集合，两边都按概念 IDF 加权，
-        再除以文档向量的模长。与稠密通道同一个数学形式，只是向量空间从
-        字符 3-gram 换成了概念图。
-
-        改造前这里是"直接命中 1.0 / 下位一层 0.8 / 两层 0.64"三个取值取 max。
-        三档离散值在 588 片、84 概念的规模上意味着几百个候选并列同分，
-        次级排序键 `chunk_id` 是 SHA-1 前缀 —— 进入 RRF 的前 30 名
-        实际上是按哈希抽的一个随机样本，却带着与 BM25 相同的融合权重。
-
-        三处同时改才有意义：
-
-        1. **沿类型化链接走，不只沿层级走。** 层级扩展只能在同类实体内部上下走，
-           Q4「VEGFR2 抑制剂」归一到靶点后无处可去 —— KDR 没有下位概念，
-           而打这个靶点的药就在数据里，只是查询期走不通。GraphDB 邻接让它走得通。
-        2. **概念 IDF**（`_build_concept_idf`）区分「肺癌」与「肾病综合征」。
-        3. **文档模长归一**（`_build_concept_norms`）区分"讲这个主题"与"提了一句"。
-           少了这一项，同一个倒排表内部仍然全部并列。
+        打分是概念空间的 IDF 加权余弦：查询侧为种子 + 沿类型化链接的衰减邻居，
+        文档侧为切片概念集合，再除以文档模长。依赖类型化邻接（非仅层级）、
+        概念 IDF 与模长归一三者同时成立，否则候选易大量并列。
         """
         if seeds is None:
             seeds = self._seed_concepts(query, ctx)

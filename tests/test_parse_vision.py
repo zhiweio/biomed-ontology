@@ -178,7 +178,7 @@ def test_asset_names_cannot_escape_the_directory(stem: str):
     assert len(name) <= 84
 
 
-# --------------------------------------------------- 资产路径还原（曾经无声地全错）
+# --------------------------------------------------- 资产路径还原
 
 
 def test_asset_dir_name_strips_the_curie_separator():
@@ -188,13 +188,7 @@ def test_asset_dir_name_strips_the_curie_separator():
 
 
 def test_asset_resolution_needs_the_doc_id(tmp_path: Path):
-    """切片里存的 `images/p0002_r000.png` 对每篇文档都是同一个名字。
-
-    少了 doc_id 这一段就永远拼不出真实路径 —— 而且是**无声**的：
-    读不到图时视觉列退化成编码 caption，照样产出一个像模像样的向量，
-    "这一列到底看没看过像素"在任何指标上都看不出来。
-    这正是它在仓库里躺了两个版本没被发现的原因。
-    """
+    """相对资产路径按文档重复；拼路径必须含 doc_id，否则永远找不到图。"""
     doc = "DOC:PMC12133497"
     rel = "images/p0002_r000.png"
     target = tmp_path / asset_dir_name(doc) / rel

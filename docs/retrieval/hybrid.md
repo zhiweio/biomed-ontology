@@ -1,120 +1,180 @@
-# 三通道与带权 RRF
+# 三通道混合检索与带权 RRF
 
-源码：`src/biomed_ontology/search/__init__.py`（`HybridSearcher`、`rrf_fuse`）。
+源码：`src/biomed_ontology/search/__init__.py`（`HybridSearcher`、`rrf_fuse`）  
+后端：`src/biomed_ontology/search/backends/milvus.py`（唯一 Evidence Index 实现）
 
-## 为什么要三条通道
+相关文档：[milvus.md](milvus.md) · [ontology-paths.md](ontology-paths.md) · [filters.md](filters.md) · [rerank.md](rerank.md) · [embedders.md](embedders.md) · [../eval/arms.md](../eval/arms.md)
 
-| 通道 | 找什么 | 误差来源 |
-|---|---|---|
-| BM25 | 字面词匹配 | 词表、分词、别名写法 |
-| DENSE | 嵌入空间近邻 | 模型与域偏移 |
-| GRAPH | 经由概念关系可达的切片 | 本体覆盖、链接质量、IDF |
+---
 
-BM25 与向量都基于 **chunk 文本相似度**，误差高度相关；只叠这两条，提升往往落在噪声范围内。图通道误差来源不同，融合后才可能有真正增量 —— 这也是为什么评测必须把「图 / search-around / 改写」拆成独立臂（见 [ARMS](../eval/arms.md)）。
+## 1. 为什么存在
 
-## 一次 `search()` 走读
+文献证据检索需要同时覆盖：
+
+- **字面术语**（基因符号、适应症写法、注册号样式）  
+- **语义改写**（同义表述、跨语言 paraphrase）  
+- **本体关系可达**（「肺癌」应召回挂「肺腺癌」概念的切片，即便正文未出现原 query 词）
+
+BM25（`sparse_lexical`）与稠密向量列误差高度相关——都基于 chunk 文本相似度。第三条 **GRAPH** 通道在概念图空间打分，误差来源正交，融合后才有可测增量。评测因此必须把图通道、查询改写、`expand` 拆成独立臂（见 [arms.md](../eval/arms.md)）。
+
+词法与向量召回下沉 Milvus；图通道与 RRF 在进程内完成。无 Milvus 时失败，不静默回落。
+
+---
+
+## 2. 设计取舍
+
+| 决策 | 理由 |
+|------|------|
+| 三通道 BM25 + DENSE + GRAPH | 正交误差；双通道叠加以噪声为主 |
+| RRF 按名次融合 | 三分数量纲不可比（BM25 无上界、余弦 [0,1]、图通道 IDF 加权） |
+| `CHANNEL_WEIGHTS[GRAPH]=0.5` | 图候选粗粒度；等权会让「挂了概念」的切片与 BM25 精排第 3 名同贡献 |
+| 许可在候选生成期过滤 | 返回前裁剪会泄漏「存在但被挡」的统计 |
+| `expand` 与 `rewrite` 分离 | 消融需区分「图邻居」与「查询串扩展」 |
+| `rewrite` 默认跟随 `expand` | 常见配置一次打开；显式 `rewrite=False` 可只开图通道 |
+| `candidate_k` 独立于 `top_k` | 精排只能重排池内已有项 |
+| 融合不下推 Milvus | 库内 RRFRanker 无法反解各通道名次 → `explain` 作废 |
+
+**`expand` vs `rewrite`**
+
+| 开关 | 影响 |
+|------|------|
+| `expand=True` | 图通道：`neighborhood.neighbors` 扩展查询概念向量 |
+| `rewrite=True` | 词法/向量：`_rewrite_queries` 追加本体别名 |
+| `rewrite=None` | 等同 `expand` |
+| `rewrite=False, expand=True` | 仅图扩展，不改 Milvus 查询串 |
+
+---
+
+## 3. 设计与实现
+
+### 3.1 通道定义
+
+| 通道 | 枚举 | 实现位置 | 候选来源 |
+|------|------|----------|----------|
+| BM25 | `RetrievalChannelEnum.BM25` | Milvus `sparse_lexical` | 稀疏内积 |
+| DENSE | `RetrievalChannelEnum.DENSE` | Milvus `dense_*` 多列 | 余弦；`merge_best` 跨列/跨查询 |
+| GRAPH | `RetrievalChannelEnum.GRAPH` | `HybridSearcher._graph_channel` | 概念倒排 + IDF 余弦 |
+| FUSED | `RetrievalChannelEnum.FUSED` | `rrf_fuse` 输出 | 非独立召回 |
+
+### 3.2 `search()` 数据流
 
 ```mermaid
 sequenceDiagram
   participant H as HybridSearcher
   participant N as Normalizer
-  participant B as SearchBackend
-  participant G as GraphDbNeighborhood
+  participant B as MilvusBackend
+  participant G as ConceptNeighborhood
   participant R as Reranker?
 
-  H->>H: LicenseScope(max_tier, entitlements)
+  H->>H: LicenseScope(entitlements, max_tier)
   alt rewrite 开启
-    H->>N: normalize → seeds
-    H->>H: _rewrite_queries → lexical + dense queries
+    H->>N: normalize(detect=True) → seeds
+    H->>H: _rewrite_queries → lexical_query, dense_queries
   end
-  H->>B: retrieve(RetrievalRequest)
-  Note over B: 许可/标签/模态下推；返回各通道名次列表
+  H->>B: RetrievalRequest(channels, filters, queries)
+  B-->>H: per-channel (chunk_id, score)[]
   alt GRAPH in channels
-    H->>N: seeds（若尚未归一）
-    H->>G: neighbors(seeds)
-    H->>H: 概念 IDF 余弦打分 ∩ _graph_allowed
+    H->>N: seeds（若 rewrite 未算则此处算）
+    H->>G: neighbors(seeds, expand?)
+    H->>H: IDF 打分 ∩ _graph_allowed
   end
   H->>H: rrf_fuse(weights=CHANNEL_WEIGHTS)
-  H->>H: modalities / figure_types 进程内闸门
+  H->>H: modalities/figure_types 进程内兜底
+  H->>H: pool[:candidate_k] → _to_hit
   opt reranker
-    H->>R: rescore(pool)
+    H->>R: rescore(snippets)
   end
-  H-->>H: SearchHit[] + explain
+  H-->>H: hits[:top_k], filtered_count
 ```
 
-要点：
-
-1. **许可在候选生成期介入**（`LicenseScope`），不是返回前裁剪 —— 后者会让命中数泄漏无权数据存在性。  
-2. **`expand` 与 `rewrite` 是两个开关** —— 合成一个时，消融无法归因。`rewrite` 默认跟随 `expand`。  
-3. **`seeds is None` vs `[]`** —— `None` = 还没归一化；`[]` = 归一过但一个概念也没有。混用会让图通道在「不开改写」时被整条跳过。  
-4. **`candidate_k`** —— 精排只能重排池子里已有的东西；开精排时必须 `candidate_k > top_k`。
-
-## RRF：用名次，不用分数
-
-三通道量纲不可比：BM25 无上界、余弦在 \[0,1\]、图通道是衰减后的概念得分。强行归一化分数会引入说不清的超参；名次天然可比。
-
-\[
-\mathrm{score}(d) = \sum_c w_c \cdot \frac{1}{k + \mathrm{rank}_c(d)}
-\]
-
-默认 \(k=60\)（经典 RRF）。`rrf_fuse` 同时返回 `channel_ranks`，供 explain 使用。
-
-### 权重：名次可比 ≠ 可信度相同
-
-`CHANNEL_WEIGHTS` 里 **GRAPH 先验固定 0.5**，其余默认 1.0。
-
-理由（代码注释原意）：图通道候选来自「挂了某个概念」这一条件，比词法/向量的相似度排序粗。等权融合时，图通道第 3 名与 BM25 第 3 名对总分贡献相同 —— 但后者是从全库按相关性挑的，前者可能只是恰好提到「肺癌」。
-
-!!! warning "0.5 不是调出来的"
-    在同一份小 gold 上搜权重再报数 = 过拟合。真要定这个值需要独立开发集。
-    权重扫描曲线若存在，只作诊断附录，不得写进「达成」结论。
-
-## Explain：WHY 支柱的载体
-
-`_to_hit` 生成：
+### 3.3 查询改写（`rewrite`）
 
 ```text
-explain = "RRF(bm25#3 + dense#1 + graph#7)"
+seeds = normalize(query, detect=True, min_confidence=0.6).concept_ids
+对每个 seed: normalizer.expand(max_depth=1, min_weight=0.35)
+  → 按 normalize_alias 去重，保留最高权重写法
+去掉已在 query 中出现的词（避免重复抬高 BM25 词频）
+取 top max_terms=8
+
+lexical: query + " " + 扩展词（单串拼接）
+dense:   (query, rewritten) 两串分别编码，merge_best 取 max
 ```
 
-开精排后再追加 `→ rerank 0.87`，并保留 `rank_before_rerank`。  
-没有名次还原，可观测的 WHY 支柱就是空的 —— 这也是**融合不下推 Milvus** 的根本原因（见 [Milvus](milvus.md)）。
+词法受益于追加同义词；稠密若拼成一句会产生**查询漂移**，故多串取 max。
 
-## 事故课：哈希并列
+### 3.4 图通道打分（概要）
 
-旧图通道只有三档分值（1.0 / 0.8 / 0.64）取 max：
+详见 [ontology-paths.md](ontology-paths.md)。
 
-- 几百个切片同分  
-- 次级键是 `chunk_id`（SHA-1 前缀）  
-- 进入 RRF 的前 30 名 = **按哈希抽的随机样本**，却带着与 BM25 相同的融合权重  
+- 查询向量：seeds 权重 1.0 + `expand` 时邻居按关系衰减（`max_hops=2`）  
+- 文档侧：切片 `concept_ids` 集合  
+- 分数：Σ (query_weight × IDF²) / chunk 概念模长  
+- IDF：`log(N/df)`，下界 0.1  
 
-症状：MRR 可能略升，P@5 / nDCG 下降。  
-修复必须三处同时做：
+`CHANNEL_WEIGHTS` 仅显式降低 GRAPH；BM25/DENSE 默认 1.0。
 
-1. search-around（类型化链接，不只层级）  
-2. 概念 IDF（区分「肺癌」与「肾病综合征」）  
-3. 文档模长归一（区分「讲这个主题」与「顺带提一句」）  
+### 3.5 RRF
 
-只做 IDF：同一倒排表内部仍然全部并列，哈希排序原地复活。
+```text
+score(chunk) += weight[channel] / (k + rank)    # 默认 k=60
+```
 
-## 后端边界
+返回 `(chunk_id, fused_score, channel_ranks)`；`SearchHit.explain` 形如 `RRF(bm25#2 + dense#1 + graph#5)`。
 
-| 职责 | 位置 |
-|---|---|
-| 词法 / 向量召回 | `MilvusBackend`（`sparse_lexical` + dense_*） |
-| 图通道 | `HybridSearcher`（Normalizer + GraphDB 邻域 + 概念倒排） |
-| RRF 融合 | 进程内 `rrf_fuse` |
-| 精排 | 可选 `Reranker`，在融合之后 |
+### 3.6 主要 API 参数
 
-## 无静默回落
+| 参数 | 默认 | 说明 |
+|------|------|------|
+| `top_k` | 10 | 返回条数 |
+| `candidate_k` | `top_k` | 融合池深度；开精排应 `> top_k` |
+| `channels` | 三通道全开 | 可消融单通道 |
+| `vector_fields` | 空=集合内全部列 | 稠密列消融 |
+| `expand` / `rewrite` | True / None | 见上表 |
+| `modalities` / `figure_types` | 空=不限 | 见 [filters.md](filters.md) |
+| `reranker` | None | 见 [rerank.md](rerank.md) |
 
-Milvus / 精排臂不可达 → 标记「未运行」，**绝不**用本地后端或 `NullReranker` 顶替后仍写「Milvus… / +精排」。回落会让报表撒谎。见 [设计不变量](../invariants.md)。
+索引期：`HybridSearcher` 构造时扫描 `kb.chunks` 建 `_by_concept`、`_concept_idf`、`_concept_norm`。
 
-## 如何验证
+---
+
+## 4. 不变量与失败模式
+
+**不变量**
+
+1. `backend` 必填（Milvus）；`None` 立即 `ValueError`。  
+2. `seeds is None` vs `seeds == []`：`None` 表示尚未归一化；`[]` 表示归一化无概念。图通道在 `rewrite=False` 时仍会对 `None` 单独 `_seed_concepts`。  
+3. 图通道过滤与 Milvus 使用同一 `LicenseScope.permits`（`_graph_allowed`）。  
+4. `filtered_count` 自后端返回，无权调用方区分「无资料」与「被挡」。  
+5. 开精排时 `rank_before_rerank` 保留融合名次。
+
+**失败模式**
+
+| 现象 | 原因 |
+|------|------|
+| 图通道恒为空 | query 未映射到概念；或 expand 关且种子无倒排 |
+| BM25 臂报错 | 集合无 `sparse_lexical` — 需 BGE-M3 索引 |
+| 改写无效果 | seeds 空；或扩展词已在 query 中 |
+| 精排无提升 | `candidate_k == top_k` 池太浅 |
+| 通道名实不符 | 用了 fake embedder 却未 `--allow-fake` |
+| Milvus 不可达 | 臂标 unavailable；**不**回落本地词法 |
+
+---
+
+## 5. 如何验证
 
 ```bash
-uv run pytest tests/test_search_backend.py -q
+task milvus:up
+uv run hmd index --recreate
 uv run hmd eval --entitlements MOCK_LICENSED
+uv run pytest tests/test_tools.py tests/test_eval_demo.py tests/test_milvus_license.py -q
 ```
 
-改 `CHANNEL_WEIGHTS` 或图打分后，看消融阶梯 ①→③ 与配对 bootstrap（[显著性](../eval/significance.md)），不要只看总平均。
+关键用例名：
+
+- `test_rrf_rewards_agreement_across_channels`
+- `test_ontology_hybrid_improves_recall_over_bm25`
+- `test_expansion_does_not_trade_ranking_for_recall`
+- `test_modality_filter_passes_the_contract_and_narrows_to_that_modality`
+- `test_channels_are_independently_selectable`
+- `test_filter_is_load_bearing`
+- `test_readme_does_not_promise_a_milvus_fallback`

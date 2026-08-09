@@ -56,11 +56,6 @@ class BiosLicenseGate:
             return cls(False, "poc")
         return cls(True, ack)
 
-    @classmethod
-    def from_env(cls) -> BiosLicenseGate:
-        """兼容别名 → ``from_settings``。"""
-        return cls.from_settings()
-
     def allow_full_load(self) -> bool:
         return self.acknowledged and self.purpose in {
             "poc",

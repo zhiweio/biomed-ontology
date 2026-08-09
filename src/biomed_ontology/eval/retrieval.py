@@ -71,13 +71,7 @@ ARMS: dict[str, dict[str, Any]] = {
         "require_graph": True,
         "label": "本体增强混合",
     },
-    # ---- 逐机制消融阶梯。这几行原先是手工跑出来贴进 README 的，谁也复现不了；
-    # 升格为一等公民臂之后，"本体到底经由哪条路起作用、贡献是正是负"
-    # 才是一个能被重跑、能被证伪的问题，而不是一段需要人记住出处的文字。
-    #
-    # 本体有三条互相独立的参与路径，必须逐条开：
-    #   graph 通道（概念倒排）→ search-around（沿类型化链接多跳）→ 查询改写。
-    # 一次全开时，任何变化都归因不到具体哪一条。
+    # 消融阶梯：图通道 → search-around → 查询改写，逐条打开以便归因。
     "bm25_dense": {
         "channels": (RetrievalChannelEnum.BM25, RetrievalChannelEnum.DENSE),
         "expand": False,
@@ -105,12 +99,8 @@ ARMS: dict[str, dict[str, Any]] = {
         "backend": "milvus",
         "label": "④仅查询改写（无图）",
     },
-    # ---- 交叉编码器精排。需显式传入 reranker：
-    # 模型不在就标为未运行，**不得**悄悄退化成 NullReranker 顶替 ——
-    # 那会让报表上的"+精排"其实是原序返回。
-    #
-    # 两臂缺一不可：只有 `ontology_hybrid_rerank` 时，涨了也说不清是本体的功劳
-    # 还是精排的功劳。`bm25_rerank` 是那道减法里的被减数。
+    # 精排臂需显式 reranker；缺失则标未运行（禁止 NullReranker 顶替）。
+    # bm25_rerank 是减法对照，用于拆分「精排贡献」与「本体贡献」。
     "bm25_rerank": {
         "channels": (RetrievalChannelEnum.BM25,),
         "expand": False,
@@ -244,9 +234,8 @@ VISUAL_BIO_DELTA = ("milvus_hybrid_5col", "milvus_hybrid_4col")
 # 不读被图像意图与英文对照 query 稀释的全量 hybrid R@10。
 ONTOLOGY_PROBES = ("bridge_zh", "alias")
 
-# `ArmResult` 字段名 → `_QueryScore` 字段名。两侧命名不同是历史遗留
-# （聚合值带 @K 后缀、逐条值不带），但对外只暴露一套 —— 就是 `ArmResult` 那套。
-_PER_QUERY_KEYS = {
+    # ArmResult（带 @K）→ 逐条 _QueryScore 字段名。
+    _PER_QUERY_KEYS = {
     "recall_at_10": "recall",
     "precision_at_5": "precision",
     "ndcg_at_10": "ndcg",
@@ -257,12 +246,7 @@ _PER_QUERY_KEYS = {
 
 
 def _has_sapbert(name: str | None) -> bool:
-    """净值这行字有没有资格被引用，取决于生医列到底是不是 SapBERT 算出来的。
-
-    两种写法都要认：命令行别名（`dual`）和组合模型的真名
-    （`bge-m3+sapbert+qwen3-vl`）。只认其中一种，就会在一份本来可信的报告上
-    盖一个"数据不可信"的戳 —— 假阴性在这里和假阳性一样坏。
-    """
+    """生医列净值是否可引用：识别 ``sapbert`` 子串及别名 ``dual`` / ``multimodal``。"""
     lowered = (name or "").lower()
     return "sapbert" in lowered or lowered in {"dual", "multimodal"}
 
@@ -393,12 +377,9 @@ class ArmResult:
     # 按语种拆分的同结构结果。SapBERT 是英文单语模型，
     # 只报总平均会把"英文涨了、中文没动甚至掉了"抹平成一个好看的数字。
     by_lang: dict[str, ArmResult] = field(default_factory=dict)
-    # 按提问意图拆分（文本 25 条 / 图像 12 条）。混在一个平均里，
-    # 检索侧改造的效果会被"文本检索答不了看图的问题"这部分常数项稀释，
-    # 视觉列的效果反过来也会被 25 条文本 query 摊平 —— 两边都读不出来。
+    # 按意图拆分（TEXT / IMAGE）；混平均会互相稀释，须分读。
     by_intent: dict[str, ArmResult] = field(default_factory=dict)
-    # 按探针拆分（bridge_zh / alias / hierarchy / control / image / license）。
-    # 产品主 KPI 读 bridge_zh+alias；全量平均只作诊断。
+    # 按探针拆分；主 KPI 读 bridge_zh+alias，全量平均仅诊断。
     by_probe: dict[str, ArmResult] = field(default_factory=dict)
 
     def per_query_metric(self, metric: str) -> dict[str, float]:
@@ -626,11 +607,9 @@ class RetrievalEval:
         for metric in ("ndcg_at_10", "recall_at_10", "precision_at_5"):
             sig = self.significance(metric)
             rows.append(f"  全量 {metric:<11} {sig.render()}")
-        # 图像意图那 12 条上，本体臂与无本体臂逐位相同（概念挂不到图切片），
-        # 它们只是往总平均里灌了 12 个恒等于零的差值，把区间往零压。
-        # 检索侧改造该在哪批 query 上读，这一段就是答案。
+        # 图像意图上本体臂与基线常逐位相同；读检索增量时以 TEXT 子集为准。
         if "TEXT" in self.arms[self.target].by_intent:
-            rows.append("  仅文本意图（图像意图上两臂逐位相同，只会把区间压向零）：")
+            rows.append("  仅文本意图（图像意图上两臂常逐位相同，会把区间压向零）：")
             for metric in ("ndcg_at_10", "recall_at_10", "precision_at_5"):
                 sig = self.significance(metric, intent="TEXT")
                 rows.append(f"    {metric:<14} {sig.render()}")
@@ -987,23 +966,19 @@ def eval_retrieval(
             unavailable[arm] = graph_error or "GraphDB 不可达（require_graph）"
             continue
 
-        # 精排臂必须拿到真模型。回落到 NullReranker 会让报表上写着"+精排"
-        # 而实际是原序返回 —— 与不得回落内存词法是同一条纪律。
+        # 精排臂禁止用 NullReranker 顶替（报表会谎称已精排）。
         if cfg.get("rerank") and getattr(reranker, "name", "null") == "null":
             unavailable[arm] = "未提供 reranker（--reranker bge-reranker-v2-m3）"
             continue
 
-        # 专用通道的臂只在对应意图的 query 上评分。把"只看图"的臂放到文本 query 上
-        # 只会得到一串 0.000，那不是测量结果，是问错了问题。
+        # 模态专用臂只在对应意图的 query 上评分。
         intent = cfg.get("modality_intent")
         selected = [c for c in cases if not intent or c.modality_intent == intent]
         if not selected:
             unavailable[arm] = f"gold 里没有 modality_intent={intent} 的 query"
             continue
 
-        # 候选池深度。不设时等于 top_k —— 也就是今天的行为，一个字节都不变。
-        # 设了就意味着"融合看得更深"，那本身是一次检索改动而不是评测口径调整，
-        # 所以它属于臂配置，会单独占一行消融，不会悄悄改掉既有各臂的数字。
+        # candidate_k 属臂配置；缺省等于 top_k，加深池会单独成臂。
         candidate_k = cfg.get("candidate_k")
 
         scores: list[_QueryScore] = []

@@ -1,18 +1,40 @@
 # LinkML 与生成物
 
-源码与契约：`schema/*.yaml` → `src/biomed_ontology/_generated/`（`task gen`）。
+源码与契约：`schema/*.yaml` → `task gen` → `src/biomed_ontology/_generated/`。
 
-## 为什么用 LinkML 当 SSOT
+LinkML 是本仓库跨 Python 运行时、OpenAPI/MCP 契约、RDF/SHACL 互操作的**唯一 schema SSOT**。业务模块只 import 生成物，禁止手写第二份枚举。
+
+---
+
+## 1. 为什么存在
 
 本仓库同时需要：
 
-- Python 运行时类型（Pydantic）  
-- JSON Schema（OpenAPI / MCP 工具契约）  
-- 可选 OWL / SHACL（对外语义互操作）  
+- Python 运行时类型（Pydantic）
+- JSON Schema（OpenAPI / MCP 工具契约）
+- OWL / SHACL（对外语义互操作与入图闸门）
 
 三套手写必然漂移。LinkML 一份 schema，生成多份制品；**业务约束写在 schema 描述里**（含设计决策 D1–D12 的叙述），比另起 ADR 目录更不容易和实现脱节。
 
-## 文件地图
+Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与 schema 对齐；契约变更仍以 YAML → `task gen` 为准。
+
+---
+
+## 2. 设计取舍
+
+| 决策 | 理由 |
+|---|---|
+| LinkML 唯一 SSOT | Protégé / OWL 只读生成物，不回写 |
+| 不引入 Apache Jena | rdflib + pyshacl + GraphDB 承担 RDF 工程 |
+| 枚举只存在于 `_generated/` | 禁止业务模块再定义 `LicenseTierEnum` 等同名枚举 |
+| `TOOL_SPECS` 与 `hmd_tools.yaml` 一一对应 | MCP 契约与实现同步 |
+| 设计决策写进 Field description | 读生成代码即见 D10 等约束 |
+
+---
+
+## 3. 设计与实现
+
+### 3.1 文件地图
 
 | Schema | 管什么 | 生成物 |
 |---|---|---|
@@ -21,13 +43,21 @@
 | `hmd_tools.yaml` | 8 工具请求/响应、Provenance | `_generated/hmd_tools.py` |
 | `hmd_obs.yaml` | Trace / Decision / ToolIo | `_generated/hmd_obs.py` |
 | `hmd_taxonomy.yaml` | 文档标引标签 | `_generated/hmd_taxonomy.py` |
-| `hmd_enterprise.yaml` | Enterprise Ontology（DrugCandidate / Target / Claim…） | `_generated/hmd_enterprise.py` |
+| `hmd_enterprise.yaml` | Enterprise Ontology（DrugCandidate / Claim…） | `_generated/hmd_enterprise.py` |
 
-Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与 schema 对齐；契约变更仍以 YAML → `task gen` 为准。见 [Foundation](foundation.md)。
+生成管线：`Taskfile` 的 `gen` target；可选 `task ontology:sync-artifacts` 复制 OWL/SHACL 到 `ontology/`。
 
-枚举（`LicenseTierEnum`、`RetrievalChannelEnum`、`SynonymScopeEnum`…）以生成代码为准；业务代码 `from biomed_ontology._generated...` 导入，**禁止在业务模块再定义一份同名枚举**。
+### 3.2 消费方
 
-## 改契约的正确流程
+| 消费方 | 导入示例 | 用途 |
+|---|---|---|
+| `ingest/seed.py` | `EntityTypeEnum`, `LicenseTierEnum` | 目录构建 |
+| `search/__init__.py` | `RetrievalChannelEnum` | 混合检索通道 |
+| `tools/api.py` | `hmd_tools` Request/Response | MCP / REST |
+| `foundation/sync.py` | enterprise 类与 claim 字段 | TTL 序列化 |
+| `quality/` | SHACL shapes | 入图闸门 |
+
+### 3.3 改契约流程
 
 ```bash
 # 1. 改 schema/*.yaml
@@ -37,23 +67,64 @@ task gen
 uv run pytest tests/test_tools.py tests/test_service.py -q
 ```
 
-!!! warning "不要手改 _generated/"
-    生成目录视为构建产物。手改会在下次 `task gen` 被覆盖，且审查时看不出意图。
-    需要新字段：改 YAML → gen → 再改消费方。
+新增 Semantic 工具时必须同时改：
 
-## 与 Semantic 工具清单的对齐
+1. `hmd_tools.yaml` 里的 Request/Response
+2. `tools/api.py` 的 `TOOL_SPECS` 一行
+3. `ToolApi` 实现 + `_invoke` 注册
+4. 相关测试与手册工具计数
 
-`TOOL_SPECS`（`tools/api.py`）与 `schema/hmd_tools.yaml` **一一对应**，供 MCP / OpenAPI 自动生成。新增工具时必须同时改：
+### 3.4 与 Ontology Toolchain 的关系
 
-1. schema 里的 Request/Response  
-2. `TOOL_SPECS` 一行  
-3. `ToolApi` 实现 + `_invoke` 注册  
-4. README / 手册里的「8」—— 有测试绊线  
+```text
+schema/*.yaml  ──task gen──►  _generated/*.py
+                │              OWL / SHACL / JSON Schema
+                ▼
+         ontology:validate
+                ▼
+         hmd foundation sync → GraphDB
+                ▼
+         Protégé（可选，只读审阅生成 OWL）
+```
 
-漏改 schema = 运行时能调、对外契约却撒谎。
+详见 [Ontology Toolchain](../ontology/toolchain.md)、[Foundation](foundation.md)。
 
-## 设计决策为何写在 schema 里
+### 3.5 典型枚举（以生成代码为准）
 
-例如 `LicenseTierEnum` 的描述直接写「决定 RDF named graph 隔离、查询重写、导出闸门与训练语料准入」。读生成出的 Field description，就能看见 D10，而不必先找到某份过期 wiki。
+| 枚举 | 影响面 |
+|---|---|
+| `LicenseTierEnum` | 命名图隔离、查询重写、导出闸门 |
+| `RetrievalChannelEnum` | BM25 / DENSE / GRAPH / FUSED |
+| `SynonymScopeEnum` | 精确归一 vs expand |
+| `MappingJustificationEnum` | 归一化 trace |
+| `PredicateEnum` | SSSOM 映射 / clique 建团 |
 
-完整索引见 [附录 · D1–D12](../appendix/decisions.md)。
+---
+
+## 4. 不变量与失败模式
+
+| 不变量 | 说明 |
+|---|---|
+| 禁止手改 `_generated/` | 下次 `task gen` 覆盖，审查看不出意图 |
+| schema 与 TOOL_SPECS 同步 | 漏改 = 对外契约撒谎 |
+| Enterprise schema 与 Foundation 对齐 | `hmd_enterprise.yaml` 变更需 sync + 集成测 |
+| SHACL 与入图数据同版本 | validate 失败则 sync 应阻断 |
+
+| 失败模式 | 处理 |
+|---|---|
+| gen 后测试红 | 先修消费方，再提交 schema |
+| 双份枚举定义 | mypy/ruff 可能不拦，运行时行为分裂 |
+| Protégé 回写 OWL | **禁止**作为 SSOT |
+
+---
+
+## 5. 如何验证
+
+```bash
+task gen
+task ontology:validate
+uv run pytest tests/test_tools.py tests/test_service.py -q
+uv run pytest tests/test_generated_schema.py -q 2>/dev/null || true
+```
+
+完整决策索引：[附录 · D1–D12](../appendix/decisions.md)。

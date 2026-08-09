@@ -119,7 +119,7 @@ class ToolApi:
 
     @classmethod
     def from_kb(cls, kb: KnowledgeBase, *, backend: SearchBackend, searcher: HybridSearcher | None = None) -> ToolApi:
-        """兼容入口；生产请用 ``from_backends`` / ``runtime.open_dual_surface``。"""
+        """无 Foundation 时的装配入口；完整双面请用 ``runtime.open_dual_surface``。"""
         return cls.from_backends(kb=kb, backend=backend, searcher=searcher)
 
     @classmethod
@@ -694,7 +694,7 @@ def _expand_via_foundation(
     *,
     languages: list[str] | None = None,
 ) -> list[dict[str, Any]] | None:
-    """GraphDB 可达时用 ENT 邻居 + 标签做扩展；不可用则返回 None 回落 catalog。"""
+    """GraphDB 可达时用 ENT 邻居 + 标签扩展；不可用返回 None，由调用方用 catalog。"""
     if foundation is None or not str(concept_id).startswith("HMD:ENT:"):
         return None
     try:

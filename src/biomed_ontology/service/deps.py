@@ -47,7 +47,6 @@ def build_state(
     surface = open_dual_surface(
         bern2_url=bern2_url,
         load_literature=True,
-        prefer_milvus=True,
     )
     foundation = surface.foundation if load_foundation else None
     world = surface.world if load_foundation else None

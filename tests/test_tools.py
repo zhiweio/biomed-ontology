@@ -71,12 +71,7 @@ def test_expansion_does_not_dilute_the_seed_concept(kb, searcher, ctx):
 
 
 def test_search_around_reaches_drugs_from_a_disease(kb, searcher, ctx):
-    """类型化链接的核心承诺：从疾病能走到治它的药。
-
-    层级扩展一步也走不到这里 —— 药不是疾病的下位概念，两者是不同的实体类型。
-    这条边一直写在 `data/seed/substances.yaml` 的 `indications` 里，
-    只是此前在 ingest 阶段被丢掉，检索期根本看不到它。
-    """
+    """类型化链接：从疾病沿 treated_by 走到药物（层级扩展做不到跨类型）。"""
     from biomed_ontology._generated.hmd_concept import EntityTypeEnum
 
     seeds = kb.normalizer.normalize("肺癌", ctx=ctx, detect=True).concept_ids
@@ -91,12 +86,7 @@ def test_search_around_reaches_drugs_from_a_disease(kb, searcher, ctx):
 
 
 def test_search_around_will_not_compose_two_cross_type_hops(kb, searcher, ctx):
-    """`has_target ∘ targeted_by` 展开是"共享靶点的竞品"，不是"回答同一个问题"。
-
-    两种关系复合出来的是一个全新的、弱得多的关系，不该继承两段权重的乘积。
-    没有这道闸，84 个概念的图上两跳就能从任意一个药走到几乎所有药 ——
-    图通道会退化成"返回全部切片"，而那正是它此前判别力被稀释的成因之一。
-    """
+    """禁止两跳跨类型复合（如 has_target ∘ targeted_by）；否则邻接表过宽、图通道失判别力。"""
     seeds = kb.normalizer.normalize("savolitinib", ctx=ctx, detect=True).concept_ids
     assert seeds
     two_hop_typed = [

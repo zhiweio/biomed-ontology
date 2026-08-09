@@ -12,30 +12,30 @@
 术语与身份 · 层级扩展 · 类型化关系 · 外部挂靠 · 结构化事实 · 证据检索 · Citationware ·
 企业资产定位 · 许可边界 · 可观测与演进 · LinkML/SHACL 治理。
 
-手册的目标不是列命令，而是让接手的人能**改、能证伪、能扩展**。
+手册目标：让接手的人能**改、能证伪、能扩展**——读懂设计与实现边界，而不是复制一段命令。
 
 ## 这本手册怎么读
 
-每一章尽量按同一骨架写：
+每一章按同一骨架写（不写改造日记）：
 
-1. **为什么存在** —— 业务问题或曾经踩过的坑  
-2. **设计取舍** —— 为什么选这条路，放弃了什么  
-3. **实现走读** —— 关键类型、调用链、常量，落到真实路径  
-4. **不变量与事故** —— 哪些事不能静默发生  
-5. **如何验证** —— 相关测试 / CLI  
+1. **为什么存在** — 要解决的业务或系统问题  
+2. **设计取舍** — 选了什么、明确放弃了什么  
+3. **设计与实现** — 模块边界、数据流、关键配置/符号名与调用链（用路径说明，不贴源码）  
+4. **不变量与失败模式** — 哪些事不能静默发生  
+5. **如何验证** — 相关测试名与 bash 命令  
 
-读完一章，你应当能回答：「如果我改 X，哪条不变量会碎，评测哪一臂会告诉我。」
+读完一章，应能回答：「如果我改 X，哪条不变量会碎，评测哪一臂会告诉我。」
 
 ## 读者路径
 
 | 你是谁 | 建议阅读顺序 |
 |---|---|
 | 第一次接触本仓库 | [快速开始](getting-started.md) → [Foundation](architecture/foundation.md) → [分层架构](architecture/layers.md) → [设计不变量](invariants.md) |
-| 要做企业世界模型 / Foundation | [Foundation 架构](architecture/foundation.md) → [Toolchain](ontology/toolchain.md) → [Golden Path](ontology/golden-path.md) → `hmd foundation golden` |
+| 要做企业世界模型 / Foundation | [Foundation](architecture/foundation.md) → [Toolchain](ontology/toolchain.md) → [Golden Path](ontology/golden-path.md) → `hmd foundation golden` |
 | 要改检索 / 本体 | [类型化链接](ontology/links.md) → [三通道与 RRF](retrieval/hybrid.md) → [查询改写 vs 图通道](retrieval/ontology-paths.md) → [评测消融](eval/arms.md) |
 | 要接 Semantic Access | [Semantic Access](tools/tools.md) → [Citationware](tools/citationware.md) → [serve](tools/serve.md) → [许可](licensing/tiers.md) |
 | 要接文档解析 / Evidence Index | [Router](parse/router.md) → [版面](parse/layout.md) → [资产路径](parse/assets.md) → [Milvus](retrieval/milvus.md) |
-| 合规 / 采购 | [Tier 矩阵](licensing/tiers.md) → [组件闸门](licensing/components.md) → [NOTICE](appendix/notice.md) → [BIOS 闸门](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
+| 合规 / 采购 | [Tier 矩阵](licensing/tiers.md) → [组件闸门](licensing/components.md) → [NOTICE](appendix/notice.md) |
 
 ## 与 README 的分工
 
@@ -43,7 +43,7 @@
     **命令、安装、实测消融表、显著性数字**只维护在仓库根目录的 [README](https://github.com/zhiweio/biomed-ontology/blob/main/README.md)。
     那些数字有 `tests/test_readme.py` 守着 —— 手册抄表只会腐烂成第二份谎言。
 
-    本手册讲的是**机制、不变量、事故教训与读数方法**。需要引用性能结论时，链到 README，不要把表复制过来。
+    本手册讲的是**机制、不变量与读数方法**。需要引用性能结论时，链到 README，不要把表复制过来。
 
 ## 一句话定位
 

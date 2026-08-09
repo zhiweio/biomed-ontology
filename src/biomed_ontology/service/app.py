@@ -126,7 +126,7 @@ def _register_kb_tool(app: FastAPI, spec: dict[str, Any], cfg: Settings) -> None
         x_hmd_entitlements: str | None = Header(default=None),
         x_hmd_trace_id: str | None = Header(default=None),
         x_hmd_client_id: str | None = Header(default=None),
-        x_hmd_agent_id: str | None = Header(default=None),  # legacy alias
+        x_hmd_agent_id: str | None = Header(default=None),  # X-HMD-Client-Id 别名
     ) -> JSONResponse:
         st = get_state()
         client_id = x_hmd_client_id or x_hmd_agent_id

@@ -63,16 +63,11 @@ def asset_dir_name(doc_id: str) -> str:
 
 
 def resolve_asset(root: Path | None, doc_id: Any, rel_path: Any) -> str | None:
-    """`data/assets` + doc_id + 切片里的相对路径 → 本机绝对路径。图不在就返回 None。
+    """``data/assets/<doc_id>/`` + 切片相对路径 → 本机绝对路径；缺失返回 None。
 
-    doc_id 是这条路径里不可省的一段。切片存的是 `images/p0002_r000.png`，
-    对**每篇文档**都是这个名字 —— 它相对的是 `render_regions` 的 `out_dir`，
-    也就是 `data/assets/<doc_id>/`，不是 `data/assets/`。
-
-    单独抽出来是因为漏掉 doc_id 这件事已经发生过一次，而且**无声**：
-    读不到图时视觉列会退化成编码 caption 文本，照样产出一个像模像样的向量，
-    于是"这一列到底看没看过像素"在指标上完全看不出来。
-    有且只有一处拼路径，那次错误就只可能犯在一个地方。
+    切片内路径（如 ``images/p0002_r000.png``）相对 ``render_regions`` 的
+    ``out_dir``，必须带 ``doc_id`` 段。路径拼装只允许这一处，避免读写不一致。
+    读不到图时视觉列会退回编码 caption，指标上难察觉，故失败须显式为 None。
     """
     if not rel_path or not doc_id or root is None:
         return None

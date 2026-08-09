@@ -479,7 +479,7 @@ def demo_bridge_alias(kb: KnowledgeBase, api: ToolApi, foundation: Any) -> DemoR
     )
     r.lines.append(f"KB concept_id={curie}")
     r.lines.append(f"WM enterprise_id={ent}")
-    # 过渡期仍可能是 HMD:SUB；桥只要求两侧都非空且 WM 为 ENT
+    # 桥接验收：KB 有概念且 WM 解析到 HMD:ENT:*。
     r.passed = bool(curie) and bool(ent) and str(ent).startswith("HMD:ENT:")
     return r
 
@@ -506,7 +506,7 @@ def demo_bridge_literature(kb: KnowledgeBase, api: ToolApi, foundation: Any) -> 
     return r
 
 
-# K* = 原 D1–D8（文献面）；W*/B* = World Model / Bridge
+# D* = 文献面；W*/B* = World Model / Bridge
 _KB_DEMOS: dict[str, Callable[[KnowledgeBase, ToolApi], DemoResult]] = {
     "D1": demo_alias_consistency,
     "D2": demo_hierarchy_expansion,
