@@ -87,6 +87,28 @@ uv run hmd foundation evolve-mine "unknownzyme-xyz-999"
 | `resolve_entity` unmapped / 低置信 → `.kgcl` + candidates JSON | 自动改 GraphDB ontology |
 | 候选含建议别名 / suggested exactMatch | 自动策展 / `evolve-apply` |
 
+### 候选落地：回到策展 YAML 再 sync
+
+KGCL / candidates **不是**生产图。人工审校后按变更类型写回 Git 策展面，再走校验与投影：
+
+```text
+.kgcl / candidates JSON
+  → 人工编辑 ontology/entities|dictionary|claims|mappings（按需）
+  → task ontology:validate
+  → uv run hmd foundation sync
+  → 新 ontology_release_id 出现在 tool 响应
+  → hmd eval / golden-eval 回归
+```
+
+| 候选类型（常见） | 写回位置 |
+|---|---|
+| 建议别名 / mention | `ontology/dictionary/` 或实体 `aliases` |
+| suggested exactMatch | `ontology/entities/` 的 `exact_match_xrefs`（及 mappings 审阅表） |
+| 新企业实体 | `ontology/entities/`（必要时补 catalog） |
+| 关系断言 | `ontology/claims/`（`validated` 才进 knowledge） |
+
+完整 edit→后端矩阵见 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
+
 ### 与质量层
 
 LLM/规则生成内容以 `PENDING` 入库，未经审校不得进 tool 返回体（D5）。演进提案同样不应绕过审校状态直接变「已发布事实」。

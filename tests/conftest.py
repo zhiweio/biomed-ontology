@@ -9,7 +9,8 @@ from biomed_ontology.ontology.ids import IdLedger, SequenceLedger
 from biomed_ontology.registry import load_registry
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SEED_DIR = REPO_ROOT / "data" / "seed"
+# 术语目录 SSOT；常量名保留 SEED_DIR 以免大面积改夹具引用
+SEED_DIR = REPO_ROOT / "ontology" / "catalog"
 
 
 @pytest.fixture(scope="session")

@@ -28,6 +28,7 @@ CLAIM_PREDICATES = frozenset(
         "inPathway",
         "hasBiomarker",
         "hasResult",
+        "hasAdverseEvent",
     }
 )
 
@@ -37,6 +38,7 @@ _PRED_ALIASES = {
     "treats": "treats",
     "biomarker_for": "hasBiomarker",
     "in_clinical_trial_for": "investigates",
+    "has_adverse_event": "hasAdverseEvent",
 }
 
 

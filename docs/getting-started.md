@@ -60,7 +60,7 @@ hmd kb / demo / eval / serve
         → foundation.FoundationApi             # World Model Semantic Ops
 ```
 
-- `build_literature_base`：读 `ontology/catalog/*.yaml`（缺失时仅单测回落 `data/seed/`），默认 `id_mode=enterprise`，身份为确定性 `HMD:ENT:*`。
+- `build_literature_base`：只读 `ontology/catalog/*.yaml`（缺失硬失败），默认 `id_mode=enterprise`，身份为确定性 `HMD:ENT:*`。
 - `hmd demo` / `eval` / `serve` 经 `open_dual_surface()`，不再各自装配第二套库。
 - KB 图投影（`GraphStore`）后端为 GraphDB；`with_graph=True` 或含 GRAPH 通道时需 `task foundation:up`。默认构建 `with_graph=False`。
 

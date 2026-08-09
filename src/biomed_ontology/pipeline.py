@@ -108,18 +108,15 @@ class KnowledgeBase:
         }
 
 
-def catalog_files(data_root: Path | None = None) -> list[Path]:
-    """优先 ``ontology/catalog/*.yaml``；缺失时回落 ``data/seed``（测试对照）。"""
-    root = data_root or DATA_ROOT
-    catalog = ONTOLOGY_CATALOG
-    if catalog.is_dir():
-        files = sorted(
-            p for p in catalog.glob("*.yaml") if p.name not in {"ambiguity.yaml", "DEPRECATED.md"}
-        )
-        if files:
-            return files
-    seed = root / "seed"
-    return sorted(p for p in seed.glob("*.yaml") if p.name != "ambiguity.yaml")
+def catalog_files(catalog_dir: Path | None = None) -> list[Path]:
+    """仅 ``ontology/catalog/*.yaml``（ENT 目录 SSOT）。缺失或空目录硬失败。"""
+    catalog = catalog_dir or ONTOLOGY_CATALOG
+    if not catalog.is_dir():
+        raise FileNotFoundError(f"ontology catalog 不存在：{catalog}")
+    files = sorted(p for p in catalog.glob("*.yaml") if p.name != "ambiguity.yaml")
+    if not files:
+        raise FileNotFoundError(f"ontology catalog 无概念 YAML：{catalog}")
+    return files
 
 
 def build_literature_base(
@@ -149,8 +146,6 @@ def build_literature_base(
         else None
     )
     amb_path = ONTOLOGY_CATALOG / "ambiguity.yaml"
-    if not amb_path.exists():
-        amb_path = root / "seed" / "ambiguity.yaml"
     ambiguity = load_ambiguity_registry(amb_path) if amb_path.exists() else None
 
     id_ledger = None
@@ -158,7 +153,7 @@ def build_literature_base(
         id_ledger = IdLedger(ledgers / "concept_ids.json", release=release_id)
 
     built = build_from_seed(
-        catalog_files(root),
+        catalog_files(),
         registry=registry,
         id_ledger=id_ledger,
         alias_ledger=SequenceLedger(ledgers / "alias_ids.json", prefix="HMDA"),

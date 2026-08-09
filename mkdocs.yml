@@ -104,6 +104,7 @@ nav:
       - 设计不变量: invariants.md
   - Ontology:
       - Ontology 工程工具链: ontology/toolchain.md
+      - 策展资产与运行时机制: ontology/curation-and-runtime.md
       - Golden Path: ontology/golden-path.md
       - 企业身份与目录 SSOT: ontology/seed.md
       - 归一化级联: ontology/normalize.md

@@ -32,6 +32,7 @@
 |---|---|
 | 第一次接触本仓库 | [快速开始](getting-started.md) → [Foundation](architecture/foundation.md) → [分层架构](architecture/layers.md) → [设计不变量](invariants.md) |
 | 要做企业世界模型 / Foundation | [Foundation](architecture/foundation.md) → [Toolchain](ontology/toolchain.md) → [Golden Path](ontology/golden-path.md) → `hmd foundation golden` |
+| 理解策展 / sync / ER·BIOS | [策展资产与运行时机制](ontology/curation-and-runtime.md) → [Foundation](architecture/foundation.md) → [演进闭环](evolution/loop.md) |
 | 要改检索 / 本体 | [类型化链接](ontology/links.md) → [三通道与 RRF](retrieval/hybrid.md) → [查询改写 vs 图通道](retrieval/ontology-paths.md) → [评测消融](eval/arms.md) |
 | 要接 Semantic Access | [Semantic Access](tools/tools.md) → [Citationware](tools/citationware.md) → [serve](tools/serve.md) → [许可](licensing/tiers.md) |
 | 要接文档解析 / Evidence Index | [Router](parse/router.md) → [版面](parse/layout.md) → [资产路径](parse/assets.md) → [Milvus](retrieval/milvus.md) |

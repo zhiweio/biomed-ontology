@@ -395,7 +395,7 @@ uv run hmd serve --mcp --port 8000
 | `src/biomed_ontology/evolution/` | 信号挖掘 → KGCL → 发版守门 |
 | `src/biomed_ontology/eval/` | 消融评测 + 指标目标 |
 | `data/foundation/` | evidence / assets / BIOS 子集等运行投影 |
-| `data/seed/` | **已退役**（见 `DEPRECATED.md`）；勿作身份权威 |
+| `ontology/catalog/` | 文献/检索 ENT 目录 SSOT（`HMD:ENT:*`） |
 | `data/gold/` | gold set 与指标目标 |
 | `docker/docker-compose.foundation.yml` | GraphDB + OM + Milvus 联调栈 |
 | `docs/` | mkdocs-material 完整手册（`task docs:serve`） |
@@ -408,7 +408,7 @@ uv run hmd serve --mcp --port 8000
 完整清单见 [设计不变量](docs/invariants.md)。
 
 - **Enterprise Ontology ID（`HMD:ENT:*`）是世界模型与身份主键**；BIOS/ChEBI/HGNC 只做 External Concept xref
-- **身份走 ER**（BERN2 → dictionary → Zingg → xref → ENT）；`data/seed` / `HMD:SUB` 铸造已退役
+- **身份走 ER**（BERN2 → dictionary → Zingg → xref → ENT）；术语目录仅 `ontology/catalog/`（`HMD:SUB` 铸造已退役）
 - **文献语料**在 `data/corpus/` → Milvus；外部 ID 一律作为 xref 挂靠（供应商中立）
 - **Milvus = Evidence Index（必选）**；失败不回落；`fake` 需 `--allow-fake`
 - **Knowledge = Claim + Provenance + Evidence**（Knowledge ≠ Truth）

@@ -4,15 +4,19 @@
 文本错在关系方向，表格错在行列对齐，图像错在数值读取。
 混在一起就无法分模态统计准确率，也就无法判断该修哪一段管线。
 
-PoC 用 schema-guided 的规则抽取器跑通方法论与质量体系；
-`FactExtractor` 是 Protocol，生产接本地垂类模型 / DeepSeek / 千问视觉时按同一接口替换。
+文本主路径：受限 LLM RE（``text-llm-v1``）+ 可选规则旁路（``text-rule-v1``）。
+`FactExtractor` 是 Protocol，可按同接口替换本地垂类模型。
 """
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
 from typing import Protocol
+
+import yaml
 
 from biomed_ontology._generated.hmd_concept import (
     LicenseTierEnum,
@@ -29,9 +33,12 @@ __all__ = [
     "ExtractedFact",
     "FactExtractor",
     "ImageExtractor",
+    "RuleTextRelationExtractor",
     "TableExtractor",
     "TextRelationExtractor",
     "TriModalPipeline",
+    "default_extractors",
+    "load_table_metrics",
 ]
 
 
@@ -142,8 +149,8 @@ _TEXT_PATTERNS: list[tuple[re.Pattern[str], PredicateEnum]] = [
 ]
 
 
-class TextRelationExtractor:
-    """schema-guided 文本关系抽取。谓词只能取 PredicateEnum 中已声明的值。"""
+class RuleTextRelationExtractor:
+    """规则旁路（高精 / 离线回落）。默认不作为生产主路径。"""
 
     extractor_id = "text-rule-v1"
     modality = ModalityChannelEnum.TEXT
@@ -154,6 +161,8 @@ class TextRelationExtractor:
         out: list[ExtractedFact] = []
         for sent in re.split(r"(?<=[.。!?])\s*", chunk.text):
             if not sent.strip():
+                continue
+            if _is_negated_sentence(sent):
                 continue
             carried: str | None = None
             for pattern, predicate in _TEXT_PATTERNS:
@@ -207,29 +216,49 @@ class TextRelationExtractor:
         return res.matched[0].concept_id if res.matched else None
 
 
+# 兼容旧导入名
+TextRelationExtractor = RuleTextRelationExtractor
+
+_NEG = re.compile(
+    r"\b(?:do|does|did|is|are|was|were|can|could|will|would)\s+not\b|"
+    r"\bnever\b|\bno longer\b|不(?:会|能|可)?|未|并非|没有",
+    re.I,
+)
+
+
+def _is_negated_sentence(sent: str) -> bool:
+    """粗粒度否定门：规则旁路宁缺勿滥。"""
+    return bool(_NEG.search(sent))
+
+
 # ---------------------------------------------------------------- 表格通道
 
-_METRIC_COLUMNS = {
-    "orr": ("ORR", "%"),
-    "objective response rate": ("ORR", "%"),
-    "客观缓解率": ("ORR", "%"),
-    "pfs": ("PFS", "months"),
-    "median pfs": ("PFS", "months"),
-    "无进展生存期": ("PFS", "months"),
-    "os": ("OS", "months"),
-    "median os": ("OS", "months"),
-    "dcr": ("DCR", "%"),
-    "ic50": ("IC50", "nM"),
-}
 _NUM_RE = re.compile(r"-?\d+(?:\.\d+)?")
+_TABLE_METRICS_PATH = (
+    Path(__file__).resolve().parents[3] / "ontology" / "extract" / "table_metrics.yaml"
+)
+
+
+@lru_cache(maxsize=1)
+def load_table_metrics(path: str | None = None) -> dict[str, tuple[str, str]]:
+    """表头 casefold → (metric, unit)。"""
+    p = Path(path) if path else _TABLE_METRICS_PATH
+    if not p.is_file():
+        return {}
+    raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    metrics = raw.get("metrics") or {}
+    out: dict[str, tuple[str, str]] = {}
+    for key, spec in metrics.items():
+        if isinstance(spec, dict):
+            out[str(key).casefold()] = (str(spec.get("metric") or key), str(spec.get("unit") or ""))
+    return out
 
 
 class TableExtractor:
     """表格通道。
 
     生产链路是：千问视觉模型还原表格结构 → 本抽取器做单元格语义对齐。
-    PoC 直接消费已还原的结构，因为要验证的是"对齐到本体"这一步，
-    而不是版面还原本身 —— 后者是成熟的商用能力。
+    指标列定义外置 ``ontology/extract/table_metrics.yaml``。
     """
 
     extractor_id = "table-cell-align-v1"
@@ -241,8 +270,9 @@ class TableExtractor:
         table = next((t for t in doc.tables if t.table_id == chunk.source_ref), None)
         if table is None or not table.header:
             return []
+        metric_map = load_table_metrics()
         header = [h.strip().casefold() for h in table.header]
-        metric_cols = {i: _METRIC_COLUMNS[h] for i, h in enumerate(header) if h in _METRIC_COLUMNS}
+        metric_cols = {i: metric_map[h] for i, h in enumerate(header) if h in metric_map}
         if not metric_cols:
             return []
         out: list[ExtractedFact] = []
@@ -358,16 +388,57 @@ def _unit_of(value: str) -> str | None:
 # ---------------------------------------------------------------- 管线
 
 
+def default_extractors(
+    *,
+    enable_llm: bool | None = None,
+    enable_rules: bool | None = None,
+) -> list[FactExtractor]:
+    """默认抽取器集合。
+
+    - LLM 文本：provider≠null 且已配置 API key（否则视为不可用）
+    - 规则旁路：``HMD_EXTRACT_RULE_BOOST`` 或 LLM 不可用时自动开启
+    """
+    from biomed_ontology.config import settings
+    from biomed_ontology.corpus.extractors.llm_text import LlmTextRelationExtractor
+    from biomed_ontology.llm.chat import NullChatProvider, get_chat_provider
+
+    chat = get_chat_provider(settings)
+    inner = getattr(chat, "provider", chat)
+    llm_usable = not isinstance(inner, NullChatProvider)
+    llm_on = bool(enable_llm) if enable_llm is not None else llm_usable
+    rules_on = (
+        bool(enable_rules)
+        if enable_rules is not None
+        else bool(getattr(settings, "extract_rule_boost", False)) or not llm_on
+    )
+    out: list[FactExtractor] = []
+    if llm_on:
+        out.append(
+            LlmTextRelationExtractor(
+                chat=chat,
+                enabled=True,
+                min_confidence=float(settings.extract_min_confidence),
+                max_confidence=float(settings.extract_max_confidence),
+                max_pairs=int(settings.extract_max_pairs),
+            )
+        )
+    if rules_on:
+        out.append(RuleTextRelationExtractor())
+    out.extend([TableExtractor(), ImageExtractor()])
+    return out
+
+
 class TriModalPipeline:
-    """按 chunk 的模态路由到对应抽取器，并做跨模态事实合并。"""
+    """按 chunk 的模态路由到对应抽取器，并做跨模态事实合并。
+
+    同模态可挂多个抽取器（如 LLM + 规则旁路），结果一并 merge。
+    """
 
     def __init__(self, extractors: list[FactExtractor] | None = None) -> None:
-        self.extractors = extractors or [
-            TextRelationExtractor(),
-            TableExtractor(),
-            ImageExtractor(),
-        ]
-        self._by_modality = {e.modality: e for e in self.extractors}
+        self.extractors = extractors or default_extractors()
+        self._by_modality: dict[ModalityChannelEnum, list[FactExtractor]] = {}
+        for e in self.extractors:
+            self._by_modality.setdefault(e.modality, []).append(e)
 
     def run(
         self,
@@ -381,11 +452,12 @@ class TriModalPipeline:
         raw: list[ExtractedFact] = []
         with ctx.span("extract", **{"hmd.chunk_count": len(chunks)}) as sp:
             for chunk in chunks:
-                extractor = self._by_modality.get(chunk.modality)
+                extractors = self._by_modality.get(chunk.modality) or []
                 doc = doc_index.get(chunk.doc_id)
-                if extractor is None or doc is None:
+                if not extractors or doc is None:
                     continue
-                raw.extend(extractor.extract(chunk, doc, normalizer, ctx))
+                for extractor in extractors:
+                    raw.extend(extractor.extract(chunk, doc, normalizer, ctx))
             merged = self.merge(raw)
             sp.set(**{"hmd.fact_count_raw": len(raw), "hmd.fact_count_merged": len(merged)})
         return merged

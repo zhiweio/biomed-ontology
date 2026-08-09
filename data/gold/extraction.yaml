@@ -1,0 +1,29 @@
+# Knowledge Extraction gold：句 → 期望三元组（含否定抑制）
+version: "0.1.0"
+
+cases:
+  - id: inhibits_en
+    text: "Savolitinib selectively inhibits MET kinase activity."
+    expect:
+      - { subject: "HMD:ENT:DC:savolitinib", predicate: inhibits, object: "HMD:ENT:TGT:MET" }
+
+  - id: treats_en
+    text: "Savolitinib for the treatment of NSCLC."
+    expect:
+      - { subject: "HMD:ENT:DC:savolitinib", predicate: treats, object: "HMD:ENT:IND:nsclc" }
+
+  - id: has_target_zh
+    text: "沃利替尼靶向MET。"
+    expect:
+      - { subject: "HMD:ENT:DC:savolitinib", predicate: has_target, object: "HMD:ENT:TGT:MET" }
+
+  - id: negation_no_fact
+    text: "Savolitinib does not inhibit EGFR."
+    expect: []
+    note: "否定句不得产出 inhibits 事实"
+
+  - id: uncertain_skip
+    text: "Savolitinib may inhibit MET in some models."
+    expect: []
+    rules: false
+    note: "不确定语气由 LLM uncertain 标志抑制；规则评测跳过"

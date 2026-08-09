@@ -16,7 +16,7 @@
 
 三份库长得像，但任意一次目录改动都可能只进了一份。把装配收成单一函数，不是为了少写几行，而是为了让**可证伪性**成立：同一份代码路径上的分数，才是服务上会看到的分数。
 
-文献面的身份权威在 `ontology/catalog/`（`HMD:ENT:*`），不经 `data/seed/` 或 `HMD:SUB` 铸造。`data/seed/` 仅作单测对照（见 [企业身份与目录 SSOT](../ontology/seed.md)）。
+文献面的身份权威在 `ontology/catalog/`（`HMD:ENT:*`），不经 `HMD:SUB` 铸造（见 [企业身份与目录 SSOT](../ontology/seed.md)）。
 
 ---
 
@@ -24,7 +24,7 @@
 
 | 决策 | 理由 |
 |---|---|
-| `catalog_files()` 优先 `ontology/catalog/` | 企业 ENT 目录与金路径实体对齐 |
+| `catalog_files()` 仅 `ontology/catalog/` | 企业 ENT 目录与金路径实体对齐 |
 | 默认 `id_mode=enterprise` | 确定性 `enterprise_id_for()`，无需 IdLedger |
 | 默认 `with_graph=False` | 术语归一化不强制 GraphDB；GRAPH 臂按需 `ensure_catalog_graphs` |
 | `SEED_INTERNAL` / `SEED_LINKS` 分图装载 | 术语节点与类型化断言证据强度不同 |

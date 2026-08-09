@@ -38,14 +38,21 @@ Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与
 
 | Schema | 管什么 | 生成物 |
 |---|---|---|
-| `hmd_concept.yaml` | 概念、同义词、映射、许可枚举 | `_generated/hmd_concept.py` |
+| `hmd_types.yaml` | 共享类型、CURIE 模式、跨模块枚举（被其余 schema import） | 无独立模块；并入各生成物 |
+| `hmd_concept.yaml` | 概念、同义词、映射、层级、等价团 | `_generated/hmd_concept.py` |
 | `hmd_fact.yaml` | 文档、切片、事实、检索通道枚举 | `_generated/hmd_fact.py` |
-| `hmd_tools.yaml` | 8 工具请求/响应、Provenance | `_generated/hmd_tools.py` |
-| `hmd_obs.yaml` | Trace / Decision / ToolIo | `_generated/hmd_obs.py` |
+| `hmd_tools.yaml` | **KB 面 8 工具**请求/响应、Provenance | `_generated/hmd_tools.py` |
+| `hmd_obs.yaml` | Trace / Decision / ToolIo / Signal | `_generated/hmd_obs.py` |
 | `hmd_taxonomy.yaml` | 文档标引标签 | `_generated/hmd_taxonomy.py` |
 | `hmd_enterprise.yaml` | Enterprise Ontology（DrugCandidate / Claim…） | `_generated/hmd_enterprise.py` |
 
-生成管线：`Taskfile` 的 `gen` target；可选 `task ontology:sync-artifacts` 复制 OWL/SHACL 到 `ontology/`。
+`hmd_tools.yaml` 只覆盖文献/术语面 `TOOL_SPECS`（8）。Foundation 另有 9 个 `SEMANTIC_OPS`；双面合计 17 个具名操作，见 [Semantic Access](../tools/tools.md) 与 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
+
+生成管线：`Taskfile` 的 `gen` target → Python 在 `_generated/`，OWL / JSON Schema / SHACL 在 `schema/generated/`（每源通常 `*.owl.ttl` / `*.schema.json` / `*.shacl.ttl`）。
+
+手写投影约束：`schema/shapes/projection.shacl.ttl`（SKOS/PROV 入图形态；与 gen-shacl 实例 shapes 分离）。
+
+可选 `task ontology:sync-artifacts` 复制 OWL/SHACL 到 `ontology/` 供离线分发。
 
 ### 3.2 消费方
 

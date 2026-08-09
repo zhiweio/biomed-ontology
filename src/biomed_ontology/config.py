@@ -26,6 +26,7 @@ __all__ = [
     "ModelHubName",
     "SearchBackendName",
     "Settings",
+    "LlmProviderName",
     "VisionProviderName",
     "load_settings",
     "settings",
@@ -38,6 +39,7 @@ MinerUEffortName = Literal["medium", "high"]
 ModelHubName = Literal["hf", "modelscope", "gitee"]
 SearchBackendName = Literal["milvus"]
 VisionProviderName = Literal["null", "openai", "qwen"]
+LlmProviderName = Literal["null", "openai", "deepseek", "qwen"]
 
 
 class Settings(BaseSettings):
@@ -80,6 +82,23 @@ class Settings(BaseSettings):
     vision_base_url: str = ""
     vision_api_key: SecretStr = SecretStr("")
     vision_cache_dir: Path = Path("data/cache/vision")
+
+    # --- 文本 LLM（Knowledge Extraction）------------------------------------
+    # 默认 DeepSeek 官方 OpenAI-compatible API + deepseek-v4-flash。
+    # 未配置 HMD_LLM_API_KEY 时 get_chat_provider 回落 null，抽取自动开规则旁路。
+    llm_provider: LlmProviderName = "deepseek"
+    llm_model: str = "deepseek-v4-flash"
+    llm_base_url: str = "https://api.deepseek.com"
+    llm_api_key: SecretStr = SecretStr("")
+    llm_cache_dir: Path = Path("data/cache/llm")
+    llm_timeout_s: float = Field(default=60.0, gt=0)
+    # V4 默认开 thinking；关系抽取要稳定 JSON，默认关闭
+    llm_thinking: bool = False
+    # 规则旁路：默认关；LLM 不可用（null / 无 key）时 default_extractors 仍会开启
+    extract_rule_boost: bool = False
+    extract_max_pairs: int = Field(default=32, ge=1, le=256)
+    extract_min_confidence: float = Field(default=0.55, ge=0.0, le=1.0)
+    extract_max_confidence: float = Field(default=0.85, ge=0.0, le=1.0)
 
     # --- 检索后端（仅 Milvus；词法走 sparse_lexical）---------------------------
     search_backend: SearchBackendName = "milvus"
@@ -141,6 +160,7 @@ class Settings(BaseSettings):
         "mineru_base_url",
         "milvus_uri",
         "vision_base_url",
+        "llm_base_url",
         "graphdb_url",
         "bern2_url",
         "openmetadata_url",
@@ -179,6 +199,17 @@ class Settings(BaseSettings):
             out.append(
                 "HMD_ACCEPT_UNCLEARED_COMPONENTS=true：跳过了第三方组件的法务闸门。"
                 "仅限本地试用；待核实的许可义务见 NOTICE。"
+            )
+        if self.llm_provider != "null" and not self.llm_api_key.get_secret_value():
+            out.append(
+                f"HMD_LLM_PROVIDER={self.llm_provider} 但未设置 HMD_LLM_API_KEY："
+                "文本 LLM 抽取将回落 null，仅规则旁路可用。"
+            )
+        if self.llm_provider != "null" and self.llm_base_url and not self.llm_base_url.startswith(
+            ("http://localhost", "http://127.0.0.1")
+        ):
+            out.append(
+                f"HMD_LLM_BASE_URL={self.llm_base_url}：Knowledge Extraction 将调用外部 LLM API。"
             )
         return out
 

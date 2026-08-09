@@ -50,6 +50,8 @@
 | 企业资产 | Foundation | `search_assets`、`get_entity_assets` | OpenMetadata Glossary |
 | 聚合上下文 | Foundation | `get_entity_context` | GraphDB + Milvus + OM 聚合；**禁止 YAML fallback** |
 
+策展 YAML / 映射文件分别被哪些 op 消费（`entities`→`get_entity`、`dictionary`→`resolve_entity`、`catalog`→`normalize_entity`…）：见 [策展资产与运行时机制 · 资产→工具矩阵](../ontology/curation-and-runtime.md#35-rest-mcp)。
+
 ### ToolApi 调用链
 
 所有 KB 工具经 `_invoke` 包裹：

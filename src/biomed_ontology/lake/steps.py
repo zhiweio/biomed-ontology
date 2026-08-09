@@ -211,6 +211,7 @@ def write_claims(ctx: IngestContext, *, bern2_url: str | None = None) -> IngestC
     except Exception:
         normalizer = Normalizer(concepts=[], synonyms=[], ambiguity_index={}, release_id="0.0.0")
 
+    # annotate_bern2 已写入 chunk.entity_ids；LLM/候选层直接复用，避免二次 NER
     facts = TriModalPipeline().run(
         [ctx.document], ctx.chunks, normalizer=normalizer, ctx=ctx_trace
     )

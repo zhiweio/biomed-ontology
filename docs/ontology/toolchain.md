@@ -72,18 +72,23 @@ Enterprise Ontology 需要同时满足：
 
 ### 3.2 Ontology as Code 目录
 
-Git 策展面：`ontology/`（映射、样例、Protégé 入口、**catalog**）。
+Git 策展面：`ontology/`（实体、词典、claims、映射、catalog、抽取配置、样例、Protégé/SHACL 入口）。
 
 | 子目录 | 用途 |
 |---|---|
 | `ontology/catalog/` | 文献/检索 ENT 目录（`HMD:ENT:*`） |
 | `ontology/entities/` | 金路径企业实体 |
 | `ontology/dictionary/` | ER 企业词典 |
-| `ontology/mappings/` | SSSOM / Zingg |
+| `ontology/mappings/` | BIOS / ChEBI / BERN2 type / Zingg |
 | `ontology/claims/` | 策展 KnowledgeClaim |
+| `ontology/extract/` | 表格指标等抽取配置（湖侧） |
 | `ontology/examples/` | Golden Path 样例包 |
+| `ontology/owl/` | Protégé 入口说明（权威 OWL 在 `schema/generated/`） |
+| `ontology/shapes/` | SHACL 入口说明（权威 shapes 在 `schema/`） |
 
 LinkML SSOT 仍在 `schema/`；生成物在 `src/biomed_ontology/_generated/`。可选 `task ontology:sync-artifacts` 复制 OWL/SHACL 到 `ontology/`。
+
+**策展资产全地图、sync 矩阵、REST/MCP 接线、BERN2/BIOS**：见 [策展资产与运行时机制](curation-and-runtime.md)。
 
 ### 3.3 PR / 运行时流程
 

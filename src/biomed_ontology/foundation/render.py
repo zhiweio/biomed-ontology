@@ -758,7 +758,7 @@ def _failure_footer(result: dict[str, Any], *, canonical: str) -> Panel:
     if reason == "candidate_unresolved":
         text.append("hmd foundation resolve --text ", style="cyan")
         text.append(escape(query or "<mention>"), style="yellow")
-        text.append("  ·  check data/seed aliases", style="dim")
+        text.append("  ·  check ontology/catalog aliases", style="dim")
     elif reason.startswith("kb_"):
         text.append("hmd tools search --query ", style="cyan")
         entity = (result.get("context") or {}).get("entity") or {}

@@ -23,27 +23,23 @@
 
 | 决策 | 理由 | 放弃 |
 |---|---|---|
-| **主路径 `ontology/catalog/`** | 与金路径实体同仓策展、可 PR 审查 | `data/seed/` 运行时权威 |
+| **唯一 SSOT `ontology/catalog/`** | 与金路径实体同仓策展、可 PR 审查 | 双源 / `data/seed` |
 | **确定性 `HMD:ENT:*`**（`enterprise_id_for`） | 同 seed_key 永远同一 ID，无需 IdLedger | `HMD:SUB` 递增铸造 |
 | **`id_mode=enterprise` 默认** | 生产/文献/评测一致 | 每环境重新 mint |
 | **外部 ID 仅 xref_hints** | 与 registry 快照版本对齐 | 手抄 DrugBank ID |
-| **`data/seed/` 仅单测** | 迁移对照、`id_mode=ledger` | 新概念写入 seed |
 
-> 脚注：`data/seed/DEPRECATED.md` 声明该目录已退役为运行时 SSOT，仅作迁移对照与 `id_mode=ledger` 单测输入。新概念请写入 `ontology/catalog/` 或金路径 `ontology/entities/`。
+> `data/seed/` 已删除。`id_mode=ledger` 单测请用临时 fixture 目录；新概念写入 `ontology/catalog/` 或金路径 `ontology/entities/`。
 
 ---
 
 ## 3. 设计与实现
 
-### 3.1 目录解析优先级
+### 3.1 目录解析
 
 ```text
-pipeline.catalog_files(data_root)
-    │
-    ├─ ontology/catalog/*.yaml 存在且非空？
-    │       YES → 返回 catalog 文件列表（排除 ambiguity.yaml）
-    │
-    └─ NO → 回落 data/seed/*.yaml（仅测试/对照）
+pipeline.catalog_files()
+    → ontology/catalog/*.yaml（排除 ambiguity.yaml）
+    → 目录缺失或空 → FileNotFoundError（硬失败，无回落）
 ```
 
 常量：
@@ -52,7 +48,7 @@ pipeline.catalog_files(data_root)
 |---|---|
 | `ONTOLOGY_CATALOG` | `ontology/catalog/` |
 | `catalog` 文件 | `substances.yaml`、`targets.yaml`、`diseases.yaml` 等 |
-| 歧义表 | `ontology/catalog/ambiguity.yaml`（缺失时回落 `data/seed/ambiguity.yaml`） |
+| 歧义表 | `ontology/catalog/ambiguity.yaml` |
 
 ### 3.2 从 SeedConcept 到 BuiltConcept
 
@@ -179,7 +175,7 @@ ensure_catalog_graphs(graph, concepts, synonyms)
 
 | 失败模式 | 表现 |
 |---|---|
-| 用 `data/seed/` 跑生产 | 与 Foundation 实体分裂 |
+| 绕过 `ontology/catalog/` 另建术语源 | 与 Foundation 实体分裂 |
 | 未解析 `targets:met` | search-around 少边 |
 | 未登记歧义碰撞 | 归一化随机落义项 |
 | catalog 与 entities 不同步 | resolve 与 normalize 命中不同 ID |

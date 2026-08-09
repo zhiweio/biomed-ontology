@@ -1,0 +1,14 @@
+# 表格通道指标列 → (metric_name, unit)
+# 键为表头 casefold 后匹配
+version: "0.1.0"
+metrics:
+  orr: { metric: ORR, unit: "%" }
+  objective response rate: { metric: ORR, unit: "%" }
+  客观缓解率: { metric: ORR, unit: "%" }
+  pfs: { metric: PFS, unit: months }
+  median pfs: { metric: PFS, unit: months }
+  无进展生存期: { metric: PFS, unit: months }
+  os: { metric: OS, unit: months }
+  median os: { metric: OS, unit: months }
+  dcr: { metric: DCR, unit: "%" }
+  ic50: { metric: IC50, unit: nM }

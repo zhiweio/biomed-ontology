@@ -30,7 +30,7 @@ app.add_typer(build_app, name="build")
 console = Console()
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SEED_DIR = REPO_ROOT / "data" / "seed"
+DEFAULT_CATALOG_DIR = REPO_ROOT / "ontology" / "catalog"
 DEFAULT_LEDGER_DIR = REPO_ROOT / "data" / "ledger"
 
 
@@ -103,19 +103,25 @@ def sources_policy() -> None:
 
 @build_app.command("seed")
 def build_seed(
-    seed_dir: Path = typer.Option(DEFAULT_SEED_DIR, "--seed-dir"),
+    catalog_dir: Path = typer.Option(DEFAULT_CATALOG_DIR, "--catalog-dir"),
+    seed_dir: Path | None = typer.Option(
+        None, "--seed-dir", help="已弃用，请用 --catalog-dir（指向 ontology/catalog）"
+    ),
     ledger_dir: Path = typer.Option(DEFAULT_LEDGER_DIR, "--ledger-dir"),
     release: str = typer.Option("0.1.0", "--release"),
     dry_run: bool = typer.Option(False, "--dry-run", help="不写入账本"),
 ) -> None:
-    """从种子切片构建概念与别名。"""
+    """从 ontology/catalog 构建概念与别名。"""
+    if seed_dir is not None:
+        console.print("[yellow]--seed-dir 已弃用，请改用 --catalog-dir[/yellow]")
+        catalog_dir = seed_dir
     registry = load_registry()
-    seed_files = sorted(p for p in seed_dir.glob("*.yaml") if p.name != "ambiguity.yaml")
+    seed_files = sorted(p for p in catalog_dir.glob("*.yaml") if p.name != "ambiguity.yaml")
     if not seed_files:
-        console.print(f"[red]未找到种子文件: {seed_dir}[/red]")
+        console.print(f"[red]未找到 catalog YAML: {catalog_dir}[/red]")
         raise typer.Exit(1)
 
-    ambiguity_path = seed_dir / "ambiguity.yaml"
+    ambiguity_path = catalog_dir / "ambiguity.yaml"
     ambiguity = load_ambiguity_registry(ambiguity_path) if ambiguity_path.exists() else None
 
     id_ledger = IdLedger(ledger_dir / "concept_ids.json", release=release)
@@ -209,7 +215,7 @@ def eval_cmd(
     suite: str = typer.Option(
         "identity,literature,bridge",
         "--suite",
-        help="逗号分隔：identity / literature / bridge",
+        help="逗号分隔：identity / literature / bridge / extraction",
     ),
     no_retrieval: bool = typer.Option(
         False, "--no-retrieval", help="跳过 Literature ARMS（仍跑 Identity + Bridge）"
@@ -217,7 +223,7 @@ def eval_cmd(
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Trace 摘要，不展开详情"),
 ) -> None:
-    """双面 Scorecard：Identity + Literature(ARMS) + Bridge。
+    """双面 Scorecard：Identity + Literature(ARMS) + Bridge（+ 可选 extraction）。
 
     World Model 三后端金路径请用 ``hmd foundation golden-eval``（本命令不重复跑）。
     默认 Rich；``--json`` / ``--compact`` 对齐 foundation 命令。
@@ -229,27 +235,53 @@ def eval_cmd(
     from biomed_ontology.rerank import get_reranker
     from biomed_ontology.runtime import open_dual_surface
 
+    _EXTRA = {"extraction"}
     _require_real_embedder(embedder, allow_fake=allow_fake)
 
     suites = [s.strip() for s in suite.split(",") if s.strip()]
+    want_extraction = "extraction" in suites
+    suites = [s for s in suites if s != "extraction"]
     if no_retrieval:
         suites = [s for s in suites if s != "literature"]
     unknown = sorted(set(suites) - set(ALL_SUITES))
     if unknown:
-        console.print(f"[red]未知 suite {unknown}；可选：{list(ALL_SUITES)}[/red]")
+        console.print(
+            f"[red]未知 suite {unknown}；可选：{list(ALL_SUITES) + sorted(_EXTRA)}[/red]"
+        )
         raise typer.Exit(2)
 
     surface = open_dual_surface()
     ents = frozenset(e.strip() for e in entitlements.split(",") if e.strip())
-    backend = _milvus_backend(embedder, collection)
-    report = run_dual_eval(
-        surface,
-        entitlements=ents,
-        milvus_backend=backend,
-        embedder=backend.embedder.name if backend else "",
-        reranker=get_reranker(reranker) if reranker.strip() else None,
-        suites=suites,
-    )
+    backend = _milvus_backend(embedder, collection) if suites else None
+    report = None
+    if suites:
+        report = run_dual_eval(
+            surface,
+            entitlements=ents,
+            milvus_backend=backend,
+            embedder=backend.embedder.name if backend else "",
+            reranker=get_reranker(reranker) if reranker.strip() else None,
+            suites=suites,
+        )
+
+    if want_extraction:
+        from biomed_ontology.eval.extraction import eval_extraction
+        from biomed_ontology.pipeline import build_literature_base
+
+        kb = surface.kb or build_literature_base(with_corpus=False, with_graph=False)
+        ext = eval_extraction(kb.normalizer)
+        console.print(
+            f"[bold]extraction[/bold] F1={ext.f1} P={ext.precision} R={ext.recall} "
+            f"grounding={ext.grounding_rate} negation_ok={ext.negation_ok}"
+        )
+        if ext.failures and not compact:
+            for line in ext.failures[:12]:
+                console.print(f"  · {line}", style="dim")
+        if not ext.ok:
+            raise typer.Exit(1)
+
+    if report is None:
+        return
 
     if json_out:
         console.print_json(json.dumps(report.to_dict(), ensure_ascii=False))
