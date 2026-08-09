@@ -1,7 +1,4 @@
-"""版面后端边界：法务闸门与降级声明。
-
-实现在 P10；这里锁的是"启用某个后端"这条路径上必须成立的性质。
-"""
+"""版面后端边界：法务闸门与降级声明。"""
 
 from __future__ import annotations
 
@@ -15,24 +12,35 @@ from biomed_ontology.parse.layout import LayoutBlock, LayoutResult, get_layout_b
 
 
 def test_enabling_a_backend_requires_legal_clearance():
-    """默认后端 PyMuPDF 的 AGPL 义务同样未结论，闸门对它一视同仁。
-
-    PoC 默认 accept_uncleared=true；这条测的是显式关闭后闸门仍生效。
-    """
+    """默认 auto 不能直接 get_layout_backend；显式 Fast Path 同样受闸门约束。"""
     with pytest.raises(LicenseViolation, match="尚未经法务结论"):
-        get_layout_backend(config=load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "false"}))
+        get_layout_backend(
+            "pymupdf4llm",
+            config=load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "false"}),
+        )
 
 
 def test_explicit_acknowledgement_reaches_the_implementation():
     cfg = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "true"})
-    assert get_layout_backend(config=cfg).name == "pymupdf"
+    assert get_layout_backend("pymupdf4llm", config=cfg).name == "pymupdf4llm"
 
 
 def test_backend_switch_is_the_only_thing_that_changes_the_implementation():
-    """配置开关的唯一落点。各调用处自己 import 会让闸门形同虚设。"""
     cfg = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "true", "HMD_LAYOUT_BACKEND": "mineru"})
     assert get_layout_backend(config=cfg).name == "mineru"
-    assert get_layout_backend("pymupdf", config=cfg).name == "pymupdf"
+    assert get_layout_backend("docling", config=cfg).name == "docling"
+
+
+def test_pymupdf_alias_is_rejected():
+    cfg = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "true"})
+    with pytest.raises(ValueError, match="已废弃"):
+        get_layout_backend("pymupdf", config=cfg)
+
+
+def test_auto_must_go_through_router():
+    cfg = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "true", "HMD_LAYOUT_BACKEND": "auto"})
+    with pytest.raises(ValueError, match="Document Router"):
+        get_layout_backend(config=cfg)
 
 
 def test_unknown_backend_is_rejected():
@@ -42,7 +50,6 @@ def test_unknown_backend_is_rejected():
 
 
 def test_missing_bbox_is_empty_not_fabricated():
-    """拿不到坐标就留空。伪造成整页坐标会让引用看起来精确而实际指错地方。"""
     block = LayoutBlock(kind="text", text="ORR 49.2%", page=3)
     assert block.bbox == ()
 
@@ -57,7 +64,7 @@ def test_degraded_capabilities_are_carried_on_the_result():
         blocks=(LayoutBlock(kind="text", text="x", page=1),),
         assets_dir=Path("data/assets/DOC_1"),
         page_count=1,
-        backend="pymupdf",
+        backend="pymupdf4llm",
         degraded=("formula", "ocr"),
     )
     assert "formula" in result.degraded

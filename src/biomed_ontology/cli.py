@@ -459,7 +459,9 @@ def parse_cmd(
     doc_id: str = typer.Option(..., "--doc-id", help="如 DOC:PMC.1234567"),
     source_id: str = typer.Option("PMC", "--source-id"),
     title: str | None = typer.Option(None, "--title"),
-    layout: str | None = typer.Option(None, "--layout", help="pymupdf | mineru"),
+    layout: str | None = typer.Option(
+        None, "--layout", help="auto | pymupdf4llm | docling | mineru"
+    ),
     out_dir: Path = typer.Option(REPO_ROOT / "data" / "corpus" / "parsed", "--out"),
 ) -> None:
     """解析文档为语义树，产出与手写语料同 schema 的 YAML。"""

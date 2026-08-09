@@ -34,7 +34,7 @@
 | 要做企业世界模型 / Foundation | [Foundation 架构](architecture/foundation.md) → [Toolchain](ontology/toolchain.md) → [Golden Path](ontology/golden-path.md) → `hmd foundation golden` |
 | 要改检索 / 本体 | [类型化链接](ontology/links.md) → [三通道与 RRF](retrieval/hybrid.md) → [查询改写 vs 图通道](retrieval/ontology-paths.md) → [评测消融](eval/arms.md) |
 | 要接 Semantic Access | [Semantic Access](tools/tools.md) → [Citationware](tools/citationware.md) → [serve](tools/serve.md) → [许可](licensing/tiers.md) |
-| 要接视觉 / Evidence Index | [资产路径](parse/assets.md) → [Milvus](retrieval/milvus.md) → [图型](parse/figure-type.md) → [嵌入器](retrieval/embedders.md) |
+| 要接文档解析 / Evidence Index | [Router](parse/router.md) → [版面](parse/layout.md) → [资产路径](parse/assets.md) → [Milvus](retrieval/milvus.md) |
 | 合规 / 采购 | [Tier 矩阵](licensing/tiers.md) → [组件闸门](licensing/components.md) → [NOTICE](appendix/notice.md) → [BIOS 闸门](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
 
 ## 与 README 的分工

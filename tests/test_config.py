@@ -11,7 +11,7 @@ from biomed_ontology.config import load_settings
 def test_defaults_prefer_milvus_evidence_index():
     """Milvus 为必选 Evidence Index；layout/vision 仍保持零依赖默认。"""
     s = load_settings({})
-    assert s.layout_backend == "pymupdf"
+    assert s.layout_backend == "auto"
     assert s.search_backend == "milvus"
     assert s.vision_provider == "null"
 
@@ -47,25 +47,51 @@ def test_auto_fallback_emits_a_warning():
 def test_cloud_mineru_warns_about_corpus_leaving_the_network():
     s = load_settings(
         {
-            "HMD_LAYOUT_BACKEND": "mineru",
+            "HMD_MINERU_TRANSPORT": "http",
             "HMD_MINERU_BASE_URL": "https://mineru.net/api/v4",
+            "HMD_ACCEPT_UNCLEARED_COMPONENTS": "false",
         }
     )
     assert s.mineru_is_cloud
     assert any("出网" in w for w in s.warnings())
 
 
-def test_self_hosted_mineru_does_not_warn_about_network():
+def test_local_mineru_transport_never_counts_as_cloud():
+    """即使 base_url 写了云域名，local transport 也不算出网。"""
     s = load_settings(
         {
-            "HMD_LAYOUT_BACKEND": "mineru",
-            "HMD_MINERU_BASE_URL": "http://localhost:8000",
-            # PoC 默认 accept=true 会有法务告警；这里只测"自托管不出网"。
+            "HMD_MINERU_TRANSPORT": "local",
+            "HMD_MINERU_BASE_URL": "https://mineru.net/api/v4",
             "HMD_ACCEPT_UNCLEARED_COMPONENTS": "false",
         }
     )
     assert not s.mineru_is_cloud
     assert s.warnings() == []
+
+
+def test_self_hosted_mineru_http_does_not_warn_about_network():
+    s = load_settings(
+        {
+            "HMD_MINERU_TRANSPORT": "http",
+            "HMD_MINERU_BASE_URL": "http://localhost:8000",
+            "HMD_ACCEPT_UNCLEARED_COMPONENTS": "false",
+        }
+    )
+    assert not s.mineru_is_cloud
+    assert s.warnings() == []
+
+
+def test_mineru_and_router_settings_defaults():
+    s = load_settings({})
+    assert s.mineru_transport == "local"
+    assert s.mineru_engine == "pipeline"
+    assert s.mineru_parse_method == "auto"
+    assert s.mineru_lang == "ch"
+    assert s.mineru_formula_enable is True
+    assert s.mineru_table_enable is True
+    assert s.mineru_effort == "medium"
+    assert s.parse_fast_max_pages == 40
+    assert s.parse_max_pages == 400
 
 
 def test_secrets_are_not_in_repr():
@@ -87,7 +113,7 @@ def test_secrets_are_not_in_repr():
 @pytest.mark.parametrize(
     ("key", "value", "allowed"),
     [
-        ("HMD_LAYOUT_BACKEND", "mineru2", "pymupdf"),
+        ("HMD_LAYOUT_BACKEND", "mineru2", "pymupdf4llm"),
         ("HMD_SEARCH_BACKEND", "qdrant", "milvus"),
         ("HMD_VISION_PROVIDER", "claude", "qwen"),
     ],
@@ -122,7 +148,7 @@ def test_test_env_ignores_host_environment(monkeypatch: pytest.MonkeyPatch):
 def test_unknown_hmd_variables_are_ignored_not_fatal():
     """拼错的变量名不该拖垮进程；但它也不会生效 —— 这正是 warnings() 存在的理由。"""
     s = load_settings({"HMD_NO_SUCH_KNOB": "x"})
-    assert s.layout_backend == "pymupdf"
+    assert s.layout_backend == "auto"
 
 
 def test_foundation_openmetadata_settings():

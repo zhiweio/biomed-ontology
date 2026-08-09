@@ -62,7 +62,9 @@ def test_content_list_gives_pages_and_bboxes(tmp_path: Path):
             200, json={"results": {"in.pdf": {"content_list": _CONTENT_LIST}}}
         )
     )
-    result = MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
+    result = MinerUBackend(transport="http", base_url=BASE).extract(
+        _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+    )
 
     abstract = result.blocks[0]
     assert abstract.kind == "heading"
@@ -78,7 +80,9 @@ def test_markdown_only_response_declares_missing_bbox(tmp_path: Path):
     respx.post(f"{BASE}/file_parse").mock(
         return_value=httpx.Response(200, json={"md_content": "# Results\n\nORR was 49.2%."})
     )
-    result = MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
+    result = MinerUBackend(transport="http", base_url=BASE).extract(
+        _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+    )
     assert "bbox" in result.degraded
     assert all(b.bbox == () for b in result.blocks)
 
@@ -89,7 +93,9 @@ def test_table_html_is_written_as_an_asset(tmp_path: Path):
         return_value=httpx.Response(200, json={"content_list": json.dumps(_CONTENT_LIST)})
     )
     out = tmp_path / "out"
-    result = MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), out, ctx=_ctx())
+    result = MinerUBackend(transport="http", base_url=BASE).extract(
+        _pdf(tmp_path), out, ctx=_ctx()
+    )
     table = next(b for b in result.blocks if b.kind == "table")
     assert table.asset_path is not None
     assert (out / table.asset_path).read_text(encoding="utf-8").startswith("<table>")
@@ -113,7 +119,9 @@ def test_remote_image_path_cannot_escape_the_asset_directory(tmp_path: Path):
             },
         )
     )
-    result = MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
+    result = MinerUBackend(transport="http", base_url=BASE).extract(
+        _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+    )
     img = next(b for b in result.blocks if b.kind == "image")
     assert img.asset_path == "images/passwd"
     assert ".." not in (img.asset_path or "")
@@ -124,14 +132,18 @@ def test_backend_failure_propagates_instead_of_degrading_silently(tmp_path: Path
     """静默降级会产出能力参差的语料，而没人知道是哪一部分。"""
     respx.post(f"{BASE}/file_parse").mock(return_value=httpx.Response(503, text="overloaded"))
     with pytest.raises(MinerUError, match="503"):
-        MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
+        MinerUBackend(transport="http", base_url=BASE).extract(
+            _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+        )
 
 
 @respx.mock
 def test_empty_response_is_an_error_not_an_empty_document(tmp_path: Path):
     respx.post(f"{BASE}/file_parse").mock(return_value=httpx.Response(200, json={}))
     with pytest.raises(MinerUError):
-        MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
+        MinerUBackend(transport="http", base_url=BASE).extract(
+            _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+        )
 
 
 @respx.mock
@@ -139,19 +151,84 @@ def test_api_key_is_sent_only_when_configured(tmp_path: Path):
     route = respx.post(f"{BASE}/file_parse").mock(
         return_value=httpx.Response(200, json={"content_list": _CONTENT_LIST})
     )
-    MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), tmp_path / "o1", ctx=_ctx())
+    MinerUBackend(transport="http", base_url=BASE).extract(
+        _pdf(tmp_path), tmp_path / "o1", ctx=_ctx()
+    )
     assert "authorization" not in route.calls[0].request.headers
 
-    MinerUBackend(base_url=BASE, api_key="k").extract(_pdf(tmp_path), tmp_path / "o2", ctx=_ctx())
+    MinerUBackend(transport="http", base_url=BASE, api_key="k").extract(
+        _pdf(tmp_path), tmp_path / "o2", ctx=_ctx()
+    )
     assert route.calls[1].request.headers["authorization"] == "Bearer k"
 
 
 @respx.mock
-def test_mineru_tree_matches_pymupdf_tree_for_the_same_layout(tmp_path: Path):
-    """验收项：同一份文档走两个后端，section_path 集合必须相同。"""
+def test_mineru_tree_matches_layout_for_the_same_blocks(tmp_path: Path):
+    """验收项：content_list 进共享 build_tree 后 section_path 稳定。"""
     respx.post(f"{BASE}/file_parse").mock(
         return_value=httpx.Response(200, json={"content_list": _CONTENT_LIST})
     )
-    mineru = MinerUBackend(base_url=BASE).extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
+    mineru = MinerUBackend(transport="http", base_url=BASE).extract(
+        _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+    )
     skeleton, _ = build_tree(mineru)
     assert [s.section_path for s in skeleton] == ["Abstract", "Methods"]
+
+
+def test_local_transport_reads_do_parse_outputs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """本地模式：mock do_parse，断言从落盘 content_list 还原块。"""
+    import sys
+    import types
+
+    def _fake_do_parse(**kwargs):
+        out = Path(kwargs["output_dir"])
+        stem = kwargs["pdf_file_names"][0]
+        method = kwargs.get("parse_method") or "auto"
+        dest = out / stem / method
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / f"{stem}_content_list.json").write_text(
+            json.dumps(_CONTENT_LIST), encoding="utf-8"
+        )
+
+    pkg = types.ModuleType("mineru")
+    cli = types.ModuleType("mineru.cli")
+    common = types.ModuleType("mineru.cli.common")
+    common.do_parse = _fake_do_parse  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "mineru", pkg)
+    monkeypatch.setitem(sys.modules, "mineru.cli", cli)
+    monkeypatch.setitem(sys.modules, "mineru.cli.common", common)
+
+    result = MinerUBackend(transport="local").extract(
+        _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+    )
+    assert result.backend == "mineru"
+    assert result.blocks[0].kind == "heading"
+    assert result.blocks[0].page == 1
+
+
+def test_local_transport_missing_package_is_explicit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    import sys
+
+    # sys.modules[name] is None → import 抛 ModuleNotFoundError
+    monkeypatch.setitem(sys.modules, "mineru", None)
+    monkeypatch.setitem(sys.modules, "mineru.cli", None)
+    monkeypatch.setitem(sys.modules, "mineru.cli.common", None)
+    with pytest.raises(MinerUError, match="需要安装 mineru"):
+        MinerUBackend(transport="local").extract(
+            _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
+        )
+
+
+def test_registry_defaults_to_local_transport():
+    from biomed_ontology.config import load_settings
+    from biomed_ontology.parse.layout.mineru import MinerUBackend
+    from biomed_ontology.parse.layout.registry import get_layout_backend
+
+    cfg = load_settings(
+        {"HMD_ACCEPT_UNCLEARED_COMPONENTS": "true", "HMD_LAYOUT_BACKEND": "mineru"}
+    )
+    backend = get_layout_backend(config=cfg)
+    assert isinstance(backend, MinerUBackend)
+    assert backend.transport == "local"

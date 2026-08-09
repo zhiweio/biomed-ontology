@@ -162,7 +162,7 @@ def download_bios_full(cache_dir: Path | None = None) -> Path:
         from huggingface_hub import snapshot_download
     except ImportError as exc:
         raise RuntimeError(
-            "需要 huggingface_hub：uv add huggingface_hub 或 uv sync --extra vector"
+            "需要 huggingface_hub：请 uv sync（默认依赖已含 huggingface_hub）"
         ) from exc
     snapshot_download(
         repo_id=BIOS_HF_REPO,

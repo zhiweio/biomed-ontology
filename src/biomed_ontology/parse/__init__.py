@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJustificationEnum
 from biomed_ontology._generated.hmd_fact import DocTypeEnum, LanguageEnum
@@ -23,6 +22,7 @@ from biomed_ontology.parse.layout import (
     LayoutResult,
     get_layout_backend,
 )
+from biomed_ontology.parse.layout._pdf_io import read_toc
 from biomed_ontology.parse.nodes import LeafNode, assign_blocks, dedupe_same_as
 from biomed_ontology.parse.outline import (
     HeadingCandidate,
@@ -30,6 +30,7 @@ from biomed_ontology.parse.outline import (
     grep_headings,
     merge_candidates,
 )
+from biomed_ontology.parse.router import route_and_extract
 from biomed_ontology.parse.skeleton import SectionSkeleton, build_skeleton, fat_leaves
 from biomed_ontology.parse.vision import (
     NullVisionProvider,
@@ -65,6 +66,7 @@ __all__ = [
     "grep_headings",
     "merge_candidates",
     "parse_document",
+    "route_and_extract",
 ]
 
 
@@ -108,15 +110,14 @@ def parse_document(
 ) -> ParsedDocument:
     ctx = ctx or TraceContext(trace_id=new_trace_id(), ontology_release_id="0.1.0")
     assets = out_dir or Path("data/assets") / asset_dir_name(doc_id)
-    backend = get_layout_backend(layout, config=config)
 
-    if not backend.supports(path):
-        raise ValueError(f"{backend.name} 不支持 {path.suffix} 格式")
-
-    with ctx.span("parse.document", doc_id=doc_id, backend=backend.name):
-        result = backend.extract(path, assets, ctx=ctx)
+    with ctx.span("parse.document", doc_id=doc_id):
+        result, route = route_and_extract(
+            path, assets, ctx=ctx, config=config, forced=layout
+        )
+        toc = read_toc(path) if path.suffix.casefold() in {".pdf", ".xps", ".epub"} else []
         skeleton, leaves = build_tree(
-            result, toc=_toc_of(path, backend), ctx=ctx, root_title=title or doc_id
+            result, toc=toc, ctx=ctx, root_title=title or doc_id
         )
         described = describe_assets(
             path, result, assets, vision=vision or get_vision_provider(config), ctx=ctx
@@ -135,6 +136,7 @@ def parse_document(
         assets=described,
         external_id=external_id,
         published_on=published_on,
+        route=route.as_dict(),
     )
 
 
@@ -205,14 +207,3 @@ def describe_assets(
                 )
     return out
 
-
-def _toc_of(path: Path, backend: Any) -> list[list[object]]:
-    """内嵌书签只有本地能读；MinerU 走 HTTP 拿不到，缺了就少一路候选而已。"""
-    if backend.name != "pymupdf":
-        return []
-    try:
-        import pymupdf
-    except ImportError:
-        return []
-    with pymupdf.open(path) as doc:
-        return doc.get_toc()

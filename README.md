@@ -79,7 +79,6 @@ uv run hmd foundation resolve "HMPL-504" --json      # 机器可读（含 aliase
 uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
 uv run hmd foundation sync                           # YAML 校验入库 → GraphDB + Milvus + OM（幂等，三后端必达）
 # Document Lake 双写（BERN2 必接；claim=extracted；Trino+OM 治理）
-uv sync --extra lake
 task lake:up
 uv run hmd lake ensure && uv run hmd lake init
 uv run hmd lake ingest-doc --source pubmed --doc-id DOC:demo --corpus-yaml data/corpus/….yaml --bern2-url http://localhost:8888
@@ -106,7 +105,7 @@ Ontology 工程工具链：见 [`ontology/`](ontology/) 与 [toolchain](docs/ont
 ## 快速开始
 
 ```bash
-uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --extra service
+uv sync --extra docs --extra dev
 
 uv run hmd kb        # 构建知识库并打印统计
 uv run hmd demo              # 跑 12 个演示场景（K/W/B 双面；Rich + 可证伪断言）
@@ -727,7 +726,7 @@ uv run hmd serve --mcp --port 8000
 [Ontos-AI/knowhere](https://github.com/Ontos-AI/knowhere)（Apache License 2.0），
 已按 Apache 2.0 §4(b) 标注全部修改。
 
-**MinerU、PyMuPDF、BiomedCLIP 三项许可义务待法务核实**，登记在
+**MinerU、PyMuPDF4LLM、Docling、BiomedCLIP 许可义务待法务核实**，登记在
 `licensing.COMPONENTS`，`review` 为 `pending` 时启用相关组件会直接抛
 `LicenseViolation` —— 义务只写进文档没人会读，写成闸门才绕不过去。
 BiomedCLIP 的权重是 MIT，但模型卡另有"任何部署用途均超出适用范围"的用途限定，

@@ -13,7 +13,8 @@
 | ID | 许可要点 | review |
 |---|---|---|
 | `knowhere` | Apache-2.0，保留声明并标注修改 | cleared |
-| `pymupdf` | AGPL / 商业双授权 | **pending** |
+| `pymupdf4llm` | AGPL / 商业双授权（底层 PyMuPDF） | **pending** |
+| `docling` | MIT | **pending** |
 | `mineru` | Apache-2.0 + 附加商业门槛与标示义务 | **pending** |
 | `biomedclip` | MIT 权重 + 模型卡「任何部署用途超出范围」 | **pending** |
 
@@ -33,7 +34,7 @@ PoC 默认 `accept_uncleared_components=true`（`hmd eval` / `hmd index` 可直�
 启动时 `warnings()` 留痕。生产务必 `HMD_ACCEPT_UNCLEARED_COMPONENTS=false`，
 **不允许**无声带进生产。
 
-调用点示例：PyMuPDF 渲染路径、MinerU 客户端、BiomedCLIP 嵌入/图型。
+调用点示例：PyMuPDF4LLM / PDF 渲染路径、Docling、MinerU（local import 或 HTTP）、BiomedCLIP 嵌入/图型。
 
 ## NOTICE 双面义务
 
@@ -43,5 +44,5 @@ PoC 默认 `accept_uncleared_components=true`（`hmd eval` / `hmd index` 可直�
 
 ```bash
 uv run pytest tests/test_licensing.py -q
-# README 绊线：MinerU + PyMuPDF + BiomedCLIP + 待法务核实
+# README 绊线：MinerU + PyMuPDF4LLM + BiomedCLIP + 待法务核实
 ```

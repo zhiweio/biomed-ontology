@@ -190,7 +190,7 @@ def test_explicit_acknowledgement_allows_local_trial():
 
 def test_pending_components_are_enumerable_for_legal_review():
     ids = {c.component_id for c in uncleared_components()}
-    assert {"mineru", "pymupdf"} <= ids
+    assert {"mineru", "pymupdf4llm", "docling"} <= ids
     for c in uncleared_components():
         assert c.obligation, f"{c.component_id} 登记了待核实却没写义务内容"
 

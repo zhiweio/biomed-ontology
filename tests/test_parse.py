@@ -17,7 +17,7 @@ from biomed_ontology.parse.outline import extract_toc_nodes, grep_headings
 from biomed_ontology.parse.skeleton import fat_leaves
 
 
-def _layout(*blocks: LayoutBlock, pages: int = 10, backend: str = "pymupdf") -> LayoutResult:
+def _layout(*blocks: LayoutBlock, pages: int = 10, backend: str = "pymupdf4llm") -> LayoutResult:
     from pathlib import Path
 
     return LayoutResult(blocks=blocks, assets_dir=Path("/tmp/x"), page_count=pages, backend=backend)
@@ -189,7 +189,7 @@ def test_whitespace_differences_do_not_defeat_dedupe():
 # ------------------------------------------------------- 跨后端一致性（验收项）
 
 
-@pytest.mark.parametrize("backend", ["pymupdf", "mineru"])
+@pytest.mark.parametrize("backend", ["pymupdf4llm", "docling", "mineru"])
 def test_tree_shape_is_backend_independent(backend: str):
     """同样的版面块，两个后端必须给出同一棵树。
 
@@ -223,7 +223,7 @@ def test_degraded_capabilities_survive_into_the_emitted_document():
         blocks=(_h("Methods", 1, 1), _t("body text here", 1)),
         assets_dir=Path("/tmp/x"),
         page_count=2,
-        backend="pymupdf",
+        backend="pymupdf4llm",
         degraded=("formula",),
     )
     skeleton, leaves = build_tree(layout)

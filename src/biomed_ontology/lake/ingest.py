@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +38,11 @@ def ingest_document(
     ctx = IngestContext(source_id=source_id, doc_id=doc_id)
     if file_path is not None:
         put_document(ctx, file_path=file_path, content_type=content_type)
-    parse_and_tree(ctx, corpus_yaml=corpus_yaml)
+    parse_and_tree(
+        ctx,
+        corpus_yaml=corpus_yaml,
+        file_path=None if corpus_yaml is not None else file_path,
+    )
     annotate_bern2(ctx, bern2_url=bern2_url)
     write_evidence(ctx)
     write_claims(ctx, bern2_url=bern2_url)

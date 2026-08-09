@@ -36,22 +36,27 @@ class ParsedDocument:
         same_as: dict[str, str],
         degraded: tuple[str, ...],
         backend: str,
+        route: dict[str, Any] | None = None,
     ) -> None:
         self.document = document
         self.sections = sections
         self.same_as = same_as
         self.degraded = degraded
         self.backend = backend
+        self.route = route
 
     def to_yaml_obj(self) -> dict[str, Any]:
+        parse: dict[str, Any] = {
+            "backend": self.backend,
+            # 空列表也要写出来：省略会让"没降级"和"没记录降级"分不清
+            "degraded": list(self.degraded),
+            "same_as": self.same_as,
+        }
+        if self.route is not None:
+            parse["route"] = self.route
         return {
             "corpus_version": "0.1.0",
-            "parse": {
-                "backend": self.backend,
-                # 空列表也要写出来：省略会让"没降级"和"没记录降级"分不清
-                "degraded": list(self.degraded),
-                "same_as": self.same_as,
-            },
+            "parse": parse,
             "sections_meta": self.sections,
             "documents": [self.document.model_dump(mode="json", exclude_none=True)],
         }
@@ -71,6 +76,7 @@ def emit_document(
     assets: dict[Any, Any] | None = None,
     external_id: str | None = None,
     published_on: str | None = None,
+    route: dict[str, Any] | None = None,
 ) -> ParsedDocument:
     by_path = {s.section_path: s for s in skeleton}
     assets = assets or {}
@@ -136,6 +142,7 @@ def emit_document(
         same_as=dedupe_same_as(dedupe_input),
         degraded=layout.degraded,
         backend=layout.backend,
+        route=route,
     )
 
 

@@ -13,7 +13,6 @@ OpenMetadata 是 **Enterprise Data Context / Governance**，不是第二套 Know
 
 ```bash
 task foundation:up   # 含 iceberg-rest + trino
-uv sync --extra lake
 uv run hmd lake ensure && uv run hmd lake init
 uv run hmd lake trino-smoke
 uv run hmd lake om-ingest

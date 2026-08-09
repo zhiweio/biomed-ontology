@@ -20,6 +20,9 @@ from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, Settings
 
 __all__ = [
     "LayoutBackendName",
+    "MinerUEffortName",
+    "MinerUParseMethodName",
+    "MinerUTransportName",
     "ModelHubName",
     "SearchBackendName",
     "Settings",
@@ -28,7 +31,10 @@ __all__ = [
     "settings",
 ]
 
-LayoutBackendName = Literal["pymupdf", "mineru"]
+LayoutBackendName = Literal["auto", "pymupdf4llm", "docling", "mineru"]
+MinerUTransportName = Literal["local", "http"]
+MinerUParseMethodName = Literal["auto", "txt", "ocr"]
+MinerUEffortName = Literal["medium", "high"]
 ModelHubName = Literal["hf", "modelscope", "gitee"]
 SearchBackendName = Literal["local", "milvus"]
 VisionProviderName = Literal["null", "openai", "qwen"]
@@ -43,14 +49,28 @@ class Settings(BaseSettings):
         frozen=True,
     )
 
-    # --- 版面解析 ---------------------------------------------------------
-    layout_backend: LayoutBackendName = "pymupdf"
+    # --- 版面解析 / Document Router ---------------------------------------
+    layout_backend: LayoutBackendName = "auto"
     layout_fallback: bool = False
+    # Document Router：简单 PDF → Fast Path 的阈值
+    parse_fast_max_pages: int = Field(default=40, gt=0)
+    parse_fast_max_images: int = Field(default=8, ge=0)
+    parse_fast_max_tables: int = Field(default=4, ge=0)
+
+    # --- MinerU（Hard Path；默认本地库）------------------------------------
+    mineru_transport: MinerUTransportName = "local"
     mineru_base_url: str = "http://localhost:8000"
     mineru_api_key: SecretStr = SecretStr("")
     mineru_timeout_s: int = Field(default=300, gt=0)
+    # pipeline | hybrid-engine | vlm-engine | …（与 MinerU CLI backend 对齐）
+    mineru_engine: str = "pipeline"
+    mineru_parse_method: MinerUParseMethodName = "auto"
+    mineru_lang: str = "ch"
+    mineru_formula_enable: bool = True
+    mineru_table_enable: bool = True
+    mineru_effort: MinerUEffortName = "medium"
 
-    # --- PDF 攻击面限制 ---------------------------------------------------
+    # --- PDF / 文档攻击面限制 ---------------------------------------------
     parse_max_pages: int = Field(default=400, gt=0)
     parse_max_bytes: int = Field(default=64 * 1024 * 1024, gt=0)
 
@@ -128,8 +148,8 @@ class Settings(BaseSettings):
 
     @property
     def mineru_is_cloud(self) -> bool:
-        """云端 API 意味着语料要出网。调用方据此决定是否放行受限来源。"""
-        return "mineru.net" in self.mineru_base_url
+        """HTTP 且指向云端 API 时语料会出网。本地 transport 永不算出网。"""
+        return self.mineru_transport == "http" and "mineru.net" in self.mineru_base_url
 
     def warnings(self) -> list[str]:
         """启动时应当打给运维看的告警。返回空列表表示配置处于保守态。"""
@@ -145,9 +165,10 @@ class Settings(BaseSettings):
                 "HMD_LAYOUT_FALLBACK=true：解析后端失败时会自动降级，"
                 "同一批语料可能出现能力不一致的切片（降级事实见 LayoutResult.degraded）。"
             )
-        if self.layout_backend == "mineru" and self.mineru_is_cloud:
+        if self.mineru_is_cloud:
             out.append(
-                "MinerU 指向云端 API：文档正文将出网至第三方。未公开专利与采购数据不得走此路径。"
+                "HMD_MINERU_TRANSPORT=http 且指向云端 API：文档正文将出网至第三方。"
+                "未公开专利与采购数据不得走此路径。"
             )
         if self.accept_uncleared_components:
             out.append(

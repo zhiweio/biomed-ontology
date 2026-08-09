@@ -107,6 +107,8 @@ def parse_and_tree(
     *,
     corpus_yaml: Path | None = None,
     document: Document | None = None,
+    file_path: Path | None = None,
+    layout: str | None = None,
 ) -> IngestContext:
     if document is not None:
         doc = document
@@ -119,8 +121,18 @@ def parse_and_tree(
                 ctx.doc_id = doc.doc_id
             else:
                 raise RuntimeError(f"corpus 中找不到 doc_id={ctx.doc_id}")
+    elif file_path is not None:
+        from biomed_ontology.parse import parse_document
+
+        parsed = parse_document(
+            file_path,
+            doc_id=ctx.doc_id,
+            source_id=ctx.source_id,
+            layout=layout,
+        )
+        doc = parsed.document
     else:
-        raise RuntimeError("需要 --corpus-yaml 或注入 Document（PDF parse 可后续接 parse 管线）")
+        raise RuntimeError("需要 --corpus-yaml、原始 file_path 或注入 Document")
     ctx.document = doc
     tree = build_document_tree(doc)
     ctx.chunks = tree_to_chunks(tree)

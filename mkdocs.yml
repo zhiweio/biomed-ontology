@@ -109,6 +109,7 @@ nav:
       - 类型化链接与 search-around: ontology/links.md
       - GraphStore 与许可命名图: ontology/rdf.md
   - 文档解析与语料:
+      - Document Router: parse/router.md
       - 版面后端与语义树: parse/layout.md
       - 资产路径与视觉融合: parse/assets.md
       - 切片与包装纸过滤: parse/chunks.md

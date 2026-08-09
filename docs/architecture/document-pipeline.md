@@ -3,10 +3,13 @@
 双线并行入湖（**不是**全量文档转 Ontology）：
 
 ```text
-Document (MinIO)
+Document (MinIO)  PDF / DOCX / PPTX / XLSX …
    │
    ▼
-Semantic Parsing → Tree Chunk Engine
+Document Router → PyMuPDF4LLM | Docling | MinerU
+   │
+   ▼
+Canonical Document → Semantic Tree → Tree Chunk Engine
    │
    ├────────────────────────────┐
    ▼                            ▼

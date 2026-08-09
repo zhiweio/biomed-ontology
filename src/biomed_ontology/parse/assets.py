@@ -99,9 +99,14 @@ def render_regions(
     from biomed_ontology.config import settings
     from biomed_ontology.licensing import assert_component_cleared
 
-    # 渲染绕开了版面后端直接调 pymupdf，法务闸门因此必须在这里也拦一道 ——
-    # 否则 layout_backend=mineru 时，AGPL 组件会从这条侧门被拉进来。
-    assert_component_cleared("pymupdf", accept_uncleared=settings.accept_uncleared_components)
+    # 渲染绕开了版面后端直接调底层 PDF 库，法务闸门挂在 pymupdf4llm 上 ——
+    # 否则 layout_backend=mineru/docling 时，AGPL 组件会从这条侧门被拉进来。
+    assert_component_cleared("pymupdf4llm", accept_uncleared=settings.accept_uncleared_components)
+
+    suf = pdf_path.suffix.casefold()
+    if suf not in {".pdf", ".xps", ".epub"}:
+        # Office / 图像：无页面 pixmap；调用方应使用后端已导出资产
+        return []
 
     import pymupdf
 

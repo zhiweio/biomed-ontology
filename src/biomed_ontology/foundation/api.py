@@ -56,7 +56,7 @@ def _search_evidence_milvus(
             from pymilvus import MilvusClient
         except ImportError as exc:
             raise BackendUnavailableError(
-                "Milvus 客户端不可用（缺少 pymilvus）。请 uv sync --extra vector"
+                "Milvus 客户端不可用（缺少 pymilvus）。请 uv sync"
             ) from exc
 
         uri = settings.milvus_uri

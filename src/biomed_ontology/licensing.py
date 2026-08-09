@@ -173,10 +173,19 @@ class ComponentObligation:
 
 
 COMPONENTS: dict[str, ComponentObligation] = {
-    "pymupdf": ComponentObligation(
-        component_id="pymupdf",
-        license_id="AGPL-3.0 / 商业双授权",
-        obligation="内部工具用途通常无碍；对外提供服务需 Artifex 商业许可，或改用 pypdfium2。",
+    "pymupdf4llm": ComponentObligation(
+        component_id="pymupdf4llm",
+        license_id="AGPL-3.0 / 商业双授权（底层 PyMuPDF）",
+        obligation=(
+            "PyMuPDF4LLM 依赖 PyMuPDF：内部工具用途通常无碍；"
+            "对外提供服务需 Artifex 商业许可，或改走 Docling / 其他非 AGPL 路径。"
+        ),
+        review="pending",
+    ),
+    "docling": ComponentObligation(
+        component_id="docling",
+        license_id="MIT",
+        obligation="保留版权与许可声明；模型权重若另有条款须单独登记。",
         review="pending",
     ),
     "mineru": ComponentObligation(

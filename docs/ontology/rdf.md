@@ -11,7 +11,7 @@
 3. **种子链接 vs 事实边** 谓词同名、证据不同，靠图 URI 区分，而不是两套词汇表  
 
 运行时后端为 **GraphDB**（`GraphDbClient`，与 Foundation 共用 `hmd` 仓库）。  
-`extra rdf` 提供 `rdflib` / `pyshacl`（SHACL 与导出辅助），不嵌入式三元组库。
+默认依赖含 `rdflib` / `pyshacl`（SHACL 与导出辅助），不嵌入式三元组库。
 
 ## 命名图 URI 约定
 

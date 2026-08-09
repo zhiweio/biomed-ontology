@@ -15,7 +15,7 @@
 ## 最小闭环（语义层 + 检索）
 
 ```bash
-uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --extra service
+uv sync --extra docs --extra dev
 
 uv run hmd kb        # 构建知识库：看 stats + warnings
 uv run hmd demo              # 8 个演示场景（Rich + 可证伪断言）
@@ -35,7 +35,7 @@ task check           # ruff + 全量测试
 
 `hmd demo` / `eval` / `serve` 经 `open_dual_surface()`：文献 ToolApi + Foundation WM。
 
-KB 图投影（`GraphStore`）后端为 GraphDB：`hmd gate` / `build_literature_base(with_graph=True)` 需 `task foundation:up`。默认构建不灌命名图；`extra rdf` 只拉 `rdflib`/`pyshacl`。
+KB 图投影（`GraphStore`）后端为 GraphDB：`hmd gate` / `build_literature_base(with_graph=True)` 需 `task foundation:up`。默认构建不灌命名图；`rdflib` / `pyshacl` 已在默认依赖中（SHACL 与导出辅助）。
 
 ## Foundation 世界模型闭环
 
