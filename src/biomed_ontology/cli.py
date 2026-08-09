@@ -258,6 +258,21 @@ def eval_cmd(
     )
 
 
+def _optional_graph_entity(enterprise_id: str) -> dict | None:
+    """CLI resolve 展示用：GraphDB 可达时合并 altLabel；失败返回 None。"""
+    from biomed_ontology.foundation.graphdb import GraphDbClient
+    from biomed_ontology.foundation.store import fetch_entity
+
+    try:
+        gdb = GraphDbClient.from_settings()
+        if not gdb.health():
+            return None
+        ent = fetch_entity(gdb, enterprise_id)
+    except Exception:  # noqa: BLE001 — 展示增强，不阻断本地 resolve
+        return None
+    return ent.to_dict() if ent is not None else None
+
+
 def _eval_resolve_probe(foundation) -> dict:
     """World Model resolve 探针：别名 → HMD:ENT:*（与文献 eval 同屏）。"""
     cases = [
@@ -620,12 +635,18 @@ def foundation_golden_eval(
         None,
         help="候选列表；默认 HMPL-504/savolitinib/AZD6094/MET/c-MET/NSCLC",
     ),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
+    compact: bool = typer.Option(False, "--compact", help="仅 Suite 汇总表，不展开逐路径 checks"),
 ) -> None:
-    """多 Golden Path 双面评估：WM 三后端 + KB 文献腿，禁止 YAML。"""
+    """多 Golden Path 双面评估：WM 三后端 + KB 文献腿，禁止 YAML。
+
+    默认用 Rich 汇总展示；`--json` 给脚本，`--compact` 只要 Suite 表。
+    """
     import json
 
     from biomed_ontology.foundation.golden_eval import DEFAULT_CANDIDATES, eval_golden_paths
     from biomed_ontology.foundation.obs_log import configure_foundation_logging
+    from biomed_ontology.foundation.render import render_golden_eval
     from biomed_ontology.runtime import open_dual_surface
 
     configure_foundation_logging(json_logs=True)
@@ -635,25 +656,41 @@ def foundation_golden_eval(
         api=surface.foundation,
         tools=surface.tools,
     )
-    console.print_json(json.dumps(summary, ensure_ascii=False))
-    if summary["passed"] != summary["total"]:
+    ok = summary["passed"] == summary["total"]
+    if json_out:
+        console.print_json(json.dumps(summary, ensure_ascii=False))
+        if not ok:
+            raise typer.Exit(1)
+        return
+    render_golden_eval(summary, console=console, verbose=not compact)
+    if not ok:
         raise typer.Exit(1)
 
 
 @foundation_app.command("resolve")
 def foundation_resolve(
     text: str = typer.Argument(..., help="待解析文本"),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（含反查别名）"),
 ) -> None:
-    """resolve_entity：BERN2 词典/候选 → Enterprise Entity ID。"""
-    from biomed_ontology.foundation import FoundationApi, load_world_model
+    """resolve_entity：词典/候选 → Enterprise Entity ID，并反查全部别名。
 
-    api = FoundationApi(load_world_model())
-    out = api.resolve_entity(text)
-    for row in out["resolved"]:
-        console.print(
-            f"{row['mention']!r} → {row.get('canonical_entity') or 'UNMAPPED'} "
-            f"[{row['resolution_method']}] conf={row['confidence']}"
-        )
+    默认 Rich 展示命中 + 实体卡 + 别名全集；`--json` 给脚本。
+    """
+    import json
+
+    from biomed_ontology.foundation import FoundationApi, load_world_model
+    from biomed_ontology.foundation.obs_log import configure_foundation_logging
+    from biomed_ontology.foundation.render import enrich_resolve, render_resolve
+
+    configure_foundation_logging(json_logs=True)
+    world = load_world_model()
+    api = FoundationApi(world)
+    raw = api.resolve_entity(text)
+    out = enrich_resolve(raw, world=world, fetch_graph_entity=_optional_graph_entity)
+    if json_out:
+        console.print_json(json.dumps(out, ensure_ascii=False))
+        return
+    render_resolve(out, console=console)
 
 
 @foundation_app.command("bios-load")
@@ -735,15 +772,26 @@ def foundation_sync() -> None:
 @foundation_app.command("evolve-mine")
 def foundation_evolve_mine(
     text: list[str] | None = typer.Argument(None, help="待挖掘查询；默认用内置未知词"),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
+    compact: bool = typer.Option(False, "--compact", help="仅 Suite 摘要，不展开候选表"),
 ) -> None:
-    """P2：unmapped → KGCL 候选落库（不自动改本体）。"""
-    from biomed_ontology.foundation.evolve import mine_unmapped_candidates
+    """P2：unmapped / 低置信 → KGCL 候选落库（不自动改本体）。
 
+    默认 Rich 展示候选与跳过项；`--json` 给脚本，`--compact` 只要摘要。
+    """
+    import json
+
+    from biomed_ontology.foundation.evolve import mine_unmapped_candidates
+    from biomed_ontology.foundation.obs_log import configure_foundation_logging
+    from biomed_ontology.foundation.render import render_evolve_mine
+
+    configure_foundation_logging(json_logs=True)
     queries = list(text or []) or ["unknownzyme-xyz-999", "HMPL-504"]
     result = mine_unmapped_candidates(queries)
-    console.print(f"signals={result.signals}")
-    console.print(f"kgcl={result.kgcl_path}")
-    console.print(f"json={result.json_path}")
+    if json_out:
+        console.print_json(json.dumps(result.to_dict(), ensure_ascii=False))
+        return
+    render_evolve_mine(result, console=console, verbose=not compact)
 
 
 @foundation_app.command("zingg-run")

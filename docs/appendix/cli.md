@@ -20,12 +20,12 @@
 
 | 命令 | 作用 | 相关手册 |
 |---|---|---|
-| `hmd foundation resolve` | 文本 → `HMD:ENT:*` | [foundation](../architecture/foundation.md) |
-| `hmd foundation golden` | 金路径验收 | 同上 |
-| `hmd foundation golden-eval` | 多路径金标评测 | [golden-path](../ontology/golden-path.md) |
+| `hmd foundation resolve [--json]` | 文本 → `HMD:ENT:*` + 反查别名（Rich） | [foundation](../architecture/foundation.md) |
+| `hmd foundation golden [--compact] [--json]` | 金路径验收（Rich） | 同上 |
+| `hmd foundation golden-eval [--compact] [--json]` | 多路径金标评测（Rich） | [golden-path](../ontology/golden-path.md) |
 | `hmd foundation sync` | YAML → GraphDB Named Graphs + Milvus Evidence | 同上 |
 | `hmd foundation bios-load` | BIOS 全量（默认）/ `--subset` | [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
-| `hmd foundation evolve-mine` | unmapped → KGCL 候选（不改本体） | [evolution](../evolution/loop.md) |
+| `hmd foundation evolve-mine [--json] [--compact]` | unmapped/低置信 → KGCL 候选（Rich，不改本体） | [evolution](../evolution/loop.md) |
 | `hmd foundation zingg-run` | 校验 Zingg matches 桩 | [foundation](../architecture/foundation.md) |
 | `task ontology:validate` | Ontology-as-Code + Golden Path 校验 | [toolchain](../ontology/toolchain.md) |
 

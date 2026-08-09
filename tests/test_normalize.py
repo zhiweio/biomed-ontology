@@ -85,6 +85,18 @@ def test_unknown_term_yields_no_match_rather_than_a_guess(kb, ctx):
     assert not r.matched or r.matched[0].confidence < 0.5
 
 
+def test_oov_sorafenib_abstains_instead_of_regorafenib(kb, ctx):
+    """未收录的 -afenib 近邻药必须弃权，不能向量级误配到 regorafenib。"""
+    r = kb.normalizer.normalize("sorafenib", ctx=ctx)
+    assert not r.matched
+    hits = kb.normalizer.vectors.search("sorafenib", top_k=3)
+    assert not hits or hits[0].concept_id != "HMD:ENT:DC:regorafenib"
+    # typo 仍应能过门槛
+    typo = kb.normalizer.vectors.search("sovolitinib", top_k=1)
+    assert typo and typo[0].concept_id == SAVOLITINIB
+    assert typo[0].score >= 0.60
+
+
 def test_ambiguous_met_resolves_by_context(kb, ctx):
     r = kb.normalizer.normalize("MET", ctx=ctx, context="MET exon 14 skipping 肿瘤 靶点")
     assert r.matched[0].concept_id == MET

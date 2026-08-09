@@ -119,6 +119,37 @@ def test_query_rejects_without_graphdb() -> None:
         api.get_relationships("HMD:ENT:DC:savolitinib")
 
 
+def test_kb_golden_leg_recognizes_restore_context_envelope() -> None:
+    """restore_context 返回 full_text/doc_id，不能按旧字段 document/text 判失败。"""
+    from unittest.mock import MagicMock
+
+    from biomed_ontology.foundation.api import _kb_golden_leg
+
+    tools = MagicMock()
+    tools.search_documents.return_value = {
+        "results": [{"chunk_id": "CHK:txt.demo", "doc_id": "DOC:1"}]
+    }
+    tools.restore_context.return_value = {
+        "doc_id": "DOC:1",
+        "full_text": "savolitinib is a MET inhibitor",
+        "section_path": "Results",
+        "warnings": [],
+        "tool_name": "restore_context",
+    }
+    leg = _kb_golden_leg(tools, "HMPL-504")
+    assert leg["ok"] is True
+    assert leg["restore_ok"] is True
+    assert leg["chunk_id"] == "CHK:txt.demo"
+
+    tools.restore_context.return_value = {
+        "warnings": ["NOT_FOUND: 切片不存在"],
+        "tool_name": "restore_context",
+    }
+    leg2 = _kb_golden_leg(tools, "HMPL-504")
+    assert leg2["restore_ok"] is False
+    assert leg2["ok"] is False
+
+
 def test_golden_path_live_backends() -> None:
     if not _backends_ready():
         pytest.skip(
@@ -277,6 +308,149 @@ def test_golden_path_rich_render_with_mock_context() -> None:
     assert "openmetadata" in text
 
 
+def test_enrich_resolve_reverse_aliases_from_world() -> None:
+    from biomed_ontology.foundation.render import enrich_resolve
+
+    world = load_world_model(FOUNDATION)
+    api = FoundationApi(world)
+    raw = api.resolve_entity("赛沃替尼")
+    enriched = enrich_resolve(raw, world=world)
+    hit = next(h for h in enriched["resolved"] if h.get("canonical_entity"))
+    assert hit["canonical_entity"] == "HMD:ENT:DC:savolitinib"
+    labels = {row["label"] for row in hit["aliases"]}
+    assert "赛沃替尼" in labels
+    assert "HMPL-504" in labels
+    assert "AZD6094" in labels
+    assert "savolitinib" in labels
+    assert hit.get("matched_surface") == "赛沃替尼"
+    matched_rows = [row for row in hit["aliases"] if row.get("matched")]
+    assert len(matched_rows) == 1 and matched_rows[0]["label"] == "赛沃替尼"
+    assert all("matched" not in row or row["matched"] for row in hit["aliases"])
+    assert hit.get("alias_source") == "world_model"
+
+
+def test_resolve_rich_render_shows_aliases() -> None:
+    from io import StringIO
+
+    from rich.console import Console
+
+    from biomed_ontology.foundation.render import enrich_resolve, render_resolve
+
+    world = load_world_model(FOUNDATION)
+    api = FoundationApi(world)
+    enriched = enrich_resolve(api.resolve_entity("赛沃替尼"), world=world)
+
+    buf = StringIO()
+    cons = Console(file=buf, force_terminal=True, width=100, color_system=None)
+    render_resolve(enriched, console=cons)
+    text = buf.getvalue()
+    assert "Entity Resolve" in text
+    assert "HMD:ENT:DC:savolitinib" in text
+    assert "Aliases" in text
+    assert "HMPL-504" in text
+    assert "赛沃替尼" in text
+    assert "ORPATHYS" in text
+
+
+def test_golden_eval_rich_render_with_mock_summary() -> None:
+    from io import StringIO
+
+    from rich.console import Console
+
+    from biomed_ontology.foundation.render import render_golden_eval
+
+    summary = {
+        "total": 2,
+        "passed": 1,
+        "failed": ["NSCLC"],
+        "paths": [
+            {
+                "candidate": "HMPL-504",
+                "passed": True,
+                "checks": {
+                    "ok": True,
+                    "no_yaml": True,
+                    "backends_graphdb": True,
+                    "backends_milvus": True,
+                    "backends_om": True,
+                    "bios_graphdb": True,
+                    "evidence_nonempty": True,
+                    "assets_nonempty": True,
+                    "bios_backend": True,
+                },
+                "path": "DrugCandidate→Target→Disease→Evidence→Asset",
+                "canonical_entity": "HMD:ENT:DC:savolitinib",
+                "entity_kind": "DrugCandidate",
+                "backends": {
+                    "entity": "graphdb",
+                    "relationships": "graphdb",
+                    "evidence": "milvus",
+                    "assets": "openmetadata",
+                    "bios": "graphdb_biomedical",
+                },
+                "counts": {
+                    "targets": 1,
+                    "diseases": 1,
+                    "drugs": 0,
+                    "evidence": 2,
+                    "assets": 1,
+                    "bios": 1,
+                },
+                "bios_bridges": [{"bios_curie": "BIOS:SAVO_DEMO"}],
+            },
+            {
+                "candidate": "NSCLC",
+                "passed": False,
+                "checks": {
+                    "ok": True,
+                    "no_yaml": True,
+                    "backends_graphdb": True,
+                    "backends_milvus": False,
+                    "backends_om": True,
+                    "bios_graphdb": False,
+                    "evidence_nonempty": False,
+                    "assets_nonempty": True,
+                    "bios_backend": True,
+                },
+                "path": "Indication→…",
+                "canonical_entity": "HMD:ENT:IND:nsclc",
+                "entity_kind": "Indication",
+                "backends": {
+                    "entity": "graphdb",
+                    "relationships": "graphdb",
+                    "evidence": "milvus",
+                    "assets": "openmetadata",
+                },
+                "counts": {
+                    "targets": 0,
+                    "diseases": 0,
+                    "drugs": 1,
+                    "evidence": 0,
+                    "assets": 1,
+                    "bios": 0,
+                },
+                "bios_bridges": [],
+            },
+        ],
+    }
+    buf = StringIO()
+    cons = Console(file=buf, force_terminal=True, width=100, color_system=None)
+    render_golden_eval(summary, console=cons, verbose=True)
+    text = buf.getvalue()
+    assert "1/2 passed" in text
+    assert "HMPL-504" in text
+    assert "NSCLC" in text
+    assert "Milvus evidence" in text
+    assert "yaml_fallback=forbidden" in text
+
+    buf2 = StringIO()
+    cons2 = Console(file=buf2, force_terminal=True, width=100, color_system=None)
+    render_golden_eval(summary, console=cons2, verbose=False)
+    compact = buf2.getvalue()
+    assert "HMPL-504" in compact
+    assert "Milvus evidence" not in compact
+
+
 def test_get_entity_context_mocked_stores() -> None:
     """用 mock 三后端验证聚合逻辑，仍不走 YAML。"""
     from biomed_ontology.foundation.models import EnterpriseEntity
@@ -379,6 +553,60 @@ def test_evolve_mine_writes_candidates_only(tmp_path: Path) -> None:
     assert "TODO curate" in text
     assert "禁止自动写入" in text
     assert result.json_path.exists()
+    # 未知词进候选；金标 HMPL-504 高置信跳过
+    mentions = {c["mention"] for c in result.candidates}
+    assert "unknownzyme-xyz-999" in mentions
+    assert "HMPL-504" not in mentions
+    skipped_mentions = {s["mention"] for s in result.skipped}
+    assert "HMPL-504" in skipped_mentions
+    payload = result.json_path.read_text(encoding="utf-8")
+    assert '"auto_apply": false' in payload
+    assert "create synonym" in text
+    assert "unknownzyme-xyz-999" in text
+
+
+def test_evolve_mine_rich_render() -> None:
+    from io import StringIO
+
+    from rich.console import Console
+
+    from biomed_ontology.foundation.evolve import EvolveMineResult
+    from biomed_ontology.foundation.render import render_evolve_mine
+
+    result = EvolveMineResult(
+        signals=1,
+        kgcl_path=Path("/tmp/demo.kgcl"),
+        json_path=Path("/tmp/demo.candidates.json"),
+        generated_at="20260809T000000Z",
+        queries=["unknownzyme-xyz-999", "HMPL-504"],
+        candidates=[
+            {
+                "mention": "unknownzyme-xyz-999",
+                "canonical_entity": None,
+                "confidence": 0.0,
+                "resolution_method": "unmapped",
+                "suggested_op": "create synonym",
+            }
+        ],
+        skipped=[
+            {
+                "mention": "HMPL-504",
+                "canonical_entity": "HMD:ENT:DC:savolitinib",
+                "confidence": 1.0,
+                "reason": "mapped_high_confidence>=0.95",
+            }
+        ],
+    )
+    buf = StringIO()
+    cons = Console(file=buf, force_terminal=True, width=100, color_system=None)
+    render_evolve_mine(result, console=cons, verbose=True)
+    text = buf.getvalue()
+    assert "Evolve Mine" in text
+    assert "unknownzyme-xyz-999" in text
+    assert "HMPL-504" in text
+    assert "create synonym" in text
+    assert "auto_apply=forbidden" in text
+    assert "Candidates staged" in text
 
 
 def test_zingg_matches_file_present() -> None:

@@ -46,9 +46,12 @@ Claim
 
 ```bash
 uv run hmd foundation sync
-uv run hmd foundation golden --candidate HMPL-504 --json
-uv run hmd foundation golden-eval          # 多路径：药物/靶点/适应症
-uv run hmd serve --mcp                     # 单一 REST + MCP
+uv run hmd foundation golden --candidate HMPL-504          # Rich 分步
+uv run hmd foundation golden --candidate HMPL-504 --json   # 机器可读
+uv run hmd foundation golden-eval                          # 多路径 Rich
+uv run hmd foundation golden-eval --compact                # 仅 Suite 表
+uv run hmd foundation golden-eval --json                   # 多路径 JSON
+uv run hmd serve --mcp                                     # 单一 REST + MCP
 ```
 
 评估检查：`backends` 无 yaml；BIOS 桥接读 GraphDB `graph/biomedical`；证据 Milvus；资产 OpenMetadata。  

@@ -614,13 +614,19 @@ def _kb_golden_leg(tools: Any, query: str) -> dict[str, Any]:
             chunk_id = hits[0].get("chunk_id")
             if chunk_id:
                 restored = tools.restore_context(chunk_id)
-                restore_ok = not bool(restored.get("error")) and (
-                    bool(restored.get("document") or restored.get("sections") or restored.get("text"))
-                    or restored.get("ok") is True
-                    or "chunk_id" in restored
+                # ToolApi.restore_context 信封字段是 full_text / doc_id，
+                # 不是 document/sections/text；warnings 非空表示工具层失败。
+                fatal = any(
+                    str(w).startswith(
+                        ("NOT_FOUND", "LICENSE_DENIED", "INTERNAL_ERROR", "CONTRACT_VIOLATION")
+                    )
+                    for w in (restored.get("warnings") or [])
+                )
+                restore_ok = (not fatal) and bool(
+                    restored.get("full_text") or restored.get("doc_id")
                 )
         return {
-            "ok": len(hits) >= 1,
+            "ok": len(hits) >= 1 and restore_ok,
             "hit_count": len(hits),
             "chunk_id": chunk_id,
             "restore_ok": restore_ok,

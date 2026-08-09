@@ -74,12 +74,16 @@ export HMD_BIOS_LICENSE_ACK=poc          # BIOS 全量默认；CI: HMD_BIOS_INIT
 # GraphDB 10 Free 无需 license；SE/EE 见 docker/docker-compose.graphdb-license.yml
 task foundation:up
 
-uv run hmd foundation resolve "HMPL-504"
+uv run hmd foundation resolve "赛沃替尼"             # Rich：命中 + 反查别名全集
+uv run hmd foundation resolve "HMPL-504" --json      # 机器可读（含 aliases）
 uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
 uv run hmd foundation sync                           # YAML 校验入库 → GraphDB + Milvus + OM（幂等，三后端必达）
-uv run hmd foundation evolve-mine                    # 候选落库，不自动改本体
+uv run hmd foundation evolve-mine                    # Rich：候选/跳过；不自动改本体
+uv run hmd foundation evolve-mine --json             # 机器可读（含 skipped）
 uv run hmd foundation golden --candidate HMPL-504 --json   # 单路径 JSON
-uv run hmd foundation golden-eval                            # 多路径评估（药物/靶点/适应症）
+uv run hmd foundation golden-eval                            # 多路径评估（Rich）
+uv run hmd foundation golden-eval --compact                  # 仅 Suite 汇总表
+uv run hmd foundation golden-eval --json                     # 多路径 JSON
 uv run hmd serve --mcp                                       # 唯一 Semantic API + MCP（KB tools + Foundation ops）
 task ontology:validate                                       # Ontology-as-Code + Golden Path
 task foundation:golden-eval                                  # GraphDB(+BIOS)/Milvus/OM，禁止 YAML
@@ -245,18 +249,16 @@ uv run hmd demo --id D7
 不是"gold query 会问到的实体"。后者会让归一化评测变成自证。
 
 ```
-归一化准确率 99.1%  (105/106)
+归一化准确率 100.0%  (106/106)
   DISEASE      100.0%  (30/30)
-  SUBSTANCE     97.8%  (44/45)
+  SUBSTANCE    100.0%  (45/45)
   TARGET       100.0%  (31/31)
   消歧           100.0%  (4/4)
-    ✗ 'sorafenib' 期望 None 实得 HMD:SUB:0000008
 ```
 
-**那一条红的是故意留的。** sorafenib 是真实存在但本语料未收录的药，正确行为是弃权；
-实际被向量级以 0.57 判成了 regorafenib —— 两者都是 `-afenib` 类抗血管生成 TKI，
-编辑距离近而适应症完全不同，是本领域最典型的一类误判。
-挑一批一定过的负例凑数，等于把这类错误从报告里抹掉。
+`sorafenib` 是真实存在但本语料未收录的药，gold 期望弃权（`expect: null`）。
+n-gram 向量级曾以 0.57 误配到 regorafenib（同属 `-afenib` TKI）；默认
+`min_score=0.60` 后弃权，同时保留单字符 typo（如 `sovolitinib`→savolitinib）。
 
 ## 检索评测
 

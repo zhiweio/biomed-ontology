@@ -308,9 +308,17 @@ def eval_normalization(
     ev = NormalizationEval(total=0, correct=0)
     tally: dict[str, list[int]] = {}
 
+    from biomed_ontology._generated.hmd_concept import EntityTypeEnum
+
     for case in gold["cases"]:
         et = case.get("entity_type")
-        res = kb.normalizer.normalize(case["text"], ctx=ctx, entity_types=[et] if et else None)
+        types = None
+        if et:
+            try:
+                types = {EntityTypeEnum(et)}
+            except ValueError:
+                types = None
+        res = kb.normalizer.normalize(case["text"], ctx=ctx, entity_types=types)
         got = res.matched[0].concept_id if res.matched else None
         ok = got == case["expect"]
         ev.total += 1

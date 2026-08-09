@@ -221,8 +221,10 @@ class NgramVectorIndex:
         *,
         top_k: int = 5,
         entity_types: set[EntityTypeEnum] | None = None,
-        min_score: float = 0.45,
+        min_score: float = 0.60,
     ) -> list[CandidateHit]:
+        # 默认 0.60：挡住 -afenib/-inib 类 OOV 近邻误判（如 sorafenib→regorafenib
+        # 仅 0.57），同时保留单字符 typo（sovolitinib→savolitinib ≈ 0.62）。
         q = self._weighted(self._grams(text))
         qn = math.sqrt(sum(v * v for v in q.values())) or 1.0
         scored: list[tuple[float, str]] = []
