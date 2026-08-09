@@ -5,16 +5,19 @@ from __future__ import annotations
 import pytest
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
-from biomed_ontology.pipeline import build_knowledge_base
+from biomed_ontology.pipeline import build_literature_base
 from biomed_ontology.tools import ToolApi, dispatch
 from biomed_ontology.tools.citation import restore_context as raw_restore
+from tests.support.search_fakes import make_searcher
 
 LICENSED = frozenset({"MOCK_LICENSED"})
 
 
 @pytest.fixture(scope="module")
 def api() -> ToolApi:
-    return ToolApi.from_kb(build_knowledge_base())
+    kb = build_literature_base(with_graph=False)
+    searcher = make_searcher(kb)
+    return ToolApi.from_backends(kb=kb, backend=searcher.backend, searcher=searcher)
 
 
 @pytest.fixture(scope="module")

@@ -124,7 +124,7 @@ task check           # ruff + 全量测试
 
 ### Milvus（Evidence Index，必选）
 
-Milvus 既是文献五列检索后端，也是 Foundation 的 **Evidence Index**。失败不回落 LocalBackend。
+Milvus 既是文献五列检索后端（词法 = `sparse_lexical`），也是 Foundation 的 **Evidence Index**。失败不回落内存词法。
 
 ```bash
 task milvus:up                                              # hmd-foundation 子集（etcd/minio/standalone）

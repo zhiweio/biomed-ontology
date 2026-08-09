@@ -62,7 +62,7 @@ indications → (treats, treated_by)
 ConceptLink(predicate="has_target", object_id="HMDC…", object_key="met")
 ```
 
-只存**正向**；反向在 `LinkIndex` 建邻接时生成。种子作者不必写 `targeted_by` 边 —— 写了反而会双倍。
+只存**正向**；反向在 `GraphDbNeighborhood` 邻接查询时合成。种子作者不必写 `targeted_by` 边 —— 写了反而会双倍。
 
 ## 未解析怎么办
 

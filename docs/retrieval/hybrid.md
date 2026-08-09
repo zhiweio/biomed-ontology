@@ -19,7 +19,7 @@ sequenceDiagram
   participant H as HybridSearcher
   participant N as Normalizer
   participant B as SearchBackend
-  participant G as LinkIndex
+  participant G as GraphDbNeighborhood
   participant R as Reranker?
 
   H->>H: LicenseScope(max_tier, entitlements)
@@ -101,8 +101,8 @@ explain = "RRF(bm25#3 + dense#1 + graph#7)"
 
 | 职责 | 位置 |
 |---|---|
-| 词法 / 向量召回 | `search/backends/`（Local 或 Milvus） |
-| 图通道 | `HybridSearcher`（依赖 Normalizer + LinkIndex + 概念倒排） |
+| 词法 / 向量召回 | `MilvusBackend`（`sparse_lexical` + dense_*） |
+| 图通道 | `HybridSearcher`（Normalizer + GraphDB 邻域 + 概念倒排） |
 | RRF 融合 | 进程内 `rrf_fuse` |
 | 精排 | 可选 `Reranker`，在融合之后 |
 

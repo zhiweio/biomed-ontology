@@ -8,7 +8,7 @@
 |---|---|---|
 | 开关 | `channels` 含 GRAPH；`expand` 控制是否 search-around | `rewrite`（默认跟随 `expand`） |
 | 作用点 | 概念倒排 → chunk 得分 | 改写下发给 BM25 / DENSE 的查询串 |
-| 依赖 | `LinkIndex` + IDF + 模长 | `Normalizer.expand` + `normalize_alias` |
+| 依赖 | GraphDB 邻域 + IDF + 模长 | `Normalizer.expand` + `normalize_alias` |
 | 消融臂 | ② 仅种子 / ③ + hops | ④ 仅改写（无图） |
 | 典型收益场景 | 跨类型：「VEGFR2 抑制剂」→ 药 | 中文别名、代号 ↔ 通用名 |
 | 典型伤害场景 | 链接噪声、IDF 失效时的并列 | 英文原词本已命中时，别名稀释 BM25 |
@@ -52,7 +52,7 @@ gold 里考察「层级扩展是否过度召回」的 query：肺癌子树别名
 
 ## 消融时如何读
 
-建议顺序（本地臂）：
+建议顺序（Milvus 臂）：
 
 1. `bm25_dense` —— 无本体基线  
 2. `bm25_dense_graph` —— 只加图通道、**不** search-around（`expand=False`）  
@@ -68,13 +68,13 @@ gold 里考察「层级扩展是否过度召回」的 query：肺癌子树别名
 
 ## 概念注入索引文本
 
-`HybridSearcher` 构建 LocalBackend 时，给 BM25 的文本是：
+`hmd index` 经 `chunk_to_row(..., label_terms=…)` 写入 Milvus 的文本是：
 
 ```text
 chunk.text + " " + preferred_label_en/zh（该片挂载概念）
 ```
 
-让文中写 ORPATHYS、查询写「沃利替尼」时，词法通道仍有机会命中。这与查询改写互补：一个改索引侧可见字符串，一个改查询侧。
+让文中写 ORPATHYS、查询写「沃利替尼」时，`sparse_lexical` 仍有机会命中。这与查询改写互补：一个改索引侧可见字符串，一个改查询侧。
 
 ## 如何验证
 

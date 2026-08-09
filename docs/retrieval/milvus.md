@@ -6,12 +6,13 @@ Foundation 证据集合：`foundation_evidence`（写入逻辑在 `foundation/sy
 
 ## 为什么要向量后端（且必选）
 
-LocalBackend 仅用于**纯算法单测**。产品路径上 Milvus 同时是：
+无内存词法后端。产品路径上 Milvus 同时是：
 
-1. **文献检索五列**（`hmd index` / `hmd eval`，默认 `multimodal-bio`）  
+1. **文献检索五列**（`hmd index` / `hmd eval`，默认 `multimodal-bio`；BM25 通道 = `sparse_lexical`）  
 2. **Foundation Evidence Index**（回答 *Where is the evidence?*；`entity_ids` = Enterprise ID）  
 
-失败**不回落** LocalBackend。联调：`task milvus:up`（仅 Evidence Index）或 `task foundation:up`（同项目全栈）。
+失败**不回落**。联调：`task milvus:up`（仅 Evidence Index）或 `task foundation:up`（同项目全栈）。
+索引文本经 `chunk_to_row(..., label_terms=…)` 注入概念 preferred label，与稀疏列跨别名命中对齐。
 
 ## 五列是什么
 
@@ -75,7 +76,7 @@ PROXY_MAXVECTORFIELDNUM: "6"
 
 ## 无静默回落
 
-Milvus 臂在容器不可达时标「未运行」，**绝不回落**到 LocalBackend 还写着 Milvus 列名。README 与测试都守这条。
+Milvus 臂在容器不可达时标「未运行」，**绝不回落**到内存词法还写着 Milvus 列名。README 与测试都守这条。
 
 ## 如何验证
 

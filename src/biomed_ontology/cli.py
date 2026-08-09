@@ -413,13 +413,14 @@ def signals_cmd(
     )
     from biomed_ontology.pipeline import build_literature_base
     from biomed_ontology.quality import QualityGate
-    from biomed_ontology.tools import ToolApi
+    from biomed_ontology.runtime import open_dual_surface
 
     kb = build_literature_base(with_graph=True)
-    api = ToolApi.from_kb(kb)
+    surface = open_dual_surface(literature_kb=kb)
+    api = surface.tools
     # 先跑一遍 demo 制造真实使用痕迹：没有使用就没有信号，
     # 这正是"信号必须来自真实使用"这条设计约束的直接体现。
-    run_all(kb, api)
+    run_all(kb, api, foundation=surface.foundation)
     sigs = mine_signals(MiningInput.from_runtime(kb, api))
 
     table = Table(title=f"演进信号 {len(sigs)} 条")
@@ -525,6 +526,7 @@ def index_cmd(
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
     from biomed_ontology.parse.figure_type import get_figure_typer
+    from biomed_ontology.ontology.neighborhood import NullNeighborhood
     from biomed_ontology.pipeline import DATA_ROOT, build_literature_base
     from biomed_ontology.registry import load_registry
     from biomed_ontology.search import HybridSearcher
@@ -533,7 +535,6 @@ def index_cmd(
     _require_real_embedder(embedder, allow_fake=allow_fake)
 
     kb = build_literature_base(with_graph=False)
-    searcher = HybridSearcher(kb)
     registry = load_registry()
 
     model = get_embedder(embedder)
@@ -546,10 +547,19 @@ def index_cmd(
         known_sources=frozenset(s.id for s in registry.active()),
         asset_root=asset_root,
     )
+    # 写索引只需 concept labels / meta；不灌 GraphDB、不开 GRAPH 通道
+    searcher = HybridSearcher(kb, backend=backend, neighborhood=NullNeighborhood())
     backend.ensure_collection(drop_existing=recreate)
 
     typed = _apply_figure_types(kb.chunks, get_figure_typer(figure_typer), asset_root)
-    rows = [chunk_to_row(ch, searcher.chunk_meta(ch.chunk_id)) for ch in kb.chunks]
+    rows = [
+        chunk_to_row(
+            ch,
+            searcher.chunk_meta(ch.chunk_id),
+            label_terms=searcher.concept_label_terms(ch),
+        )
+        for ch in kb.chunks
+    ]
     written = backend.upsert(rows)
 
     table = Table(title=f"索引 {backend.collection}")

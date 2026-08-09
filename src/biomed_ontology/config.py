@@ -36,7 +36,7 @@ MinerUTransportName = Literal["local", "http"]
 MinerUParseMethodName = Literal["auto", "txt", "ocr"]
 MinerUEffortName = Literal["medium", "high"]
 ModelHubName = Literal["hf", "modelscope", "gitee"]
-SearchBackendName = Literal["local", "milvus"]
+SearchBackendName = Literal["milvus"]
 VisionProviderName = Literal["null", "openai", "qwen"]
 
 
@@ -81,7 +81,7 @@ class Settings(BaseSettings):
     vision_api_key: SecretStr = SecretStr("")
     vision_cache_dir: Path = Path("data/cache/vision")
 
-    # --- 检索后端（Milvus 为必选；local 仅单测）-------------------------------
+    # --- 检索后端（仅 Milvus；词法走 sparse_lexical）---------------------------
     search_backend: SearchBackendName = "milvus"
     milvus_uri: str = "http://localhost:19530"
     milvus_token: SecretStr = SecretStr("")
@@ -179,11 +179,6 @@ class Settings(BaseSettings):
             out.append(
                 "HMD_ACCEPT_UNCLEARED_COMPONENTS=true：跳过了第三方组件的法务闸门。"
                 "仅限本地试用；待核实的许可义务见 NOTICE。"
-            )
-        if self.search_backend != "milvus":
-            out.append(
-                "HMD_SEARCH_BACKEND 非 milvus：生产与 Foundation Evidence 要求必选 Milvus。"
-                "请 task milvus:up 并将 HMD_SEARCH_BACKEND=milvus。"
             )
         return out
 

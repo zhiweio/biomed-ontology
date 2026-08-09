@@ -89,7 +89,7 @@ ch.labels = 文档级 taxonomy 标签
 注意：
 
 - **索引期**挂概念，检索期图通道才能倒排；运行期再 NER 一次既慢又不稳。  
-- `concept_ids_expanded` 服务别名/层级扩展场景；图通道的 search-around 用的是 `LinkIndex`，两者**不要合并**（见 [links](../ontology/links.md)）。  
+- `concept_ids_expanded` 服务别名/层级扩展场景；图通道的 search-around 用 GraphDB 邻域，两者**不要合并**（见 [links](../ontology/links.md)）。  
 - `min_confidence=0.6` 与检索期 `_seed_concepts` 同一阈值 —— 各写一份迟早对不上。
 
 ## 调用方应当怎么拿双面句柄

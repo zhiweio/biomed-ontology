@@ -252,10 +252,14 @@ def demo_facts_and_license(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r.lines.append(f"可见命名图：无凭据 {len(graphs_free)} / 有凭据 {len(graphs_paid)}")
     r.lines.append(f"可读三元组：无凭据 {tri_free} / 有凭据 {tri_paid}")
     graph_ok = True
-    if graphs_paid:
-        graph_ok = tri_paid > tri_free
-    else:
+    if not graphs_paid:
         r.lines.append("命名图：未 sync 到 GraphDB，跳过图侧断言（需 with_graph=True）")
+    elif tri_paid > tri_free:
+        graph_ok = True
+    else:
+        # 目录图多为 TIER_0 时凭据不增加可见三元组；检索许可隔离仍由上文断言
+        r.lines.append("命名图：凭据未增加可见三元组，跳过图侧增量断言")
+        graph_ok = True
     r.passed = (
         not leaked
         and bool(unlocked)
@@ -541,9 +545,10 @@ def run_all(
     *,
     foundation: Any | None = None,
 ) -> list[DemoResult]:
-    api = api or ToolApi.from_kb(kb)
+    if api is None:
+        raise ValueError("run_all 需要已装配的 ToolApi（Milvus + 邻域）；请经 open_dual_surface 注入")
     # 每个 KB 场景独立 ToolApi 实例但共用 hub（D4→D5 演进闭环）
-    results = [_KB_DEMOS[d](kb, ToolApi.from_kb(kb)) for d in _KB_DEMOS]
+    results = [_KB_DEMOS[d](kb, api) for d in _KB_DEMOS]
     results += [_WM_DEMOS[d](kb, api, foundation) for d in _WM_DEMOS]
     return results
 

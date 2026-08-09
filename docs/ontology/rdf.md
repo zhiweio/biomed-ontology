@@ -35,7 +35,7 @@ KB 许可图与 Foundation 固定图（`graph/ontology|knowledge|provenance|…`
 
 事实溯源使用标准 RDF 1.1 reification（`rdf:subject` / `rdf:predicate` / `rdf:object`），兼容 GraphDB / RDF4J。
 
-`build_literature_base(with_graph=True)` 将上述投影同步进 GraphDB（需 `task foundation:up`）。默认 `with_graph=False`：术语与检索不依赖灌库。
+`build_literature_base(with_graph=True)` 或检索装配的 `ensure_catalog_graphs` 将目录与链接同步进 GraphDB（需 `task foundation:up`）。默认 `with_graph=False` 时术语归一仍可不灌库；**含 GRAPH 的检索臂**必须 ensure 成功。
 
 ## 查询时的可见性
 
@@ -43,13 +43,13 @@ GraphStore 内部查询路径根据调用方 `entitlements` 注入允许的命�
 
 ## 与检索图通道的关系
 
-| | RDF GraphStore | LinkIndex |
+| | RDF GraphStore | 检索 search-around |
 |---|---|---|
-| 用途 | 可审计的知识图查询、导出 | 检索期毫秒级 search-around |
-| 结构 | GraphDB 三元组 + 命名图 | 内存邻接表 |
+| 用途 | 可审计知识图查询、导出 | 图通道邻域遍历 |
+| 结构 | GraphDB 三元组 + 命名图 | SPARQL 一跳出/入边 + 进程内 `walk_neighbors` |
 | 许可 | FROM NAMED | `_graph_allowed` + `LicenseScope` |
 
-两端必须表达**同一套**业务边；但实现上不共享一个存储 —— 检索热路径不能每次 SPARQL。改种子链接时：同时影响 `LinkIndex`（经 `BuiltConcept.links`）与 RDF 装载。
+边权威在 GraphDB；BFS 策略（衰减、跨类型一跳、`min_weight`）留在进程内。改种子链接时：经 `ensure_catalog_graphs` / `load_concept_links` 影响两边。
 
 ## 如何验证
 

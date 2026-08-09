@@ -55,7 +55,7 @@ flowchart TD
 | 切片挂载 | 装配期对 `ch.text` 同样 normalize | 概念倒排 |
 
 `Normalizer._children` **只有层级、只向下**，服务 `descendants` / `expand`。  
-`LinkIndex` 是层级 + 跨类型、双向，服务 search-around。合并二者会让「下位别名扩展」带上竞品药名 —— 精确率灾难。
+`GraphDbNeighborhood` / `walk_neighbors` 是层级 + 跨类型、双向，服务 search-around。合并二者会让「下位别名扩展」带上竞品药名 —— 精确率灾难。
 
 ## 埋点长什么样
 

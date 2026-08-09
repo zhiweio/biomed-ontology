@@ -28,9 +28,10 @@ def test_security_sensitive_defaults_are_closed():
     assert closed.warnings() == []
 
 
-def test_local_search_backend_emits_milvus_warning():
-    s = load_settings({"HMD_SEARCH_BACKEND": "local"})
-    assert any("milvus" in w.lower() for w in s.warnings())
+def test_local_search_backend_is_rejected():
+    """词法仅认 Milvus；local 字面量非法。"""
+    with pytest.raises(ValidationError):
+        load_settings({"HMD_SEARCH_BACKEND": "local"})
 
 
 def test_trusting_client_entitlements_emits_a_warning():
@@ -144,7 +145,7 @@ def test_attack_surface_limits_must_be_positive(key: str):
 
 def test_test_env_ignores_host_environment(monkeypatch: pytest.MonkeyPatch):
     """传 dict 就只认这个 dict —— 开发机上一个 .env 不该让断言在本地与 CI 分叉。"""
-    monkeypatch.setenv("HMD_SEARCH_BACKEND", "local")
+    monkeypatch.setenv("HMD_SEARCH_BACKEND", "milvus")
     assert load_settings({}).search_backend == "milvus"
 
 

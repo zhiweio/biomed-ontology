@@ -8,11 +8,24 @@ from rich.console import Console
 
 from biomed_ontology.eval import DualEvalReport, eval_bridge, eval_identity, run_dual_eval
 from biomed_ontology.eval.render import render_dual_eval
+from biomed_ontology.pipeline import build_literature_base
 from biomed_ontology.runtime import open_dual_surface
+from tests.support.search_fakes import make_searcher
+
+
+def _surface():
+    kb = build_literature_base(with_graph=False)
+    searcher = make_searcher(kb)
+    return open_dual_surface(
+        literature_kb=kb,
+        milvus_backend=searcher.backend,
+        neighborhood=searcher.neighborhood,
+        searcher=searcher,
+    )
 
 
 def test_identity_gate_resolves_golden_aliases() -> None:
-    surface = open_dual_surface()
+    surface = _surface()
     ev = eval_identity(surface.foundation)
     assert ev.gate_ok
     assert ev.gate_total >= 4
@@ -20,7 +33,7 @@ def test_identity_gate_resolves_golden_aliases() -> None:
 
 
 def test_bridge_alias_and_literature() -> None:
-    surface = open_dual_surface()
+    surface = _surface()
     ev = eval_bridge(surface, entitlements=frozenset({"MOCK_LICENSED"}))
     assert ev.alias_ok
     assert ev.literature_ok
@@ -28,7 +41,7 @@ def test_bridge_alias_and_literature() -> None:
 
 
 def test_run_dual_eval_without_literature() -> None:
-    surface = open_dual_surface()
+    surface = _surface()
     report = run_dual_eval(
         surface,
         entitlements=frozenset({"MOCK_LICENSED"}),
@@ -43,11 +56,7 @@ def test_run_dual_eval_without_literature() -> None:
 
 
 def test_render_dual_eval_mentions_golden_eval() -> None:
-    report = DualEvalReport(
-        suites_run=["identity", "bridge"],
-    )
-    # minimal identity/bridge via live surface for richer panel
-    surface = open_dual_surface()
+    surface = _surface()
     report = run_dual_eval(
         surface,
         entitlements=frozenset({"MOCK_LICENSED"}),

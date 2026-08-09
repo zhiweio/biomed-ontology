@@ -101,8 +101,10 @@ def signals(kb):
     """先制造真实使用痕迹，再挖信号 —— 没有使用就不该有信号。"""
     from biomed_ontology.demo import run_all
     from biomed_ontology.tools import ToolApi
+    from tests.support.search_fakes import make_searcher
 
-    api = ToolApi.from_kb(kb)
+    searcher = make_searcher(kb)
+    api = ToolApi.from_backends(kb=kb, backend=searcher.backend, searcher=searcher)
     run_all(kb, api)
     return mine_signals(MiningInput.from_runtime(kb, api)), api
 

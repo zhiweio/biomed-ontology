@@ -24,16 +24,16 @@
 | 内部 CURIE 主键 | 检索底座：外部 ID 只做 xref（D1/D9） |
 | 别名带 scope | BROAD 不进精确归一（D2） |
 | 不确定不猜 | 消歧返回 top-k（D3）；Foundation unmapped → evolve-mine 候选 |
-| 链接双向建 | 种子写正向；`LinkIndex` 建反向 |
+| 链接双向建 | 种子写正向；邻接查询侧合成反向 |
 | 跨类型最多一跳 | 防竞品关系污染召回 |
-| 别名扩展 ≠ search-around | `_children` 与 `LinkIndex` 不合并 |
+| 别名扩展 ≠ search-around | `_children` 与 `GraphDbNeighborhood` 不合并 |
 | Evolution 不自动改本体 | `evolve-mine` 只落 KGCL/JSON；禁止静默 apply |
 
 ## Foundation / Evidence
 
 | 不变量 | 说明 |
 |---|---|
-| Milvus 必选 | Evidence Index；生产路径失败不回落 LocalBackend |
+| Milvus 必选 | 文献词法/稠密 + Evidence Index；失败不回落内存后端 |
 | Semantic Ops 隐藏后端 | Agent 默认不拼 SPARQL / 原始向量 API |
 | Knowledge ≠ Truth | Claim + Provenance + Evidence 才可消费 |
 | extracted ≠ validated | ingest 只写 extracted；仅 validated 物化 knowledge 边 |

@@ -116,6 +116,7 @@ ignore = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-q -m 'not integration'"
 markers = [
     "integration: 需本机 GraphDB（task foundation:up）；默认跳过",

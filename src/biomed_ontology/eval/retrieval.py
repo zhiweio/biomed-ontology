@@ -47,25 +47,28 @@ _ALL_CHANNELS = (
 
 # 臂定义。名字直接写死通道与向量列组合，避免"混合"在不同报告里指代不同东西。
 #
-# `backend` 区分本地内存与 Milvus：后者不可达时该臂标为不可用，
-# **不得回落到本地后端顶替** —— 那会让报告里的"Milvus 混合"其实是本地跑的。
+# 全部臂走 Milvus：不可达时标为不可用，**不得回落**内存词法顶替。
+# 含 GRAPH 的臂另需 GraphDB（``require_graph``）；图不可达同样标未运行。
 ARMS: dict[str, dict[str, Any]] = {
     "bm25_only": {
         "channels": (RetrievalChannelEnum.BM25,),
         "expand": False,
-        "backend": "local",
-        "label": "纯 BM25（无本体）",
+        "backend": "milvus",
+        "vector_fields": ("sparse_lexical",),
+        "label": "纯词法（Milvus sparse_lexical）",
     },
     "dense_only": {
         "channels": (RetrievalChannelEnum.DENSE,),
         "expand": False,
-        "backend": "local",
-        "label": "纯向量（无本体）",
+        "backend": "milvus",
+        "vector_fields": ("dense_general", "dense_biomed"),
+        "label": "纯向量（Milvus dense）",
     },
     "ontology_hybrid": {
         "channels": _ALL_CHANNELS,
         "expand": True,
-        "backend": "local",
+        "backend": "milvus",
+        "require_graph": True,
         "label": "本体增强混合",
     },
     # ---- 逐机制消融阶梯。这几行原先是手工跑出来贴进 README 的，谁也复现不了；
@@ -78,29 +81,31 @@ ARMS: dict[str, dict[str, Any]] = {
     "bm25_dense": {
         "channels": (RetrievalChannelEnum.BM25, RetrievalChannelEnum.DENSE),
         "expand": False,
-        "backend": "local",
+        "backend": "milvus",
         "label": "①BM25+DENSE 无本体",
     },
     "bm25_dense_graph": {
         "channels": _ALL_CHANNELS,
         "expand": False,
-        "backend": "local",
+        "backend": "milvus",
+        "require_graph": True,
         "label": "②+图通道（仅种子）",
     },
     "bm25_dense_hops": {
         "channels": _ALL_CHANNELS,
         "expand": True,
         "rewrite": False,
-        "backend": "local",
+        "backend": "milvus",
+        "require_graph": True,
         "label": "③+search-around",
     },
     "bm25_dense_expand": {
         "channels": (RetrievalChannelEnum.BM25, RetrievalChannelEnum.DENSE),
         "expand": True,
-        "backend": "local",
+        "backend": "milvus",
         "label": "④仅查询改写（无图）",
     },
-    # ---- 交叉编码器精排。需显式传入 reranker，与 Milvus 臂同一套纪律：
+    # ---- 交叉编码器精排。需显式传入 reranker：
     # 模型不在就标为未运行，**不得**悄悄退化成 NullReranker 顶替 ——
     # 那会让报表上的"+精排"其实是原序返回。
     #
@@ -109,20 +114,22 @@ ARMS: dict[str, dict[str, Any]] = {
     "bm25_rerank": {
         "channels": (RetrievalChannelEnum.BM25,),
         "expand": False,
-        "backend": "local",
+        "backend": "milvus",
+        "vector_fields": ("sparse_lexical",),
         "rerank": True,
         "candidate_k": 50,
-        "label": "⑤纯 BM25 + 精排",
+        "label": "⑤纯词法 + 精排",
     },
     "ontology_hybrid_rerank": {
         "channels": _ALL_CHANNELS,
         "expand": True,
-        "backend": "local",
+        "backend": "milvus",
+        "require_graph": True,
         "rerank": True,
         "candidate_k": 50,
         "label": "⑥本体增强 + 精排",
     },
-    # ---- 以下需要 Milvus。逐列拆开是为了让"SapBERT 值多少"成为一个减法。
+    # ---- 逐列拆开是为了让"SapBERT 值多少"成为一个减法。
     "milvus_lexical": {
         "channels": (RetrievalChannelEnum.BM25,),
         "expand": False,
@@ -216,6 +223,7 @@ ARMS: dict[str, dict[str, Any]] = {
         ),
         "expand": True,
         "backend": "milvus",
+        "require_graph": True,
         "vector_fields": ("sparse_lexical", "dense_general", "dense_biomed"),
         "label": "本体增强 + Milvus",
     },
@@ -542,7 +550,10 @@ class RetrievalEval:
         if any(ONTOLOGY_PROBES[0] in a.by_probe for a in self.arms.values()):
             gain = self.absolute_gain(probes=ONTOLOGY_PROBES)
             lines.append(f"\n本体敏感探针 nDCG@10 绝对增益：{gain:+.3f}（主 KPI）")
-        lines.append(f"全量 Recall@10 相对提升：{self.lift():+.1%}（诊断，含图像/对照稀释）")
+        if self.baseline in self.arms and self.target in self.arms:
+            lines.append(
+                f"全量 Recall@10 相对提升：{self.lift():+.1%}（诊断，含图像/对照稀释）"
+            )
         lines.extend(self._significance_block())
         lines.extend(self._pool_note())
 
@@ -882,24 +893,49 @@ def eval_retrieval(
     top_k: int = 10,
     arms: dict[str, dict[str, Any]] | None = None,
     milvus_backend: Any = None,
+    neighborhood: Any = None,
     embedder: str = "",
     reranker: Any = None,
 ) -> RetrievalEval:
-    """跑消融。Milvus 臂需显式传入后端 —— 不可达时标记为未运行而非回落。
-
-    回落到本地后端会让报告里的"Milvus 三列混合"其实是本地 TF-IDF 跑的，
-    这种错误一旦进了采购决策文档就再也追不回来。
-    """
+    """跑消融。全部臂走 Milvus（或注入的 SearchBackend）；缺后端/图时标未运行。"""
     import time
 
     from biomed_ontology.observability import TraceContext
+    from biomed_ontology.ontology.neighborhood import GraphDbNeighborhood, NullNeighborhood
+    from biomed_ontology.pipeline import ensure_catalog_graphs
     from biomed_ontology.search import HybridSearcher
+
+    selected_arms = arms or ARMS
+    if milvus_backend is None:
+        # 无后端时不必加载 gold：全部臂标未运行即可，避免语料/标注漂移挡住装配测试。
+        return RetrievalEval(
+            arms={},
+            unavailable={name: "milvus 后端未提供" for name in selected_arms},
+            embedder=embedder,
+            reranker=getattr(reranker, "name", ""),
+        )
 
     gold = gold or load_gold("retrieval")
     index = _chunk_key_index(kb)
-    searchers = {"local": HybridSearcher(kb)}
+    searchers: dict[str, HybridSearcher] = {}
+    graph_ready = False
+    graph_error = ""
     if milvus_backend is not None:
-        searchers["milvus"] = HybridSearcher(kb, backend=milvus_backend)
+        nb: Any
+        if neighborhood is not None:
+            nb = neighborhood
+            graph_ready = True
+        else:
+            nb = NullNeighborhood()
+            try:
+                ensure_catalog_graphs(kb.graph, kb.concepts, kb.synonyms)
+                nb = GraphDbNeighborhood(kb.graph)
+                graph_ready = True
+            except Exception as exc:  # noqa: BLE001 — 评测侧记不可用原因
+                graph_error = str(exc)
+        searchers["milvus"] = HybridSearcher(
+            kb, backend=milvus_backend, neighborhood=nb
+        )
     ctx = TraceContext(trace_id="eval", ontology_release_id=kb.release_id)
 
     cases = []
@@ -942,14 +978,17 @@ def eval_retrieval(
     results: dict[str, ArmResult] = {}
     unavailable: dict[str, str] = {}
 
-    for arm, cfg in (arms or ARMS).items():
-        searcher = searchers.get(cfg.get("backend", "local"))
+    for arm, cfg in selected_arms.items():
+        searcher = searchers.get(cfg.get("backend", "milvus"))
         if searcher is None:
             unavailable[arm] = f"{cfg.get('backend')} 后端未提供"
             continue
+        if cfg.get("require_graph") and not graph_ready:
+            unavailable[arm] = graph_error or "GraphDB 不可达（require_graph）"
+            continue
 
         # 精排臂必须拿到真模型。回落到 NullReranker 会让报表上写着"+精排"
-        # 而实际是原序返回 —— 与 Milvus 臂不得回落到本地后端是同一条纪律。
+        # 而实际是原序返回 —— 与不得回落内存词法是同一条纪律。
         if cfg.get("rerank") and getattr(reranker, "name", "null") == "null":
             unavailable[arm] = "未提供 reranker（--reranker bge-reranker-v2-m3）"
             continue

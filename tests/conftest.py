@@ -62,7 +62,10 @@ def api(kb):
     """每个测试一个新 ToolApi —— feedback_log 是可变状态，共用会互相污染。"""
     from biomed_ontology.tools import ToolApi
 
-    return ToolApi.from_kb(kb)
+    from tests.support.search_fakes import make_searcher
+
+    searcher = make_searcher(kb)
+    return ToolApi.from_backends(kb=kb, backend=searcher.backend, searcher=searcher)
 
 
 @pytest.fixture

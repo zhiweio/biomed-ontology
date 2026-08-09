@@ -8,8 +8,8 @@ BM25 找字面、向量找语义、图找"经由概念关系可达"。
 license 过滤在候选生成阶段就介入，而不是返回前裁剪：
 后者会让"总命中数"这类统计量泄漏无权数据的存在性。
 
-词法/向量召回下沉到 `backends/`（本地内存或 Milvus）；
-图通道留在本层，因为它依赖本体规范化器与概念倒排，向量库替不了。
+词法/向量召回下沉到 Milvus（`sparse_lexical` + dense_*）；
+图通道留在本层：邻接来自 GraphDB，IDF/概念倒排/RRF 仍在进程内。
 
 本体经由**两条**路径参与检索，缺一条这个臂就名不副实：
 1. 图通道 —— search-around，从查询概念沿类型化链接走到相关概念；
@@ -29,26 +29,20 @@ from biomed_ontology.alias import normalize_alias
 from biomed_ontology.corpus import Chunk
 from biomed_ontology.licensing import tier_rank
 from biomed_ontology.observability import Candidate, TraceContext
-from biomed_ontology.ontology.links import LinkIndex
+from biomed_ontology.ontology.neighborhood import ConceptNeighborhood
 from biomed_ontology.pipeline import KnowledgeBase
 from biomed_ontology.rerank import Reranker
 from biomed_ontology.search.backends import (
-    Bm25Index,
     ChunkMeta,
-    DenseIndex,
     LicenseScope,
-    LocalBackend,
     RetrievalRequest,
     SearchBackend,
 )
 
 __all__ = [
     "CHANNEL_WEIGHTS",
-    "Bm25Index",
-    "DenseIndex",
     "HybridSearcher",
     "LicenseScope",
-    "LocalBackend",
     "SearchBackend",
     "SearchHit",
     "rrf_fuse",
@@ -125,30 +119,33 @@ def rrf_fuse(
 
 
 class HybridSearcher:
-    def __init__(self, kb: KnowledgeBase, backend: SearchBackend | None = None) -> None:
+    def __init__(
+        self,
+        kb: KnowledgeBase,
+        *,
+        backend: SearchBackend,
+        neighborhood: ConceptNeighborhood,
+    ) -> None:
+        if backend is None:  # type: ignore[comparison-overlap]
+            raise ValueError("检索 backend 必填（Milvus）；已移除 LocalBackend")
         self.kb = kb
+        self.backend = backend
+        self.neighborhood = neighborhood
         self._by_concept: dict[str, set[str]] = defaultdict(set)
         self._chunks: dict[str, Chunk] = {}
         self._meta: dict[str, ChunkMeta] = {}
 
-        local = LocalBackend() if backend is None else None
         for ch in kb.chunks:
             self._chunks[ch.chunk_id] = ch
             self._meta[ch.chunk_id] = self._chunk_meta(ch)
-            if local is not None:
-                # 概念注入索引文本：让 BM25 也能命中跨别名情形，
-                # 例如文中写 ORPATHYS 而查询写"沃利替尼"。
-                enriched = ch.text + " " + " ".join(self._concept_terms(ch))
-                local.add(self._meta[ch.chunk_id], enriched)
             for cid in ch.concept_ids:
                 self._by_concept[cid].add(ch.chunk_id)
-        if local is not None:
-            local.build()
-        self.backend: SearchBackend = local if local is not None else backend  # type: ignore[assignment]
-
-        self.links = LinkIndex(kb.concepts)
         self._concept_idf = self._build_concept_idf()
         self._concept_norm = self._build_concept_norms()
+
+    def concept_label_terms(self, chunk: Chunk) -> list[str]:
+        """索引侧注入的概念 preferred label（稀疏列文本 parity）。"""
+        return self._concept_terms(chunk)
 
     def _build_concept_idf(self) -> dict[str, float]:
         """概念的判别力：log(N / df)，索引期算一次。
@@ -432,7 +429,7 @@ class HybridSearcher:
 
         1. **沿类型化链接走，不只沿层级走。** 层级扩展只能在同类实体内部上下走，
            Q4「VEGFR2 抑制剂」归一到靶点后无处可去 —— KDR 没有下位概念，
-           而打这个靶点的药就在数据里，只是查询期走不通。`LinkIndex` 让它走得通。
+           而打这个靶点的药就在数据里，只是查询期走不通。GraphDB 邻接让它走得通。
         2. **概念 IDF**（`_build_concept_idf`）区分「肺癌」与「肾病综合征」。
         3. **文档模长归一**（`_build_concept_norms`）区分"讲这个主题"与"提了一句"。
            少了这一项，同一个倒排表内部仍然全部并列。
@@ -446,7 +443,7 @@ class HybridSearcher:
         query_vec: dict[str, float] = {cid: 1.0 for cid in seeds}
         origin_of: dict[str, str] = {cid: cid for cid in seeds}
         if expand:
-            for neighbor in self.links.neighbors(seeds, max_hops=2):
+            for neighbor in self.neighborhood.neighbors(seeds, max_hops=2):
                 if neighbor.weight > query_vec.get(neighbor.concept_id, 0.0):
                     query_vec[neighbor.concept_id] = neighbor.weight
                     origin_of[neighbor.concept_id] = f"{neighbor.predicate}:{neighbor.concept_id}"

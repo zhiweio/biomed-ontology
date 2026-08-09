@@ -87,7 +87,7 @@ flowchart TB
 | 能力 | 本仓库 | 说明 |
 |---|---|---|
 | 对象类型 + 属性 | `BuiltConcept` | id / 双语标签 / 定义 / tier |
-| 类型化链接 | `ConceptLink` + `LinkIndex` | `has_target` / `treats` 双向 |
+| 类型化链接 | `ConceptLink` + GraphDB 邻域 | `has_target` / `treats` 双向 |
 | search-around | `ontology/links.py` | 带衰减、跨类型最多一跳 |
 | semantic ops / functions | ToolApi + Foundation Semantic Ops | 世界模型访问契约，非 Agent actions |
 | dynamic security | license tier + entitlement | 候选生成阶段过滤 |
@@ -97,7 +97,7 @@ flowchart TB
 ## 如何验证你理解了分层
 
 1. 指出「查询改写」属于 L3 能力被 L5 消费，而不是 L5 自己维护别名。  
-2. 解释为什么图通道不能下沉到 Milvus（它依赖 `LinkIndex` + 概念倒排，向量库替不了）。  
+2. 解释为什么图通道不能整包下沉到 Milvus（邻接在 GraphDB、IDF/倒排/RRF 在进程内，向量库替不了）。  
 3. 说明 `SEED_LINKS` 为何与 `SEED_INTERNAL` 分图（谓词同名、证据强度不同）。  
 
 相关测试：`tests/test_seed_build.py`、`tests/test_search_backend.py`、`tests/test_tools.py`。

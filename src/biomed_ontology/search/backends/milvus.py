@@ -224,7 +224,19 @@ class MilvusBackend:
         # 默认查集合里真实存在的列。写死一份清单的话，用 4 列建的表遇上
         # 5 列的默认值就会在一个不存在的字段上搜 —— 报错还算好的，
         # 更糟的是有人为了让它别报错而把默认值改窄，于是新列悄悄不参与检索了。
-        fields = request.vector_fields or self.vector_fields()
+        available = set(self.vector_fields())
+        fields = tuple(request.vector_fields or self.vector_fields())
+        want_bm25 = RetrievalChannelEnum.BM25 in request.channels
+        # 未显式排除 sparse 时，BM25 通道必须走 sparse_lexical
+        need_sparse = want_bm25 and (
+            not request.vector_fields or "sparse_lexical" in request.vector_fields
+        )
+        if need_sparse and "sparse_lexical" not in available:
+            raise RuntimeError(
+                f"集合 {self.collection!r} 无 sparse_lexical；"
+                "词法通道必须用 BGE-M3 稀疏列，请 hmd index --recreate"
+            )
+
         expr = self._filter(request)
         depth = request.top_k * 3
 
@@ -237,12 +249,23 @@ class MilvusBackend:
         channels: dict[RetrievalChannelEnum, list[tuple[str, float]]] = {}
 
         for field in fields:
-            channel = _CHANNEL[field]
+            channel = _CHANNEL.get(field)
+            if channel is None:
+                continue
+            if channel is RetrievalChannelEnum.BM25 and field != "sparse_lexical":
+                continue
+            if field not in available:
+                continue
             queries = (lexical_text,) if channel is RetrievalChannelEnum.BM25 else dense_texts
             for text in queries:
                 vector = bundles[text].get(field)
                 if vector is None:
-                    continue  # 该列没算 —— 补零会让"没算"和"算出来是零"分不清
+                    if field == "sparse_lexical" and need_sparse:
+                        raise RuntimeError(
+                            f"embedder {self.embedder.name!r} 未产出 sparse_lexical；"
+                            "请使用含 BGE-M3 稀疏列的 embedder"
+                        )
+                    continue
                 hits = self.client.search(
                     collection_name=self.collection,
                     data=[vector],
@@ -256,9 +279,6 @@ class MilvusBackend:
                 channels.setdefault(channel, [])
                 channels[channel] = merge_best(channels[channel], scored)
 
-        # 计数只按许可谓词算，不带 labels / modality：后两者是调用方自己下的条件。
-        # 混进来会让 `license_filtered_count` 在"你无权查看"与"你自己筛掉的"之间摇摆，
-        # 而本地后端算的一直是前者 —— 两个后端对同一字段给出不同含义是最坏的情形。
         return BackendResult(
             channels=channels,
             filtered_count=self._filtered_count(request, self._license_expr(request)),
@@ -357,7 +377,18 @@ def _plain(value: str) -> bool:
     return value.replace("_", "").replace("-", "").isalnum()
 
 
-def chunk_to_row(chunk: Any, meta: ChunkMeta, *, degraded: str = "") -> dict[str, Any]:
+def chunk_to_row(
+    chunk: Any,
+    meta: ChunkMeta,
+    *,
+    degraded: str = "",
+    label_terms: list[str] | tuple[str, ...] = (),
+) -> dict[str, Any]:
+    """``label_terms`` 注入 preferred label，让稀疏列能命中跨别名查询。"""
+    text = str(getattr(chunk, "text", "") or "")
+    extra = " ".join(t for t in label_terms if t)
+    if extra:
+        text = f"{text} {extra}".strip()
     return {
         "chunk_id": meta.chunk_id,
         "doc_id": meta.doc_id,
@@ -373,5 +404,5 @@ def chunk_to_row(chunk: Any, meta: ChunkMeta, *, degraded: str = "") -> dict[str
         "figure_type": str(getattr(chunk, "figure_type", "") or ""),
         "labels": list(meta.labels),
         "concept_ids_expanded": list(getattr(chunk, "concept_ids_expanded", ())),
-        "text": chunk.text,
+        "text": text,
     }

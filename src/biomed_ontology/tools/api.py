@@ -118,28 +118,34 @@ class ToolApi:
     foundation: Any | None = None  # FoundationApi：ER / GraphDB 扩展
 
     @classmethod
-    def from_kb(cls, kb: KnowledgeBase) -> ToolApi:
-        """本地 HybridSearcher。运行时入口优先 ``from_backends``。"""
-        return cls.from_backends(kb=kb)
+    def from_kb(cls, kb: KnowledgeBase, *, backend: SearchBackend, searcher: HybridSearcher | None = None) -> ToolApi:
+        """兼容入口；生产请用 ``from_backends`` / ``runtime.open_dual_surface``。"""
+        return cls.from_backends(kb=kb, backend=backend, searcher=searcher)
 
     @classmethod
     def from_backends(
         cls,
         *,
         kb: KnowledgeBase,
-        backend: SearchBackend | None = None,
+        backend: SearchBackend,
         foundation: Any | None = None,
+        searcher: HybridSearcher | None = None,
+        neighborhood: Any | None = None,
     ) -> ToolApi:
-        """文献面装配：语料句柄 + 可插拔检索后端（Local / Milvus）。
+        """文献面装配：Milvus 检索 + GraphDB 邻域（或显式注入的 searcher）。
 
         身份：``normalize_entity`` 走 ENT Normalizer（与 ER 同目录）；
         若挂了 ``foundation`` 且 GraphDB 可达，``expand_concept`` 优先 GraphDB 邻居。
         """
-        return cls(
-            kb=kb,
-            searcher=HybridSearcher(kb, backend=backend),
-            foundation=foundation,
-        )
+        if searcher is None:
+            if neighborhood is None:
+                from biomed_ontology.ontology.neighborhood import GraphDbNeighborhood
+                from biomed_ontology.pipeline import ensure_catalog_graphs
+
+                ensure_catalog_graphs(kb.graph, kb.concepts, kb.synonyms)
+                neighborhood = GraphDbNeighborhood(kb.graph)
+            searcher = HybridSearcher(kb, backend=backend, neighborhood=neighborhood)
+        return cls(kb=kb, searcher=searcher, foundation=foundation)
 
     @property
     def hub(self) -> ObservabilityHub:

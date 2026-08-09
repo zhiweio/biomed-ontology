@@ -115,7 +115,7 @@ class RetrievalRequest:
         RetrievalChannelEnum.BM25,
         RetrievalChannelEnum.DENSE,
     )
-    # 逐向量列消融用（P13）。空元组表示后端默认全开；本地后端无向量列，忽略此项。
+    # 逐向量列消融用（P13）。空元组表示后端默认全开。
     vector_fields: tuple[str, ...] = ()
     # 只保留这些模态的候选。空元组 = 不限模态。
     #

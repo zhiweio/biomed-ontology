@@ -36,6 +36,7 @@ __all__ = [
     "build_knowledge_base",
     "build_literature_base",
     "catalog_files",
+    "ensure_catalog_graphs",
 ]
 
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
@@ -45,6 +46,22 @@ DEFAULT_RELEASE = "0.3.0-ent"
 
 _CATALOG_SOURCE = "SEED_INTERNAL"
 _CATALOG_LINKS_SOURCE = "SEED_LINKS"
+
+
+def ensure_catalog_graphs(
+    graph: GraphStore,
+    concepts: list[BuiltConcept],
+    synonyms: list[BuiltSynonym],
+) -> None:
+    """把企业目录与类型化链接写入 GraphDB（search-around 边权威）。"""
+    if not graph.client.health():
+        raise RuntimeError("GraphDB 不可达；GRAPH 通道需要 task foundation:up")
+    graph.load_concepts(
+        concepts, synonyms, source_id=_CATALOG_SOURCE, tier=LicenseTierEnum.TIER_0
+    )
+    graph.load_concept_links(
+        concepts, source_id=_CATALOG_LINKS_SOURCE, tier=LicenseTierEnum.TIER_0
+    )
 
 
 @dataclass
