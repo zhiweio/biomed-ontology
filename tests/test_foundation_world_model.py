@@ -166,6 +166,14 @@ def test_kb_golden_leg_retries_english_alias_after_cjk_miss() -> None:
     assert "HMPL-504" in aliases
     assert "赛沃替尼" not in aliases  # 原始 query 不重复
 
+    related = _kb_query_aliases(
+        {"preferred_label_en": "MET", "aliases": ["c-MET"]},
+        "MET",
+        context={"drugs": [{"id": "HMD:ENT:DC:savolitinib", "label": "savolitinib"}]},
+    )
+    assert "savolitinib" in related
+    assert "c-MET" in related
+
     tools = MagicMock()
 
     def _search(query: str, top_k: int = 5):  # noqa: ARG001

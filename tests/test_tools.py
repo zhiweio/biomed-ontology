@@ -42,6 +42,51 @@ def test_alias_query_matches_documents_written_differently(kb, searcher, ctx):
     assert any(SAVOLITINIB in kb.chunk(h.chunk_id).concept_ids for h in hits)
 
 
+def test_search_skips_orphan_milvus_chunk_ids(kb, ctx):
+    """索引超前 corpus 时，未知 chunk_id 必须跳过而不是 KeyError 整次失败。"""
+    from biomed_ontology.licensing import tier_rank
+    from biomed_ontology.search import HybridSearcher
+    from biomed_ontology.search.backends import ChunkMeta
+    from tests.support.search_fakes import StaticBackend, seed_neighborhood
+
+    known = kb.chunks[0]
+    meta = ChunkMeta(
+        chunk_id=known.chunk_id,
+        doc_id=known.doc_id,
+        source_id="MOCK_OPEN",
+        license_rank=tier_rank(LicenseTierEnum.TIER_0),
+        labels=tuple(known.labels),
+        modality=known.modality.value,
+    )
+    backend = StaticBackend(
+        rows=[
+            (
+                meta,
+                [
+                    (RetrievalChannelEnum.BM25, 1.0),
+                    (RetrievalChannelEnum.DENSE, 0.9),
+                ],
+            ),
+            # 伪造一条不在 KB 中的命中（Milvus 孤儿）
+            (
+                ChunkMeta(
+                    chunk_id="CHK:txt.orphan_deadbeef",
+                    doc_id="DOC:orphan",
+                    source_id="MOCK_OPEN",
+                    license_rank=tier_rank(LicenseTierEnum.TIER_0),
+                    modality="TEXT",
+                ),
+                [(RetrievalChannelEnum.BM25, 9.0), (RetrievalChannelEnum.DENSE, 0.99)],
+            ),
+        ]
+    )
+    searcher = HybridSearcher(kb, backend=backend, neighborhood=seed_neighborhood(kb))
+    hits, _ = searcher.search("orphan-probe", ctx=ctx, top_k=5, expand=False)
+    assert hits, "已知切片应仍能返回"
+    assert all(h.chunk_id != "CHK:txt.orphan_deadbeef" for h in hits)
+    assert hits[0].chunk_id == known.chunk_id
+
+
 def test_hierarchy_expansion_reaches_narrower_concepts(kb, searcher, ctx):
     """查"肺癌"要能召回只提到 NSCLC 的文档，且该文档不含"肺癌"字面量。"""
     hits, _ = searcher.search("肺癌", ctx=ctx, top_k=10)

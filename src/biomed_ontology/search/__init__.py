@@ -274,6 +274,10 @@ class HybridSearcher:
                 graph_hits, concept_ids = self._graph_channel(query, ctx, allowed, expand, seeds)
                 results[RetrievalChannelEnum.GRAPH] = graph_hits[: pool_k * 3]
 
+            # Milvus 索引可能超前于当前进程装载的 corpus：丢弃未知 chunk_id，
+            # 否则 _to_hit / 模态过滤会 KeyError，整次 search 被 ToolApi 吞成 0 hits。
+            results, orphan_dropped = self._drop_unknown_chunks(results)
+
             fused = rrf_fuse(results, weights=CHANNEL_WEIGHTS)
             if modalities:
                 # 后端已下推过滤；此处兜底 Protocol 实现忽略 modalities 的情况。
@@ -294,11 +298,30 @@ class HybridSearcher:
                     "hmd.hit_count": len(hits),
                     "hmd.license_filtered": filtered,
                     "hmd.pool_size": len(pool),
+                    "hmd.orphan_dropped": orphan_dropped,
                     "hmd.reranker": getattr(reranker, "name", "") if reranker else "",
                     "ontology.concept_ids": ",".join(concept_ids),
                 }
             )
         return hits, filtered
+
+    def _drop_unknown_chunks(
+        self,
+        channels: dict[RetrievalChannelEnum, list[tuple[str, float]]],
+    ) -> tuple[dict[RetrievalChannelEnum, list[tuple[str, float]]], int]:
+        """去掉不在本进程 KnowledgeBase 中的 chunk_id，返回 (过滤后通道, 丢弃数)。"""
+        kept: dict[RetrievalChannelEnum, list[tuple[str, float]]] = {}
+        dropped = 0
+        for channel, hits in channels.items():
+            alive: list[tuple[str, float]] = []
+            for chunk_id, score in hits:
+                if chunk_id in self._chunks:
+                    alive.append((chunk_id, score))
+                else:
+                    dropped += 1
+            if alive:
+                kept[channel] = alive
+        return kept, dropped
 
     def _seed_concepts(self, query: str, ctx: TraceContext) -> list[str]:
         res = self.kb.normalizer.normalize(query, ctx=ctx, detect=True, min_confidence=0.6)

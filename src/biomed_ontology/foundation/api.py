@@ -579,7 +579,7 @@ class FoundationApi:
             path = _path_for_kind(kind)
             backends = ctx.get("backends") or {}
             entity = ctx.get("entity") or {}
-            kb_aliases = _kb_query_aliases(entity, candidate_key)
+            kb_aliases = _kb_query_aliases(entity, candidate_key, context=ctx)
             kb_leg = (
                 _kb_golden_leg(tools, candidate_key, aliases=kb_aliases)
                 if tools is not None
@@ -636,10 +636,17 @@ class FoundationApi:
             }
 
 
-def _kb_query_aliases(entity: dict[str, Any], query: str) -> list[str]:
+def _kb_query_aliases(
+    entity: dict[str, Any],
+    query: str,
+    *,
+    context: dict[str, Any] | None = None,
+) -> list[str]:
     """文献检索备用表面形：英文 preferred / Latin aliases 优先于 CJK。
 
     中文别名在英文文献库常 0 命中；金路径在 resolve 成功后应按企业实体别名重试。
+    Target / Indication 路径再附带邻接药/靶点/适应症 label（如 MET → savolitinib），
+    避免短基因符号或适应症全称在索引漂移时 0 命中。
     """
     qnorm = str(query or "").strip().casefold()
     seen: set[str] = set()
@@ -663,6 +670,10 @@ def _kb_query_aliases(entity: dict[str, Any], query: str) -> list[str]:
     for alias in entity.get("aliases") or []:
         _push(alias)
     _push(entity.get("preferred_label_zh"))
+    if context:
+        for bucket in ("drugs", "targets", "diseases"):
+            for row in context.get(bucket) or []:
+                _push(row.get("label"))
     return [*latin, *cjk]
 
 
