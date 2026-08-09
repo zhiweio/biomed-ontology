@@ -8,6 +8,12 @@
 # 反向绊线同样存在：目标已达成却还挂着豁免，也会让测试失败 ——
 # 因为那意味着对外结论仍在引用一条过期的免责说明。
 #
+# ---------------------------------------------------------------- 0.5.0
+#
+# 双面 Scorecard：I1 / B1 由 ``run_dual_eval`` 硬门禁（见 resolve.yaml / bridge.yaml），
+# 不走本文件的 arm 比较器。T1–T5 仍为 Literature ARMS 目标。
+# World Model 三后端门禁独占 ``hmd foundation golden-eval``（无 W* 于此）。
+#
 # ---------------------------------------------------------------- 0.4.0
 #
 # 产品定位为 World Model + Ontology Semantic Layer 之后，T1 不再用被图像意图（12/37）
@@ -22,7 +28,21 @@
 #
 # 读数前提：判定粒度是章节，|relevant| 常常大于 10，
 # Recall@10 天花板约 0.848；主指标取 nDCG@10。
-version: "0.4.0"
+version: "0.5.0"
+
+# Suite 硬门禁（文档化；实现见 DualEvalReport.ok）
+# I1: resolve.yaml gate cases accuracy = 1.0
+# B1: bridge.yaml alias + literature + entitlement
+suite_gates:
+  - id: I1
+    suite: identity
+    rule: gate_accuracy == 1.0
+    rationale: 金标别名必须落到期望 HMD:ENT:*（Foundation resolve）
+  - id: B1
+    suite: bridge
+    rule: alias_ok ∧ literature_ok ∧ entitlement_ok
+    rationale: KB normalize 与 WM resolve 同 ENT；resolve 后文献可检索；许可还原不泄漏
+
 targets:
   # T1：本体敏感探针上的 nDCG 绝对增益。
   #

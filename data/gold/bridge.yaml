@@ -1,0 +1,18 @@
+# 跨面桥接 gold：KB normalize ∧ WM resolve；resolve → literature search；许可还原。
+version: "0.1.0"
+
+# B1：同一 mention 两侧都命中且落到期望 ENT
+alias_bridge:
+  - { mention: "HMPL-504", expect: "HMD:ENT:DC:savolitinib", entity_types: [SUBSTANCE] }
+  - { mention: "savolitinib", expect: "HMD:ENT:DC:savolitinib", entity_types: [SUBSTANCE] }
+  - { mention: "MET", expect: "HMD:ENT:TGT:MET", entity_types: [TARGET] }
+  - { mention: "NSCLC", expect: "HMD:ENT:IND:nsclc", entity_types: [DISEASE] }
+
+# B2：WM resolve 后用别名做文献检索须有命中
+literature_bridge:
+  - { mention: "savolitinib", expect: "HMD:ENT:DC:savolitinib", top_k: 5 }
+  - { mention: "HMPL-504", expect: "HMD:ENT:DC:savolitinib", top_k: 5 }
+
+# 许可：无 entitlement 时受限文档 restore 须拒绝；有 MOCK_LICENSED 须放行
+entitlement:
+  licensed_id: MOCK_LICENSED

@@ -1,6 +1,8 @@
-# ARMS 消融阶梯
+# ARMS 消融阶梯（Literature 子套件）
 
-源码：`eval.ARMS`（`src/biomed_ontology/eval/__init__.py`）。
+源码：`eval.ARMS`（`src/biomed_ontology/eval/retrieval.py`）。  
+编排：双面 Scorecard 的 Literature 段，见 [dual-surface](dual-surface.md)。  
+World Model 三后端联调不在此文件——见 `hmd foundation golden-eval`。
 
 消融臂是一等公民配置，不是「某次手工跑完贴进 README」。升格之后，「本体到底经由哪条路起作用」才是可重跑、可证伪的问题。
 

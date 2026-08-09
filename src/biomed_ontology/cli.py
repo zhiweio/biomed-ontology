@@ -206,56 +206,60 @@ def eval_cmd(
     allow_fake: bool = typer.Option(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
+    suite: str = typer.Option(
+        "identity,literature,bridge",
+        "--suite",
+        help="逗号分隔：identity / literature / bridge",
+    ),
+    no_retrieval: bool = typer.Option(
+        False, "--no-retrieval", help="跳过 Literature ARMS（仍跑 Identity + Bridge）"
+    ),
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Trace 摘要，不展开详情"),
 ) -> None:
-    """双面 gold 评测：文献（归一化+检索+targets）+ WM resolve 探针。
+    """双面 Scorecard：Identity + Literature(ARMS) + Bridge。
 
-    默认用 Rich 分步展示；`--json` 给脚本，`--compact` 只要 Trace 摘要。
+    World Model 三后端金路径请用 ``hmd foundation golden-eval``（本命令不重复跑）。
+    默认 Rich；``--json`` / ``--compact`` 对齐 foundation 命令。
     """
-    from biomed_ontology.eval import eval_normalization, eval_retrieval
-    from biomed_ontology.eval.render import render_eval, summary_json
-    from biomed_ontology.eval.targets import check_targets
+    import json
+
+    from biomed_ontology.eval import ALL_SUITES, run_dual_eval
+    from biomed_ontology.eval.render import render_dual_eval
     from biomed_ontology.rerank import get_reranker
     from biomed_ontology.runtime import open_dual_surface
 
     _require_real_embedder(embedder, allow_fake=allow_fake)
 
-    surface = open_dual_surface()
-    kb = surface.kb
-    ents = frozenset(e.strip() for e in entitlements.split(",") if e.strip())
-    norm = eval_normalization(kb)
+    suites = [s.strip() for s in suite.split(",") if s.strip()]
+    if no_retrieval:
+        suites = [s for s in suites if s != "literature"]
+    unknown = sorted(set(suites) - set(ALL_SUITES))
+    if unknown:
+        console.print(f"[red]未知 suite {unknown}；可选：{list(ALL_SUITES)}[/red]")
+        raise typer.Exit(2)
 
+    surface = open_dual_surface()
+    ents = frozenset(e.strip() for e in entitlements.split(",") if e.strip())
     backend = _milvus_backend(embedder, collection)
-    ev = eval_retrieval(
-        kb,
+    report = run_dual_eval(
+        surface,
         entitlements=ents,
         milvus_backend=backend,
-        # 报的是模型真名（bge-m3+sapbert+qwen3-vl），不是命令行别名。
-        # 别名说不清生医列到底装了什么，而这行字要给净值背书。
         embedder=backend.embedder.name if backend else "",
         reranker=get_reranker(reranker) if reranker.strip() else None,
+        suites=suites,
     )
-    outcomes = check_targets(ev)
-
-    # WM resolve 探针（ENT）；失败写入 console，不静默跳过
-    resolve_probe = _eval_resolve_probe(surface.foundation)
 
     if json_out:
-        payload = summary_json(norm, ev, outcomes)
-        import json as _json
-
-        data = _json.loads(payload)
-        data["world_model_resolve"] = resolve_probe
-        console.print_json(_json.dumps(data, ensure_ascii=False))
+        console.print_json(json.dumps(report.to_dict(), ensure_ascii=False))
+        if not report.ok:
+            raise typer.Exit(1)
         return
 
-    render_eval(norm, ev, outcomes, console=console, verbose=not compact)
-    console.print(
-        f"[cyan]WM resolve probe[/]  "
-        f"passed={resolve_probe['passed']}/{resolve_probe['total']}  "
-        f"failed={resolve_probe['failed']}"
-    )
+    render_dual_eval(report, console=console, verbose=not compact)
+    if not report.ok:
+        raise typer.Exit(1)
 
 
 def _optional_graph_entity(enterprise_id: str) -> dict | None:
@@ -268,36 +272,9 @@ def _optional_graph_entity(enterprise_id: str) -> dict | None:
         if not gdb.health():
             return None
         ent = fetch_entity(gdb, enterprise_id)
-    except Exception:  # noqa: BLE001 — 展示增强，不阻断本地 resolve
+    except Exception:
         return None
     return ent.to_dict() if ent is not None else None
-
-
-def _eval_resolve_probe(foundation) -> dict:
-    """World Model resolve 探针：别名 → HMD:ENT:*（与文献 eval 同屏）。"""
-    cases = [
-        ("HMPL-504", "HMD:ENT:DC:savolitinib"),
-        ("savolitinib", "HMD:ENT:DC:savolitinib"),
-        ("MET", "HMD:ENT:TGT:MET"),
-        ("NSCLC", "HMD:ENT:IND:nsclc"),
-    ]
-    failed: list[str] = []
-    for mention, expect in cases:
-        try:
-            out = foundation.resolve_entity(mention)
-            got = next(
-                (
-                    h.get("canonical_entity")
-                    for h in out.get("resolved") or []
-                    if h.get("canonical_entity")
-                ),
-                None,
-            )
-            if got != expect:
-                failed.append(f"{mention!r}→{got} (期望 {expect})")
-        except Exception as exc:
-            failed.append(f"{mention!r} error={exc}")
-    return {"total": len(cases), "passed": len(cases) - len(failed), "failed": failed}
 
 
 def _require_real_embedder(name: str, *, allow_fake: bool) -> None:

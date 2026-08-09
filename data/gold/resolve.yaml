@@ -1,0 +1,22 @@
+# World Model resolve gold：mention → HMD:ENT:*（FoundationApi.resolve_entity）。
+#
+# 与 normalization.yaml 分工：normalization 验 KB normalizer；本文件验 ER / 词典身份。
+# I1 硬门禁只读 gate: true 的用例；其余为诊断切片。
+version: "0.1.0"
+cases:
+  # ---- DrugCandidate（金标路径）
+  - { text: "HMPL-504", expect: "HMD:ENT:DC:savolitinib", gate: true }
+  - { text: "savolitinib", expect: "HMD:ENT:DC:savolitinib", gate: true }
+  - { text: "AZD6094", expect: "HMD:ENT:DC:savolitinib", gate: true }
+  - { text: "赛沃替尼", expect: "HMD:ENT:DC:savolitinib", gate: true }
+  - { text: "沃利替尼", expect: "HMD:ENT:DC:savolitinib" }
+  - { text: "ORPATHYS", expect: "HMD:ENT:DC:savolitinib" }
+  # ---- Target
+  - { text: "MET", expect: "HMD:ENT:TGT:MET", gate: true }
+  - { text: "c-MET", expect: "HMD:ENT:TGT:MET", gate: true }
+  - { text: "c-Met", expect: "HMD:ENT:TGT:MET" }
+  # ---- Indication
+  - { text: "NSCLC", expect: "HMD:ENT:IND:nsclc", gate: true }
+  - { text: "非小细胞肺癌", expect: "HMD:ENT:IND:nsclc" }
+  # ---- abstain（不应映射到企业实体）
+  - { text: "unknownzyme-xyz-999", expect: null, gate: true }

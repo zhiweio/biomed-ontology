@@ -106,8 +106,9 @@ uv sync --extra dev --extra rdf --extra ontology --extra parse --extra vector --
 uv run hmd kb        # 构建知识库并打印统计
 uv run hmd demo              # 跑 12 个演示场景（K/W/B 双面；Rich + 可证伪断言）
 uv run hmd demo --compact    # 仅 Trace 摘要（对齐 hmd foundation golden）
-uv run hmd eval --entitlements MOCK_LICENSED   # Rich：归一化 + 检索消融 + targets
-uv run hmd eval --entitlements MOCK_LICENSED --compact  # 仅 Trace
+uv run hmd eval --entitlements MOCK_LICENSED   # 双面：Identity + Literature + Bridge
+uv run hmd eval --suite identity,bridge --no-retrieval  # 跳过 ARMS 长跑
+uv run hmd foundation golden-eval              # WM 三后端金路径（不并入 eval）
 uv run hmd serve     # 起 REST + MCP 服务（:8000）
 task check           # ruff + 全量测试
 ```
@@ -241,9 +242,14 @@ uv run hmd demo --id D7
 
 ---
 
-## 归一化评测
+## 双面 Eval
 
-`hmd eval` 先跑归一化再跑检索。本体层已按语料同步扩到
+`hmd eval` = **Identity**（WM resolve 金标）+ **Literature**（归一化 + ARMS）+ **Bridge**（KB∧WM）。  
+World Model 三后端金路径另跑 `hmd foundation golden-eval`（[职责对照](docs/eval/dual-surface.md)）。
+
+### 归一化（Literature）
+
+`hmd eval` 的 Literature 段先跑归一化再跑检索。本体层已按语料同步扩到
 **84 个概念**（43 药 / 21 靶点 / 20 疾病），全部带双语别名、`xref_hints` 与
 `verified: false` 标记 —— 收录范围是"9 篇真实文献正文里出现的主要实体"，
 不是"gold query 会问到的实体"。后者会让归一化评测变成自证。
@@ -260,12 +266,12 @@ uv run hmd demo --id D7
 n-gram 向量级曾以 0.57 误配到 regorafenib（同属 `-afenib` TKI）；默认
 `min_score=0.60` 后弃权，同时保留单字符 typo（如 `sovolitinib`→savolitinib）。
 
-## 检索评测
+### 检索 ARMS（Literature）
 
 `uv run hmd eval --entitlements MOCK_LICENSED`
 
 读数方法、ARMS 定义、显著性纪律见手册
-[评测](docs/eval/arms.md) · [显著性](docs/eval/significance.md) · [豁免](docs/eval/targets.md)。
+[双面标准](docs/eval/dual-surface.md) · [ARMS](docs/eval/arms.md) · [显著性](docs/eval/significance.md) · [豁免](docs/eval/targets.md)。
 下面只保留**当前实测快照**（有 `tests/test_readme.py` 守着）。
 
 gold：**14 篇 / 37 query**（en 26 / zh 11；文本 25 / 图像 12），每条带 `probe`

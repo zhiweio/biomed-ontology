@@ -17,14 +17,64 @@ from rich.text import Text
 from biomed_ontology.eval import ONTOLOGY_PROBES, SAPBERT_DELTA, VISUAL_BIO_DELTA, VISUAL_DELTA
 
 if TYPE_CHECKING:
-    from biomed_ontology.eval import NormalizationEval, RetrievalEval
+    from biomed_ontology.eval import DualEvalReport, NormalizationEval, RetrievalEval
+    from biomed_ontology.eval.bridge import BridgeEval
+    from biomed_ontology.eval.identity import IdentityEval
     from biomed_ontology.eval.targets import TargetOutcome
 
 __all__ = [
+    "render_dual_eval",
     "render_eval",
     "render_eval_compact",
     "summary_json",
 ]
+
+
+def render_dual_eval(
+    report: DualEvalReport,
+    *,
+    console: Console | None = None,
+    verbose: bool = True,
+) -> None:
+    """双面 Scorecard：Identity → Literature → Bridge；页脚指向 golden-eval。"""
+    out = console or Console()
+    out.print()
+    out.print(_dual_header(report))
+    out.print()
+    out.print(_dual_trace(report))
+    out.print()
+
+    if verbose:
+        if report.identity is not None:
+            out.print(Rule("[dim]① Identity · WM resolve[/]", style="dim"))
+            out.print(_identity_panel(report.identity))
+            out.print()
+        if report.normalization is not None and report.literature is not None:
+            out.print(Rule("[dim]② Literature · Normalization[/]", style="dim"))
+            out.print(_normalization_panel(report.normalization))
+            out.print()
+            out.print(Rule("[dim]③ Literature · ARMS[/]", style="dim"))
+            out.print(_arms_panel(report.literature, key=None, title="全部 query"))
+            out.print()
+            if _has_probe_slice(report.literature):
+                out.print(
+                    _arms_panel(
+                        report.literature,
+                        probes=ONTOLOGY_PROBES,
+                        title="本体敏感探针（bridge_zh + alias，主 KPI）",
+                    )
+                )
+                out.print()
+            out.print(Rule("[dim]④ Literature · Targets[/]", style="dim"))
+            out.print(_targets_panel(report.literature_targets))
+            out.print()
+        if report.bridge is not None:
+            out.print(Rule("[dim]⑤ Bridge · KB ∧ WM[/]", style="dim"))
+            out.print(_bridge_panel(report.bridge))
+            out.print()
+
+    out.print(_dual_footer(report))
+    out.print()
 
 
 def render_eval(
@@ -474,6 +524,174 @@ def _targets_panel(outcomes: list[TargetOutcome]) -> Panel:
         border_style="bright_green" if ok else "red",
         box=box.ROUNDED,
     )
+
+
+def _dual_header(report: DualEvalReport) -> Panel:
+    title = Text()
+    title.append("Dual-Surface Eval", style="bold bright_white")
+    title.append("  ·  ", style="dim")
+    title.append("Identity + Literature + Bridge", style="dim cyan")
+
+    body = Text()
+    parts: list[str] = []
+    if report.identity is not None:
+        parts.append(f"I1 gate={report.identity.gate_accuracy:.0%}")
+    if report.literature is not None and report.normalization is not None:
+        parts.append(f"norm={report.normalization.accuracy:.1%}")
+        if _has_probe_slice(report.literature):
+            gain = report.literature.absolute_gain(probes=ONTOLOGY_PROBES)
+            parts.append(f"probe nDCG={gain:+.3f}")
+    if report.bridge is not None:
+        parts.append(
+            f"bridge={report.bridge.alias_passed}/{report.bridge.alias_total}"
+            f"+{report.bridge.literature_passed}/{report.bridge.literature_total}"
+        )
+    body.append("  ·  ".join(parts) if parts else "—", style="bold")
+    body.append("\n")
+    body.append("suites  ", style="dim")
+    body.append(", ".join(report.suites_run) or "—", style="white")
+    body.append("\n")
+    body.append("status  ", style="dim")
+    if report.ok:
+        body.append("OK", style="bold green")
+        body.append("  ·  scorecard green; WM backends → golden-eval", style="dim")
+    else:
+        body.append("CHECK", style="bold yellow")
+        body.append("  ·  inspect suite panels before shipping numbers", style="dim")
+
+    border = "bright_green" if report.ok else "yellow"
+    return Panel(body, title=title, border_style=border, box=box.ROUNDED, padding=(1, 2))
+
+
+def _dual_trace(report: DualEvalReport) -> Panel:
+    table = Table(box=None, show_header=False, padding=(0, 1))
+    table.add_column("ok", width=2)
+    table.add_column("step", style="dim", width=3)
+    table.add_column("name", style="bold", width=14)
+    table.add_column("detail")
+
+    step = 1
+    if report.identity is not None:
+        mark = "[green]✓[/]" if report.identity_ok else "[red]✗[/]"
+        table.add_row(
+            mark,
+            str(step),
+            "Identity",
+            f"gate {report.identity.gate_correct}/{report.identity.gate_total}"
+            f"  ·  all {report.identity.correct}/{report.identity.total}",
+        )
+        step += 1
+    if report.literature is not None:
+        mark = "[green]✓[/]" if report.literature_ok else "[red]✗[/]"
+        met = sum(1 for o in report.literature_targets if o.met or o.waived)
+        table.add_row(
+            mark,
+            str(step),
+            "Literature",
+            f"targets {met}/{len(report.literature_targets)}"
+            f"  ·  arms={len(report.literature.arms)}"
+            f"  ·  unavailable={len(report.literature.unavailable)}",
+        )
+        step += 1
+    if report.bridge is not None:
+        mark = "[green]✓[/]" if report.bridge_ok else "[red]✗[/]"
+        ent = (
+            "skip"
+            if report.bridge.entitlement_ok is None
+            else ("ok" if report.bridge.entitlement_ok else "fail")
+        )
+        table.add_row(
+            mark,
+            str(step),
+            "Bridge",
+            f"alias {report.bridge.alias_passed}/{report.bridge.alias_total}"
+            f"  ·  lit {report.bridge.literature_passed}/{report.bridge.literature_total}"
+            f"  ·  entitlement={ent}",
+        )
+    return Panel(table, title="[bold]Trace[/]", border_style="dim", box=box.SIMPLE)
+
+
+def _identity_panel(identity: IdentityEval) -> Panel:
+    table = Table(box=box.SIMPLE_HEAD, expand=True, border_style="dim", pad_edge=False)
+    table.add_column("", width=2)
+    table.add_column("mention", style="bold", ratio=2, overflow="fold")
+    table.add_column("expect", style="cyan", ratio=2, overflow="fold")
+    table.add_column("got", ratio=2, overflow="fold")
+    table.add_column("gate", width=6)
+
+    for row in identity.cases:
+        mark = "[green]✓[/]" if row.get("ok") else "[red]✗[/]"
+        table.add_row(
+            mark,
+            escape(str(row.get("text") or "")),
+            escape(str(row.get("expect"))),
+            escape(str(row.get("got"))),
+            "yes" if row.get("gate") else "",
+        )
+
+    border = "green" if identity.gate_ok else "red"
+    return Panel(
+        table,
+        title=(
+            f"[bold]Resolve gold[/]  [dim]gate "
+            f"{identity.gate_correct}/{identity.gate_total}  ·  "
+            f"all {identity.correct}/{identity.total}[/]"
+        ),
+        border_style=border,
+        box=box.ROUNDED,
+    )
+
+
+def _bridge_panel(bridge: BridgeEval) -> Panel:
+    table = Table(box=box.SIMPLE_HEAD, expand=True, border_style="dim", pad_edge=False)
+    table.add_column("", width=2)
+    table.add_column("kind", style="dim", width=16)
+    table.add_column("detail", ratio=3, overflow="fold")
+
+    for row in bridge.rows:
+        mark = "[green]✓[/]" if row.get("ok") else "[red]✗[/]"
+        kind = str(row.get("kind") or "")
+        if kind == "alias_bridge":
+            detail = f"{row.get('mention')}  kb={row.get('kb_id')}  wm={row.get('wm_id')}"
+        elif kind == "literature_bridge":
+            detail = f"{row.get('mention')}  wm={row.get('wm_id')}  hits={row.get('hit_count')}"
+        elif kind == "entitlement":
+            detail = row.get("note") or (
+                f"{row.get('doc_id')}  denied_empty={row.get('denied_empty')}  "
+                f"allowed={row.get('allowed_nonempty')}"
+            )
+        else:
+            detail = escape(str(row))
+        table.add_row(mark, kind, escape(str(detail)))
+
+    border = "green" if bridge.ok else "red"
+    return Panel(
+        table,
+        title="[bold]Bridge checks[/]",
+        border_style=border,
+        box=box.ROUNDED,
+    )
+
+
+def _dual_footer(report: DualEvalReport) -> Panel:
+    text = Text()
+    if report.ok:
+        text.append("✓ ", style="bold green")
+        text.append("Dual-surface scorecard ready", style="bold")
+    else:
+        text.append("✗ ", style="bold red")
+        text.append("Dual-surface scorecard failed", style="bold")
+    text.append(
+        f"  ·  suites={','.join(report.suites_run)}  ·  ok={report.ok}",
+        style="dim",
+    )
+    text.append("\n")
+    text.append("WM backends  ", style="dim")
+    text.append("hmd foundation golden-eval", style="cyan")
+    text.append("  ·  ", style="dim")
+    text.append("hmd demo", style="cyan")
+    border = "bright_green" if report.ok else "red"
+    return Panel(text, border_style=border, box=box.ROUNDED)
 
 
 def _footer(
