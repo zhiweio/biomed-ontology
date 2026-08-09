@@ -151,6 +151,19 @@ class HybridSearcher:
         """索引侧注入的概念 preferred label（稀疏列文本 parity）。"""
         return self._concept_terms(chunk)
 
+    def index_text_terms(self, chunk: Chunk) -> list[str]:
+        """写入稀疏/稠密文本的附加词：概念 label + 文档标题。
+
+        Tree Chunk 只索引 sentence 叶节点，标题不在正文里；不注入则
+        「Competitive landscape …」这类仅出现在 title 的查询永远打不中。
+        """
+        terms = list(self._concept_terms(chunk))
+        doc = self.kb.document(chunk.doc_id)
+        title = (getattr(doc, "title", None) or "").strip() if doc else ""
+        if title:
+            terms.append(title)
+        return terms
+
     def _build_concept_idf(self) -> dict[str, float]:
         """概念 IDF：``log(N / df)``，索引期算一次。
 

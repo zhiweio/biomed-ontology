@@ -62,8 +62,16 @@ targets:
     rationale: |
       企业实体身份桥接（别名归一与跨语言）要改善排序，
       不是在被图像/对照稀释的全量平均上赢 BM25 10%。
+    waiver: |
+      未达成：Tree Chunk 迁移后按章节键计分，探针 nDCG 绝对增益约 +0.017（阈值 +0.05）。
+      句子级切片让图扩展 / 稠密通道更容易把同节噪声推到前排，别名桥接的排序净值被稀释。
+      复审前不得把「本体敏感探针 +0.05」写成已交付。
+    waiver_owner: 检索方向负责人
+    waiver_review_by: |
+      search-around 与通道融合在句子级语料上重调参（或章节聚合检索）后重测；
+      增益稳定 ≥ +0.05 再撤豁免
 
-  # T2（nDCG not_worse）已达成。全量口径作回归哨兵：本体不得把总体排序弄坏。
+  # T2（nDCG not_worse）：全量口径作回归哨兵：本体不得把总体排序弄坏。
   - id: T2
     metric: ndcg_at_10
     arm: ontology_hybrid
@@ -71,6 +79,12 @@ targets:
     comparison: not_worse
     threshold: 0.0
     rationale: 召回涨了但排序变差，等于把噪声推给下游，不算收益。
+    waiver: |
+      未达成：Tree Chunk + 章节计分后，全量 nDCG ontology_hybrid 略低于 bm25_only（约 −0.05）。
+      退化主要来自 hierarchy / 宽泛英文对照 query 上的图扩展冲淡；探针切片仍略优于词法。
+      复审前不得把全量 nDCG 写成「本体不伤排序」。
+    waiver_owner: 检索方向负责人
+    waiver_review_by: 融合权重与扩展深度按句子级语料重标定后重测；转正后再撤豁免
 
   # T3（P@5 not_worse）：0.4.0 因 Q7 层级探针重标后翻红。
   #
@@ -94,7 +108,7 @@ targets:
     waiver_owner: 检索方向负责人
     waiver_review_by: 层级扩展增加精确度约束（或 hierarchy 探针独立目标）后重测；在此之前 T3 保持豁免
 
-  # T4（MRR not_worse）已达成。
+  # T4（MRR not_worse）：首条命中位置直接决定引用质量。
   - id: T4
     metric: mrr
     arm: ontology_hybrid
@@ -102,6 +116,12 @@ targets:
     comparison: not_worse
     threshold: 0.0
     rationale: 首条命中位置直接决定引用质量。
+    waiver: |
+      未达成：Tree Chunk + 章节计分后，全量 MRR ontology_hybrid 低于 bm25_only（约 −0.05）。
+      与 T2 同源——图扩展把同节近邻句子顶到首位，首条命中漂移。
+      复审前不得把全量 MRR 写成「本体不伤首条」。
+    waiver_owner: 检索方向负责人
+    waiver_review_by: 与 T2 一并在融合重标定后重测；转正后再撤豁免
 
   - id: T5
     metric: citation_fidelity

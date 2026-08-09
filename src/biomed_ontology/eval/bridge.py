@@ -110,11 +110,25 @@ def eval_bridge(
 
     ent_cfg = gold.get("entitlement") or {}
     licensed_id = str(ent_cfg.get("licensed_id") or "MOCK_LICENSED")
-    restricted = next(
-        (c for c in kb.chunks if kb.document(c.doc_id).license_tier is not LicenseTierEnum.TIER_0),
-        None,
+    # 优先挑「源 = licensed_id」且正文非空的切片；Iceberg 与内存库 ID 漂移时
+    # 单拿 first non-TIER_0 容易落到空正文 / 缺 source_id，误报 allowed=False。
+    candidates = []
+    for c in kb.chunks:
+        doc = kb.document(c.doc_id)
+        if doc is None or doc.license_tier is LicenseTierEnum.TIER_0:
+            continue
+        if not (c.text or "").strip():
+            continue
+        candidates.append(c)
+    candidates.sort(
+        key=lambda c: (
+            0
+            if (d := kb.document(c.doc_id)) is not None and d.source_id == licensed_id
+            else 1,
+            c.chunk_id,
+        )
     )
-    if restricted is None:
+    if not candidates:
         ev.entitlement_ok = None
         ev.rows.append(
             {
@@ -124,23 +138,26 @@ def eval_bridge(
             }
         )
     else:
-        denied = tools.restore_context(restricted.chunk_id)
-        allowed = tools.restore_context(
-            restricted.chunk_id,
-            entitlements=frozenset({licensed_id}) | (entitlements or frozenset()),
-        )
-        ok = (not denied.get("full_text")) and bool(allowed.get("full_text"))
-        row = {
-            "kind": "entitlement",
-            "chunk_id": restricted.chunk_id,
-            "doc_id": restricted.doc_id,
-            "denied_empty": not bool(denied.get("full_text")),
-            "allowed_nonempty": bool(allowed.get("full_text")),
-            "ok": ok,
-        }
+        ents = frozenset({licensed_id}) | (entitlements or frozenset())
+        row: dict[str, Any] | None = None
+        for restricted in candidates[:12]:
+            denied = tools.restore_context(restricted.chunk_id)
+            allowed = tools.restore_context(restricted.chunk_id, entitlements=ents)
+            ok = (not denied.get("full_text")) and bool(allowed.get("full_text"))
+            row = {
+                "kind": "entitlement",
+                "chunk_id": restricted.chunk_id,
+                "doc_id": restricted.doc_id,
+                "denied_empty": not bool(denied.get("full_text")),
+                "allowed_nonempty": bool(allowed.get("full_text")),
+                "ok": ok,
+            }
+            if ok:
+                break
+        assert row is not None
         ev.rows.append(row)
-        ev.entitlement_ok = ok
-        if not ok:
+        ev.entitlement_ok = bool(row["ok"])
+        if not row["ok"]:
             ev.failures.append(row)
 
     return ev

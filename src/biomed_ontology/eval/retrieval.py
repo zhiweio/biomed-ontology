@@ -234,8 +234,8 @@ VISUAL_BIO_DELTA = ("milvus_hybrid_5col", "milvus_hybrid_4col")
 # 不读被图像意图与英文对照 query 稀释的全量 hybrid R@10。
 ONTOLOGY_PROBES = ("bridge_zh", "alias")
 
-    # ArmResult（带 @K）→ 逐条 _QueryScore 字段名。
-    _PER_QUERY_KEYS = {
+# ArmResult（带 @K）→ 逐条 _QueryScore 字段名。
+_PER_QUERY_KEYS = {
     "recall_at_10": "recall",
     "precision_at_5": "precision",
     "ndcg_at_10": "ndcg",
@@ -725,6 +725,28 @@ def _pad(text: str, width: int) -> str:
     return text + " " * max(1, width - _display_width(text))
 
 
+_SECTION_SEP = " / "
+
+
+def _section_aliases(section: str) -> list[str]:
+    """树形 ``section_path`` 的全部连续子路径，供章节级 gold 键寻址。
+
+    叶证据路径形如 ``Abstract / p0 / s0`` 或 ``Results / table:T1``。
+    gold 写的是章节（``Abstract``、``table:T1``），不是句子级叶子；
+    把每个连续子路径都登记进去，标注就不必跟着切片粒度漂移。
+    """
+    parts = [p.strip() for p in (section or "").split(_SECTION_SEP) if p.strip()]
+    out: list[str] = []
+    seen: set[str] = set()
+    for i in range(len(parts)):
+        for j in range(i + 1, len(parts) + 1):
+            alias = _SECTION_SEP.join(parts[i:j])
+            if alias not in seen:
+                seen.add(alias)
+                out.append(alias)
+    return out
+
+
 def _chunk_key_index(kb: KnowledgeBase) -> dict[str, list[str]]:
     """`doc_id#section` → 该节的**全部** chunk_id。gold 用稳定键，运行时用哈希键。
 
@@ -736,11 +758,74 @@ def _chunk_key_index(kb: KnowledgeBase) -> dict[str, list[str]]:
     随之确定的是 gold 的判定粒度：**一节内的全部切片同 grade**。
     人工审校面对的是章节，不是内容哈希；让标注去追切片边界，
     等于每改一次切片参数就要重标一遍。
+
+    Tree Chunk 之后 ``chunk.section`` 是完整 ``section_path``。索引额外登记
+    全部连续子路径，使 ``Abstract`` / ``table:T1`` 这类章节键仍能命中。
+    同一 chunk 会出现在多个键下；评测按键展开后以 chunk_id 去重。
     """
     index: dict[str, list[str]] = {}
+    seen: dict[str, set[str]] = {}
     for c in kb.chunks:
-        index.setdefault(f"{c.doc_id}#{c.section}", []).append(c.chunk_id)
+        for alias in _section_aliases(c.section or ""):
+            key = f"{c.doc_id}#{alias}"
+            bucket = index.setdefault(key, [])
+            ids = seen.setdefault(key, set())
+            if c.chunk_id not in ids:
+                bucket.append(c.chunk_id)
+                ids.add(c.chunk_id)
     return index
+
+
+def _resolve_gold_alias(key: str, index: dict[str, list[str]]) -> str | None:
+    """把 gold 键解析成索引里真实存在的 ``doc_id#alias``。
+
+    先精确命中；再试 gold section 的后缀与各路径分量——旧解析器常把 DOI /
+    页码噪声写进 section 名，router 重写后这些前缀不再出现于 ``section_path``。
+    """
+    if key in index:
+        return key
+    doc, sep, section = key.partition("#")
+    if not sep or not section:
+        return None
+    parts = [p.strip() for p in section.split(_SECTION_SEP) if p.strip()]
+    for i in range(len(parts)):
+        candidate = f"{doc}#{_SECTION_SEP.join(parts[i:])}"
+        if candidate in index:
+            return candidate
+    for part in sorted((p for p in parts if len(p) >= 3), key=len, reverse=True):
+        candidate = f"{doc}#{part}"
+        if candidate in index:
+            return candidate
+    return None
+
+
+def _resolve_gold_key(key: str, index: dict[str, list[str]]) -> list[str] | None:
+    """解析 gold 键到 chunk_id 列表；供 dangling 检查与测试对齐。"""
+    alias = _resolve_gold_alias(key, index)
+    return None if alias is None else index[alias]
+
+
+def _hit_aliases(hit: Any) -> set[str]:
+    doc_id = getattr(hit, "doc_id", "") or ""
+    section = getattr(hit, "section", "") or ""
+    return {f"{doc_id}#{a}" for a in _section_aliases(section)}
+
+
+def _ranked_chapters(hits: list[Any], rel: dict[str, int]) -> list[str]:
+    """命中 → gold 章节键有序列表。
+
+    一片命中若落在多个 gold 键下（如 ``Results`` 与 ``table:T1``），按键长
+    优先去重收录；同一键只在首次命中时出现一次。
+    """
+    out: list[str] = []
+    seen: set[str] = set()
+    for hit in hits:
+        matched = sorted(_hit_aliases(hit) & rel.keys(), key=len, reverse=True)
+        for key in matched:
+            if key not in seen:
+                seen.add(key)
+                out.append(key)
+    return out
 
 
 def _dcg(gains: list[float]) -> float:
@@ -925,8 +1010,14 @@ def eval_retrieval(
             # 无凭据时该 query 的正解不可见，计入会把"合规过滤"错算成"召回差"。
             continue
         labels = q.get("relevant") or {}
-        dangling.extend(f"{q['id']}:{k}" for k in labels if k not in index)
-        rel = {cid: v for k, v in labels.items() if k in index for cid in index[k]}
+        # 判定粒度是 gold 章节键：命中该键下任一片即命中，不按句子数放大分母。
+        rel: dict[str, int] = {}
+        for k, v in labels.items():
+            alias = _resolve_gold_alias(k, index)
+            if alias is None:
+                dangling.append(f"{q['id']}:{k}")
+                continue
+            rel[alias] = v
         if rel:
             cases.append(
                 _Case(
@@ -950,8 +1041,7 @@ def eval_retrieval(
 
     # gold 只在这些文档上做过判断。索引里其余文档的命中都是"没人看过"，
     # 按不相关计入分母只会低估召回。
-    judged_ids = {cid for case in cases for cid in case.rel}
-    judged_docs = {c.doc_id for c in kb.chunks if c.chunk_id in judged_ids}
+    judged_docs = {ck.split("#", 1)[0] for case in cases for ck in case.rel}
     doc_of = {c.chunk_id: c.doc_id for c in kb.chunks}
 
     results: dict[str, ArmResult] = {}
@@ -998,9 +1088,8 @@ def eval_retrieval(
                 rewrite=cfg.get("rewrite"),
             )
             elapsed = (time.perf_counter() - started) * 1000
-            recall, precision, ndcg, rr, ap = _score_one(
-                [h.chunk_id for h in hits], rel, top_k=top_k
-            )
+            ranked = _ranked_chapters(hits, rel)
+            recall, precision, ndcg, rr, ap = _score_one(ranked, rel, top_k=top_k)
             fidelity = _citation_fidelity(kb, hits)
             top = [h.chunk_id for h in hits][:top_k]
             judged = (
@@ -1022,7 +1111,8 @@ def eval_retrieval(
                     candidate_k=candidate_k,
                     rewrite=cfg.get("rewrite"),
                 )[0]
-                pool_recall = len([h for h in pool if h.chunk_id in rel]) / len(rel)
+                pool_hit = set(_ranked_chapters(pool, rel))
+                pool_recall = len(pool_hit) / len(rel)
             scores.append(
                 _QueryScore(
                     qid,

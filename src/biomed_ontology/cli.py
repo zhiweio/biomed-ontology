@@ -566,7 +566,7 @@ def index_cmd(
         chunk_to_row(
             ch,
             searcher.chunk_meta(ch.chunk_id),
-            label_terms=searcher.concept_label_terms(ch),
+            label_terms=searcher.index_text_terms(ch),
         )
         for ch in kb.chunks
     ]

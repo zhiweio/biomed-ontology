@@ -31,6 +31,7 @@ def milvus_ev():
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
     from biomed_ontology.eval import _chunk_key_index, load_gold
+    from biomed_ontology.eval.retrieval import _resolve_gold_key
     from biomed_ontology.search.backends.milvus import MilvusBackend
 
     kb = build_literature_base(with_graph=False)
@@ -40,7 +41,7 @@ def milvus_ev():
         f"{q['id']}:{k}"
         for q in gold["queries"]
         for k in (q.get("relevant") or {})
-        if k not in index
+        if _resolve_gold_key(k, index) is None
     ]
     if dangling:
         pytest.skip(f"gold 与语料漂移 {len(dangling)} 条；对齐后再核 README 数字")

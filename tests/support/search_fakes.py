@@ -227,6 +227,6 @@ def make_searcher(kb: Any):
     for ch in kb.chunks:
         meta = searcher.chunk_meta(ch.chunk_id)
         assert meta is not None
-        labels = " ".join(searcher.concept_label_terms(ch))
+        labels = " ".join(searcher.index_text_terms(ch))
         backend.add(meta, f"{ch.text} {labels}".strip())
     return searcher

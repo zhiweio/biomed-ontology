@@ -19,11 +19,17 @@ def _aligned_gold(kb):
     """工作树语料若与 gold 漂移，只保留可寻址标注。"""
     from biomed_ontology.eval import _chunk_key_index, load_gold
 
+    from biomed_ontology.eval.retrieval import _resolve_gold_key
+
     index = _chunk_key_index(kb)
     gold = load_gold("retrieval")
     queries = []
     for q in gold["queries"]:
-        rel = {k: v for k, v in (q.get("relevant") or {}).items() if k in index}
+        rel = {
+            k: v
+            for k, v in (q.get("relevant") or {}).items()
+            if _resolve_gold_key(k, index) is not None
+        }
         if not rel:
             continue
         qq = dict(q)
@@ -77,7 +83,9 @@ def test_gold_keys_address_every_chunk_in_the_section(kb):
     from biomed_ontology.eval import _chunk_key_index
 
     index = _chunk_key_index(kb)
-    assert sum(len(v) for v in index.values()) == len(kb.chunks)
+    # 树形 section_path 会为每个连续子路径登记别名，同一 chunk 出现在多键下；
+    # 不变量是「每个切片至少可被一个键寻址」，不是「键→切片多重集大小 = 切片数」。
+    assert {cid for ids in index.values() for cid in ids} == {c.chunk_id for c in kb.chunks}
     assert any(len(v) > 1 for v in index.values()), (
         "语料里已经没有多切片章节了，这条守卫失去意义 —— 要么切片策略变了，要么语料退化了"
     )

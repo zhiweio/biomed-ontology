@@ -481,7 +481,7 @@ def chunk_to_row(
     degraded: str = "",
     label_terms: list[str] | tuple[str, ...] = (),
 ) -> dict[str, Any]:
-    """``label_terms`` 注入 preferred label，让稀疏列能命中跨别名查询。"""
+    """``label_terms`` 注入 preferred label / 文档标题，让稀疏列能命中跨别名与仅-title 查询。"""
     text = str(getattr(chunk, "text", "") or "")
     extra = " ".join(t for t in label_terms if t)
     if extra:

@@ -100,8 +100,8 @@ queries:
   relevant:
     DOC:PMC12133497#10.3389/fonc.2025.1546217 / Case presentation: 2
     'DOC:PMC12133497#10.3389/fonc.2025.1546217 #2 / Discussion': 2
-    'DOC:PMC12133497#10.3389/fonc.2025.1546217 #3': 1
-    'DOC:PMC12133497#10.3389/fonc.2025.1546217 #4': 1
+    'DOC:PMC12133497#image:IMG:0003': 1
+    'DOC:PMC12133497#image:IMG:0004': 1
   probe: control
 - id: Q10
   text: 索凡替尼 蛋白尿 肾病综合征 不良反应
@@ -116,7 +116,7 @@ queries:
   lang: en
   intent: 三药联合方案，考察多实体共现
   relevant:
-    DOC:PMC12515981#adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and Targeted Therapy / OPEN: 2
+    DOC:PMC12515981#Introduction: 2
     ? 'DOC:PMC12515981#83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7% / Results / Phase II randomized study:
       efficacy and safety / Baseline characteristics'
     : 2
@@ -126,8 +126,8 @@ queries:
   lang: zh
   intent: 中文疾病全称（本体新收的 PDAC）+ 疗效指标
   relevant:
-    DOC:PMC12515981#3.6(2.2,12.6) / 290.0 (47.4, 1635.0)518.0(98.5,2998.0): 2
-    DOC:PMC12515981#adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and Targeted Therapy / OPEN: 1
+    DOC:PMC12515981#Baseline characteristics: 2
+    DOC:PMC12515981#Introduction: 1
   probe: bridge_zh
 - id: Q13
   text: QUINTIS trial fruquintinib plus tislelizumab MSS colorectal study design
@@ -152,15 +152,15 @@ queries:
     ? DOC:PMC12994080#metastases―theIKF-080/AIO-QUINTIStrial / Key questions addressed by the QUINTIS trial / J.Tintelnot1∗,J.Gorgulho1,S.-E.Al-Batran2,D.Arnold3,A.Reinacher-Schick4,S.Kasper5,G.Prager6,T.Goetze2,
     : 1
     DOC:PMC12994080#table:TBL:0000: 1
-    DOC:PMC13116735#2 of 11: 2
-    DOC:PMC13116735#7 of 11: 1
+    DOC:PMC13116735#Introduction: 2
+    DOC:PMC13116735#Comparative Analysis of Mean Overall Survival: 1
   probe: control
 - id: Q15
   text: fruquintinib adverse event disproportionality signal detection FAERS
   lang: en
   intent: 药物警戒方法学，与 Q3/Q13 同药不同问题，考察是否被药名带偏
   relevant:
-    DOC:PMC13052964#1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*: 2
+    DOC:PMC13052964#Post-marketing signal detection of fruquintinib-associated adverse events using the FAERS database: 2
     DOC:PMC13052964#9.30 / 3.3. Risk signaling PT: 2
     DOC:PMC13052964#5. Conclusion: 1
   probe: control
@@ -169,7 +169,7 @@ queries:
   lang: zh
   intent: 中文问药物警戒；语料全英文，考察别名 + 概念扩展
   relevant:
-    DOC:PMC13052964#1. Introduction / Cui Liu, MMa / , Hao Zhang, MMa,*: 2
+    DOC:PMC13052964#Post-marketing signal detection of fruquintinib-associated adverse events using the FAERS database: 2
     DOC:PMC13052964#9.30 / 3.3. Risk signaling PT: 1
   probe: bridge_zh
 - id: Q17
@@ -212,9 +212,9 @@ queries:
   lang: en
   intent: 两个新收靶点（CD274）与老靶点（MET）共现，考察多靶点 query
   relevant:
-    DOC:PMC13201154#resistanceandliteraturereview / YefeiRuanandLinQiu*: 2
+    DOC:PMC13201154#Patient information: 2
     'DOC:PMC13201154#10.3389/fonc.2026.1807242 #2 / Literaturereviewanddiscussion / Literature review and discussion': 2
-    'DOC:PMC13201154#10.3389/fonc.2026.1807242 #3': 2
+    DOC:PMC13201154#Conclusion: 2
   probe: control
 - id: Q22
   text: third generation EGFR TKI osimertinib acquired resistance mechanisms
@@ -234,7 +234,7 @@ queries:
   intent: 同一篇综述的另一条通路，与 Q22 互为"别串台"的对照
   relevant:
     'DOC:PMC13235695#12 of 27 / FIGURE 4: ALK inhibitor therapies': 2
-    'DOC:PMC13235695#2026 Chitneni et al. Cureus 18(5): e108302. DOI 10.7759/cureus.108302 #13': 2
+    'DOC:PMC13235695#Bypass Signaling Activation #2': 2
     'DOC:PMC13235695#11 of 27 / TABLE 4: List of non-EGFR driver alterations commonly targeted in lung cancer management': 1
   probe: control
 - id: Q24
