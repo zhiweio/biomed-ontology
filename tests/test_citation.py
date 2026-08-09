@@ -76,7 +76,7 @@ def test_restore_reuses_the_search_license_predicate(api):
 
     chunk = api.kb.chunks[0]
     with pytest.raises(PermissionError):
-        raw_restore(api.kb, chunk.chunk_id, permits=permits)
+        raw_restore(api.kb, chunk.chunk_id, store=api.chunk_store, permits=permits)
     assert denied, "谓词根本没被调用，说明还原绕开了许可判定"
 
 
@@ -86,11 +86,14 @@ def test_unknown_chunk_is_a_typed_error_not_a_crash(api):
 
 
 def test_truncation_is_reported_never_silent(api, open_chunk):
-    """静默截断会让"还原完整原文"变成一句假话。"""
-    out = api.restore_context(open_chunk, max_chars=40)
+    """静默截断会让"还原完整原文"变成一句假话。
+
+    Tree Chunk 下单节可能极短；用 DOCUMENT 保证正文长于 max_chars。
+    """
+    out = api.restore_context(open_chunk, restore_scope="DOCUMENT", max_chars=40)
     assert out["truncated"] is True
     assert len(out["full_text"]) <= 40
-    full = api.restore_context(open_chunk, max_chars=100_000)
+    full = api.restore_context(open_chunk, restore_scope="DOCUMENT", max_chars=100_000)
     assert full["truncated"] is False
 
 

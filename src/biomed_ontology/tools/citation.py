@@ -5,6 +5,8 @@
 这一层负责从碎片走回原文：拼回整节、给出面包屑、报出原始页码。
 
 许可谓词在这里同样生效。还原若绕过许可，就成了一个用碎片 id 换全文的后门。
+
+正文权威源是 ``ChunkStore``（生产为 Iceberg ``evidence_chunks``），不是进程内 ``kb.chunks``。
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology._generated.hmd_tools import RestoreScopeEnum
 
 if TYPE_CHECKING:  # pragma: no cover
+    from biomed_ontology.lake.chunk_store import ChunkStore
     from biomed_ontology.pipeline import KnowledgeBase
 
 __all__ = [
@@ -43,9 +46,10 @@ class RestoredContext:
 
 
 def restore_context(
-    kb: KnowledgeBase,
+    kb: KnowledgeBase | None,
     chunk_id: str,
     *,
+    store: ChunkStore,
     scope: RestoreScopeEnum | str = RestoreScopeEnum.SECTION,
     max_chars: int = 8000,
     permits: Any = None,
@@ -55,42 +59,53 @@ def restore_context(
     `permits(license_rank, source_id) -> bool` 由调用方注入，
     复用 `LicenseScope.permits` 那一个谓词 —— 这里再写一份判断
     就会出现"检索看不到但还原看得到"的越权。
+
+    正文经 ``store`` 拉取；``kb`` 仅用于面包屑标题（可缺省）。
     """
     scope = RestoreScopeEnum(scope) if isinstance(scope, str) else scope
-    anchor = _chunk(kb, chunk_id)
+    anchor = store.get_chunk(chunk_id)
     if anchor is None:
         raise KeyError(f"未知切片：{chunk_id}")
 
-    doc = kb.document(anchor.doc_id)
-    tier = doc.license_tier if doc else LicenseTierEnum.TIER_3
-    if permits is not None and not permits(_rank(tier), doc.source_id if doc else ""):
-        raise PermissionError(f"无权还原该文档：{anchor.doc_id}")
+    tier = _tier_of(anchor)
+    source_id = str(anchor.source_id or "")
+    if permits is not None and not permits(_rank(tier), source_id):
+        raise PermissionError(f"无权还原该文档：{anchor.document_id}")
 
-    members = _members(kb, anchor, scope)
+    members = _members(store, anchor, scope)
     text, truncated = _join(members, max_chars)
-    pages = [int(getattr(c, "page", 0) or 0) for c in members if getattr(c, "page", None)]
+    pages = [int(c.page or 0) for c in members if c.page]
+    section = _section_of(anchor)
 
     return RestoredContext(
-        doc_id=anchor.doc_id,
-        section_id=_section_of(anchor),
-        section_path=_section_of(anchor),
-        breadcrumb=_breadcrumb(doc, _section_of(anchor)),
+        doc_id=anchor.document_id,
+        section_id=section,
+        section_path=section,
+        breadcrumb=_breadcrumb(kb, anchor, section),
         full_text=text,
         page_start=min(pages) if pages else 0,
         page_end=max(pages) if pages else 0,
-        sibling_paths=_siblings(kb, anchor),
+        sibling_paths=_siblings(store, anchor),
         truncated=truncated,
         restored_chunk_ids=[c.chunk_id for c in members],
         license_tier=tier,
     )
 
 
-def _chunk(kb: KnowledgeBase, chunk_id: str) -> Any:
-    return next((c for c in kb.chunks if c.chunk_id == chunk_id), None)
+def _tier_of(record: Any) -> LicenseTierEnum:
+    raw = getattr(record, "license_tier", None)
+    if isinstance(raw, LicenseTierEnum):
+        return raw
+    try:
+        return LicenseTierEnum(str(raw or "TIER_0"))
+    except ValueError:
+        return LicenseTierEnum.TIER_3
 
 
 def _section_of(chunk: Any) -> str:
-    return getattr(chunk, "section", "") or ""
+    return str(
+        getattr(chunk, "section_path", None) or getattr(chunk, "section", "") or ""
+    )
 
 
 def _rank(tier: LicenseTierEnum) -> int:
@@ -99,44 +114,41 @@ def _rank(tier: LicenseTierEnum) -> int:
     return tier_rank(tier)
 
 
-def _members(kb: KnowledgeBase, anchor: Any, scope: RestoreScopeEnum) -> list[Any]:
-    same_doc = [c for c in kb.chunks if c.doc_id == anchor.doc_id]
+def _members(store: ChunkStore, anchor: Any, scope: RestoreScopeEnum) -> list[Any]:
+    doc_id = anchor.document_id
     if scope is RestoreScopeEnum.DOCUMENT:
-        picked = same_doc
-    elif scope is RestoreScopeEnum.SIBLINGS:
+        return list(store.get_document_chunks(doc_id))
+    if scope is RestoreScopeEnum.SIBLINGS:
         parent = _parent(_section_of(anchor))
-        picked = [c for c in same_doc if _parent(_section_of(c)) == parent]
-    else:
-        picked = [c for c in same_doc if _section_of(c) == _section_of(anchor)]
-    return sorted(picked, key=_order)
-
-
-def _order(chunk: Any) -> tuple[int, int, str]:
-    """按页 → 字符偏移 → id 排。缺 sort_order 时用 char_start 兜底，
-    否则还原出来的段落顺序是字典序，读起来是乱的。"""
-    return (
-        int(getattr(chunk, "page", 0) or 0),
-        int(getattr(chunk, "char_start", 0) or 0),
-        chunk.chunk_id,
-    )
+        return [
+            c
+            for c in store.get_document_chunks(doc_id)
+            if _parent(_section_of(c)) == parent
+        ]
+    return list(store.get_section_chunks(doc_id, _section_of(anchor)))
 
 
 def _parent(section_path: str) -> str:
     return section_path.rsplit(_SEP, 1)[0] if _SEP in section_path else ""
 
 
-def _breadcrumb(doc: Any, section_path: str) -> str:
-    title = getattr(doc, "title", "") or getattr(doc, "doc_id", "")
+def _breadcrumb(kb: KnowledgeBase | None, anchor: Any, section_path: str) -> str:
+    title = str(getattr(anchor, "title", "") or "")
+    if not title and kb is not None:
+        doc = kb.document(anchor.document_id)
+        title = getattr(doc, "title", "") if doc else ""
+    if not title:
+        title = anchor.document_id
     return _SEP.join(filter(None, [title, section_path]))
 
 
-def _siblings(kb: KnowledgeBase, anchor: Any) -> list[str]:
+def _siblings(store: ChunkStore, anchor: Any) -> list[str]:
     parent = _parent(_section_of(anchor))
     here = _section_of(anchor)
     paths = {
         _section_of(c)
-        for c in kb.chunks
-        if c.doc_id == anchor.doc_id and _parent(_section_of(c)) == parent
+        for c in store.get_document_chunks(anchor.document_id)
+        if _parent(_section_of(c)) == parent
     }
     return sorted(p for p in paths if p and p != here)
 
@@ -145,7 +157,7 @@ def _join(members: list[Any], max_chars: int) -> tuple[str, bool]:
     """超限就截断并如实报告。静默丢内容会让"还原完整原文"变成一句假话。"""
     parts, total = [], 0
     for chunk in members:
-        text = chunk.text
+        text = str(getattr(chunk, "text", None) or getattr(chunk, "content", "") or "")
         if total + len(text) > max_chars:
             remaining = max_chars - total
             if remaining > 0:
@@ -164,7 +176,7 @@ def build_evidence_tree(kb: KnowledgeBase, hits: list[Any]) -> list[dict[str, An
     """
     docs: dict[str, dict[str, Any]] = {}
     for hit in hits:
-        doc = kb.document(hit.doc_id)
+        doc = kb.document(hit.doc_id) if kb is not None else None
         node = docs.setdefault(
             hit.doc_id,
             {

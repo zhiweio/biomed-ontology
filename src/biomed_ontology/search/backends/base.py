@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
 
@@ -146,6 +146,8 @@ class BackendResult:
     # 被许可谓词挡掉的切片数。必须回传：只报"命中 0 条"会让无权调用方
     # 无法区分"没有这份资料"和"有但你看不到"，而后者本身就是要暴露的事实。
     filtered_count: int = 0
+    # chunk_id → Milvus 标量 payload（text/section/…），供进程不装全文时水合。
+    payloads: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @runtime_checkable

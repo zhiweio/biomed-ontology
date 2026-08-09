@@ -32,7 +32,8 @@ Evidence Index 是产品级检索底座，承担：
 | 融合留在 `HybridSearcher` | Milvus RRFRanker 无法反解名次 → `explain` 断裂 |
 | `partition_key_field=source_id` | 采购边界即物理边界 |
 | `license_rank` + expr 双保险 | 即使 expr 写错，付费分区不可无凭据触碰 |
-| 集合 `description=embedder=…` | 防 A 模型写入 B 模型检索 |
+| 集合 `description=embedder=…;release=…` | 防 A 模型写入 B 模型检索，并与 corpus `release_id` 强绑定 |
+| 标量 `release_id` | 检索 filter / upsert 门禁；错配须 `hmd index --recreate` |
 | upsert 默认 `flush=True` | Bounded consistency 下不 flush 表现为「检索空」 |
 | 仅建 embedder 实际产出的列 | 多建空列会导致整批 upsert 失败 |
 
@@ -116,8 +117,10 @@ MilvusBackend.upsert(rows):
 
 - 向量列数超默认 4 需调高 `PROXY_MAXVECTORFIELDNUM`（建议 6），`task milvus:down && task milvus:up`  
 - 失败提示 `_explain_vector_field_cap` — **不要**删列绕过  
-- `stamped_embedder()` 读集合描述校验索引/评测 embedder 一致  
+- `stamped_embedder()` / `stamped_release()` 读集合描述；`require_release(kb.release_id)` 硬失败防孤儿索引  
 - `fake` embedder 需 CLI `--allow-fake` 留痕  
+- `hmd index` dual-write：Milvus + Iceberg `evidence_chunks`（同 Tree Chunk、同 `release_id`）  
+ 
 
 ```mermaid
 flowchart LR

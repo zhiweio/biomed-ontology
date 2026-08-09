@@ -116,6 +116,7 @@ class ToolApi:
     validator: ContractValidator = field(default_factory=ContractValidator)
     feedback_log: list[Feedback] = field(default_factory=list)
     foundation: Any | None = None  # FoundationApi：ER / GraphDB 扩展
+    chunk_store: Any | None = None  # ChunkStore：Citationware / hydrate 权威正文
 
     @classmethod
     def from_kb(cls, kb: KnowledgeBase, *, backend: SearchBackend, searcher: HybridSearcher | None = None) -> ToolApi:
@@ -131,12 +132,21 @@ class ToolApi:
         foundation: Any | None = None,
         searcher: HybridSearcher | None = None,
         neighborhood: Any | None = None,
+        chunk_store: Any | None = None,
     ) -> ToolApi:
         """文献面装配：Milvus 检索 + GraphDB 邻域（或显式注入的 searcher）。
 
         身份：``normalize_entity`` 走 ENT Normalizer（与 ER 同目录）；
         若挂了 ``foundation`` 且 GraphDB 可达，``expand_concept`` 优先 GraphDB 邻居。
         """
+        if chunk_store is None:
+            from biomed_ontology.lake.chunk_store import MemoryChunkStore
+
+            chunk_store = MemoryChunkStore(
+                kb.chunks,
+                documents=kb.documents,
+                release_id=getattr(kb, "release_id", "") or "",
+            )
         if searcher is None:
             if neighborhood is None:
                 from biomed_ontology.ontology.neighborhood import GraphDbNeighborhood
@@ -144,8 +154,12 @@ class ToolApi:
 
                 ensure_catalog_graphs(kb.graph, kb.concepts, kb.synonyms)
                 neighborhood = GraphDbNeighborhood(kb.graph)
-            searcher = HybridSearcher(kb, backend=backend, neighborhood=neighborhood)
-        return cls(kb=kb, searcher=searcher, foundation=foundation)
+            searcher = HybridSearcher(
+                kb, backend=backend, neighborhood=neighborhood, chunk_store=chunk_store
+            )
+        elif getattr(searcher, "chunk_store", None) is None:
+            searcher.chunk_store = chunk_store
+        return cls(kb=kb, searcher=searcher, foundation=foundation, chunk_store=chunk_store)
 
     @property
     def hub(self) -> ObservabilityHub:
@@ -635,6 +649,9 @@ class ToolApi:
         def handler(ctx: TraceContext):
             from biomed_ontology.tools.citation import restore_context as _restore
 
+            store = self.chunk_store
+            if store is None:
+                raise ToolError("ChunkStore 未装配，无法还原原文", code="INTERNAL_ERROR")
             scope = LicenseScope(
                 max_rank=tier_rank(LicenseTierEnum.TIER_3),
                 open_rank=OPEN_RANK,
@@ -644,6 +661,7 @@ class ToolApi:
                 restored = _restore(
                     self.kb,
                     chunk_id,
+                    store=store,
                     scope=restore_scope,
                     max_chars=max_chars,
                     # 复用检索那一个谓词。这里另写一份判断就会出现

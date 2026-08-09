@@ -58,11 +58,14 @@ flowchart LR
 
 ### `restore_context`
 
+正文权威源是 **`ChunkStore`**（生产默认 Iceberg `evidence_chunks`；单测用 `MemoryChunkStore`），**不再**扫进程内 `kb.chunks`。`hmd index` 对 Tree Chunk **dual-write** Milvus + Iceberg，并以同一 `release_id` 强绑定。
+
 参数：
 
 | 参数 | 含义 |
 |---|---|
 | `chunk_id` | 锚定碎片 |
+| `store` | `ChunkStore`（`get_section_chunks` / `get_document_chunks` 一次范围查询） |
 | `restore_scope` | `SECTION`（默认）/ `SIBLINGS`（同父章节下的兄弟节）/ `DOCUMENT` |
 | `max_chars` | 拼接上限（默认 8000） |
 | `permits` | 由 `ToolApi` 注入的 `LicenseScope.permits` |

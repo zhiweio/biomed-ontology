@@ -22,6 +22,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from dataclasses import dataclass, field
+from typing import Any
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJustificationEnum
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
@@ -125,15 +126,18 @@ class HybridSearcher:
         *,
         backend: SearchBackend,
         neighborhood: ConceptNeighborhood,
+        chunk_store: Any | None = None,
     ) -> None:
         if backend is None:  # type: ignore[comparison-overlap]
             raise ValueError("检索 backend 必填（Milvus）")
         self.kb = kb
         self.backend = backend
         self.neighborhood = neighborhood
+        self.chunk_store = chunk_store
         self._by_concept: dict[str, set[str]] = defaultdict(set)
         self._chunks: dict[str, Chunk] = {}
         self._meta: dict[str, ChunkMeta] = {}
+        self._payloads: dict[str, dict[str, Any]] = {}
 
         for ch in kb.chunks:
             self._chunks[ch.chunk_id] = ch
@@ -267,6 +271,7 @@ class HybridSearcher:
             result = self.backend.retrieve(request)
             results = dict(result.channels)
             filtered = result.filtered_count
+            self._payloads = dict(getattr(result, "payloads", None) or {})
 
             concept_ids: list[str] = seeds or []
             if RetrievalChannelEnum.GRAPH in channels:
@@ -274,8 +279,8 @@ class HybridSearcher:
                 graph_hits, concept_ids = self._graph_channel(query, ctx, allowed, expand, seeds)
                 results[RetrievalChannelEnum.GRAPH] = graph_hits[: pool_k * 3]
 
-            # Milvus 索引可能超前于当前进程装载的 corpus：丢弃未知 chunk_id，
-            # 否则 _to_hit / 模态过滤会 KeyError，整次 search 被 ToolApi 吞成 0 hits。
+            # 先按批从 ChunkStore 补正文，再丢真正孤儿（既无 KB / payload / store）。
+            self._hydrate_missing_from_store(results)
             results, orphan_dropped = self._drop_unknown_chunks(results)
 
             fused = rrf_fuse(results, weights=CHANNEL_WEIGHTS)
@@ -283,14 +288,10 @@ class HybridSearcher:
                 # 后端已下推过滤；此处兜底 Protocol 实现忽略 modalities 的情况。
                 # 必须在截断前执行，避免 top_k 被误砍薄。
                 wanted = set(modalities)
-                fused = [f for f in fused if self._chunks[f[0]].modality.value in wanted]
+                fused = [f for f in fused if self._modality_of(f[0]) in wanted]
             if figure_types:
                 wanted_ft = set(figure_types)
-                fused = [
-                    f
-                    for f in fused
-                    if (getattr(self._chunks[f[0]], "figure_type", "") or "") in wanted_ft
-                ]
+                fused = [f for f in fused if self._figure_type_of(f[0]) in wanted_ft]
             pool = [self._to_hit(key, score, ranks) for key, score, ranks in fused[:pool_k]]
             hits = self._rerank(query, pool, reranker)[:top_k]
             sp.set(
@@ -309,19 +310,63 @@ class HybridSearcher:
         self,
         channels: dict[RetrievalChannelEnum, list[tuple[str, float]]],
     ) -> tuple[dict[RetrievalChannelEnum, list[tuple[str, float]]], int]:
-        """去掉不在本进程 KnowledgeBase 中的 chunk_id，返回 (过滤后通道, 丢弃数)。"""
+        """去掉既不在 KB、也无 Milvus payload 的孤儿 chunk_id。"""
         kept: dict[RetrievalChannelEnum, list[tuple[str, float]]] = {}
         dropped = 0
         for channel, hits in channels.items():
             alive: list[tuple[str, float]] = []
             for chunk_id, score in hits:
-                if chunk_id in self._chunks:
+                if chunk_id in self._chunks or chunk_id in self._payloads:
                     alive.append((chunk_id, score))
                 else:
                     dropped += 1
             if alive:
                 kept[channel] = alive
         return kept, dropped
+
+    def _hydrate_missing_from_store(
+        self, channels: dict[RetrievalChannelEnum, list[tuple[str, float]]]
+    ) -> None:
+        """缺内存正文时，按一批 chunk_id 从 ChunkStore 补全（禁止 N+1）。"""
+        if self.chunk_store is None:
+            return
+        missing = sorted(
+            {
+                cid
+                for hits in channels.values()
+                for cid, _ in hits
+                if cid not in self._chunks and cid not in self._payloads
+            }
+        )
+        if not missing:
+            return
+        fetched = self.chunk_store.get_chunks(missing)
+        for cid, rec in fetched.items():
+            self._payloads[cid] = {
+                "chunk_id": rec.chunk_id,
+                "doc_id": rec.document_id,
+                "source_id": rec.source_id,
+                "license_rank": tier_rank(LicenseTierEnum(rec.license_tier))
+                if rec.license_tier in LicenseTierEnum.__members__
+                else tier_rank(LicenseTierEnum.TIER_0),
+                "section_path": rec.section_path,
+                "page": rec.page,
+                "modality": rec.modality,
+                "text": rec.content,
+                "release_id": rec.release_id,
+            }
+
+    def _modality_of(self, chunk_id: str) -> str:
+        ch = self._chunks.get(chunk_id)
+        if ch is not None:
+            return ch.modality.value
+        return str((self._payloads.get(chunk_id) or {}).get("modality") or "")
+
+    def _figure_type_of(self, chunk_id: str) -> str:
+        ch = self._chunks.get(chunk_id)
+        if ch is not None:
+            return str(getattr(ch, "figure_type", "") or "")
+        return str((self._payloads.get(chunk_id) or {}).get("figure_type") or "")
 
     def _seed_concepts(self, query: str, ctx: TraceContext) -> list[str]:
         res = self.kb.normalizer.normalize(query, ctx=ctx, detect=True, min_confidence=0.6)
@@ -454,22 +499,50 @@ class HybridSearcher:
         return ordered, seeds
 
     def _to_hit(self, chunk_id: str, score: float, ranks: dict[str, int]) -> SearchHit:
-        ch = self._chunks[chunk_id]
-        doc = self.kb.document(ch.doc_id)
         why = " + ".join(f"{c}#{r}" for c, r in sorted(ranks.items(), key=lambda kv: kv[1]))
+        ch = self._chunks.get(chunk_id)
+        if ch is not None:
+            doc = self.kb.document(ch.doc_id)
+            return SearchHit(
+                chunk_id=chunk_id,
+                doc_id=ch.doc_id,
+                score=round(score, 6),
+                channel=RetrievalChannelEnum.FUSED,
+                section=ch.section,
+                snippet=ch.text[:300],
+                page=ch.page,
+                modality=ch.modality.value,
+                figure_type=getattr(ch, "figure_type", "") or "",
+                license_tier=doc.license_tier if doc else LicenseTierEnum.TIER_0,
+                matched_concepts=list(ch.concept_ids),
+                labels=list(ch.labels),
+                channel_ranks=ranks,
+                explain=f"RRF({why})",
+            )
+        payload = self._payloads.get(chunk_id) or {}
+        tier = LicenseTierEnum.TIER_0
+        try:
+            rank = int(payload.get("license_rank") or 0)
+            for candidate in LicenseTierEnum:
+                if tier_rank(candidate) == rank:
+                    tier = candidate
+                    break
+        except (TypeError, ValueError):
+            pass
+        text = str(payload.get("text") or "")
         return SearchHit(
             chunk_id=chunk_id,
-            doc_id=ch.doc_id,
+            doc_id=str(payload.get("doc_id") or ""),
             score=round(score, 6),
             channel=RetrievalChannelEnum.FUSED,
-            section=ch.section,
-            snippet=ch.text[:300],
-            page=ch.page,
-            modality=ch.modality.value,
-            figure_type=getattr(ch, "figure_type", "") or "",
-            license_tier=doc.license_tier if doc else LicenseTierEnum.TIER_0,
-            matched_concepts=list(ch.concept_ids),
-            labels=list(ch.labels),
+            section=str(payload.get("section_path") or payload.get("section_id") or ""),
+            snippet=text[:300],
+            page=int(payload.get("page") or 1),
+            modality=str(payload.get("modality") or ""),
+            figure_type=str(payload.get("figure_type") or ""),
+            license_tier=tier,
+            matched_concepts=[],
+            labels=list(payload.get("labels") or []),
             channel_ranks=ranks,
             explain=f"RRF({why})",
         )

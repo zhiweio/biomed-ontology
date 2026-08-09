@@ -173,21 +173,16 @@ def annotate_bern2(ctx: IngestContext, *, bern2_url: str | None = None) -> Inges
 
 
 def write_evidence(ctx: IngestContext) -> IngestContext:
-    rows = [
-        {
-            "chunk_id": c.chunk_id,
-            "parent_id": c.parent_id or "",
-            "document_id": c.doc_id,
-            "section_path": c.section_path or c.section,
-            "node_kind": c.node_kind or "",
-            "content": c.text,
-            "modality": c.modality.value if hasattr(c.modality, "value") else str(c.modality),
-            "page": int(c.page or 1),
-            "entity_ids": list(c.entity_ids or c.concept_ids or []),
-            "milvus_collection": "foundation_evidence",
-        }
-        for c in ctx.chunks
-    ]
+    from biomed_ontology.lake.chunk_store import chunks_to_evidence_rows
+    from biomed_ontology.pipeline import DEFAULT_RELEASE
+
+    docs = [ctx.document] if ctx.document is not None else []
+    rows = chunks_to_evidence_rows(
+        ctx.chunks,
+        documents=docs,
+        release_id=DEFAULT_RELEASE,
+        milvus_collection="foundation_evidence",
+    )
     try:
         append_evidence_chunks(rows, document_id=ctx.doc_id)
     except Exception as exc:

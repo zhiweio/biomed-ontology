@@ -13,7 +13,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
-from biomed_ontology.corpus import Chunk, Document, chunk_document, load_corpus
+from biomed_ontology.corpus import Chunk, Document, load_corpus
+from biomed_ontology.corpus.tree import build_document_tree, tree_to_chunks
 from biomed_ontology.corpus.classify import (
     DocumentLabel,
     TaxonomyClassifier,
@@ -218,7 +219,8 @@ def build_literature_base(
     labels: dict[str, list[DocumentLabel]] = {}
     with ctx.span("ingest_corpus", **{"hmd.doc_count": len(documents)}):
         for doc in documents:
-            doc_chunks = chunk_document(doc)
+            # Tree Chunk = Evidence Object SSOT（与 lake ingest / Iceberg 同 ID 空间）
+            doc_chunks = tree_to_chunks(build_document_tree(doc))
             labels[doc.doc_id] = classifier.classify(doc.doc_id, doc.full_text(), ctx=ctx)
             for ch in doc_chunks:
                 res = normalizer.normalize(ch.text, ctx=ctx, detect=True, min_confidence=0.6)

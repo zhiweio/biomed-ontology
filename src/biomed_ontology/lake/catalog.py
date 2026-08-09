@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from biomed_ontology.config import Settings, settings
+from biomed_ontology.config import Settings, settings  # noqa: TC001 — runtime Settings
 
 __all__ = [
     "DOCUMENTS_TABLE",
@@ -75,6 +75,10 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             NestedField(8, "page", IntegerType(), required=False),
             NestedField(9, "entity_ids", ListType(10, StringType(), element_required=False), required=False),
             NestedField(11, "milvus_collection", StringType(), required=False),
+            NestedField(12, "release_id", StringType(), required=False),
+            NestedField(13, "source_id", StringType(), required=False),
+            NestedField(14, "license_tier", StringType(), required=False),
+            NestedField(15, "sort_order", IntegerType(), required=False),
         ),
         "knowledge_claims": Schema(
             NestedField(1, "claim_id", StringType(), required=True),
@@ -93,8 +97,24 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
     for name, schema in schemas.items():
         ident = (NAMESPACE, name)
         try:
-            cat.load_table(ident)
+            table = cat.load_table(ident)
+            _ensure_optional_columns(table, schema)
         except Exception:
             cat.create_table(ident, schema=schema)
             created.append(f"{NAMESPACE}.{name}")
     return created
+
+
+def _ensure_optional_columns(table: Any, want: Any) -> None:
+    """已有表补齐可选列（Iceberg schema evolve）；失败则留给 --recreate / 重建。"""
+    have = {f.name for f in table.schema().fields}
+    missing = [f for f in want.fields if f.name not in have]
+    if not missing:
+        return
+    try:
+        with table.update_schema() as update:
+            for field in missing:
+                update.add_column(field.name, field.field_type, required=False)
+    except Exception:
+        # 旧 catalog / 权限不足时不阻断启动；写入侧仍按当前 schema 投影字段
+        return

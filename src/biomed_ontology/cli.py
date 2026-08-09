@@ -319,15 +319,16 @@ def _apply_figure_types(chunks: list, typer_impl, asset_root) -> dict[str, int]:
     return dict(Counter(t.figure_type for t in typings if t.figure_type))
 
 
-def _milvus_backend(embedder: str, collection: str | None):
+def _milvus_backend(embedder: str, collection: str | None, *, release_id: str = ""):
     """连不上就直接退出，不静默降级 —— 报告里的"Milvus 臂"必须真的是 Milvus 跑的。"""
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
-    from biomed_ontology.pipeline import DATA_ROOT
+    from biomed_ontology.pipeline import DATA_ROOT, DEFAULT_RELEASE
     from biomed_ontology.registry import load_registry
     from biomed_ontology.search.backends.milvus import MilvusBackend
 
     model = get_embedder(embedder)
+    want_release = release_id or DEFAULT_RELEASE
     backend = MilvusBackend(
         uri=settings.milvus_uri,
         token=settings.milvus_token.get_secret_value(),
@@ -335,6 +336,7 @@ def _milvus_backend(embedder: str, collection: str | None):
         embedder=model,
         known_sources=frozenset(s.id for s in load_registry().active()),
         asset_root=DATA_ROOT / "assets",
+        release_id=want_release,
     )
     if not backend.client.has_collection(backend.collection):
         console.print(f"[red]集合 {backend.collection} 不存在，先跑 hmd index[/red]")
@@ -347,6 +349,11 @@ def _milvus_backend(embedder: str, collection: str | None):
             "两套向量不在同一空间，算出来的分数没有意义 —— 先 hmd index --recreate。[/red]"
         )
         raise typer.Exit(1)
+    try:
+        backend.require_release(want_release)
+    except RuntimeError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
     return backend
 
 
@@ -522,9 +529,11 @@ def index_cmd(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
 ) -> None:
-    """把知识库切片写入 Milvus（默认 multimodal-bio 五列 + BiomedCLIP 图型）。"""
+    """把知识库切片写入 Milvus + Iceberg（Tree Chunk SSOT，同 release_id）。"""
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
+    from biomed_ontology.lake.chunk_store import chunks_to_evidence_rows
+    from biomed_ontology.lake.tables import append_evidence_chunks
     from biomed_ontology.parse.figure_type import get_figure_typer
     from biomed_ontology.ontology.neighborhood import NullNeighborhood
     from biomed_ontology.pipeline import DATA_ROOT, build_literature_base
@@ -546,6 +555,7 @@ def index_cmd(
         embedder=model,
         known_sources=frozenset(s.id for s in registry.active()),
         asset_root=asset_root,
+        release_id=kb.release_id,
     )
     # 写索引只需 concept labels / meta；不灌 GraphDB、不开 GRAPH 通道
     searcher = HybridSearcher(kb, backend=backend, neighborhood=NullNeighborhood())
@@ -560,13 +570,32 @@ def index_cmd(
         )
         for ch in kb.chunks
     ]
+    for row in rows:
+        row["release_id"] = kb.release_id
     written = backend.upsert(rows)
+
+    lake_n = 0
+    try:
+        from biomed_ontology.lake.catalog import ensure_lake_tables
+
+        ensure_lake_tables()
+        lake_rows = chunks_to_evidence_rows(
+            kb.chunks, documents=kb.documents, release_id=kb.release_id
+        )
+        lake_n = append_evidence_chunks(lake_rows)
+    except Exception as exc:
+        console.print(
+            f"[red]Iceberg dual-write 失败（Citationware 需要 evidence_chunks）：{exc}[/red]"
+        )
+        raise typer.Exit(1) from exc
 
     table = Table(title=f"索引 {backend.collection}")
     table.add_column("指标")
     table.add_column("值", justify="right")
+    table.add_row("release_id", kb.release_id)
     table.add_row("embedder", model.name)
-    table.add_row("切片", str(written))
+    table.add_row("Milvus 切片", str(written))
+    table.add_row("Iceberg 切片", str(lake_n))
     table.add_row("向量列", str(len(backend.vector_fields())))
     table.add_row("带图切片", str(sum(1 for r in rows if r["asset_path"])))
     table.add_row("图型已标注", f"{sum(typed.values())}（{figure_typer}）")

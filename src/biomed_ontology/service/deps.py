@@ -47,6 +47,8 @@ def build_state(
     surface = open_dual_surface(
         bern2_url=bern2_url,
         load_literature=True,
+        # 本地/CI 无湖时回落 Memory；生产应 hmd index dual-write Iceberg。
+        allow_memory_chunk_store=True,
     )
     foundation = surface.foundation if load_foundation else None
     world = surface.world if load_foundation else None

@@ -77,10 +77,13 @@ OpenMetadata ← Trino（官方 connector）← Iceberg REST Catalog
 
 模块：`corpus/tree.py`；解析路由见 `parse/router.md`。
 
+文献 `build_literature_base` / `hmd index` 与 lake ingest **共用** `build_document_tree` + `tree_to_chunks`；`hmd index` dual-write Milvus `hmd_chunks` 与 Iceberg `evidence_chunks`（同 `chunk_id`、同 `release_id`）。Citationware 经 `ChunkStore` 从 Iceberg 懒加载还原。
+
 ### 3.4 编排入口
 
 | 入口 | 模块 | 用途 |
 |---|---|---|
+| `hmd index` | `cli.py` | Tree Chunk → Milvus + Iceberg |
 | `hmd lake ingest-doc` | `lake/steps.py` | 纯函数单文档 |
 | `hmd lake ingest-flow` | `lake/flows.py` | Prefect 编排 |
 | `hmd lake ingest-batch` | `lake/flows.py` | 批量 |

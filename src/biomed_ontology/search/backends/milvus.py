@@ -26,7 +26,45 @@ from biomed_ontology.search.backends.base import (
     merge_best,
 )
 
-__all__ = ["MilvusBackend", "collection_schema"]
+__all__ = [
+    "MilvusBackend",
+    "collection_schema",
+    "parse_collection_stamp",
+    "format_collection_stamp",
+]
+
+_PAYLOAD_FIELDS = (
+    "chunk_id",
+    "doc_id",
+    "source_id",
+    "license_rank",
+    "section_id",
+    "section_path",
+    "sort_order",
+    "page",
+    "modality",
+    "figure_type",
+    "text",
+    "release_id",
+)
+
+
+def format_collection_stamp(*, embedder: str, release_id: str = "") -> str:
+    base = f"embedder={embedder}"
+    return f"{base};release={release_id}" if release_id else base
+
+
+def parse_collection_stamp(description: str) -> dict[str, str]:
+    """解析 ``embedder=X;release=Y``（兼容旧 ``embedder=X``）。"""
+    out: dict[str, str] = {}
+    for part in str(description or "").split(";"):
+        part = part.strip()
+        if "=" not in part:
+            continue
+        key, _, val = part.partition("=")
+        if key in {"embedder", "release"} and val:
+            out[key] = val
+    return out
 
 # 列 → 检索通道。稀疏列对应 BM25 通道（两者都是词法匹配），
 # 四条稠密列共用 DENSE 通道但可分别启用，消融靠 vector_fields 控制。
@@ -108,6 +146,8 @@ def collection_schema(
         max_length=64,
     )
     schema.add_field("text", DataType.VARCHAR, max_length=8192)
+    # corpus release 强绑定：与 KnowledgeBase.release_id 对齐，防索引超前孤儿命中
+    schema.add_field("release_id", DataType.VARCHAR, max_length=64, default_value="")
     # 只建 embedder 真的会写的列。向量列不可为空，多建一列的下场是整批 upsert 全挂。
     for name in _DENSE_COLUMNS:
         if name in dims:
@@ -130,12 +170,14 @@ class MilvusBackend:
         known_sources: frozenset[str] | None = None,
         asset_root: Path | None = None,
         client: Any = None,
+        release_id: str = "",
     ) -> None:
         self.collection = collection
         self.embedder = embedder or FakeEmbedder()
         self.known_sources = known_sources
         # 切片里存的是相对路径（collection 才能跨机器搬），读像素时在这里拼回绝对路径。
         self.asset_root = asset_root
+        self.release_id = str(release_id or "")
         self._client = client
         self._uri = uri
         self._token = token
@@ -168,7 +210,12 @@ class MilvusBackend:
         # 把建表用的 embedder 刻进集合描述。用 A 模型写入、用 B 模型检索不会报错，
         # 只会给出一批看上去很正常、实际毫无意义的分数 —— 那是最难发现的错。
         schema = collection_schema(
-            self.client, dims=dims, sparse=sparse, description=f"embedder={self.embedder.name}"
+            self.client,
+            dims=dims,
+            sparse=sparse,
+            description=format_collection_stamp(
+                embedder=self.embedder.name, release_id=self.release_id
+            ),
         )
         index = self.client.prepare_index_params()
         for field, spec in _INDEX.items():
@@ -188,10 +235,32 @@ class MilvusBackend:
 
     def stamped_embedder(self) -> str:
         """建这张表时用的 embedder 名。集合不存在或没刻名字则返回空串。"""
+        return self._stamp().get("embedder", "")
+
+    def stamped_release(self) -> str:
+        """建这张表时钉死的 corpus release。空串表示旧集合（未 stamp）。"""
+        return self._stamp().get("release", "")
+
+    def _stamp(self) -> dict[str, str]:
         if not self.client.has_collection(self.collection):
-            return ""
+            return {}
         desc = str(self.client.describe_collection(self.collection).get("description", ""))
-        return desc.removeprefix("embedder=") if desc.startswith("embedder=") else ""
+        return parse_collection_stamp(desc)
+
+    def require_release(self, release_id: str) -> None:
+        """集合 release 与 KB 不一致则硬失败（须 ``hmd index --recreate``）。"""
+        want = str(release_id or "")
+        if not want:
+            return
+        stamped = self.stamped_release()
+        if not stamped:
+            # 旧集合无 stamp：允许读，但写入路径应 --recreate
+            return
+        if stamped != want:
+            raise RuntimeError(
+                f"集合 {self.collection!r} release={stamped!r} 与 corpus "
+                f"release={want!r} 不一致；请 hmd index --recreate"
+            )
 
     def vector_fields(self) -> tuple[str, ...]:
         """集合里真实存在的向量列。以库为准，不以代码里的常量为准。"""
@@ -208,6 +277,14 @@ class MilvusBackend:
         """
         if not rows:
             return 0
+        stamped = self.stamped_release()
+        if stamped and self.release_id and stamped != self.release_id:
+            raise RuntimeError(
+                f"拒绝写入：集合 {self.collection!r} release={stamped!r}，"
+                f"本次 release={self.release_id!r}；请 hmd index --recreate"
+            )
+        if self.release_id:
+            rows = [{**r, "release_id": r.get("release_id") or self.release_id} for r in rows]
         bundles = self.embedder.encode(
             [str(r["text"]) for r in rows],
             images=[self._asset(r.get("asset_path"), r.get("doc_id")) for r in rows],
@@ -247,6 +324,8 @@ class MilvusBackend:
         texts = list(dict.fromkeys([lexical_text, *dense_texts]))
         bundles = dict(zip(texts, self.embedder.encode(texts), strict=True))
         channels: dict[RetrievalChannelEnum, list[tuple[str, float]]] = {}
+        payloads: dict[str, dict[str, Any]] = {}
+        out_fields = [f for f in _PAYLOAD_FIELDS if f == "chunk_id" or self._has_field(f)]
 
         for field in fields:
             channel = _CHANNEL.get(field)
@@ -272,16 +351,25 @@ class MilvusBackend:
                     anns_field=field,
                     filter=expr,
                     limit=depth,
-                    output_fields=["chunk_id"],
+                    output_fields=out_fields,
                     search_params={"metric_type": _METRIC[field]},
                 )
-                scored = [(h["entity"]["chunk_id"], float(h["distance"])) for h in hits[0]]
+                scored: list[tuple[str, float]] = []
+                for h in hits[0]:
+                    ent = h.get("entity") or {}
+                    cid = str(ent.get("chunk_id") or "")
+                    if not cid:
+                        continue
+                    scored.append((cid, float(h["distance"])))
+                    if cid not in payloads:
+                        payloads[cid] = dict(ent)
                 channels.setdefault(channel, [])
                 channels[channel] = merge_best(channels[channel], scored)
 
         return BackendResult(
             channels=channels,
             filtered_count=self._filtered_count(request, self._license_expr(request)),
+            payloads=payloads,
         )
 
     def restore_section(
@@ -308,6 +396,8 @@ class MilvusBackend:
 
     def _filter(self, request: RetrievalRequest) -> str:
         expr = self._license_expr(request)
+        if self.release_id and self._has_field("release_id"):
+            expr = f'{expr} and release_id == "{_safe_ident(self.release_id)}"'
         if request.labels:
             allow = ", ".join(f'"{lbl}"' for lbl in request.labels if _plain(lbl))
             if allow:
@@ -326,6 +416,13 @@ class MilvusBackend:
             if kinds:
                 expr = f"{expr} and figure_type in [{kinds}]"
         return expr
+
+    def _has_field(self, name: str) -> bool:
+        try:
+            info = self.client.describe_collection(self.collection)
+        except Exception:
+            return False
+        return name in {f["name"] for f in info.get("fields", ())}
 
     def _filtered_count(self, request: RetrievalRequest, expr: str) -> int:
         """被挡掉多少条。无权调用方看到 0 命中时，这个数字是唯一的线索。"""
@@ -389,15 +486,18 @@ def chunk_to_row(
     extra = " ".join(t for t in label_terms if t)
     if extra:
         text = f"{text} {extra}".strip()
+    section_path = (
+        getattr(chunk, "section_path", None) or getattr(chunk, "section", "") or ""
+    )
     return {
         "chunk_id": meta.chunk_id,
         "doc_id": meta.doc_id,
         "source_id": meta.source_id,
         "license_rank": meta.license_rank,
         "section_id": getattr(chunk, "section_id", "") or "",
-        "section_path": getattr(chunk, "section", "") or "",
+        "section_path": section_path,
         "sort_order": int(getattr(chunk, "char_start", 0)),
-        "page": int(getattr(chunk, "page", 1)),
+        "page": int(getattr(chunk, "page", 1) or 1),
         "modality": str(getattr(chunk.modality, "value", chunk.modality)),
         "degraded": degraded,
         "asset_path": getattr(chunk, "asset_path", None) or "",
@@ -405,4 +505,5 @@ def chunk_to_row(
         "labels": list(meta.labels),
         "concept_ids_expanded": list(getattr(chunk, "concept_ids_expanded", ())),
         "text": text,
+        "release_id": str(getattr(chunk, "release_id", "") or ""),
     }
