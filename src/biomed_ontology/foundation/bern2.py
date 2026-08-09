@@ -2,10 +2,15 @@
 
 企业自定义词典优先于远程/本地 BERN2，保证专有名词金标覆盖。
 未配置 endpoint 时仅走词典 + 可选 mock annotations。
+
+远程调用复用单个 httpx.Client；批量标注用有界线程池（默认低并发），
+避免压垮本机 BERN2。
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -15,7 +20,12 @@ import yaml
 
 from biomed_ontology.foundation.ids import normalize_alias_key
 
-__all__ = ["Bern2Client", "Bern2Mention", "EnterpriseDictionary", "load_enterprise_dictionary"]
+__all__ = [
+    "Bern2Client",
+    "Bern2Mention",
+    "EnterpriseDictionary",
+    "load_enterprise_dictionary",
+]
 
 
 @dataclass(frozen=True)
@@ -53,7 +63,6 @@ class EnterpriseDictionary:
         lowered = text.lower()
         hits: list[Bern2Mention] = []
         seen: set[str] = set()
-        # 长别名优先，避免短码误切
         aliases = sorted(self._norm_index.keys(), key=len, reverse=True)
         for key in aliases:
             if key in seen or key not in lowered:
@@ -90,17 +99,39 @@ class Bern2Client:
         base_url: str | None = None,
         dictionary: EnterpriseDictionary | None = None,
         timeout: float = 30.0,
+        concurrency: int = 2,
+        min_chars: int = 8,
     ) -> None:
         self.base_url = (base_url or "").rstrip("/") or None
         self.dictionary = dictionary or EnterpriseDictionary()
         self.timeout = timeout
+        self.concurrency = max(1, int(concurrency))
+        self.min_chars = max(0, int(min_chars))
+        self._client: httpx.Client | None = None
+
+    def __enter__(self) -> Bern2Client:
+        self.open()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+    def open(self) -> None:
+        if self.base_url and self._client is None:
+            self._client = httpx.Client(timeout=self.timeout)
+
+    def close(self) -> None:
+        if self._client is not None:
+            self._client.close()
+            self._client = None
 
     def annotate(self, text: str) -> list[Bern2Mention]:
         dict_hits = self.dictionary.scan(text)
         if not self.base_url:
             return dict_hits
+        if len((text or "").strip()) < self.min_chars:
+            return dict_hits
         remote = self._remote_plain(text)
-        # 词典命中覆盖同 span 的远程结果
         covered = {(h.begin, h.end) for h in dict_hits if h.begin is not None}
         merged = list(dict_hits)
         for m in remote:
@@ -109,13 +140,58 @@ class Bern2Client:
             merged.append(m)
         return merged
 
+    def annotate_many(self, texts: Sequence[str]) -> list[list[Bern2Mention]]:
+        """有界并发标注；相同正文只打一次远程，结果按输入顺序返回。"""
+        if not texts:
+            return []
+        # 无远程时串行词典扫描即可
+        if not self.base_url:
+            return [self.annotate(t) for t in texts]
+
+        self.open()
+        # 去重：同文只请求一次
+        unique_order: list[str] = []
+        seen: set[str] = set()
+        for t in texts:
+            key = t if isinstance(t, str) else str(t or "")
+            if key not in seen:
+                seen.add(key)
+                unique_order.append(key)
+
+        cache: dict[str, list[Bern2Mention]] = {}
+        workers = min(self.concurrency, len(unique_order)) or 1
+
+        def _one(text: str) -> tuple[str, list[Bern2Mention]]:
+            return text, self.annotate(text)
+
+        if workers == 1:
+            for text in unique_order:
+                k, v = _one(text)
+                cache[k] = v
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                futures = [pool.submit(_one, text) for text in unique_order]
+                for fut in as_completed(futures):
+                    k, v = fut.result()
+                    cache[k] = v
+
+        return [cache[t if isinstance(t, str) else str(t or "")] for t in texts]
+
     def _remote_plain(self, text: str) -> list[Bern2Mention]:
         assert self.base_url is not None
         url = f"{self.base_url}/plain"
-        with httpx.Client(timeout=self.timeout) as client:
+        client = self._client
+        owned = False
+        if client is None:
+            client = httpx.Client(timeout=self.timeout)
+            owned = True
+        try:
             resp = client.post(url, json={"text": text})
             resp.raise_for_status()
             payload = resp.json()
+        finally:
+            if owned:
+                client.close()
         out: list[Bern2Mention] = []
         for ann in payload.get("annotations", []):
             span = ann.get("span") or {}

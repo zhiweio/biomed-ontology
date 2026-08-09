@@ -91,6 +91,11 @@ class Settings(BaseSettings):
     graphdb_url: str = "http://localhost:7200"
     graphdb_repository: str = "hmd"
     bern2_url: str = ""
+    # 本地 BERN2 扛不住高并发：默认 2；1 = 完全串行
+    bern2_concurrency: int = Field(default=2, ge=1, le=8)
+    bern2_timeout_s: float = Field(default=30.0, gt=0)
+    # 短于该字符数的 chunk 只走企业词典，不打远程 /plain
+    bern2_min_chars: int = Field(default=8, ge=0)
     openmetadata_url: str = "http://localhost:8585"
     openmetadata_token: SecretStr = SecretStr("")
     # OpenMetadata 唯一 Admin（业务读写共用此账号）

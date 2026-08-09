@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from biomed_ontology.config import settings
 from biomed_ontology.lake.claim_bridge import evidence_id_for_chunk
@@ -56,7 +57,7 @@ def upsert_evidence_objects(
     doc_id: str | None = None,
 ) -> int:
     """Upsert Evidence Objects；若给 ``doc_id`` 则先按文档删再写（幂等）。"""
-    from pymilvus import DataType, MilvusClient
+    from pymilvus import MilvusClient
 
     uri = uri or settings.milvus_uri
     client = MilvusClient(uri=uri)
@@ -90,7 +91,10 @@ def upsert_evidence_objects(
         )
     if not rows:
         return 0
-    client.upsert(collection_name=_COLLECTION, data=rows)
+    # 分批 upsert，最后一次 flush，避免单次超大 payload + 多次 flush
+    batch = 256
+    for i in range(0, len(rows), batch):
+        client.upsert(collection_name=_COLLECTION, data=rows[i : i + batch])
     client.flush(_COLLECTION)
     return len(rows)
 

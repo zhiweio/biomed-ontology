@@ -92,6 +92,9 @@ def test_mineru_and_router_settings_defaults():
     assert s.mineru_effort == "medium"
     assert s.parse_fast_max_pages == 40
     assert s.parse_max_pages == 400
+    assert s.bern2_concurrency == 2
+    assert s.bern2_timeout_s == 30.0
+    assert s.bern2_min_chars == 8
 
 
 def test_secrets_are_not_in_repr():

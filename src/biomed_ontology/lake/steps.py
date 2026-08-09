@@ -46,6 +46,8 @@ class IngestContext:
     claim_n: int = 0
     asset_fqn: str | None = None
     errors: list[str] = field(default_factory=list)
+    # annotate_bern2 装配后供 write_claims 复用，避免二次 load_world_model
+    resolver: Any | None = None
 
 
 def require_bern2(bern2_url: str | None = None) -> str:
@@ -146,15 +148,24 @@ def annotate_bern2(ctx: IngestContext, *, bern2_url: str | None = None) -> Inges
 
     dict_path = Path("ontology/dictionary/enterprise_dictionary.yaml")
     dictionary = load_enterprise_dictionary(dict_path) if dict_path.exists() else None
-    client = Bern2Client(base_url=url, dictionary=dictionary)
     world = load_world_model(bern2_url=url)
     assert world.resolver is not None
+    ctx.resolver = world.resolver
 
     def _resolve(text: str) -> Any:
         return world.resolver.resolve_text(text)
 
-    for ch in ctx.chunks:
-        mentions = client.annotate(ch.text)
+    texts = [str(getattr(ch, "text", "") or "") for ch in ctx.chunks]
+    with Bern2Client(
+        base_url=url,
+        dictionary=dictionary,
+        timeout=settings.bern2_timeout_s,
+        concurrency=settings.bern2_concurrency,
+        min_chars=settings.bern2_min_chars,
+    ) as client:
+        mentions_list = client.annotate_many(texts)
+
+    for ch, mentions in zip(ctx.chunks, mentions_list, strict=True):
         ents = mentions_to_entity_ids(mentions, resolve_fn=_resolve)
         ch.entity_ids = ents
         ch.concept_ids = list(dict.fromkeys([*ch.concept_ids, *ents]))
@@ -208,11 +219,15 @@ def write_claims(ctx: IngestContext, *, bern2_url: str | None = None) -> IngestC
     facts = TriModalPipeline().run(
         [ctx.document], ctx.chunks, normalizer=normalizer, ctx=ctx_trace
     )
-    world = load_world_model(bern2_url=bern2_url or settings.bern2_url or None)
-    assert world.resolver is not None
+    resolver = ctx.resolver
+    if resolver is None:
+        world = load_world_model(bern2_url=bern2_url or settings.bern2_url or None)
+        assert world.resolver is not None
+        resolver = world.resolver
+        ctx.resolver = resolver
 
     def _resolve(text: str) -> Any:
-        return world.resolver.resolve_text(text)
+        return resolver.resolve_text(text)
 
     claims, skipped = facts_to_claims(facts, document_id=ctx.doc_id, resolve_fn=_resolve)
     ctx.claims = claims
