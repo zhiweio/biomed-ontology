@@ -1,8 +1,27 @@
 corpus_version: 0.1.0
 parse:
-  backend: pymupdf
-  degraded: []
+  backend: docling
+  degraded:
+  - table_structure
   same_as: {}
+  route:
+    requested: auto
+    chosen: docling
+    reason: structured_pdf
+    probe:
+      page_count: 9
+      image_count: 5
+      table_candidates: 1
+      text_chars: 48196
+      avg_blocks_per_page: 17.22222222222222
+      multi_column_hint: true
+      text_extractable: true
+    attempts:
+    - backend: docling
+      status: ok
+      degraded:
+      - table_structure
+      blocks: 120
 sections_meta:
 - section_id: SEC:PMC12515981#0000
   doc_id: DOC:PMC12515981
@@ -24,8 +43,8 @@ sections_meta:
 - section_id: SEC:PMC12515981#0001
   doc_id: DOC:PMC12515981
   parent_section_id: null
-  section_path: First-line treatment with chemotherapy, surufatinib (an angio-
-  section_title: First-line treatment with chemotherapy, surufatinib (an angio-
+  section_path: ARTICLE
+  section_title: ARTICLE
   section_level: 1
   sort_order: 1
   start_page: 1
@@ -33,1141 +52,304 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 19.4
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC12515981#0002
   doc_id: DOC:PMC12515981
   parent_section_id: null
-  section_path: immunokinaseinhibitor),andcamrelizumab(ananti-PD-1
-  section_title: immunokinaseinhibitor),andcamrelizumab(ananti-PD-1
+  section_path: OPEN
+  section_title: OPEN
   section_level: 1
   sort_order: 2
   start_page: 1
-  end_page: 1
+  end_page: 7
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 19.4
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC12515981#0003
   doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: antibody)forlocallyadvancedormetastaticpancreaticductal
-  section_title: antibody)forlocallyadvancedormetastaticpancreaticductal
-  section_level: 1
-  sort_order: 3
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 19.4
-- section_id: SEC:PMC12515981#0004
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: adenocarcinoma:aphaseIb/IIrandomizedstudy
-  section_title: adenocarcinoma:aphaseIb/IIrandomizedstudy
-  section_level: 1
-  sort_order: 4
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 19.4
-- section_id: SEC:PMC12515981#0005
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0004
-  section_path: adenocarcinoma:aphaseIb/IIrandomizedstudy / Introduction
+  parent_section_id: SEC:PMC12515981#0002
+  section_path: OPEN / Introduction
   section_title: Introduction
   section_level: 2
-  sort_order: 5
+  sort_order: 3
   start_page: 1
   end_page: 1
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=1
+  - docling 版面信号 level=1 page=1
   - 命中标准章节名
-- section_id: SEC:PMC12515981#0006
+- section_id: SEC:PMC12515981#0004
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0004
-  section_path: adenocarcinoma:aphaseIb/IIrandomizedstudy / ARTICLE
-  section_title: ARTICLE
-  section_level: 2
-  sort_order: 6
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=2 page=1
-  - 字号 12.0
-- section_id: SEC:PMC12515981#0007
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0004
-  section_path: adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and
-    Targeted Therapy
-  section_title: Signal Transduction and Targeted Therapy
-  section_level: 2
-  sort_order: 7
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=2 page=1
-  - 字号 12.9
-- section_id: SEC:PMC12515981#0008
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0007
-  section_path: adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and
-    Targeted Therapy / OPEN
-  section_title: OPEN
-  section_level: 3
-  sort_order: 8
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=3 page=1
-  - 字号 10.4
-  - 粗体
-- section_id: SEC:PMC12515981#0009
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 31.1%hadtwo,respectively.Biliarydrainagewasperformedprior
-  section_title: 31.1%hadtwo,respectively.Biliarydrainagewasperformedprior
-  section_level: 1
-  sort_order: 9
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 31
-- section_id: SEC:PMC12515981#0010
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: '9.9–41.5and 95% CI 6.6–43.9; oddsratio [OR]: 3.2, 95%CI 1.3–8.2,'
-  section_title: '9.9–41.5and 95% CI 6.6–43.9; oddsratio [OR]: 3.2, 95%CI 1.3–8.2,'
-  section_level: 1
-  sort_order: 10
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 9
-- section_id: SEC:PMC12515981#0011
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 5.8–13.3), while those treated with nab-paclitaxel and gemcitabine
-  section_title: 5.8–13.3), while those treated with nab-paclitaxel and gemcitabine
-  section_level: 1
-  sort_order: 11
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 5
-- section_id: SEC:PMC12515981#0012
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 1.5–2.7),notablyshorterthanthe2.5months(95%CI:1.4–3.8)
-  section_title: 1.5–2.7),notablyshorterthanthe2.5months(95%CI:1.4–3.8)
-  section_level: 1
-  sort_order: 12
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 1
-- section_id: SEC:PMC12515981#0013
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 3.4–6.4)forthosereceivingnab-paclitaxelandgemcitabine.The
-  section_title: 3.4–6.4)forthosereceivingnab-paclitaxelandgemcitabine.The
-  section_level: 1
-  sort_order: 13
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 3
-- section_id: SEC:PMC12515981#0014
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 10.5–16.1)fortheNASCAand11.0months(95%CI:8.4–15.3)for
-  section_title: 10.5–16.1)fortheNASCAand11.0months(95%CI:8.4–15.3)for
-  section_level: 1
-  sort_order: 14
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12515981#0015
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%'
-  section_title: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%'
-  section_level: 1
-  sort_order: 15
-  start_page: 2
-  end_page: 3
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 83
-- section_id: SEC:PMC12515981#0016
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0015
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Results'
+  parent_section_id: SEC:PMC12515981#0002
+  section_path: OPEN / Results
   section_title: Results
   section_level: 2
-  sort_order: 16
+  sort_order: 4
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=2
+  - docling 版面信号 level=1 page=2
   - 命中标准章节名
-- section_id: SEC:PMC12515981#0017
+- section_id: SEC:PMC12515981#0005
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0016
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Results / Phase Ib study: dose determination'
+  parent_section_id: SEC:PMC12515981#0004
+  section_path: 'OPEN / Results / Phase Ib study: dose determination'
   section_title: 'Phase Ib study: dose determination'
   section_level: 3
-  sort_order: 17
+  sort_order: 5
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=3 page=2
-- section_id: SEC:PMC12515981#0018
+- section_id: SEC:PMC12515981#0006
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0016
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Results / Phase II randomized study: efficacy and safety'
+  parent_section_id: SEC:PMC12515981#0004
+  section_path: 'OPEN / Results / Phase II randomized study: efficacy and safety'
   section_title: 'Phase II randomized study: efficacy and safety'
   section_level: 3
-  sort_order: 18
+  sort_order: 6
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=3 page=2
-- section_id: SEC:PMC12515981#0019
+- section_id: SEC:PMC12515981#0007
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0018
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Results / Phase II randomized study: efficacy and safety / Baseline characteristics'
+  parent_section_id: SEC:PMC12515981#0006
+  section_path: 'OPEN / Results / Phase II randomized study: efficacy and safety /
+    Baseline characteristics'
   section_title: Baseline characteristics
   section_level: 4
-  sort_order: 19
+  sort_order: 7
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=4 page=2
-- section_id: SEC:PMC12515981#0020
+- section_id: SEC:PMC12515981#0008
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0018
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Results / Phase II randomized study: efficacy and safety / Efficacy'
+  parent_section_id: SEC:PMC12515981#0006
+  section_path: 'OPEN / Results / Phase II randomized study: efficacy and safety /
+    Efficacy'
   section_title: Efficacy
   section_level: 4
-  sort_order: 20
+  sort_order: 8
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=4 page=2
-- section_id: SEC:PMC12515981#0021
+- section_id: SEC:PMC12515981#0009
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0018
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Results / Phase II randomized study: efficacy and safety / Safety'
+  parent_section_id: SEC:PMC12515981#0006
+  section_path: 'OPEN / Results / Phase II randomized study: efficacy and safety /
+    Safety'
   section_title: Safety
   section_level: 4
-  sort_order: 21
+  sort_order: 9
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=4 page=2
-- section_id: SEC:PMC12515981#0022
+- section_id: SEC:PMC12515981#0010
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0015
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Discussion'
+  parent_section_id: SEC:PMC12515981#0002
+  section_path: OPEN / Discussion
   section_title: Discussion
   section_level: 2
-  sort_order: 22
+  sort_order: 10
   start_page: 3
-  end_page: 3
+  end_page: 5
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=3
+  - docling 版面信号 level=1 page=3
   - 命中标准章节名
-- section_id: SEC:PMC12515981#0023
+- section_id: SEC:PMC12515981#0011
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0022
-  section_path: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-    / Discussion / Subgroup and biomarker analyses'
+  parent_section_id: SEC:PMC12515981#0010
+  section_path: OPEN / Discussion / Subgroup and biomarker analyses
   section_title: Subgroup and biomarker analyses
   section_level: 3
-  sort_order: 23
+  sort_order: 11
   start_page: 3
-  end_page: 3
+  end_page: 5
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=4 page=3
-- section_id: SEC:PMC12515981#0024
+- section_id: SEC:PMC12515981#0012
   doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 7.4months.9TheNASCAgroupalsoshowedhigherORRandPFS
-  section_title: 7.4months.9TheNASCAgroupalsoshowedhigherORRandPFS
-  section_level: 1
-  sort_order: 24
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 7
-- section_id: SEC:PMC12515981#0025
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 9.2months,respectively,4,6whilethisstudydemonstrateda
-  section_title: 9.2months,respectively,4,6whilethisstudydemonstrateda
-  section_level: 1
-  sort_order: 25
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 9
-- section_id: SEC:PMC12515981#0026
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 51.1%
-  section_title: 51.1%
-  section_level: 1
-  sort_order: 26
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 51
-- section_id: SEC:PMC12515981#0027
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 24.4%(12.9–39.5)
-  section_title: 24.4%(12.9–39.5)
-  section_level: 1
-  sort_order: 27
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 24
-- section_id: SEC:PMC12515981#0028
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 91.1%
-  section_title: 91.1%
-  section_level: 1
-  sort_order: 28
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 91
-- section_id: SEC:PMC12515981#0029
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 88.9%(75.9–96.3)
-  section_title: 88.9%(75.9–96.3)
-  section_level: 1
-  sort_order: 29
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 88
-- section_id: SEC:PMC12515981#0030
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 1.6(1.5–2.7)
-  section_title: 1.6(1.5–2.7)
-  section_level: 1
-  sort_order: 30
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 1
-- section_id: SEC:PMC12515981#0031
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 2.5(1.4–3.8)
-  section_title: 2.5(1.4–3.8)
-  section_level: 1
-  sort_order: 31
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 2
-- section_id: SEC:PMC12515981#0032
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 8.1(5.8–13.3)
-  section_title: 8.1(5.8–13.3)
-  section_level: 1
-  sort_order: 32
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 8
-- section_id: SEC:PMC12515981#0033
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 6.0(2.3–13.0)
-  section_title: 6.0(2.3–13.0)
-  section_level: 1
-  sort_order: 33
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 6
-- section_id: SEC:PMC12515981#0034
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 59.0(56.0,61.0)
-  section_title: 59.0(56.0,61.0)
-  section_level: 1
-  sort_order: 34
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 59
-- section_id: SEC:PMC12515981#0035
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 59.0(55.0,66.0)
-  section_title: 59.0(55.0,66.0)
-  section_level: 1
-  sort_order: 35
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 59
-- section_id: SEC:PMC12515981#0036
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 36.0–75.0
-  section_title: 36.0–75.0
-  section_level: 1
-  sort_order: 36
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 36
-- section_id: SEC:PMC12515981#0037
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 39.0–74.0
-  section_title: 39.0–74.0
-  section_level: 1
-  sort_order: 37
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 39
-- section_id: SEC:PMC12515981#0038
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 4.6(2.5,8.1)
-  section_title: 4.6(2.5,8.1)
-  section_level: 1
-  sort_order: 38
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 4
-- section_id: SEC:PMC12515981#0039
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 3.6(2.2,12.6)
-  section_title: 3.6(2.2,12.6)
-  section_level: 1
-  sort_order: 39
-  start_page: 4
-  end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 3
-- section_id: SEC:PMC12515981#0040
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0039
-  section_path: 3.6(2.2,12.6) / 290.0 (47.4, 1635.0)518.0(98.5,2998.0)
-  section_title: 290.0 (47.4, 1635.0)518.0(98.5,2998.0)
-  section_level: 2
-  sort_order: 40
-  start_page: 4
-  end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 290.0
-- section_id: SEC:PMC12515981#0041
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 300 mg.
-  section_title: 300 mg.
-  section_level: 1
-  sort_order: 41
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 300
-- section_id: SEC:PMC12515981#0042
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0041
-  section_path: 300 mg. / Materials and methods
+  parent_section_id: SEC:PMC12515981#0002
+  section_path: OPEN / Materials and methods
   section_title: Materials and methods
   section_level: 2
-  sort_order: 42
+  sort_order: 12
   start_page: 6
-  end_page: 6
+  end_page: 7
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=6
-- section_id: SEC:PMC12515981#0043
+  - docling 版面信号 level=1 page=6
+  - 命中标准章节名
+- section_id: SEC:PMC12515981#0013
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0042
-  section_path: 300 mg. / Materials and methods / Study design and participants
+  parent_section_id: SEC:PMC12515981#0012
+  section_path: OPEN / Materials and methods / Study design and participants
   section_title: Study design and participants
   section_level: 3
-  sort_order: 43
+  sort_order: 13
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=3 page=6
-- section_id: SEC:PMC12515981#0044
+  - docling 版面信号 level=1 page=6
+- section_id: SEC:PMC12515981#0014
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0042
-  section_path: 300 mg. / Materials and methods / Procedures
+  parent_section_id: SEC:PMC12515981#0012
+  section_path: OPEN / Materials and methods / Procedures
   section_title: Procedures
   section_level: 3
-  sort_order: 44
+  sort_order: 14
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=3 page=6
-- section_id: SEC:PMC12515981#0045
+  - docling 版面信号 level=1 page=6
+- section_id: SEC:PMC12515981#0015
   doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 30 min on the same days, repeated every 21 days. Therapy in both
-  section_title: 30 min on the same days, repeated every 21 days. Therapy in both
-  section_level: 1
-  sort_order: 45
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 30
-- section_id: SEC:PMC12515981#0046
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0045
-  section_path: 30 min on the same days, repeated every 21 days. Therapy in both /
-    0.2.Withequalrandomization(1:1ratio)betweenthetwo
-  section_title: 0.2.Withequalrandomization(1:1ratio)betweenthetwo
-  section_level: 2
-  sort_order: 46
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 0.2
-- section_id: SEC:PMC12515981#0047
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0046
-  section_path: 30 min on the same days, repeated every 21 days. Therapy in both /
-    0.2.Withequalrandomization(1:1ratio)betweenthetwo / Outcomes
+  parent_section_id: SEC:PMC12515981#0012
+  section_path: OPEN / Materials and methods / Outcomes
   section_title: Outcomes
   section_level: 3
-  sort_order: 47
+  sort_order: 15
   start_page: 7
   end_page: 7
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=3 page=7
-- section_id: SEC:PMC12515981#0048
+  - docling 版面信号 level=1 page=7
+- section_id: SEC:PMC12515981#0016
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0046
-  section_path: 30 min on the same days, repeated every 21 days. Therapy in both /
-    0.2.Withequalrandomization(1:1ratio)betweenthetwo / Statistical analysis
+  parent_section_id: SEC:PMC12515981#0012
+  section_path: OPEN / Materials and methods / Statistical analysis
   section_title: Statistical analysis
   section_level: 3
-  sort_order: 48
+  sort_order: 16
   start_page: 7
   end_page: 7
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=3 page=7
-- section_id: SEC:PMC12515981#0049
+  - docling 版面信号 level=1 page=7
+- section_id: SEC:PMC12515981#0017
   doc_id: DOC:PMC12515981
   parent_section_id: null
-  section_path: 1.Siegel,R.L.,Giaquinto,A.N.& Jemal, A.Cancerstatistics,2024.CACancerJ.
-    Clin.
-  section_title: 1.Siegel,R.L.,Giaquinto,A.N.& Jemal, A.Cancerstatistics,2024.CACancerJ.
-    Clin.
+  section_path: DATA AVAILABILITY
+  section_title: DATA AVAILABILITY
   section_level: 1
-  sort_order: 49
+  sort_order: 17
   start_page: 8
-  end_page: 8
+  end_page: 9
   heading_source: HEADING_REGEX
-  heading_confidence: 0.62
+  heading_confidence: 0.72
   evidence:
-  - 编号模式 1
-- section_id: SEC:PMC12515981#0050
+  - docling 版面信号 level=1 page=8
+- section_id: SEC:PMC12515981#0018
   doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 3.Halbrook,C.J.,Lyssiotis,C.A.,PascadiMagliano,M.&Maitra,A.Pancreatic
-  section_title: 3.Halbrook,C.J.,Lyssiotis,C.A.,PascadiMagliano,M.&Maitra,A.Pancreatic
-  section_level: 1
-  sort_order: 50
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 3
-- section_id: SEC:PMC12515981#0051
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 4.VonHoff,D.D.etal.Increasedsurvivalinpancreaticcancerwithnab-paclitaxel
-  section_title: 4.VonHoff,D.D.etal.Increasedsurvivalinpancreaticcancerwithnab-paclitaxel
-  section_level: 1
-  sort_order: 51
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 4
-- section_id: SEC:PMC12515981#0052
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 6.Wainberg,Z.A.etal.NALIRIFOXversusnab-paclitaxelandgemcitabinein
-  section_title: 6.Wainberg,Z.A.etal.NALIRIFOXversusnab-paclitaxelandgemcitabinein
-  section_level: 1
-  sort_order: 52
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 6
-- section_id: SEC:PMC12515981#0053
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 7.Hu,Z.I.etal.Evaluatingmismatchrepairdeﬁciencyinpancreaticadenocarci-
-  section_title: 7.Hu,Z.I.etal.Evaluatingmismatchrepairdeﬁciencyinpancreaticadenocarci-
-  section_level: 1
-  sort_order: 53
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 7
-- section_id: SEC:PMC12515981#0054
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 8.O’Reilly, E. M. et al. Durvalumab with or withouttremelimumab forpatients
-    with
-  section_title: 8.O’Reilly, E. M. et al. Durvalumab with or withouttremelimumab forpatients
-    with
-  section_level: 1
-  sort_order: 54
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 8
-- section_id: SEC:PMC12515981#0055
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 9.Morizane,C.etal.APhase2studyofnivolumabincombinationwithmodiﬁed
-  section_title: 9.Morizane,C.etal.APhase2studyofnivolumabincombinationwithmodiﬁed
-  section_level: 1
-  sort_order: 55
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 9
-- section_id: SEC:PMC12515981#0056
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 10.Sherman,M.H.&Beatty,G.L.Tumormicroenvironmentinpancreaticcancer
-  section_title: 10.Sherman,M.H.&Beatty,G.L.Tumormicroenvironmentinpancreaticcancer
-  section_level: 1
-  sort_order: 56
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12515981#0057
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 11.Tao,J.etal.Targetinghypoxictumormicroenvironmentinpancreaticcancer.J.
-  section_title: 11.Tao,J.etal.Targetinghypoxictumormicroenvironmentinpancreaticcancer.J.
-  section_level: 1
-  sort_order: 57
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 11
-- section_id: SEC:PMC12515981#0058
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: '13.Fukumura,D.etal.Enhancingcancerimmunotherapyusingantiangiogenics:'
-  section_title: '13.Fukumura,D.etal.Enhancingcancerimmunotherapyusingantiangiogenics:'
-  section_level: 1
-  sort_order: 58
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 13
-- section_id: SEC:PMC12515981#0059
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 14.Datta,M.etal.Reprogrammingthetumormicroenvironmenttoimprove
-  section_title: 14.Datta,M.etal.Reprogrammingthetumormicroenvironmenttoimprove
-  section_level: 1
-  sort_order: 59
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 14
-- section_id: SEC:PMC12515981#0060
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 15.Sha,H.etal.First-linepenpulimab(ananti-PD1antibody)andanlotinib(an
-  section_title: 15.Sha,H.etal.First-linepenpulimab(ananti-PD1antibody)andanlotinib(an
-  section_level: 1
-  sort_order: 60
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 15
-- section_id: SEC:PMC12515981#0061
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 16.Chuah,B.etal.Comparisonofthepharmacokineticsandpharmacodynamicsof
-  section_title: 16.Chuah,B.etal.Comparisonofthepharmacokineticsandpharmacodynamicsof
-  section_level: 1
-  sort_order: 61
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 16
-- section_id: SEC:PMC12515981#0062
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 17.Kang,Y.K.etal.Nivolumabpluschemotherapyversusplaceboplusche-
-  section_title: 17.Kang,Y.K.etal.Nivolumabpluschemotherapyversusplaceboplusche-
-  section_level: 1
-  sort_order: 62
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 17
-- section_id: SEC:PMC12515981#0063
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 19.Yamada,Y.etal.S-1andirinotecanplusbevacizumabversusmFOLFOX6or
-  section_title: 19.Yamada,Y.etal.S-1andirinotecanplusbevacizumabversusmFOLFOX6or
-  section_level: 1
-  sort_order: 63
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 19
-- section_id: SEC:PMC12515981#0064
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 20.Li,C.etal.PathologicresponseofphaseIIIstudy:perioperativecamrelizumab
-  section_title: 20.Li,C.etal.PathologicresponseofphaseIIIstudy:perioperativecamrelizumab
-  section_level: 1
-  sort_order: 64
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 20
-- section_id: SEC:PMC12515981#0065
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 21.Uesaka,K.etal.AdjuvantchemotherapyofS-1versusgemcitabineforresected
-  section_title: 21.Uesaka,K.etal.AdjuvantchemotherapyofS-1versusgemcitabineforresected
-  section_level: 1
-  sort_order: 65
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 21
-- section_id: SEC:PMC12515981#0066
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 22.Ueno, H.et al. Randomized phaseIII studyofgemcitabineplusS-1, S-1alone,or
-  section_title: 22.Ueno, H.et al. Randomized phaseIII studyofgemcitabineplusS-1,
-    S-1alone,or
-  section_level: 1
-  sort_order: 66
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 22
-- section_id: SEC:PMC12515981#0067
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 24.Suenaga,M.etal.S-1plusnab-paclitaxelisapromisingregimenforpancreatic
-  section_title: 24.Suenaga,M.etal.S-1plusnab-paclitaxelisapromisingregimenforpancreatic
-  section_level: 1
-  sort_order: 67
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 24
-- section_id: SEC:PMC12515981#0068
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 25.Zong,Y.etal.Nab-paclitaxelplusS-1versusnab-paclitaxelplusgemcitabineas
-  section_title: 25.Zong,Y.etal.Nab-paclitaxelplusS-1versusnab-paclitaxelplusgemcitabineas
-  section_level: 1
-  sort_order: 68
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 25
-- section_id: SEC:PMC12515981#0069
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-  section_title: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-  section_level: 1
-  sort_order: 69
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 26
-- section_id: SEC:PMC12515981#0070
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0069
-  section_path: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-    / Supplementary information
+  parent_section_id: SEC:PMC12515981#0017
+  section_path: DATA AVAILABILITY / Supplementary information
   section_title: Supplementary information
   section_level: 2
-  sort_order: 70
+  sort_order: 18
   start_page: 8
   end_page: 8
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=2 page=8
-- section_id: SEC:PMC12515981#0071
+- section_id: SEC:PMC12515981#0019
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0069
-  section_path: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-    / Acknowledgements
+  parent_section_id: SEC:PMC12515981#0017
+  section_path: DATA AVAILABILITY / Acknowledgements
   section_title: Acknowledgements
   section_level: 2
-  sort_order: 71
+  sort_order: 19
   start_page: 8
   end_page: 8
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=8
+  - docling 版面信号 level=1 page=8
   - 命中标准章节名
-- section_id: SEC:PMC12515981#0072
+- section_id: SEC:PMC12515981#0020
   doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0069
-  section_path: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-    / Author contributions
+  parent_section_id: SEC:PMC12515981#0017
+  section_path: DATA AVAILABILITY / Author contributions
   section_title: Author contributions
   section_level: 2
-  sort_order: 72
-  start_page: 8
-  end_page: 8
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=8
-- section_id: SEC:PMC12515981#0073
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0069
-  section_path: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-    / ADDITIONAL INFORMATION
-  section_title: ADDITIONAL INFORMATION
-  section_level: 2
-  sort_order: 73
-  start_page: 8
-  end_page: 8
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=8
-- section_id: SEC:PMC12515981#0074
-  doc_id: DOC:PMC12515981
-  parent_section_id: SEC:PMC12515981#0069
-  section_path: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-    / References
-  section_title: References
-  section_level: 2
-  sort_order: 74
+  sort_order: 20
   start_page: 8
   end_page: 8
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=8
+  - docling 版面信号 level=1 page=8
+- section_id: SEC:PMC12515981#0021
+  doc_id: DOC:PMC12515981
+  parent_section_id: SEC:PMC12515981#0017
+  section_path: DATA AVAILABILITY / ADDITIONAL INFORMATION
+  section_title: ADDITIONAL INFORMATION
+  section_level: 2
+  sort_order: 21
+  start_page: 8
+  end_page: 8
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=8
+  - docling 版面信号 level=1 page=8
+- section_id: SEC:PMC12515981#0022
+  doc_id: DOC:PMC12515981
+  parent_section_id: SEC:PMC12515981#0017
+  section_path: DATA AVAILABILITY / References
+  section_title: References
+  section_level: 2
+  sort_order: 22
+  start_page: 8
+  end_page: 9
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=8
+  - docling 版面信号 level=1 page=8
   - 命中标准章节名
-- section_id: SEC:PMC12515981#0075
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 27.Jin,M.etal.Nab-paclitaxelplusS-1versusnab-paclitaxelplusgemcitabinein
-  section_title: 27.Jin,M.etal.Nab-paclitaxelplusS-1versusnab-paclitaxelplusgemcitabinein
-  section_level: 1
-  sort_order: 75
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 27
-- section_id: SEC:PMC12515981#0076
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 28.Shi,Y.etal.Nab-paclitaxelplusS-1inadvancedpancreaticadenocarcinoma
-  section_title: 28.Shi,Y.etal.Nab-paclitaxelplusS-1inadvancedpancreaticadenocarcinoma
-  section_level: 1
-  sort_order: 76
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 28
-- section_id: SEC:PMC12515981#0077
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 30.Liu,Q.etal.Nab-paclitaxelplusS-1withorwithoutPD-1inhibitorinpancreatic
-  section_title: 30.Liu,Q.etal.Nab-paclitaxelplusS-1withorwithoutPD-1inhibitorinpancreatic
-  section_level: 1
-  sort_order: 77
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 30
-- section_id: SEC:PMC12515981#0078
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 31.Syed,Y.Y.Surufatinib:ﬁrstapproval.Drugs81,727–732(2021).
-  section_title: 31.Syed,Y.Y.Surufatinib:ﬁrstapproval.Drugs81,727–732(2021).
-  section_level: 1
-  sort_order: 78
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 31
-- section_id: SEC:PMC12515981#0079
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 32.Xu,J.et al.Surufatinibin advancedpancreaticneuroendocrinetumours
-    (SANET-
-  section_title: 32.Xu,J.et al.Surufatinibin advancedpancreaticneuroendocrinetumours
-    (SANET-
-  section_level: 1
-  sort_order: 79
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 32
-- section_id: SEC:PMC12515981#0080
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 33.Xu,J.etal.Surufatinibinadvancedextrapancreaticneuroendocrinetumours
-  section_title: 33.Xu,J.etal.Surufatinibinadvancedextrapancreaticneuroendocrinetumours
-  section_level: 1
-  sort_order: 80
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 33
-- section_id: SEC:PMC12515981#0081
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 35.Chen,S.etal.Nab-paclitaxelandgemcitabinepluscamrelizumabandradio-
-  section_title: 35.Chen,S.etal.Nab-paclitaxelandgemcitabinepluscamrelizumabandradio-
-  section_level: 1
-  sort_order: 81
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 35
-- section_id: SEC:PMC12515981#0082
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 36.Guo,X.etal.Efﬁcacyofnab‑paclitaxelvs.gemcitabineincombinationwithS‑1
-  section_title: 36.Guo,X.etal.Efﬁcacyofnab‑paclitaxelvs.gemcitabineincombinationwithS‑1
-  section_level: 1
-  sort_order: 82
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 36
-- section_id: SEC:PMC12515981#0083
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 37.Li,H.W.&Tang,S.L.Colonystimulatingfactor-1anditsreceptoringastro-
-  section_title: 37.Li,H.W.&Tang,S.L.Colonystimulatingfactor-1anditsreceptoringastro-
-  section_level: 1
-  sort_order: 83
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 37
-- section_id: SEC:PMC12515981#0084
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 38.Gao,S.etal.Abstract2781:mechanismstudyofsurufatinibontheoptimized
-  section_title: 38.Gao,S.etal.Abstract2781:mechanismstudyofsurufatinibontheoptimized
-  section_level: 1
-  sort_order: 84
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 38
-- section_id: SEC:PMC12515981#0085
-  doc_id: DOC:PMC12515981
-  parent_section_id: null
-  section_path: 40.Wang,L.etal.LBA61HR070803plus5-FU/LVversusplaceboplus5-FU/LVin
-  section_title: 40.Wang,L.etal.LBA61HR070803plus5-FU/LVversusplaceboplus5-FU/LVin
-  section_level: 1
-  sort_order: 85
-  start_page: 9
-  end_page: 9
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 40
 documents:
 - doc_id: DOC:PMC12515981
-  source_id: PUBMED
-  external_id: PMC12515981
+  source_id: PMC
   title: 'First-line treatment with chemotherapy, surufatinib (an angio-immuno kinase
     inhibitor), and camrelizumab (an anti-PD-1 antibody) for locally advanced or metastatic
     pancreatic ductal adenocarcinoma: a phase Ib/II randomized study.'
@@ -1175,2376 +357,1166 @@ documents:
   language: en
   license_tier: TIER_0
   sections:
-  - name: adenocarcinoma:aphaseIb/IIrandomizedstudy / Signal Transduction and Targeted
-      Therapy / OPEN
-    text: 'RuJia1,Hai-YanSi1,Meng-JiaoFan1,NanZhang1,Guo-ChaoDeng1,Fang-FangLiu1,LuHan1,Miao-MiaoGou1,Zhao-LiTan1,
-
-      XiaZhang1,Yan-RongWang1,YueShi1,Yao-YueZhang1,Yu-ShanJia1,Yu-QiWang2,Quan-LiHan1✉,Zhi-KuanWang1✉and
-
-      Guang-HaiDai1✉
-
-      Pancreaticductaladenocarcinoma(PDAC)hasapoorprognosisandlimitedﬁrst-linetreatments.ThisphaseIb/IIrandomizedtrial
-
-      (NCT05218889)investigatedtheefﬁcacyandsafetyofsurufatinibpluscamrelizumabandnab-paclitaxel/S-1(NASCA)versusnab-
-
-      paclitaxelandgemcitabineinpatientswithlocallyadvancedormetastaticPDAC.Theprimaryendpointsweredose-limiting
-
-      toxicities and the recommended phase II dose (RP2D) of surufatinib in phase
-      Ib, and the objective response rate (ORR) in phase II.
-
-      Phase Ib used a 3 + 3 dose-escalation design to determine the RP2D of surufatinib
-      in six patients, which was established at 200 mg.
-
-      In phase II, patients were randomized 1:1 to receive the NASCA (45 patients)
-      or nab-paclitaxel and gemcitabine (45 patients). NASCA
-
-      groupshowedanORRof51.1%(23/45)versus24.4%(11/45)inthenab-paclitaxelandgemcitabinegroup(oddsratio3.2,95%CI
-
-      1.3–8.2,p = 0.01).Themedianprogression-freesurvival(PFS)was7.9vs.5.3months(HR0.63,95%CI0.40–0.99,p
-      = 0.045).The
-
-      medianoverallsurvivalwas13.0vs.11.0months(HR0.77,95%CI0.47–1.28,p = 0.318).ThemostcommonGrade≥3treatment-
-
-      related adverse event was decreased neutrophil count (33.3% vs. 35.6%). In the
-      NASCA group, enrichment of CD8+and CD8+PD-1+
-
-      cells, a high baseline M1/M2 macrophage ratio, and a reduction in CA19-9 levels
-      at weeks 6 and 12 were associated with improved
-
-      PFS comparedtopatientswithoutthese features.The NASCA regimenshowed promisingefﬁcacywithtolerablesafetyrelativeto
-
-      nab-paclitaxelandgemcitabineforlocallyadvancedormetastaticPDAC.
-
-      SignalTransductionandTargetedTherapy (2025) 10:339
-
-      ;https://doi.org/10.1038/s41392-025-02441-2
-
-      INTRODUCTION
-
-      Theprognosisforpancreaticductaladenocarcinoma(PDAC)
-
-      remainspoor,makingitaparticularlydifﬁcultdiseasetomanage.
-
-      DatafromtheGlobalCancerStatistics2022indicatethatthere
-
-      were511,000newlydiagnosedcasesand467,000deaths,
-
-      placingthiscancer12thintermsofincidenceand6thfor
-
-      cancer-relateddeathsglobally.1,2Asmostindividualsreceive
-
-      theirdiagnosisatalatestage,justapproximately12%are
-
-      anticipated
-
-      to
-
-      survive
-
-      for
-
-      more
-
-      than
-
-      5
-
-      years.3
-
-      First-line
-
-      management
-
-      of
-
-      metastatic
-
-      PDAC
-
-      predominantly
-
-      involves
-
-      systemic
-
-      chemotherapy,
-
-      with
-
-      regimens
-
-      like
-
-      nab-paclitaxel
-
-      combined with gemcitabine, FOLFIRINOX (irinotecan, leucovorin,
-
-      ﬂuorouracil,
-
-      and
-
-      oxaliplatin),
-
-      and
-
-      NALIRIFOX
-
-      (folinic
-
-      acid,
-
-      liposomalirinotecan,ﬂuorouracil,andoxaliplatin)reporting
-
-      medianoverallsurvival(OS)durationsof8.5,11.1,and11.1
-
-      months,accordingly.4–6Furthermore,immunotherapyefﬁcacy
-
-      remainsunsatisfactoryformostpatients,exceptforasmall
-
-      subgroup(~1%)withMSI-high/dMMR.7Forexample,treatments
-
-      involvingdurvalumabaloneorincombinationwithtremelimu-
-
-      mab,aswellasnivolumabcombinedwithchemotherapy,have
-
-      shownonlylimitedresponses.8,9
-
-      ImmunotherapyapproachesshowedlimitedefﬁcacyinPDAC,
-
-      potentiallyowingtotheparticularpropertiesofthetumorand
-
-      tumormicroenvironment(TME).10ThehallmarksofPDACTME
-
-      include desmoplastic ﬁbrotic stroma and hypovascularity resulting
-
-      inincreasedinterstitialpressure,poortumorperfusion,intratu-
-
-      moralhypoxia,immunesuppression,andinadequatedeliveryof
-
-      systemicdrugs.10,11Addressingthepoorvascularizationcharac-
-
-      terizedbyimmatureandinefﬁcientbloodvesselsmayoffera
-
-      novelavenueforPDACtherapy.Vascularnormalizationwith
-
-      increasedpericytecoverageofvesselsandimprovedtumor
-
-      perfusioninanorthotopicPDACmousemodelresultedin
-
-      decreased tumor hypoxia and enhanced chemotherapy delivery.12
-
-      Moreover,normalizingbloodvesselswithanti-angiogenicdrugs
-
-      withlowdosescanreduceimmunosuppressionbyrestrictingthe
-
-      functionsofregulatoryT(Treg)cellsandmyeloid-derived
-
-      suppressor cells (MDSCs). This approach improves T cell activation
-
-      andinﬁltrationintotumors.13,14Therefore,wehypothesizethat
-
-      usinganti-angiogenicagentstopromotevascularnormalization
-
-      mayenhancechemotherapydelivery,alleviateimmunesuppres-
-
-      sion, and improve tumor sensitivity to immunotherapy. Promising
-
-      ﬁndingswerereportedinaphaseIIstudyassessingpenpulimab
-
-      Received:26April2025Revised:27August2025Accepted:16September2025
-
-      1SeniorDepartmentofOncology,ChinesePLAGeneralHospital,Beijing,Chinaand2GeneseeqResearchInstitute,NanjingGeneseeqTechnologyInc,Nanjing,China
-
-      Correspondence:Quan-LiHan(hanquanli@aliyun.com)orZhi-KuanWang(wangzkme@sohu.com)orGuang-HaiDai(daigh301@vip.sina.com)
-
-      Theseauthorscontributedequally:RuJia,Hai-YanSi,Meng-JiaoFan,NanZhang
-
-      www.nature.com/sigtrans
-
-      ©TheAuthor(s)2025,Correctedpublication2025
-
-      1234567890();,:'
+  - name: OPEN / Introduction
+    text: '1234567890();,:
+
+      First-line treatment with chemotherapy, surufatinib (an angioimmuno kinase inhibitor),
+      and camrelizumab (an anti-PD-1 antibody) for locally advanced or metastatic
+      pancreatic ductal adenocarcinoma: a phase Ib/II randomized study
+
+      Ru Jia 1 , Hai-Yan Si 1 , Meng-Jiao Fan 1 , Nan Zhang 1 , Guo-Chao Deng 1 ,
+      Fang-Fang Liu 1 , Lu Han 1 , Miao-Miao Gou 1 , Zhao-Li Tan 1 , Xia Zhang 1 ,
+      Yan-Rong Wang 1 , Yue Shi 1 , Yao-Yue Zhang 1 , Yu-Shan Jia 1 , Yu-Qi Wang 2
+      , Quan-Li Han 1 ✉ , Zhi-Kuan Wang 1 ✉ and Guang-Hai Dai 1 ✉
+
+      Pancreatic ductal adenocarcinoma (PDAC) has a poor prognosis and limited fi
+      rst-line treatments. This phase Ib/II randomized trial (NCT05218889) investigated
+      the ef fi cacy and safety of surufatinib plus camrelizumab and nab-paclitaxel/S-1
+      (NASCA) versus nabpaclitaxel and gemcitabine in patients with locally advanced
+      or metastatic PDAC. The primary endpoints were dose-limiting toxicities and
+      the recommended phase II dose (RP2D) of surufatinib in phase Ib, and the objective
+      response rate (ORR) in phase II. Phase Ib used a 3 + 3 dose-escalation design
+      to determine the RP2D of surufatinib in six patients, which was established
+      at 200 mg. In phase II, patients were randomized 1:1 to receive the NASCA (45
+      patients) or nab-paclitaxel and gemcitabine (45 patients). NASCA group showed
+      an ORR of 51.1% (23/45) versus 24.4% (11/45) in the nab-paclitaxel and gemcitabine
+      group (odds ratio 3.2, 95% CI 1.3 -8.2, p = 0.01). The median progression-free
+      survival (PFS) was 7.9 vs. 5.3 months (HR 0.63, 95% CI 0.40 -0.99, p = 0.045).
+      The median overall survival was 13.0 vs. 11.0 months (HR 0.77, 95% CI 0.47 -1.28,
+      p = 0.318). The most common Grade ≥ 3 treatmentrelated adverse event was decreased
+      neutrophil count (33.3% vs. 35.6%). In the NASCA group, enrichment of CD8 +
+      and CD8 + PD-1 + cells, a high baseline M1/M2 macrophage ratio, and a reduction
+      in CA19-9 levels at weeks 6 and 12 were associated with improved PFS compared
+      to patients without these features. The NASCA regimen showed promising ef fi
+      cacy with tolerable safety relative to nab-paclitaxel and gemcitabine for locally
+      advanced or metastatic PDAC.
+
+      Signal Transduction and Targeted Therapy (2025) 10:339
+
+      The prognosis for pancreatic ductal adenocarcinoma (PDAC) remains poor, making
+      it a particularly dif fi cult disease to manage. Data from the Global Cancer
+      Statistics 2022 indicate that there were 511,000 newly diagnosed cases and 467,000
+      deaths, placing this cancer 12th in terms of incidence and 6th for cancer-related
+      deaths globally. 1,2 As most individuals receive their diagnosis at a late stage,
+      just approximately 12% are anticipated to survive for more than 5 years. 3 First-line
+      management of metastatic PDAC predominantly involves systemic chemotherapy,
+      with regimens like nab-paclitaxel combined with gemcitabine, FOLFIRINOX (irinotecan,
+      leucovorin, fl uorouracil, and oxaliplatin), and NALIRIFOX (folinic acid, liposomal
+      irinotecan, fl uorouracil, and oxaliplatin) reporting median overall survival
+      (OS) durations of 8.5, 11.1, and 11.1 months, accordingly. 4 -6 Furthermore,
+      immunotherapy ef fi cacy remains unsatisfactory for most patients, except for
+      a small subgroup (~1%) with MSI-high/dMMR. 7 For example, treatments involving
+      durvalumab alone or in combination with tremelimumab, as well as nivolumab combined
+      with chemotherapy, have shown only limited responses. 8,9
+
+      ; https://doi.org/10.1038/s41392-025-02441-2
+
+      Immunotherapy approaches showed limited ef fi cacy in PDAC, potentially owing
+      to the particular properties of the tumor and tumor microenvironment (TME).
+      10 The hallmarks of PDAC TME include desmoplastic fi brotic stroma and hypovascularity
+      resulting in increased interstitial pressure, poor tumor perfusion, intratumoral
+      hypoxia, immune suppression, and inadequate delivery of systemic drugs. 10,11
+      Addressing the poor vascularization characterized by immature and inef fi cient
+      blood vessels may offer a novel avenue for PDAC therapy. Vascular normalization
+      with increased pericyte coverage of vessels and improved tumor perfusion in
+      an orthotopic PDAC mouse model resulted in decreased tumor hypoxia and enhanced
+      chemotherapy delivery. 12 Moreover, normalizing blood vessels with anti-angiogenic
+      drugs with low doses can reduce immunosuppression by restricting the functions
+      of regulatory T (Treg) cells and myeloid-derived suppressor cells (MDSCs). This
+      approach improves T cell activation and in fi ltration into tumors. 13,14 Therefore,
+      we hypothesize that using anti-angiogenic agents to promote vascular normalization
+      may enhance chemotherapy delivery, alleviate immune suppression, and improve
+      tumor sensitivity to immunotherapy. Promising fi ndings were reported in a phase
+      II study assessing penpulimab
+
+      1 Senior Department of Oncology, Chinese PLA General Hospital, Beijing, China
+      and 2 Geneseeq Research Institute, Nanjing Geneseeq Technology Inc, Nanjing,
+      China Correspondence: Quan-Li Han (hanquanli@aliyun.com) or Zhi-Kuan Wang (wangzkme@sohu.com)
+      or Guang-Hai Dai (daigh301@vip.sina.com) These authors contributed equally:
+      Ru Jia, Hai-Yan Si, Meng-Jiao Fan, Nan Zhang'
     page: 1
-  - name: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7% / Results
-      / Phase II randomized study: efficacy and safety / Baseline characteristics'
-    text: '(ananti-PD-1antibody)plusanlotinib(aninhibitorofangiogen-
-
-      esis),nab-paclitaxel,andgemcitabine,asﬁrst-linetreatmentfor
-
-      metastaticpancreaticcancer.Theregimenachieveda50.0%
-
-      objectiveresponserate(ORR),95.5%diseasecontrolrate(DCR),
-
-      andmedianprogression-freesurvival(PFS)andOSof8.8months
-
-      and13.7months,respectively.15
-
-      S-1,anoralﬂuoropyrimidine,isbettertoleratedinEastAsian
-
-      patientsduetoethnicdifferencesindrugmetabolismandis
-
-      widely used for gastrointestinalcancers in this population.16–20Its
-
-      efﬁcacy in PDAC among East Asians is well established. According
-
-      totheJASPAC01trial,S-1demonstratedgreaterefﬁcacythan
-
-      gemcitabineintheadjuvantcontext,andresultsfromtheGEST
-
-      trial
-
-      indicated
-
-      that
-
-      S-1
-
-      offers
-
-      comparable
-
-      effectiveness
-
-      to
-
-      gemcitabineasinitialtreatmentforadvancedPDAC.21,22These
-
-      conclusions were further backed by a network meta-analysis from
-
-      Japan, which demonstrated that ﬁrst-line treatment with S-1 yields
-
-      survivaloutcomescomparabletothosewithgemcitabinein
-
-      metastatic PDAC.23Both trials also reported lower rates of adverse
-
-      events (AEs), especially hematologic toxicity, with S-1 compared to
-
-      gemcitabine.21,22Apreclinicalstudyinpancreaticcancersuggest
-
-      thatS-1plusnab-paclitaxelmayexertsynergisticantitumor
-
-      effects,potentiallythroughstromaldepletionandimproved
-
-      vascularization.24Thisdoubletregimenofferssimilarefﬁcacyto
-
-      nab-paclitaxelplusgemcitabine,withbettertolerability,andhas
-
-      recentlybeenexploredinChina,especiallyatourcenter.25–29A
-
-      retrospectivestudyshowedthataddingPD-1blockadetothis
-
-      combinationdidnotincreaseGrade≥3AEs,indicatinga
-
-      manageablesafetyproﬁle.30
-
-      Buildingonthisrationale,wedevelopedanexploratorymulti-
-
-      modalregimencombiningchemotherapy,anti-angiogenicther-
-
-      apy,andimmunotherapytoimproveantitumorefﬁcacywhile
-
-      maintainingacceptablesafety.Givenitsfavorabletolerability
-
-      proﬁle,S-1plusnab-paclitaxelwasselectedasthechemotherapy
-
-      backbone.Tofurtherinﬂuencethetumormicroenvironment,we
-
-      introduced surufatinib—a novel small-molecule agent that acts on
-
-      tumorangiogenesisbyinhibitingVEGFRsandFGFR1,andon
-
-      immuneescapemechanismsthroughCSF1Rblockade.31Two
-
-      randomizedphaseIIItrialsfoundthatsurufatinibprovideda
-
-      signiﬁcantimprovementinPFSforpatientswithadvanced
-
-      pancreaticandextra-pancreaticneuroendocrinetumorscom-
-
-      paredrelativetoplacebo.32,33InitialresultsfromaphaseItrial
-
-      evaluatingsurufatinibincombinationwithPD-1inhibitionin
-
-      advancedsolidtumorsshowedanti-tumoractivityandgood
-
-      tolerability.34Camrelizumab,aPD-1blockingantibody,showed
-
-      clinicalbeneﬁtata200 mgdosewhenadministeredalongside
-
-      chemotherapy and radiotherapy in patients with locally advanced
-
-      pancreaticadenocarcinoma.35Drawinguponthisevidence,we
-
-      initiateda
-
-      phase
-
-      Ib/II
-
-      randomized
-
-      study
-
-      investigating
-
-      the
-
-      combinationofsurufatinib,camrelizumab,nab-paclitaxel,and
-
-      S-1asaﬁrst-linetreatmentforpatientswithlocallyadvancedor
-
-      metastaticPDAC.
-
-      RESULTS
-
-      PhaseIbstudy:dosedetermination
-
-      ThephaseIbstudyaimedtoidentifytherecommendedphaseII
-
-      dose(RP2D)ofsurufatinibincombinationwithcamrelizumab,
-
-      nab-paclitaxel,andS-1.Surufatinibat200 mgwasinitially
-
-      administeredtothreepatientsalongsidecamrelizumab,nab-
-
-      paclitaxel, and S-1. After one individual developed a dose-limiting
-
-      toxicity(DLT)withGrade3diarrhea,threefurtherpatientswere
-
-      treated using the same dose regimen. The following three patients
-
-      didnotdevelopanyDLTs.Amongthesixpatients,AEsobserved
-
-      duringthestudyalsoincludedGrade2dcreasedneutrophil
-
-      count(n = 3),Grade3dcreasedneutrophilcount(n = 1),Grade4
-
-      dcreased neutrophil count (n = 1; noted as a single-day event and
-
-      thusnotmeetingDLTcriteria),Grade3immune-relatedhepatitis
-
-      (n = 2;occurringatWeeks8and18,respectively,bothbeyond
-
-      Cycle1),andGrade2nausea(n = 1).TheORRwas66.7%(4/6),
-
-      withaDCRof100%.Consideringthehighantitumoractivityand
-
-      thetolerablesafetyproﬁleobservedatthisdoselevel,itwas
-
-      decidedthatnofurtherdoseescalationwouldbeconducted.On
-
-      thisbasis,surufatinib200 mgwasdeterminedtobetheRP2D.
-
-      Surufatinib200 mgshowedmanageablesafetyandhighanti-
-
-      tumoractivity.
-
-      PhaseIIrandomizedstudy:efﬁcacyandsafety
-
-      Baselinecharacteristics.
-
-      DuringthephaseIItrialperiodfrom
-
-      December2021toJune2024,90patientswererandomly
-
-      assigned:45toreceivesurufatinibincombinationwithcamreli-
-
-      zumab,nab-paclitaxel,andS-1(theNASCAgroup),and45tothe
-
-      grouptreatedwithnab-paclitaxelandgemcitabine.Allrando-
-
-      mizedsubjectswereadministeredtheirallocatedregimens(Fig.
-
-      1).Additionally,35.6%ofNASCAand35.6%ofnab-paclitaxeland
-
-      gemcitabinepatientshadonemetastaticsite,and35.6%and
-
-      31.1%hadtwo,respectively.Biliarydrainagewasperformedprior
-
-      totreatmentinsevenindividuals(15.6%)fromtheNASCAgroup
-
-      and four (8.9%) from the nab-paclitaxel and gemcitabine group. In
-
-      addition,onepatientinthelattergrouprequiredbiliarydrainage
-
-      whileontherapy(Table1).Baselinedemographicsandclinical
-
-      featureswerebalancedbetweengroups.
-
-      Efﬁcacy.
-
-      AtdatacutoffonMarch3,2025,patientshadbeen
-
-      followedforamedianof21.5months(95%conﬁdenceinterval
-
-      [CI]:17.5–25.9).TheORRwas51.1%(23/45)(95%CI35.8–66.3)in
-
-      theNASCAand24.4%(11/45)(95%CI12.9–39.5)inthenab-
-
-      paclitaxel and gemcitabinegroups (ratedifference:26.7%,90% CI
-
-      9.9–41.5and 95% CI 6.6–43.9; oddsratio [OR]: 3.2, 95%CI 1.3–8.2,
-
-      p = 0.01).TheDCRreached91.1%(95%CI78.8–97.5)and88.9%
-
-      (95%CI75.9–96.3),
-
-      respectively.Partial
-
-      response(PR)was
-
-      achievedby23patientsand11,whilestabledisease(SD)was
-
-      observedin18and29patientsinthetwogroups,respectively
-
-      (Table 2 and supplementary Fig. 1). Patients receiving NASCA had
-
-      amediandurationofresponse(DOR)of8.1months(95%CI:
-
-      5.8–13.3), while those treated with nab-paclitaxel and gemcitabine
-
-      hadamedianDORof6.0months(95%CI:2.3–13.0).Themedian
-
-      timetoresponse(TTR)forNASCAwas1.6months(95%CI:
-
-      1.5–2.7),notablyshorterthanthe2.5months(95%CI:1.4–3.8)
-
-      observedinthecomparatorgroup(Table2).
-
-      PatientsintheNASCAgroupexperiencedamedianPFSof7.9
-
-      months(95%CI:5.9–9.4),asopposedto5.3months(95%CI:
-
-      3.4–6.4)forthosereceivingnab-paclitaxelandgemcitabine.The
-
-      calculatedhazard
-
-      ratio
-
-      (HR)was0.63
-
-      (95%
-
-      CI:0.40–0.99;
-
-      p = 0.045).The6-monthand12-monthPFSrateswere61.4%
-
-      (95%CI45.4–74.0)versus43.7%(95%CI28.9–57.6)and19.1%
-
-      (95%CI8.7–32.6)versus13.5%(95%CI5.0–26.3),respectively.
-
-      Furthermore,themedianOSreached13.0months(95%CI:
-
-      10.5–16.1)fortheNASCAand11.0months(95%CI:8.4–15.3)for
-
-      thenab-paclitaxelandgemcitabine(HR:0.77;95%CI:0.47–1.28;
-
-      p = 0.318).Six-and12-monthOSrateswere95.6%(95%CI:
-
-      83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7%
-
-      (95%CI:72.7–93.8)and45.4%(95%CI:30.2–59.4)forthe
-
-      comparator group(Fig. 2). The NASCA regimen achieved a higher
-
-      ORR
-
-      and
-
-      prolonged
-
-      PFS
-
-      compared
-
-      to
-
-      nab-paclitaxel
-
-      and
-
-      gemcitabinegroup,withatrendtowardimprovedOS.
-
-      At the data cutoff, 42 (93.3%) patients in the NASCA group and
-
-      43(95.6%)inthenab-paclitaxelandgemcitabinegrouphad
-
-      discontinuedstudytreatments.Subsequenttherapywasreceived
-
-      by28(66.7%)and37(86.0%)patients,respectively.Themost
-
-      commontreatmentswerechemotherapy,mainlyirinotecan(17
-
-      [60.7%]vs.14[37.8%])orliposomalirinotecan(10[35.7%]vs.16
-
-      [43.2%]) and oxaliplatin (19 [67.9%] vs. 27 [73.0%]). Details of other
-
-      therapiesareprovidedinSupplementaryTables1and2.
-
-      Safety.
-
-      Toevaluatetolerability,treatment-emergentadverse
-
-      events(TEAEs)wereassessedinbothgroups.IntheNASCA
-
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
-
-      Jiaetal.
-
-      2
-
-      SignalTransductionandTargetedTherapy (2025) 10:339'
+  - name: 'OPEN / Results / Phase II randomized study: efficacy and safety / Baseline
+      characteristics'
+    text: '(an anti-PD-1 antibody) plus anlotinib (an inhibitor of angiogenesis),
+      nab-paclitaxel, and gemcitabine, as fi rst-line treatment for metastatic pancreatic
+      cancer. The regimen achieved a 50.0% objective response rate (ORR), 95.5% disease
+      control rate (DCR), and median progression-free survival (PFS) and OS of 8.8
+      months and 13.7 months, respectively. 15
+
+      S-1, an oral fl uoropyrimidine, is better tolerated in East Asian patients due
+      to ethnic differences in drug metabolism and is widely used for gastrointestinal
+      cancers in this population. 16 -20 Its ef fi cacy in PDAC among East Asians
+      is well established. According to the JASPAC01 trial, S-1 demonstrated greater
+      ef fi cacy than gemcitabine in the adjuvant context, and results from the GEST
+      trial indicated that S-1 offers comparable effectiveness to gemcitabine as initial
+      treatment for advanced PDAC. 21,22 These conclusions were further backed by
+      a network meta-analysis from Japan, which demonstrated that fi rst-line treatment
+      with S-1 yields survival outcomes comparable to those with gemcitabine in metastatic
+      PDAC. 23 Both trials also reported lower rates of adverse events (AEs), especially
+      hematologic toxicity, with S-1 compared to gemcitabine. 21,22 A preclinical
+      study in pancreatic cancer suggest that S-1 plus nab-paclitaxel may exert synergistic
+      antitumor effects, potentially through stromal depletion and improved vascularization.
+      24 This doublet regimen offers similar ef fi cacy to nab-paclitaxel plus gemcitabine,
+      with better tolerability, and has recently been explored in China, especially
+      at our center. 25 -29 A retrospective study showed that adding PD-1 blockade
+      to this combination did not increase Grade ≥ 3 AEs, indicating a manageable
+      safety pro fi le. 30
+
+      Building on this rationale, we developed an exploratory multimodal regimen combining
+      chemotherapy, anti-angiogenic therapy, and immunotherapy to improve antitumor
+      ef fi cacy while maintaining acceptable safety. Given its favorable tolerability
+      pro fi le, S-1 plus nab-paclitaxel was selected as the chemotherapy backbone.
+      To further in fl uence the tumor microenvironment, we introduced surufatinib
+      -a novel small-molecule agent that acts on tumor angiogenesis by inhibiting
+      VEGFRs and FGFR1, and on immune escape mechanisms through CSF1R blockade. 31
+      Two randomized phase III trials found that surufatinib provided a signi fi cant
+      improvement in PFS for patients with advanced pancreatic and extra-pancreatic
+      neuroendocrine tumors compared relative to placebo. 32,33 Initial results from
+      a phase I trial evaluating surufatinib in combination with PD-1 inhibition in
+      advanced solid tumors showed anti-tumor activity and good tolerability. 34 Camrelizumab,
+      a PD-1 blocking antibody, showed clinical bene fi t at a 200 mg dose when administered
+      alongside chemotherapy and radiotherapy in patients with locally advanced pancreatic
+      adenocarcinoma. 35 Drawing upon this evidence, we initiated a phase Ib/II randomized
+      study investigating the combination of surufatinib, camrelizumab, nab-paclitaxel,
+      and S-1 as a fi rst-line treatment for patients with locally advanced or metastatic
+      PDAC.
+
+      Phase Ib study: dose determination
+
+      The phase Ib study aimed to identify the recommended phase II dose (RP2D) of
+      surufatinib in combination with camrelizumab, nab-paclitaxel, and S-1. Surufatinib
+      at 200 mg was initially administered to three patients alongside camrelizumab,
+      nabpaclitaxel, and S-1. After one individual developed a dose-limiting toxicity
+      (DLT) with Grade 3 diarrhea, three further patients were treated using the same
+      dose regimen. The following three patients did not develop any DLTs. Among the
+      six patients, AEs observed during the study also included Grade 2 dcreased neutrophil
+      count(n = 3), Grade 3 dcreased neutrophil count(n = 1), Grade 4 dcreased neutrophil
+      count (n = 1; noted as a single-day event and thus not meeting DLT criteria),
+      Grade 3 immune-related hepatitis (n = 2; occurring at Weeks 8 and 18, respectively,
+      both beyond Cycle 1), and Grade 2 nausea (n = 1). The ORR was 66.7% (4/6), with
+      a DCR of 100%. Considering the high antitumor activity and the tolerable safety
+      pro fi le observed at this dose level, it was decided that no further dose escalation
+      would be conducted. On this basis, surufatinib 200 mg was determined to be the
+      RP2D. Surufatinib 200 mg showed manageable safety and high antitumor activity.
+
+      Phase II randomized study: ef fi cacy and safety
+
+      Baseline characteristics . During the phase II trial period from December 2021
+      to June 2024, 90 patients were randomly assigned: 45 to receive surufatinib
+      in combination with camrelizumab, nab-paclitaxel, and S-1 (the NASCA group),
+      and 45 to the group treated with nab-paclitaxel and gemcitabine. All randomized
+      subjects were administered their allocated regimens (Fig. 1). Additionally,
+      35.6% of NASCA and 35.6% of nab-paclitaxel and gemcitabine patients had one
+      metastatic site, and 35.6% and 31.1% had two, respectively. Biliary drainage
+      was performed prior to treatment in seven individuals (15.6%) from the NASCA
+      group and four (8.9%) from the nab-paclitaxel and gemcitabine group. In addition,
+      one patient in the latter group required biliary drainage while on therapy (Table
+      1). Baseline demographics and clinical features were balanced between groups.
+
+      Ef fi cacy . At data cutoff on March 3, 2025, patients had been followed for
+      a median of 21.5 months (95% con fi dence interval [CI]: 17.5 -25.9). The ORR
+      was 51.1% (23/45) (95% CI 35.8 -66.3) in the NASCA and 24.4% (11/45) (95% CI
+      12.9 -39.5) in the nabpaclitaxel and gemcitabine groups (rate difference: 26.7%,
+      90% CI 9.9 -41.5 and 95% CI 6.6 -43.9; odds ratio [OR]: 3.2, 95% CI 1.3 -8.2,
+      p = 0.01). The DCR reached 91.1% (95% CI 78.8 -97.5) and 88.9% (95% CI 75.9
+      -96.3), respectively. Partial response (PR) was achieved by 23 patients and
+      11, while stable disease (SD) was observed in 18 and 29 patients in the two
+      groups, respectively (Table 2 and supplementary Fig. 1). Patients receiving
+      NASCA had a median duration of response (DOR) of 8.1 months (95% CI: 5.8 -13.3),
+      while those treated with nab-paclitaxel and gemcitabine had a median DOR of
+      6.0 months (95% CI: 2.3 -13.0). The median time to response (TTR) for NASCA
+      was 1.6 months (95% CI: 1.5 -2.7), notably shorter than the 2.5 months (95%
+      CI: 1.4 -3.8) observed in the comparator group (Table 2).
+
+      Patients in the NASCA group experienced a median PFS of 7.9 months (95% CI:
+      5.9 -9.4), as opposed to 5.3 months (95% CI: 3.4 -6.4) for those receiving nab-paclitaxel
+      and gemcitabine. The calculated hazard ratio (HR) was 0.63 (95% CI: 0.40 -0.99;
+      p = 0.045). The 6-month and 12-month PFS rates were 61.4% (95% CI 45.4 -74.0)
+      versus 43.7% (95% CI 28.9 -57.6) and 19.1% (95% CI 8.7 -32.6) versus 13.5% (95%
+      CI 5.0 -26.3), respectively. Furthermore, the median OS reached 13.0 months
+      (95% CI: 10.5 -16.1) for the NASCA and 11.0 months (95% CI: 8.4 -15.3) for the
+      nab-paclitaxel and gemcitabine (HR: 0.77; 95% CI: 0.47 -1.28; p = 0.318). Sixand
+      12-month OS rates were 95.6% (95% CI: 83.4 -98.9) and 56.5% (95% CI: 40.6 -69.7)
+      for NASCA, versus 86.7% (95% CI: 72.7 -93.8) and 45.4% (95% CI: 30.2 -59.4)
+      for the comparator group (Fig. 2). The NASCA regimen achieved a higher ORR and
+      prolonged PFS compared to nab-paclitaxel and gemcitabine group, with a trend
+      toward improved OS.
+
+      At the data cutoff, 42 (93.3%) patients in the NASCA group and 43 (95.6%) in
+      the nab-paclitaxel and gemcitabine group had discontinued study treatments.
+      Subsequent therapy was received by 28 (66.7%) and 37 (86.0%) patients, respectively.
+      The most common treatments were chemotherapy, mainly irinotecan (17 [60.7%]
+      vs. 14 [37.8%]) or liposomal irinotecan (10 [35.7%] vs. 16 [43.2%]) and oxaliplatin
+      (19 [67.9%] vs. 27 [73.0%]). Details of other therapies are provided in Supplementary
+      Tables 1 and 2.
+
+      Safety . To evaluate tolerability, treatment-emergent adverse events (TEAEs)
+      were assessed in both groups. In the NASCA'
     page: 2
-  - name: '83.4–98.9) and 56.5% (95% CI: 40.6–69.7) for NASCA, versus 86.7% / Discussion
-      / Subgroup and biomarker analyses'
-    text: 'group,45patients(100%)experiencedTEAEs,comparedto43
-
-      patients(95.6%)receivingnab-paclitaxelandgemcitabine.Hema-
-
-      tologicAEs,particularlydeclinesinwhitebloodcell,neutrophil,
-
-      andlymphocytecounts,werethepredominantTEAEsinpatients
-
-      treatedwithNASCA.Forthosereceivingnab-paclitaxeland
-
-      gemcitabine,decreasedwhitebloodcellcount,anemia,and
-
-      dcreasedneutrophilcountweremostfrequentlyreported.Inthe
-
-      NASCAgroup,themostprevalentGrade3and4TEAEswere
-
-      declinesinwhitebloodcell,neutrophil,andlymphocytecounts,
-
-      whereasdecreasedwhitebloodcellandneutrophilcountswere
-
-      prominentinthenab-paclitaxelandgemcitabinegroup(Table3).
-
-      Additionally,immune-relatedadverseevents(irAEs)weredocu-
-
-      mentedinten(22.2%)patientsintheNASCAgroup,including
-
-      three cases of Grade 2 hepatitis, one case of Grade 3 hepatitis, one
-
-      caseofGrade2colitis,twocasesofGrade2hypothyroidism,two
-
-      cases of Grade 2 hypophysitis, and one case of Grade 3 rash. Dose
-
-      reductionsduetoTEAEswererequiredinsevenpatients(15.6%)
-
-      intheNASCAandnine(20.0%)inthenab-paclitaxeland
-
-      gemcitabine groups. Treatment discontinuation of any medication
-
-      occurredin15patients(33.3%)receivingNASCAand10patients
-
-      (22.2%)receivingnab-paclitaxelandgemcitabine.Twodeaths
-
-      occurredintheNASCAgroup,oneduetoliverfailurenotrelated
-
-      to treatment and one from unspeciﬁed causes. For treatment with
-
-      nab-paclitaxelandgemcitabine,onedeathwasattributedtoa
-
-      non-treatment-related infection and one from unspeciﬁed causes.
-
-      NASCA treatment was associated with manageable TEAEs, with no
-
-      newsafetysignals.
-
-      Subgroupandbiomarkeranalyses.
-
-      Subgroupanalysesforboth
-
-      PFSandOSdemonstratedconsistentpatternswiththeresults
-
-      observedintheprimaryanalyses(SupplementaryFigs.2–4).In
-
-      boththeNASCAandnab-paclitaxelandgemcitabinegroups,
-
-      patients with a CA19-9 decrease at week 6 or week 12 had longer
-
-      medianPFScomparedtothosewithoutadecrease(Supplemen-
-
-      taryTable3).
-
-      Multipleximmunohistochemistry(mIHC)wasperformedon
-
-      baselinetissuesamplesof26patientswhoreceivedNASCA
-
-      treatment.TheproportionofM1toM2macrophageswithinthe
-
-      stroma was markedly elevated in individuals achieving PR relative
-
-      tothosewithSDandprogressivedisease(PD)(p = 0.04)(Fig.3a).
-
-      UsinganM1/M2cutoffof10,patientswithhigherM1/M2ratios
-
-      exhibitedgreatertumorshrinkagecomparedtothosewithlower
-
-      ratios(Fig.3b).Additionally,stromalM1/M2cellpercentages
-
-      showedacorrelationwiththemagnitudeoftumorshrinkage.
-
-      (r = −0.39,p = 0.051)(Fig.3c).Usingthemedianasacutoff,
-
-      patientswithhigherlevelsofM1/M2(p = 0.048),CD8+(p = 0.03),
-
-      andCD8+PD-1+cells(p = 0.0035)instromahadlongerPFS
-
-      comparedtothosewithlowerlevels(Fig.3d–f).Immune
-
-      microenvironmentfeatures,includingM1/M2ratioandCD8+
-
-      inﬁltration, may serve as predictive biomarkers for NASCA beneﬁt.
-
-      DISCUSSION
-
-      Managementofadvancedpancreaticcancercontinuestobe
-
-      challenging, largely owing to scarce treatment choices and dismal
-
-      outcomes.Ourstudyevaluatesanewﬁrst-lineregimen,combin-
-
-      ing
-
-      surufatinib,
-
-      camrelizumab,
-
-      nab-paclitaxel,
-
-      and
-
-      S-1,
-
-      and
-
-      conﬁrmsitsefﬁcacyandsafetyinpatientswithmetastatic
-
-      pancreaticadenocarcinoma.TheNASCAgroupachievedanORR
-
-      of51.1%,signiﬁcantlyexceedingthatofthestandardnab-
-
-      paclitaxelandgemcitabineregimen(24.4%),therebymeeting
-
-      theprimaryendpoint.Additionally,theNASCAgroupshoweda
-
-      Fig.1
-
-      Trialproﬁle.TwodeathsoccurredintheNASCAgroup,oneduetoliverfailureandtheotherduetounspeciﬁedcauses.Inthenab-
-
-      paclitaxelandgemcitabinegroup,onedeathwasattributedtoaninfectionandoneduetounspeciﬁedcauses
-
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
-
-      Jiaetal.
-
-      3
-
-      SignalTransductionandTargetedTherapy (2025) 10:339'
-    page: 3
-  - name: 3.6(2.2,12.6) / 290.0 (47.4, 1635.0)518.0(98.5,2998.0)
-    text: 'longer median PFS (7.9 months) relative to the nab-paclitaxel and
-
-      gemcitabinegroup(5.3months).Notably,thisstudyrepresents
-
-      theﬁrstrandomizedtrialcomparinganti-PD-1therapycombined
-
-      withanti-angiogenictherapyandchemotherapyversusche-
-
-      motherapy alone in this setting. Our ﬁndings align with those from
-
-      asimilarphaseIIstudyevaluatinganti-PD-1therapyand
-
-      angiogenesisinhibitorswithchemotherapyinmetastaticpan-
-
-      creaticcancer.Penpulimabwithanlotinibandgemcitabineand
-
-      nab-paclitaxelachievedanORRof50.0%,withamedianPFSand
-
-      OSof8.8and13.7months,respectively.15Additionally,ourORR
-
-      and PFS values were numerically higher than those observed with
-
-      nivolumabandmodiﬁedFOLFIRINOXaccordingtophaseIItrial
-
-      data,whichreportedanORRof32.3%andamedianPFSof
-
-      7.4months.9TheNASCAgroupalsoshowedhigherORRandPFS
-
-      comparedtothegemcitabineandnab-paclitaxelintheMPACT
-
-      and NAPOLI-3 studies, which reported ORRs of 23% and 36%, with
-
-      amedianPFSof5.5and5.6months,respectively.4,6Nonetheless,
-
-      it
-
-      is
-
-      essential
-
-      to
-
-      approach
-
-      these
-
-      cross-study
-
-      comparisons
-
-      cautiously, as differences in study designs and patient populations
-
-      limitdirectcomparisons.
-
-      Mechanistically, these results of surufatinib may be attributed to
-
-      itsabilitytoimprovetumorvasculaturenormalizationata
-
-      relativelylowdose.13,14Thisimprovementfacilitatesbetterdrug
-
-      deliveryandmitigateshypoxia-inducedchemotherapyresis-
-
-      tance.11,36Surufatinib,aVEGFRtyrosinekinaseinhibitor,also
-
-      targetsCSF1R.BlockingCSF1Rsignalingdecreasestheinﬁltration
-
-      oftumor-associatedmacrophagesandlimitstheirpolarization
-
-      toward the M2 phenotype.37Notably, in vitrostudies have shown
-
-      that surufatinib plus an anti-PD-1 antibody and nab-paclitaxel and
-
-      gemcitabinedownregulatesCSF1R,CD163(anM2macrophage
-
-      marker),andPD-L1.38ThroughitsinﬂuenceontheCSF-1/CSF-1R
-
-      signalingaxis,surufatinibcouldcontributetoreshapingthe
-
-      immune contexture within tumors, which may improve responses
-
-      tocombinationtherapies. Thisstudyfoundthat a higherbaseline
-
-      M1/M2macrophageratiowassigniﬁcantlyassociatedwitha
-
-      higherresponserate,deeperresponses,aswellasimprovedPFS.
-
-      Moreover,CA19-9hasbeenrecognizedasabiomarkerfor
-
-      predictingtreatmentresponseinseverallargephaseIIItrials.39
-
-      Inthistrial,patientswithanydecreaseinCA19-9atweeks6and
-
-      12hadabetterPFSthanthosewithnodecrease,regardlessof
-
-      whether
-
-      they
-
-      received
-
-      the
-
-      NASCA
-
-      or
-
-      nab-paclitaxel
-
-      and
-
-      gemcitabine.
-
-      IntheMPACTandNAPOLI-3phaseIIItrials,medianOSfor
-
-      patients treatedwithnab-paclitaxeland gemcitabinewas8.5and
-
-      9.2months,respectively,4,6whilethisstudydemonstrateda
-
-      medianOSof11.0months.ThelongerOSobservedinthisstudy
-
-      maybeattributedtotheavailabilityofsubsequenttherapies.
-
-      Speciﬁcally,86.0%ofpatientstreatedwiththenab-paclitaxeland
-
-      gemcitabinegroupand66.7%treatedwithNASCAreceived
-
-      subsequent therapy. At our center, we improved the availability of
-
-      irinotecan-basedregimensforsecond-linetherapy,guidedby
-
-      ﬁndingsfromthephaseIIIHR-IRI-APCtrialinwhichliposomal
-
-      irinotecanplus5-ﬂuorouracilandleucovorinassecond-line
-
-      treatmentyieldedamedianOSof7.39months.40Safetyproﬁle
-
-      ofthenab-paclitaxelandgemcitabineinthisstudyalignedwith
-
-      datafromtheMPACTandNAPOLI-3trials.4,6Moreover,the
-
-      additionofsurufatinibandcamrelizumabtothenab-paclitaxel
-
-      andS-1backbonereportedacontrollablesafetyproﬁle.The
-
-      administrationoftwooraldrugsledtomorepronounced
-
-      gastrointestinaldiscomfortintheNASCAgroup.Furthermore,
-
-      theincidencesofGrade3increasedaspartateaminotransferase
-
-      andelevatedbilirubinwerehigherintheNASCAgroup,which
-
-      maybeattributabletosurufatinibandcamrelizumab.Notably,
-
-      around 11.1% of patients receiving NASCA developed Grade 3 or 4
-
-      peripheral neuropathy,an adverse effect that was not reported in
-
-      those
-
-      given
-
-      nab-paclitaxel
-
-      and
-
-      gemcitabine.
-
-      Although
-
-      this
-
-      Table2.
-
-      Tumorresponse
-
-      Tumorresponse
-
-      NASCA (N = 45)Nab-paclitaxeland
-
-      gemcitabine(N = 45)
-
-      Partialresponse,n(%)
-
-      23(51.1)
-
-      11(24.4)
-
-      Stabledisease,n(%)
-
-      18(40.0)
-
-      29(64.4)
-
-      Progressivedisease,n(%)
-
-      4(8.9)
-
-      5(11.1)
-
-      Objectiveresponserate,
-
-      (95%CI)
-
-      51.1%
-
-      (35.8–66.3)
-
-      24.4%(12.9–39.5)
-
-      Diseasecontrolrate,(95%
-
-      CI)
-
-      91.1%
-
-      (78.8–97.5)
-
-      88.9%(75.9–96.3)
-
-      Timetoresponse
-
-      (months), median (95% CI)
-
-      1.6(1.5–2.7)
-
-      2.5(1.4–3.8)
-
-      Durationofresponse
-
-      (months), median (95% CI)
-
-      8.1(5.8–13.3)
-
-      6.0(2.3–13.0)
-
-      Table1.
-
-      Baselinecharacteristics
-
-      NASCA(N = 45)
-
-      Nab-paclitaxeland
-
-      gemcitabine
-
-      (N = 45)
-
-      Sex,n(%)
-
-      Male
-
-      30(66.7)
-
-      25(55.6)
-
-      Female
-
-      15(33.3)
-
-      20(44.4)
-
-      Age(years)
-
-      Median(IQR)
-
-      59.0(56.0,61.0)
-
-      59.0(55.0,66.0)
-
-      Range
-
-      36.0–75.0
-
-      39.0–74.0
-
-      ECOG performance status, n (%)
-
-      0
-
-      18(40.0)
-
-      14(31.1)
-
-      1
-
-      27(60.0)
-
-      31(68.9)
-
-      Differentiationgrade,n(%)
-
-      Undifferentiated
-
-      11(24.4)
-
-      7(15.6)
-
-      Poorly-differentiated
-
-      25(55.6)
-
-      29(64.4)
-
-      Moderately-differentiated
-
-      7(15.6)
-
-      9(20.0)
-
-      Well-differentiated
-
-      2(4.4)
-
-      0
-
-      Primarytumorlocation,n(%)
-
-      Head
-
-      18(40.0)
-
-      19(42.2)
-
-      Body/Tail
-
-      27(60.0)
-
-      26(57.8)
-
-      Stage,n(%)
-
-      Metastaticdisease
-
-      37(82.2)
-
-      36(80.0)
-
-      Locallyadvanced
-
-      8(17.8)
-
-      9(20.0)
-
-      Sitesofmetastasis,n(%)
-
-      Liver
-
-      23(51.1)
-
-      25(55.6)
-
-      lymphnodes
-
-      24(53.3)
-
-      20(44.4)
-
-      Peritoneum
-
-      9(20.0)
-
-      9(20.0)
-
-      Lung
-
-      5(11.1)
-
-      8(17.8)
-
-      Other
-
-      3(6.7)
-
-      3(6.7)
-
-      Metastaticsites,n(%)
-
-      1
-
-      16(35.6)
-
-      16(35.6)
-
-      2
-
-      16(35.6)
-
-      14(31.1)
-
-      3
-
-      5(11.1)
-
-      6(13.3)
-
-      Priorresectionofprimarysite
-
-      Yes
-
-      6(13.3)
-
-      9(20.0)
-
-      No
-
-      39(86.7)
-
-      36(80.0)
-
-      BaselineCA19-9,U/mL
-
-      Median(IQR)
-
-      290.0 (47.4, 1635.0)518.0(98.5,2998.0)
-
-      BaselineCEA,ng/mL
-
-      Median(IQR)
-
-      4.6(2.5,8.1)
-
-      3.6(2.2,12.6)
-
-      Priorbiliarydrainage,n(%)
-
-      7(15.6)
-
-      4(8.9)
-
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
-
-      Jiaetal.
-
-      4
-
-      SignalTransductionandTargetedTherapy (2025) 10:339
-
-      differencemayreﬂectregimen-speciﬁctoxicity,thesmallsample
-
-      sizewarrantscautiousinterpretation.
-
-      AccordingtotheNCCNguidelines,ﬁrst-linetreatmentoptions
-
-      forlocallyadvancedPDACincludeenrollmentinclinicaltrials,
-
-      systemictherapy,chemoradiotherapy,orstereotacticbodyradia-
-
-      tiontherapy.Amongthisstudyparticipants,locallyadvanced
-
-      diseasewasobservedin20.0%ofthosereceivingnab-paclitaxel
-
-      andgemcitabineandin17.8%ofthosetreatedwiththeNASCA
-
-      regimen. Although the proportionof these patientswasrelatively
-
-      smallandbalancedbetweenarms,theirinclusionmayhave
-
-      introduced
-
-      clinical
-
-      heterogeneity,
-
-      as
-
-      locally
-
-      advanced
-
-      and
-
-      metastaticPDACdifferinprognosisandtreatmentresponse.This
-
-      heterogeneitycouldpotentiallyinﬂuencetheinterpretationand
-
-      generalizabilityoftheefﬁcacyoutcomes.Notably,patientswith
-
-      locallyadvanceddiseasewhoreceivedtheNASCAregimen
-
-      appearedtohaveimprovedsurvivaloutcomes.Nevertheless,the
-
-      reliability of this observation is constrained by the small number of
-
-      patientsinthissubgroup,underscoringtheneedforfurther
-
-      research.Additionally,thisinvestigationwaslimitedtoasingle
-
-      centerwithamodestsamplesize,involvingonlyChinese
-
-      participants,whichmayaffectboththestatisticalrobustness
-
-      andthebroaderapplicabilityoftheresults.Althoughthecontrol
-
-      groupreceivedthestandardregimenofnab-paclitaxeland
-
-      gemcitabine,theexperimentalgroupdidnotsimplybuildupon
-
-      thisbackbonebyaddingsurufatinibandcamrelizumab.The
-
-      decision to use S-1 instead of gemcitabine with nab-paclitaxel was
-
-      guided by the demonstrated tolerability of the nab-paclitaxel plus
-
-      S-1 regimen, in addition to our center’s prior successful experience
-
-      withthiscombination.Thisdesigncomplicatestheattributionof
-
-      theobservedclinicalbeneﬁtspeciﬁcallytosurufatiniband
-
-      Fig.2
-
-      Kaplan‒Meieranalysesofsurvivalintheintention-to-treatpopulationasassessedbyinvestigators.aKaplan‒Meiercurvesof
-
-      progression-freesurvival(%).bKaplan‒Meiercurvesofoverallsurvival
-
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
-
-      Jiaetal.
-
-      5
-
-      SignalTransductionandTargetedTherapy (2025) 10:339'
-    page: 4
-  - name: 300 mg. / Materials and methods / Study design and participants
-    text: 'camrelizumab.Moreover,theﬁndingsremainpreliminaryand are
-
-      notdeﬁnitive.Nevertheless,thisexploratorystudyprovidesan
-
-      earlysignalthattheadditionofaPD-1inhibitorandananti-
-
-      angiogenicagenttochemotherapymayoffertherapeuticbeneﬁt
-
-      inPDAC,incontrasttothelimitedefﬁcacyreportedinprior
-
-      studiesofchemoimmunotherapy.AphaseII/IIIrandomized
-
-      controlledtrialiscurrentlybeingconductedtoexaminethe
-
-      combineduseofsurufatinib,camrelizumab,nab-paclitaxel,and
-
-      gemcitabineforadditionalvalidationoftheseﬁndings.
-
-      Inconclusion,theNASCAregimendemonstratedsuperior
-
-      outcomescomparedtothenab-paclitaxelandgemcitabine
-
-      regimenregardingORR,TTR,andPFS,whilemaintainingan
-
-      acceptable safety proﬁle in the management of PDAC. Enrichment
-
-      ofCD8+andCD8+PD-1+cells,ahighM1/M2macrophageratioat
-
-      baseline,andanearlyreductioninCA19-9levelsservedas
-
-      valuable
-
-      predictive
-
-      biomarkers
-
-      for
-
-      PFS,
-
-      underscoring
-
-      their
-
-      potentialutilityinclinicalpractice.
-
-      MATERIALSANDMETHODS
-
-      Studydesignandparticipants
-
-      EthicalapprovalfortheprotocolwasgrantedbytheEthics
-
-      CommitteeoftheChinesePLAGeneralHospital(S2021-228-03),
-
-      andthestudyisregisteredonClinicalTrials.gov(NCT05218889).
-
-      Writteninformedconsentwasobtainedfromallsubjectspriorto
-
-      participation.Thetrialwasconductedinaccordancewiththe
-
-      Declaration
-
-      of
-
-      Helsinki
-
-      and
-
-      Good
-
-      Clinical
-
-      Practice
-
-      recommendations.
-
-      ThisinvestigationwasdesignedasaphaseIb/IIrandomized
-
-      clinical trial. Eligible individuals ranged from 18 to 75 years old and
-
-      had pathologically or cytologically conﬁrmed unresectable, locally
-
-      advanced,ormetastaticPDACwithoutprevioussystemictreat-
-
-      ment for advanced disease. Principal inclusion criteria involved an
-
-      EasternCooperativeOncologyGroup(ECOG)performancestatus
-
-      between0and1,atleastonetargetlesionassessablebyRECIST
-
-      version1.1,sufﬁcientfunction ofvitalorgans,anda projectedlife
-
-      expectancyofatleast3months.Exclusionparametersencom-
-
-      passedahistoryoftreatmentwithVEGFRinhibitorsorprior
-
-      administrationofimmunecheckpointblockade.
-
-      Procedures
-
-      DuringthephaseIb,dose-escalationportionofthestudy,
-
-      surufatinibwasgivenorallyoncedailyatincreasingdoselevels
-
-      of
-
-      200,
-
-      250,
-
-      or
-
-      300 mg.
-
-      This
-
-      agent
-
-      was
-
-      administered
-
-      in
-
-      combinationwithcamrelizumab,nab-paclitaxel,andS-1.Camre-
-
-      lizumabwasdosedintravenously(IV)at200 mgonday1ofeach
-
-      21-daytreatmentcycle.Nab-paclitaxelwasinfusedIVat125 mg/
-
-      m2on days 1 and 8, while S-1 was taken orally at 40 mg twice daily
-
-      fromdays1to14ofeachthree-weekcycle.
-
-      Doseescalationfolloweda3 + 3designbasedonDLTs
-
-      observed in the ﬁrst treatment cycle. Non-hematologic DLTs were
-
-      deﬁnedasGrade≥3toxicities,exceptforcertainconditionsthat
-
-      wereexcluded:Grade3nausea,vomiting,diarrhea,orconstipa-
-
-      tionresolvingwithinoneweekaftersupportivecare;Grade3
-
-      fatiguelasting≤7days;Grade3hypertensioncontrollablewithin
-
-      oneweek;alopecia,fever,oralkalinephosphataseelevation
-
-      attributabletotumororinfection;andGrade≥3decreasein
-
-      ventricularejectionfraction.HematologicDLTsincludedGrade4
-
-      neutropenia,thrombocytopenia,orhemoglobindecreasecon-
-
-      ﬁrmedbyatleasttwotestswithin2days;Grade3thrombocy-
-
-      topeniawithbleedingtendencyconﬁrmedbyatleast2tests
-
-      within2days;andGrade3dcreasedneutrophilcountwithfever
-
-      (ANC < 1.0 × 109/Landbodytemperature ≥38.5 °C),conﬁrmedat
-
-      leasttwicewithin2daysdespitesupportivecare.
-
-      In the phase II segment, participants were allocated in a 1:1 ratio
-
-      toreceiveeithertheNASCAregimenornab-paclitaxelin
-
-      combination with gemcitabine, utilizing block randomization with
-
-      ablocksizeoffourandnostratiﬁcationparameters.Therandom
-
-      allocationsequencewasgeneratedbyanindependentbiostatis-
-
-      ticianusingRsoftware(v4.4.1),andboththerandomization
-
-      sequenceandblocksizewereconcealedfrominvestigatorsto
-
-      ensureallocationconcealmentuntilinterventionassignment.
-
-      Table3.
-
-      Treatment-emergentadverseeventinthesafetypopulation
-
-      NASCAgroup
-
-      Nab-paclitaxelandgemcitabinegroup
-
-      (N = 45)
-
-      (N = 45)
-
-      Allgrades
-
-      Grade1–2
-
-      Grade3
-
-      Grade4
-
-      Allgrades
-
-      Grade1–2
-
-      Grade3
-
-      Grade4
-
-      Decreasedwhitebloodcellcount
-
-      34(75.5%)
-
-      20(44.4%)
-
-      10(22.2%)
-
-      4(8.9%)
-
-      33(73.3%)
-
-      21(46.7%)
-
-      8(17.8%)
-
-      4(8.9%)
-
-      Decreasedneutrophilcount
-
-      33(73.3%)
-
-      18(40.0%)
-
-      9(20.0%)
-
-      6(13.3%)
-
-      27(60.0%)
-
-      11(24.4%)
-
-      12(26.7%)
-
-      4(8.9%)
-
-      Decreasedlymphocytecount
-
-      22(48.9%)
-
-      13(28.9%)
-
-      8(17.8%)
-
-      1(2.2%)
-
-      14(31.1%)
-
-      11(24.4%)
-
-      3(6.7%)
-
-      0
-
-      Anemia
-
-      21(46.7%)
-
-      20(44.4%)
-
-      1(2.2%)
-
-      0
-
-      31(68.9%)
-
-      30(66.7%)
-
-      1(2.2%)
-
-      0
-
-      Decreasedplateletcount
-
-      21(46.7%)
-
-      20(44.4%)
-
-      1(2.2%)
-
-      0
-
-      20(44.4%)
-
-      16(35.6%)
-
-      3(6.7%)
-
-      1(2.2%)
-
-      Alopecia
-
-      21(46.7%)
-
-      21(46.7%)
-
-      0
-
-      0
-
-      18(40.0%)
-
-      18(40.0%)
-
-      0
-
-      0
-
-      Peripheralneuropathy
-
-      20(44.4%)
-
-      15(33.3%)
-
-      4(8.9%)
-
-      1(2.2%)
-
-      9(20.0%)
-
-      9(20.0%)
-
-      0
-
-      0
-
-      Anorexia
-
-      20(44.4%)
-
-      20(44.4%)
-
-      0
-
-      0
-
-      18(40.0%)
-
-      18(40.0%)
-
-      0
-
-      0
-
-      Nausea
-
-      19(42.2%)
-
-      19(42.2%)
-
-      0
-
-      0
-
-      22(48.9%)
-
-      22(48.9%)
-
-      0
-
-      0
-
-      Vomiting
-
-      13(28.9%)
-
-      13(28.9%)
-
-      0
-
-      0
-
-      11(24.4%)
-
-      11(24.4%)
-
-      0
-
-      0
-
-      Increasedalanineaminotransferase
-
-      16(35.6%)
-
-      15(33.3%)
-
-      1(2.2%)
-
-      0
-
-      16(35.6%)
-
-      15(33.3%)
-
-      1(2.2%)
-
-      0
-
-      Increasedaspartateaminotransferase
-
-      16(35.6%)
-
-      13(28.9%)
-
-      3(6.7%)
-
-      0
-
-      17(37.8%)
-
-      16(35.6%)
-
-      1(2.2%)
-
-      0
-
-      Elevatedbilirubin
-
-      14(31.1%)
-
-      9(20.0%)
-
-      5(11.1%)
-
-      0
-
-      7(15.6%)
-
-      5(11.1%)
-
-      1(2.2%)
-
-      1(2.2%)
-
-      Fatigue
-
-      11(24.4%)
-
-      11(24.4%)
-
-      0
-
-      0
-
-      9(20.0%)
-
-      7(15.6%)
-
-      2(4.4%)
-
-      0
-
-      Diarrhea
-
-      6(13.3%)
-
-      5(11.1%)
-
-      1(2.2%)
-
-      0
-
-      4(8.9%)
-
-      4(8.9%)
-
-      0
-
-      0
-
-      Rash
-
-      5(11.1%)
-
-      4(8.9%)
-
-      1(2.2%)
-
-      0
-
-      3(6.7%)
-
-      3(6.7%)
-
-      0
-
-      0
-
-      Abdominalpain
-
-      2(4.4%)
-
-      2(4.4%)
-
-      0
-
-      0
-
-      3(6.7%)
-
-      3(6.7%)
-
-      0
-
-      0
-
-      Albuminuria
-
-      2(4.4%)
-
-      2(4.4%)
-
-      0
-
-      0
-
-      0
-
-      0
-
-      0
-
-      0
-
-      Hypothyroidism
-
-      2(4.4%)
-
-      2(4.4%)
-
-      0
-
-      0
-
-      0
-
-      0
-
-      0
-
-      0
-
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
-
-      Jiaetal.
-
-      6
-
-      SignalTransductionandTargetedTherapy (2025) 10:339'
-    page: 6
-  - name: 30 min on the same days, repeated every 21 days. Therapy in both / 0.2.Withequalrandomization(1:1ratio)betweenthetwo
-      / Outcomes
-    text: 'Randomizationwasperformedimmediatelypriortotreatment
-
-      initiation,andonceassigned,randomizationnumberswere
-
-      irrevocableandnotreassigned.
-
-      Patients in the NASCA group received surufatinib at the RP2D in
-
-      conjunctionwithcamrelizumab,nab-paclitaxel,andS-1(same
-
-      regimensasphaseIb)foreightcycles.Patientsdemonstratinga
-
-      completeresponse(CR),PR,orSDthenreceivedmaintenance
-
-      therapyconsistingofsurufatinib(RP2D),S-1,andcamrelizumab
-
-      (sameregimensasphaseIb).Inthenab-paclitaxelandgemcita-
-
-      bine cohort, treatment involved nab-paclitaxel at 125 mg/m2IV on
-
-      days1and8,togetherwithgemcitabineat1000 mg/m2IVover
-
-      30 min on the same days, repeated every 21 days. Therapy in both
-
-      studyarmscontinueduntilradiographicprogression,unaccep-
-
-      tabletoxicity,consentwithdrawal,orpatientdeath.Tumor
-
-      evaluationswereperformedevery6weeksaccordingtoRECIST
-
-      version1.1guidelines.AEswerecategorizedbasedonthe
-
-      NationalCancerInstituteCommonTerminologyCriteriafor
-
-      AdverseEvents(NCI-CTCAE),version5.0.Survivalstatuswas
-
-      monitoredeverythreemonthsintheﬁrstyearafterstudydrug
-
-      discontinuation,andfollowedthereafteruntildeath,lossto
-
-      follow-up,orwithdrawalofconsent.Methodologicaldetails
-
-      regardingﬂuorescentmultipleximmunohistochemistryandima-
-
-      gingtechniquesareprovidedinthesupplementaryappendix.
-
-      Outcomes
-
-      TheprimaryendpointswereDLTsandtheRP2Dofsurufatinibin
-
-      phase Ib, and ORR in phase II. Secondary endpoints included DCR,
-
-      DOR,TTR,PFS,OS,andsafety.Efﬁcacywasanalyzedinthe
-
-      intention-to-treatpopulation,whichencompassedallpatients
-
-      whowererandomized.Forthesafetyanalysis,allindividualswho
-
-      wererandomizedandreceivedatleastonedoseofastudy
-
-      medicationwereincluded.AsperRECISTversion1.1criteria,ORR
-
-      wasdeﬁnedasthepercentageofsubjectswitheitherCRorPR,
-
-      while DCR included those with CR, PR, or SD. DOR represented the
-
-      intervalfromtheinitialCRorPRdocumentationuntildisease
-
-      progressionordeath.TTRwasmeasuredfromrandomizationto
-
-      theearliestachievementofCRorPR.PFSwascalculatedfrom
-
-      randomizationtothepointofdiseaseprogressionordeath,and
-
-      OSwasmeasuredfromrandomizationuntildeathdueto
-
-      anycause.
-
-      Statisticalanalysis
-
-      SamplesizeestimationwasbasedonananticipatedORRof0.49
-
-      fortheNASCAgroupand0.23forthenab-paclitaxeland
-
-      gemcitabinegroup,withasuperioritymarginsetat0.The
-
-      calculation assumed a one-sidedalpha level of 0.05 and a beta of
-
-      0.2.Withequalrandomization(1:1ratio)betweenthetwo
-
-      treatmentgroups,40participantspergroupwereneeded,
-
-      equatingtoatotalof80subjects.Accountingforaprojected
-
-      dropoutrateof10%,theﬁnalrequiredsamplesizewas
-
-      determinedtobe90patients.
-
-      Themediandurationoffollow-upwasestimatedusingthe
-
-      reverse Kaplan–Meier approach. For the calculation of 95% CIs for
-
-      ORR and DCR, the Clopper–Pearson exact method was applied. To
-
-      determinethedifferenceinratesbetweentheexperimentaland
-
-      controlarms,alongwithassociatedtwo-sided90%CIs,the
-
-      Newcombe-Wilson method was used. Superiority was concluded if
-
-      thelowerlimitofthe90%CIfortheratedifferencewasgreater
-
-      Fig.3
-
-      Fluorescentmultipleximmunohistochemistryanalysisofbaselinetissuesamplesfrom26patientswhoreceivedNASCAtreatment.
-
-      a Comparison of the ratio of M1/M2 macrophage percentages in the stroma between
-      patients with partial response (PR) and those with stable
-
-      disease (SD) or progressive disease (PD). b Tumor shrinkage in patients with
-      a higher ratio of M1/M2 macrophage percentages in the stroma
-
-      comparedtothosewithalowerratio,usingacutoffvalueof10.cCorrelationbetweentheratioofM1/M2macrophagepercentagesinthe
-
-      stromaandtumorshrinkage.dProgression-freesurvivalwasanalyzedaccordingtotheratioofM1toM2macrophagepercentages,with
-
-      patients divided into high and low groups based on the median value. e Progression-free
-      survival was analyzed based on the levels of CD8+
-
-      cells,usingthemedianasthecutofftodeﬁnehighandlowgroups.fProgression-freesurvivalwasanalyzedinrelationtothelevelsof
-
-      CD8+PD-1+cells,stratiﬁedbythemedianvalue.HRHazardRatio,NAnotavailable
-
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
-
-      Jiaetal.
-
-      7
-
-      SignalTransductionandTargetedTherapy (2025) 10:339'
-    page: 7
-  - name: 26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-      / Supplementary information
-    text: 'thanzero.ORwascalculatedbyunivariatelogisticregression
-
-      analysis.
-
-      Median
-
-      PFS
-
-      and
-
-      OS
-
-      were
-
-      estimated
-
-      using
-
-      the
-
-      Kaplan–Meiertechnique,whilesurvivaldifferencesbetween
-
-      groupswereassessedwiththelog-ranktest.HRsandtheir95%
-
-      CIs were calculated using the Cox proportional hazards regression
-
-      model.ToidentifytheoptimalthresholdofserumCA19-9for
-
-      predicting 6-month survival, a time-dependent ROC curve analysis
-
-      wasconducted.A6-weekdecreaseora12-weekdecreaseof
-
-      CA19-9levelswereanalyzedaccordingtotheoptimalcutoff
-
-      values.Subgroupanalyseswereconductedbasedonbaseline
-
-      variablesandCA19-9levels(bydecreaseusingtheoptimalcutoff
-
-      value).TheevaluationsemployedtheCoxproportionalhazards
-
-      methodandweresummarizedgraphicallyusingforestplots.
-
-      Differencesinimmunecellpopulationsamongpatientsshowing
-
-      PRversusthosewithSDorPDwereassessedusingtheWilcoxon
-
-      rank-sumtest.TheSpearmancorrelationwasassessedbetween
-
-      immunecellsubsetsandthebesttumorshrinkage.Allstatistical
-
-      analyseswereconductedutilizingRsoftware(version4.4.1).
-
-      DATAAVAILABILITY
-
-      The protocol,statisticalanalysisplan,andotherrelevantstudymaterialsarepublicly
-
-      availableonline.Thedatasetsgeneratedandanalyzedduringthecurrentstudyare
-
-      notpubliclyavailableduetoethicalandregulatoryrestrictionsbutmaybemade
-
-      availablefromthecorrespondingauthorsuponreasonablerequest.De-identiﬁed
-
-      participantdatamaybesharedfollowingapprovalofaproposalthatincludesa
-
-      detaileddescriptionofstudyobjectivesandastatisticalanalysisplan,whichwillbe
-
-      reviewedbyallcorrespondingauthors.
-
-      ACKNOWLEDGEMENTS
-
-      The authors express their gratitude to all patients, their families, and the
-      investigators
-
-      whoparticipatedinthestudy.TheyalsothankYan-QingWufordatacollection,
-
-      Cong-YingLiandYan-HuiXuforstatisticalanalyses,Xiao-ChongTang,XingLv,Jian-
-
-      CaiZhou,Xiao-YanDai,andJiaLuformedicalsupport,andWen-DingSunfor
-
-      medicalwritingsupport.ThisstudywassupportedbyChineseNationalNatural
-
-      ScienceFoundationProject(82272643)andBeijingNaturalScienceFoundation
-
-      Project(7232163,7252130).
-
-      AUTHORCONTRIBUTIONS
-
-      Guang-Hai Dai, Zhi-Kuan Wang,and Quan-Li Han contributed to the conception and
-
-      design of the study. Ru Jia, Hai-Yan Si, Nan Zhang, Meng-Jiao Fan, Lu Han, Miao-Miao
-
-      Gou,Zhao-LiTan,XiaZhang,Yan-RongWang,Fang-FangLiu,YueShi,Yao-Yue
-
-      Zhang,andYu-ShanJiaprovidedstudymaterialsorrecruitedpatientsandcollected
-
-      thedata.RuJia,Hai-YanSi,NanZhang,andMeng-JiaoFanwereinvolvedindata
-
-      collection and assembly. Ru Jia, Nan Zhang, Meng-Jiao Fan, Guo-Chao Deng, and
-      Yu-
-
-      QiWangcontributedtodataanalysisandinterpretation.Allauthorshavereadand
-
-      approvedthearticle.
-
-      ADDITIONALINFORMATION
-
-      SupplementaryinformationTheonlineversioncontainssupplementarymaterial
-
-      availableathttps://doi.org/10.1038/s41392-025-02441-2.
-
-      Competinginterests:Yu-QiWangisemployedbyNanjingGeneseeqTechnology
-
-      Inc.Allotherauthorsdeclarenoconﬂictofinterest.
-
-      Ethicsapproval:Thisstudywasperformedinlinewiththeprinciplesofthe
-
-      Declarationof Helsinki andGood ClinicalPractice recommendations.Ethics approval
-
-      wasgrantedbytheEthicsCommitteeofChinesePLAGeneralHospital(S2021-228-
-
-      03).
-
-      Consenttoparticipate:Allparticipantsprovidedwritteninformedconsentpriorto
-
-      enrollmentinthestudy.
-
-      Publisher’s note Springer Nature remains neutral with regard to jurisdictional
-      claims
-
-      inpublishedmapsandinstitutionalafﬁliations.
-
-      REFERENCES
-
-      1.Siegel,R.L.,Giaquinto,A.N.& Jemal, A.Cancerstatistics,2024.CACancerJ. Clin.
-
-      74,12–49(2024).
-
-      2.Bray, F. et al. Global cancer statistics 2022: GLOBOCAN estimates of incidence
-      and
-
-      mortalityworldwidefor36cancersin185countries.CACancerJ.Clin.74,
-
-      229–263(2024).
-
-      3.Halbrook,C.J.,Lyssiotis,C.A.,PascadiMagliano,M.&Maitra,A.Pancreatic
-
-      cancer:advancesandchallenges.Cell186,1729–1754(2023).
-
-      4.VonHoff,D.D.etal.Increasedsurvivalinpancreaticcancerwithnab-paclitaxel
-
-      plusgemcitabine.N.Engl.J.Med.369,1691–1703(2013).
-
-      5.Conroy, T. et al. FOLFIRINOX versus gemcitabine for metastatic pancreatic
-      cancer.
-
-      N.Engl.J.Med.364,1817–1825(2011).
-
-      6.Wainberg,Z.A.etal.NALIRIFOXversusnab-paclitaxelandgemcitabinein
-
-      treatment-naivepatientswithmetastaticpancreaticductaladenocarcinoma
-
-      (NAPOLI3):arandomised,open-label,phase3trial.Lancet402,1272–1281
-
-      (2023).
-
-      7.Hu,Z.I.etal.Evaluatingmismatchrepairdeﬁciencyinpancreaticadenocarci-
-
-      noma:challenges andrecommendations. Clin. Cancer Res. 24, 1326–1336 (2018).
-
-      8.O’Reilly, E. M. et al. Durvalumab with or withouttremelimumab forpatients
-      with
-
-      metastatic pancreatic ductal adenocarcinoma: a phase 2 randomized clinical trial.
-
-      JAMAOncol.5,1431–1438(2019).
-
-      9.Morizane,C.etal.APhase2studyofnivolumabincombinationwithmodiﬁed
-
-      FOLFIRINOXformetastaticpancreaticcancer.BJCRep.2,3(2024).
-
-      10.Sherman,M.H.&Beatty,G.L.Tumormicroenvironmentinpancreaticcancer
-
-      pathogenesisandtherapeuticresistance.Annu.Rev.Pathol.18,123–148
-
-      (2023).
-
-      11.Tao,J.etal.Targetinghypoxictumormicroenvironmentinpancreaticcancer.J.
-
-      Hematol.Oncol.14,14(2021).
-
-      12.Gilles, M. E. et al. Nucleolin targeting impairs the progression of pancreatic
-      cancer
-
-      and promotes the normalization of tumor vasculature. Cancer Res. 76, 7181–7193
-
-      (2016).
-
-      13.Fukumura,D.etal.Enhancingcancerimmunotherapyusingantiangiogenics:
-
-      opportunitiesandchallenges.Nat.Rev.Clin.Oncol.15,325–340(2018).
-
-      14.Datta,M.etal.Reprogrammingthetumormicroenvironmenttoimprove
-
-      immunotherapy:emergingstrategiesandcombinationtherapies.Am.Soc.Clin.
-
-      Oncol.Educ.Book39,165–174(2019).
-
-      15.Sha,H.etal.First-linepenpulimab(ananti-PD1antibody)andanlotinib(an
-
-      angiogenesisinhibitor)withnab-paclitaxel/gemcitabine(PAAG)inmetastatic
-
-      pancreaticcancer:aprospective,multicentre,biomolecularexploratory,phaseII
-
-      trial.SignalTransduct.TargetTher.9,143(2024).
-
-      16.Chuah,B.etal.Comparisonofthepharmacokineticsandpharmacodynamicsof
-
-      S-1betweenCaucasian andEast Asianpatients.CancerSci.102, 478–483 (2011).
-
-      17.Kang,Y.K.etal.Nivolumabpluschemotherapyversusplaceboplusche-
-
-      motherapy inpatientswith HER2-negative,untreated,unresectable advancedor
-
-      recurrentgastricorgastro-oesophagealjunctioncancer(ATTRACTION-4):aran-
-
-      domised,multicentre,double-blind,placebo-controlled,phase3trial.Lancet
-
-      Oncol.23,234–247(2022).
-
-      18.Hong, Y. S. et al. S-1plus oxaliplatinversuscapecitabine plusoxaliplatinforﬁrst-
-
-      linetreatmentofpatientswithmetastaticcolorectalcancer:arandomised,non-
-
-      inferiorityphase3trial.LancetOncol.13,1125–1132(2012).
-
-      19.Yamada,Y.etal.S-1andirinotecanplusbevacizumabversusmFOLFOX6or
-
-      CapeOXplusbevacizumabasﬁrst-linetreatmentinpatientswithmetastatic
-
-      colorectal cancer (TRICOLORE): a randomized, open-label, phase III, noninferiority
-
-      trial.Ann.Oncol.29,624–631(2018).
-
-      20.Li,C.etal.PathologicresponseofphaseIIIstudy:perioperativecamrelizumab
-
-      plusrivoceranibandchemotherapyversuschemotherapyforlocallyadvanced
-
-      gastriccancer(DRAGONIV/CAP05).J.Clin.Oncol.43,464–474(2025).
-
-      21.Uesaka,K.etal.AdjuvantchemotherapyofS-1versusgemcitabineforresected
-
-      pancreaticcancer:aphase3,open-label,randomised,non-inferioritytrial(JAS-
-
-      PAC01).Lancet388,248–257(2016).
-
-      22.Ueno, H.et al. Randomized phaseIII studyofgemcitabineplusS-1, S-1alone,or
-
-      gemcitabinealoneinpatientswithlocallyadvancedandmetastaticpancreatic
-
-      cancerinJapanandTaiwan:GESTstudy.J.Clin.Oncol.31,1640–1648(2013).
-
-      23.Takumoto, Y., Sasahara, Y., Narimatsu, H. & Akazawa, M. Comparative outcomes
-      of
-
-      ﬁrst-linechemotherapyformetastaticpancreaticcanceramongtheregimens
-
-      used in Japan: a systematic review and network meta-analysis. JAMA Netw. Open
-
-      5,e2145515(2022).
-
-      24.Suenaga,M.etal.S-1plusnab-paclitaxelisapromisingregimenforpancreatic
-
-      cancerinapreclinicalmodel.J.Surg.Oncol.113,413–419(2016).
-
-      25.Zong,Y.etal.Nab-paclitaxelplusS-1versusnab-paclitaxelplusgemcitabineas
-
-      ﬁrst-linechemotherapyinpatientswithadvancedpancreaticductaladeno-
-
-      carcinoma: a randomized study. J. Cancer Res. Clin. Oncol. 147, 1529–1536 (2021).
-
-      26.Zong,Y.et al. Efﬁcacyandsafetyofnab-paclitaxel plusS-1versusnab-paclitaxel
-
-      plusgemcitabineforﬁrst-linechemotherapyinadvancedpancreaticductal
-
-      adenocarcinoma.CancerManag.Res.12,12657–12666(2020).
-
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
-
-      Jiaetal.
-
-      8
-
-      SignalTransductionandTargetedTherapy (2025) 10:339'
-    page: 8
-  - name: 27.Jin,M.etal.Nab-paclitaxelplusS-1versusnab-paclitaxelplusgemcitabinein
-    text: '27.Jin,M.etal.Nab-paclitaxelplusS-1versusnab-paclitaxelplusgemcitabinein
-
-      patientswithadvancedpancreaticcancer:amulticenter,randomized,phaseII
-
-      study.Oncologist29,e1406–e1418(2024).
-
-      28.Shi,Y.etal.Nab-paclitaxelplusS-1inadvancedpancreaticadenocarcinoma
-
-      (NPSPAC):asinglearm,singlecenter,phaseIItrial.Oncotarget8,92401–92410
-
-      (2017).
-
-      29.Cui, H. et al. A Chinese retrospective multicenter study of ﬁrst-line chemotherapy
-
-      foradvancedpancreaticcancer.Med.Sci.Monit.26,e927654(2020).
-
-      30.Liu,Q.etal.Nab-paclitaxelplusS-1withorwithoutPD-1inhibitorinpancreatic
-
-      ductaladenocarcinomawithonlyhepaticmetastases:aretrospectivecohort
-
-      study.LangenbecksArch.Surg.407,633–643(2022).
-
-      31.Syed,Y.Y.Surufatinib:ﬁrstapproval.Drugs81,727–732(2021).
-
-      32.Xu,J.et al.Surufatinibin advancedpancreaticneuroendocrinetumours (SANET-
-
-      p):arandomised,double-blind,placebo-controlled,phase3study.LancetOncol.
-
-      21,1489–1499(2020).
-
-      33.Xu,J.etal.Surufatinibinadvancedextrapancreaticneuroendocrinetumours
-
-      (SANET-ep):arandomised,double-blind,placebo-controlled,phase3study.
-
-      LancetOncol.21,1500–1512(2020).
-
-      34.Cao, Y. et al. Surufatinib plus toripalimab in patients with advanced solid
-      tumors: a
-
-      single-arm, open-label, phase 1 trial. J. Cancer Res. Clin. Oncol. 149, 779–789
-      (2023).
-
-      35.Chen,S.etal.Nab-paclitaxelandgemcitabinepluscamrelizumabandradio-
-
-      therapyversusnab-paclitaxelandgemcitabinealoneforlocallyadvancedpan-
-
-      creaticadenocarcinoma:aprospectivecohortstudy.J.Hematol.Oncol.16,26
-
-      (2023).
-
-      36.Guo,X.etal.Efﬁcacyofnab‑paclitaxelvs.gemcitabineincombinationwithS‑1
-
-      foradvancedpancreaticcancer:amulticenterphaseIIrandomizedtrial.Oncol.
-
-      Lett.27,161(2024).
-
-      37.Li,H.W.&Tang,S.L.Colonystimulatingfactor-1anditsreceptoringastro-
-
-      intestinalmalignanttumors.J.Cancer12,7111–7119(2021).
-
-      38.Gao,S.etal.Abstract2781:mechanismstudyofsurufatinibontheoptimized
-
-      strategy of AG plus PD-1 antibody treatment in pancreatic cancer. Cancer Res.
-      83,
-
-      2781–2781(2023).
-
-      39.Chandana, S. R. et al. Kinetics of CA19-9 decline in a randomized phase III
-      study of
-
-      irinotecanliposomeinjection,oxaliplatin,5-ﬂuorouracial/leucovorin(NALIRIFOX)
-
-      ornab-paclitaxelplusgemcitabine(GEM+NABP)inpatientswhohavenotpre-
-
-      viouslyreceivedchemotherapyformetastaticadenocarcinomaofthepancreas
-
-      (NAPOLI3).J.Clin.Oncol.42,687–687(2024).
-
-      40.Wang,L.etal.LBA61HR070803plus5-FU/LVversusplaceboplus5-FU/LVin
-
-      second-linetherapyforgemcitabine-refractorylocallyadvancedormetastatic
-
-      pancreatic cancer: a multicentered, randomized, double-blind, parallel-controlled
-
-      phaseIIItrial(HR-IRI-APC).Ann.Oncol.33,S1426(2022).
-
-      OpenAccessThisarticleislicensedunderaCreativeCommons
-
-      Attribution4.0InternationalLicense,whichpermitsuse,sharing,
-
-      adaptation, distribution and reproduction in any medium or format, as long as
-      you give
-
-      appropriate credit to the original author(s) and the source, provide a link
-      to the Creative
-
-      Commons licence, and indicate if changes were made. The images or other third
-      party
-
-      materialinthisarticleareincludedinthearticle’sCreativeCommonslicence,unless
-
-      indicatedotherwiseinacreditlinetothematerial.Ifmaterialisnotincludedinthe
-
-      article’s Creative Commons licence and your intended use is not permitted by
-      statutory
-
-      regulationorexceedsthepermitteduse, you will needto obtainpermissiondirectly
-
-      from
-
-      the
-
-      copyright
-
-      holder.
-
-      To
-
-      view
+  - name: OPEN / Discussion / Subgroup and biomarker analyses
+    text: 'group, 45 patients (100%) experienced TEAEs, compared to 43 patients (95.6%)
+      receiving nab-paclitaxel and gemcitabine. Hematologic AEs, particularly declines
+      in white blood cell, neutrophil, and lymphocyte counts, were the predominant
+      TEAEs in patients treated with NASCA. For those receiving nab-paclitaxel and
+      gemcitabine, decreased white blood cell count, anemia, and dcreased neutrophil
+      count were most frequently reported. In the NASCA group, the most prevalent
+      Grade 3 and 4 TEAEs were declines in white blood cell, neutrophil, and lymphocyte
+      counts, whereas decreased white blood cell and neutrophil counts were prominent
+      in the nab-paclitaxel and gemcitabine group (Table 3). Additionally, immune-related
+      adverse events (irAEs) were documented in ten (22.2%) patients in the NASCA
+      group, including three cases of Grade 2 hepatitis, one case of Grade 3 hepatitis,
+      one case of Grade 2 colitis, two cases of Grade 2 hypothyroidism, two cases
+      of Grade 2 hypophysitis, and one case of Grade 3 rash. Dose reductions due to
+      TEAEs were required in seven patients (15.6%) in the NASCA and nine (20.0%)
+      in the nab-paclitaxel and gemcitabine groups. Treatment discontinuation of any
+      medication occurred in 15 patients (33.3%) receiving NASCA and 10 patients (22.2%)
+      receiving nab-paclitaxel and gemcitabine. Two deaths occurred in the NASCA group,
+      one due to liver failure not related to treatment and one from unspeci fi ed
+      causes. For treatment with nab-paclitaxel and gemcitabine, one death was attributed
+      to a non-treatment-related infection and one from unspeci fi ed causes. NASCA
+      treatment was associated with manageable TEAEs, with no new safety signals.
+
+      Subgroup and biomarker analyses . Subgroup analyses for both PFS and OS demonstrated
+      consistent patterns with the results observed in the primary analyses (Supplementary
+      Figs. 2 -4). In both the NASCA and nab-paclitaxel and gemcitabine groups, patients
+      with a CA19-9 decrease at week 6 or week 12 had longer median PFS compared to
+      those without a decrease (Supplementary Table 3).
+
+      Multiplex immunohistochemistry (mIHC) was performed on baseline tissue samples
+      of 26 patients who received NASCA treatment. The proportion of M1 to M2 macrophages
+      within the stroma was markedly elevated in individuals achieving PR relative
+      to those with SD and progressive disease (PD) ( p = 0.04) (Fig. 3a). Using an
+      M1/M2 cutoff of 10, patients with higher M1/M2 ratios exhibited greater tumor
+      shrinkage compared to those with lower ratios (Fig. 3b). Additionally, stromal
+      M1/M2 cell percentages showed a correlation with the magnitude of tumor shrinkage.
+      (r = -0.39, p = 0.051) (Fig. 3c). Using the median as a cutoff, patients with
+      higher levels of M1/M2 ( p = 0.048), CD8 + ( p = 0.03), and CD8 + PD-1 + cells
+      ( p = 0.0035) in stroma had longer PFS compared to those with lower levels (Fig.
+      3d -f). Immune microenvironment features, including M1/M2 ratio and CD8 + in
+      fi ltration, may serve as predictive biomarkers for NASCA bene fi t.
+
+      Management of advanced pancreatic cancer continues to be challenging, largely
+      owing to scarce treatment choices and dismal outcomes. Our study evaluates a
+      new fi rst-line regimen, combining surufatinib, camrelizumab, nab-paclitaxel,
+      and S-1, and con fi rms its ef fi cacy and safety in patients with metastatic
+      pancreatic adenocarcinoma. The NASCA group achieved an ORR of 51.1%, signi fi
+      cantly exceeding that of the standard nabpaclitaxel and gemcitabine regimen
+      (24.4%), thereby meeting the primary endpoint. Additionally, the NASCA group
+      showed a longer median PFS (7.9 months) relative to the nab-paclitaxel and gemcitabine
+      group (5.3 months). Notably, this study represents the fi rst randomized trial
+      comparing anti-PD-1 therapy combined with anti-angiogenic therapy and chemotherapy
+      versus chemotherapy alone in this setting. Our fi ndings align with those from
+      a similar phase II study evaluating anti-PD-1 therapy and angiogenesis inhibitors
+      with chemotherapy in metastatic pancreatic cancer. Penpulimab with anlotinib
+      and gemcitabine and nab-paclitaxel achieved an ORR of 50.0%, with a median PFS
+      and OS of 8.8 and 13.7 months, respectively. 15 Additionally, our ORR and PFS
+      values were numerically higher than those observed with nivolumab and modi fi
+      ed FOLFIRINOX according to phase II trial data, which reported an ORR of 32.3%
+      and a median PFS of 7.4 months. 9 The NASCA group also showed higher ORR and
+      PFS compared to the gemcitabine and nab-paclitaxel in the MPACT and NAPOLI-3
+      studies, which reported ORRs of 23% and 36%, with a median PFS of 5.5 and 5.6
+      months, respectively. 4,6 Nonetheless, it is essential to approach these cross-study
+      comparisons cautiously, as differences in study designs and patient populations
+      limit direct comparisons.
+
+      Fig. 1 Trial pro fi le. Two deaths occurred in the NASCA group, one due to liver
+      failure and the other due to unspeci fi ed causes. In the nabpaclitaxel and
+      gemcitabine group, one death was attributed to an infection and one due to unspeci
+      fi ed causes
+
+      Mechanistically, these results of surufatinib may be attributed to its ability
+      to improve tumor vasculature normalization at a relatively low dose. 13,14 This
+      improvement facilitates better drug delivery and mitigates hypoxia-induced chemotherapy
+      resistance. 11,36 Surufatinib, a VEGFR tyrosine kinase inhibitor, also targets
+      CSF1R. Blocking CSF1R signaling decreases the in fi ltration of tumor-associated
+      macrophages and limits their polarization toward the M2 phenotype. 37 Notably,
+      in vitro studies have shown that surufatinib plus an anti-PD-1 antibody and
+      nab-paclitaxel and gemcitabine downregulates CSF1R, CD163 (an M2 macrophage
+      marker), and PD-L1. 38 Through its in fl uence on the CSF-1/CSF-1R signaling
+      axis, surufatinib could contribute to reshaping the immune contexture within
+      tumors, which may improve responses to combination therapies. This study found
+      that a higher baseline M1/M2 macrophage ratio was signi fi cantly associated
+      with a higher response rate, deeper responses, as well as improved PFS. Moreover,
+      CA19-9 has been recognized as a biomarker for predicting treatment response
+      in several large phase III trials. 39 In this trial, patients with any decrease
+      in CA19-9 at weeks 6 and 12 had a better PFS than those with no decrease, regardless
+      of whether they received the NASCA or nab-paclitaxel and gemcitabine.
+
+      In the MPACT and NAPOLI-3 phase III trials, median OS for patients treated with
+      nab-paclitaxel and gemcitabine was 8.5 and 9.2 months, respectively, 4,6 while
+      this study demonstrated a median OS of 11.0 months. The longer OS observed in
+      this study may be attributed to the availability of subsequent therapies. Speci
+      fi cally, 86.0% of patients treated with the nab-paclitaxel and gemcitabine
+      group and 66.7% treated with NASCA received subsequent therapy. At our center,
+      we improved the availability of irinotecan-based regimens for second-line therapy,
+      guided by fi ndings from the phase III HR-IRI-APC trial in which liposomal irinotecan
+      plus 5- fl uorouracil and leucovorin as second-line treatment yielded a median
+      OS of 7.39 months. 40 Safety pro fi le of the nab-paclitaxel and gemcitabine
+      in this study aligned with data from the MPACT and NAPOLI-3 trials. 4,6 Moreover,
+      the addition of surufatinib and camrelizumab to the nab-paclitaxel and S-1 backbone
+      reported a controllable safety pro fi le. The administration of two oral drugs
+      led to more pronounced gastrointestinal discomfort in the NASCA group. Furthermore,
+      the incidences of Grade 3 increased aspartate aminotransferase and elevated
+      bilirubin were higher in the NASCA group, which may be attributable to surufatinib
+      and camrelizumab. Notably, around 11.1% of patients receiving NASCA developed
+      Grade 3 or 4 peripheral neuropathy, an adverse effect that was not reported
+      in those given nab-paclitaxel and gemcitabine. Although this
 
       a
 
-      copy
+      Fig. 2 Kaplan -Meier analyses of survival in the intention-to-treat population
+      as assessed by investigators. a Kaplan -Meier curves of progression-free survival
+      (%). b Kaplan -Meier curves of overall survival
 
-      of
+      difference may re fl ect regimen-speci fi c toxicity, the small sample size
+      warrants cautious interpretation.
 
-      this
+      According to the NCCN guidelines, fi rst-line treatment options for locally
+      advanced PDAC include enrollment in clinical trials, systemic therapy, chemoradiotherapy,
+      or stereotactic body radiation therapy. Among this study participants, locally
+      advanced disease was observed in 20.0% of those receiving nab-paclitaxel and
+      gemcitabine and in 17.8% of those treated with the NASCA regimen. Although the
+      proportion of these patients was relatively small and balanced between arms,
+      their inclusion may have introduced clinical heterogeneity, as locally advanced
+      and metastatic PDAC differ in prognosis and treatment response. This heterogeneity
+      could potentially in fl uence the interpretation and generalizability of the
+      ef fi cacy outcomes. Notably, patients with locally advanced disease who received
+      the NASCA regimen appeared to have improved survival outcomes. Nevertheless,
+      the reliability of this observation is constrained by the small number of patients
+      in this subgroup, underscoring the need for further research. Additionally,
+      this investigation was limited to a single center with a modest sample size,
+      involving only Chinese participants, which may affect both the statistical robustness
+      and the broader applicability of the results. Although the control group received
+      the standard regimen of nab-paclitaxel and gemcitabine, the experimental group
+      did not simply build upon this backbone by adding surufatinib and camrelizumab.
+      The decision to use S-1 instead of gemcitabine with nab-paclitaxel was guided
+      by the demonstrated tolerability of the nab-paclitaxel plus S-1 regimen, in
+      addition to our center '' s prior successful experience with this combination.
+      This design complicates the attribution of the observed clinical bene fi t speci
+      fi cally to surufatinib and'
+    page: 3
+  - name: OPEN / Materials and methods / Study design and participants
+    text: '6
 
-      licence,
+      camrelizumab. Moreover, the fi ndings remain preliminary and are not de fi nitive.
+      Nevertheless, this exploratory study provides an early signal that the addition
+      of a PD-1 inhibitor and an antiangiogenic agent to chemotherapy may offer therapeutic
+      bene fi t in PDAC, in contrast to the limited ef fi cacy reported in prior studies
+      of chemoimmunotherapy. A phase II/III randomized controlled trial is currently
+      being conducted to examine the combined use of surufatinib, camrelizumab, nab-paclitaxel,
+      and gemcitabine for additional validation of these fi ndings.
 
-      visit
+      In conclusion, the NASCA regimen demonstrated superior outcomes compared to
+      the nab-paclitaxel and gemcitabine regimen regarding ORR, TTR, and PFS, while
+      maintaining an acceptable safety pro fi le in the management of PDAC. Enrichment
+      of CD8 + and CD8 + PD-1 + cells, a high M1/M2 macrophage ratio at baseline,
+      and an early reduction in CA19-9 levels served as valuable predictive biomarkers
+      for PFS, underscoring their potential utility in clinical practice.
 
-      http://
+      Ethical approval for the protocol was granted by the Ethics Committee of the
+      Chinese PLA General Hospital (S2021-228-03), and the study is registered on
+      ClinicalTrials.gov (NCT05218889). Written informed consent was obtained from
+      all subjects prior to participation. The trial was conducted in accordance with
+      the Declaration of Helsinki and Good Clinical Practice recommendations.
 
-      creativecommons.org/licenses/by/4.0/.
+      This investigation was designed as a phase Ib/II randomized clinical trial.
+      Eligible individuals ranged from 18 to 75 years old and had pathologically or
+      cytologically con fi rmed unresectable, locally advanced, or metastatic PDAC
+      without previous systemic treatment for advanced disease. Principal inclusion
+      criteria involved an Eastern Cooperative Oncology Group (ECOG) performance status
+      between 0 and 1, at least one target lesion assessable by RECIST version 1.1,
+      suf fi cient function of vital organs, and a projected life expectancy of at
+      least 3 months. Exclusion parameters encompassed a history of treatment with
+      VEGFR inhibitors or prior administration of immune checkpoint blockade.
 
-      ©TheAuthor(s)2025,correctedpublication2025
+      During the phase Ib, dose-escalation portion of the study, surufatinib was given
+      orally once daily at increasing dose levels of 200, 250, or 300 mg. This agent
+      was administered in combination with camrelizumab, nab-paclitaxel, and S-1.
+      Camrelizumab was dosed intravenously (IV) at 200 mg on day 1 of each 21-day
+      treatment cycle. Nab-paclitaxel was infused IV at 125 mg/ m 2 on days 1 and
+      8, while S-1 was taken orally at 40 mg twice daily from days 1 to 14 of each
+      three-week cycle.
 
-      First-linetreatmentwithchemotherapy,surufatinib(anangio-immuno. . .
+      Dose escalation followed a 3 + 3 design based on DLTs observed in the fi rst
+      treatment cycle. Non-hematologic DLTs were de fi ned as Grade ≥ 3 toxicities,
+      except for certain conditions that were excluded: Grade 3 nausea, vomiting,
+      diarrhea, or constipation resolving within one week after supportive care; Grade
+      3 fatigue lasting ≤ 7 days; Grade 3 hypertension controllable within one week;
+      alopecia, fever, or alkaline phosphatase elevation attributable to tumor or
+      infection; and Grade ≥ 3 decrease in ventricular ejection fraction. Hematologic
+      DLTs included Grade 4 neutropenia, thrombocytopenia, or hemoglobin decrease
+      confi rmed by at least two tests within 2 days; Grade 3 thrombocytopenia with
+      bleeding tendency con fi rmed by at least 2 tests within 2 days; and Grade 3
+      dcreased neutrophil count with fever (ANC < 1.0 × 10 9 /L and body temperature
+      ≥ 38.5 °C), con fi rmed at least twice within 2 days despite supportive care.
 
-      Jiaetal.
+      In the phase II segment, participants were allocated in a 1:1 ratio to receive
+      either the NASCA regimen or nab-paclitaxel in combination with gemcitabine,
+      utilizing block randomization with a block size of four and no strati fi cation
+      parameters. The random allocation sequence was generated by an independent biostatistician
+      using R software (v4.4.1), and both the randomization sequence and block size
+      were concealed from investigators to ensure allocation concealment until intervention
+      assignment.'
+    page: 6
+  - name: OPEN / Materials and methods / Outcomes
+    text: 'Fig. 3 Fluorescent multiplex immunohistochemistry analysis of baseline
+      tissue samples from 26 patients who received NASCA treatment. a Comparison of
+      the ratio of M1/M2 macrophage percentages in the stroma between patients with
+      partial response (PR) and those with stable disease (SD) or progressive disease
+      (PD). b Tumor shrinkage in patients with a higher ratio of M1/M2 macrophage
+      percentages in the stroma compared to those with a lower ratio, using a cutoff
+      value of 10. c Correlation between the ratio of M1/M2 macrophage percentages
+      in the stroma and tumor shrinkage. d Progression-free survival was analyzed
+      according to the ratio of M1 to M2 macrophage percentages, with patients divided
+      into high and low groups based on the median value. e Progression-free survival
+      was analyzed based on the levels of CD8 + cells, using the median as the cutoff
+      to de fi ne high and low groups. f Progression-free survival was analyzed in
+      relation to the levels of CD8 + PD-1 + cells, strati fi ed by the median value.
+      HR Hazard Ratio, NA not available 2
 
-      9
+      Randomization was performed immediately prior to treatment initiation, and once
+      assigned, randomization numbers were irrevocable and not reassigned.
 
-      SignalTransductionandTargetedTherapy (2025) 10:339'
-    page: 9
-  tables: []
+      Patients in the NASCA group received surufatinib at the RP2D in conjunction
+      with camrelizumab, nab-paclitaxel, and S-1 (same regimens as phase Ib) for eight
+      cycles. Patients demonstrating a complete response (CR), PR, or SD then received
+      maintenance therapy consisting of surufatinib (RP2D), S-1, and camrelizumab
+      (same regimens as phase Ib). In the nab-paclitaxel and gemcitabine cohort, treatment
+      involved nab-paclitaxel at 125 mg/m 2 IV on days 1 and 8, together with gemcitabine
+      at 1000 mg/m 2 IV over 30 min on the same days, repeated every 21 days. Therapy
+      in both study arms continued until radiographic progression, unacceptable toxicity,
+      consent withdrawal, or patient death. Tumor evaluations were performed every
+      6 weeks according to RECIST version 1.1 guidelines. AEs were categorized based
+      on the National Cancer Institute Common Terminology Criteria for Adverse Events
+      (NCI-CTCAE), version 5.0. Survival status was monitored every three months in
+      the fi rst year after study drug discontinuation, and followed thereafter until
+      death, loss to follow-up, or withdrawal of consent. Methodological details regarding
+      fl uorescent multiplex immunohistochemistry and imaging techniques are provided
+      in the supplementary appendix.
+
+      The primary endpoints were DLTs and the RP2D of surufatinib in phase Ib, and
+      ORR in phase II. Secondary endpoints included DCR, DOR, TTR, PFS, OS, and safety.
+      Ef fi cacy was analyzed in the intention-to-treat population, which encompassed
+      all patients who were randomized. For the safety analysis, all individuals who
+      were randomized and received at least one dose of a study medication were included.
+      As per RECIST version 1.1 criteria, ORR was de fi ned as the percentage of subjects
+      with either CR or PR, while DCR included those with CR, PR, or SD. DOR represented
+      the interval from the initial CR or PR documentation until disease progression
+      or death. TTR was measured from randomization to the earliest achievement of
+      CR or PR. PFS was calculated from randomization to the point of disease progression
+      or death, and OS was measured from randomization until death due to any cause.
+
+      Sample size estimation was based on an anticipated ORR of 0.49 for the NASCA
+      group and 0.23 for the nab-paclitaxel and gemcitabine group, with a superiority
+      margin set at 0. The calculation assumed a one-sided alpha level of 0.05 and
+      a beta of 0.2. With equal randomization (1:1 ratio) between the two treatment
+      groups, 40 participants per group were needed, equating to a total of 80 subjects.
+      Accounting for a projected dropout rate of 10%, the fi nal required sample size
+      was determined to be 90 patients.
+
+      The median duration of follow-up was estimated using the reverse Kaplan -Meier
+      approach. For the calculation of 95% CIs for ORR and DCR, the Clopper -Pearson
+      exact method was applied. To determine the difference in rates between the experimental
+      and control arms, along with associated two-sided 90% CIs, the Newcombe-Wilson
+      method was used. Superiority was concluded if the lower limit of the 90% CI
+      for the rate difference was greater than zero. OR was calculated by univariate
+      logistic regression analysis. Median PFS and OS were estimated using the Kaplan
+      -Meier technique, while survival differences between groups were assessed with
+      the log-rank test. HRs and their 95% CIs were calculated using the Cox proportional
+      hazards regression model. To identify the optimal threshold of serum CA 19-9
+      for predicting 6-month survival, a time-dependent ROC curve analysis was conducted.
+      A 6-week decrease or a 12-week decrease of CA19-9 levels were analyzed according
+      to the optimal cutoff values. Subgroup analyses were conducted based on baseline
+      variables and CA19-9 levels (by decrease using the optimal cutoff value). The
+      evaluations employed the Cox proportional hazards method and were summarized
+      graphically using forest plots. Differences in immune cell populations among
+      patients showing PR versus those with SD or PD were assessed using the Wilcoxon
+      rank-sum test. The Spearman correlation was assessed between immune cell subsets
+      and the best tumor shrinkage. All statistical analyses were conducted utilizing
+      R software (version 4.4.1).'
+    page: 7
+  - name: DATA AVAILABILITY / Supplementary information
+    text: 'The protocol, statistical analysis plan, and other relevant study materials
+      are publicly available online. The datasets generated and analyzed during the
+      current study are not publicly available due to ethical and regulatory restrictions
+      but may be made available from the corresponding authors upon reasonable request.
+      De-identi fi ed participant data may be shared following approval of a proposal
+      that includes a detailed description of study objectives and a statistical analysis
+      plan, which will be reviewed by all corresponding authors.
+
+      The authors express their gratitude to all patients, their families, and the
+      investigators who participated in the study. They also thank Yan-Qing Wu for
+      data collection, Cong-Ying Li and Yan-Hui Xu for statistical analyses, Xiao-Chong
+      Tang, Xing Lv, JianCai Zhou, Xiao-Yan Dai, and Jia Lu for medical support, and
+      Wen-Ding Sun for medical writing support. This study was supported by Chinese
+      National Natural Science Foundation Project (82272643) and Beijing Natural Science
+      Foundation Project (7232163, 7252130).
+
+      Guang-Hai Dai, Zhi-Kuan Wang, and Quan-Li Han contributed to the conception
+      and design of the study. Ru Jia, Hai-Yan Si, Nan Zhang, Meng-Jiao Fan, Lu Han,
+      Miao-Miao Gou, Zhao-Li Tan, Xia Zhang, Yan-Rong Wang, Fang-Fang Liu, Yue Shi,
+      Yao-Yue Zhang, and Yu-Shan Jia provided study materials or recruited patients
+      and collected the data. Ru Jia, Hai-Yan Si, Nan Zhang, and Meng-Jiao Fan were
+      involved in data collection and assembly. Ru Jia, Nan Zhang, Meng-Jiao Fan,
+      Guo-Chao Deng, and YuQi Wang contributed to data analysis and interpretation.
+      All authors have read and approved the article.
+
+      Supplementary information The online version contains supplementary material
+      available at https://doi.org/10.1038/s41392-025-02441-2.
+
+      Competing interests: Yu-Qi Wang is employed by Nanjing Geneseeq Technology Inc.
+      All other authors declare no con fl ict of interest.
+
+      Ethics approval: This study was performed in line with the principles of the
+      Declaration of Helsinki and Good Clinical Practice recommendations. Ethics approval
+      was granted by the Ethics Committee of Chinese PLA General Hospital (S2021-22803).
+
+      Consent to participate: All participants provided written informed consent prior
+      to enrollment in the study.
+
+      Publisher '' s note Springer Nature remains neutral with regard to jurisdictional
+      claims in published maps and institutional af fi liations.
+
+      Siegel, R. L., Giaquinto, A. N. & Jemal, A. Cancer statistics, 2024. CA Cancer
+      J. Clin. 74 , 12 -49 (2024).
+
+      Bray, F. et al. Global cancer statistics 2022: GLOBOCAN estimates of incidence
+      and mortality worldwide for 36 cancers in 185 countries. CA Cancer J. Clin.
+      74 , 229 -263 (2024).
+
+      Halbrook, C. J., Lyssiotis, C. A., Pasca di Magliano, M. & Maitra, A. Pancreatic
+      cancer: advances and challenges. Cell 186 , 1729 -1754 (2023).
+
+      Von Hoff, D. D. et al. Increased survival in pancreatic cancer with nab-paclitaxel
+      plus gemcitabine. N. Engl. J. Med. 369 , 1691 -1703 (2013).
+
+      Conroy, T. et al. FOLFIRINOX versus gemcitabine for metastatic pancreatic cancer.
+      N. Engl. J. Med. 364 , 1817 -1825 (2011).
+
+      Wainberg, Z. A. et al. NALIRIFOX versus nab-paclitaxel and gemcitabine in treatment-naive
+      patients with metastatic pancreatic ductal adenocarcinoma (NAPOLI 3): a randomised,
+      open-label, phase 3 trial. Lancet 402 , 1272 -1281 (2023).
+
+      Hu, Z. I. et al. Evaluating mismatch repair de fi ciency in pancreatic adenocarcinoma:
+      challenges and recommendations. Clin. Cancer Res. 24 , 1326 -1336 (2018).
+
+      O '' Reilly, E. M. et al. Durvalumab with or without tremelimumab for patients
+      with metastatic pancreatic ductal adenocarcinoma: a phase 2 randomized clinical
+      trial. JAMA Oncol. 5 , 1431 -1438 (2019).
+
+      Morizane, C. et al. A Phase 2 study of nivolumab in combination with modi fi
+      ed FOLFIRINOX for metastatic pancreatic cancer. BJC Rep. 2 , 3 (2024).
+
+      Sherman, M. H. & Beatty, G. L. Tumor microenvironment in pancreatic cancer pathogenesis
+      and therapeutic resistance. Annu. Rev. Pathol. 18 , 123 -148 (2023).
+
+      Tao, J. et al. Targeting hypoxic tumor microenvironment in pancreatic cancer.
+      J. Hematol. Oncol. 14 , 14 (2021).
+
+      Gilles, M. E. et al. Nucleolin targeting impairs the progression of pancreatic
+      cancer and promotes the normalization of tumor vasculature. Cancer Res. 76 ,
+      7181 -7193 (2016).
+
+      Fukumura, D. et al. Enhancing cancer immunotherapy using antiangiogenics: opportunities
+      and challenges. Nat. Rev. Clin. Oncol. 15 , 325 -340 (2018).
+
+      Datta, M. et al. Reprogramming the tumor microenvironment to improve immunotherapy:
+      emerging strategies and combination therapies. Am. Soc. Clin. Oncol. Educ. Book
+      39 , 165 -174 (2019).
+
+      Sha, H. et al. First-line penpulimab (an anti-PD1 antibody) and anlotinib (an
+      angiogenesis inhibitor) with nab-paclitaxel/gemcitabine (PAAG) in metastatic
+      pancreatic cancer: a prospective, multicentre, biomolecular exploratory, phase
+      II trial. Signal Transduct. Target Ther. 9 , 143 (2024).
+
+      Chuah, B. et al. Comparison of the pharmacokinetics and pharmacodynamics of
+      S-1 between Caucasian and East Asian patients. Cancer Sci. 102 , 478 -483 (2011).
+
+      Kang, Y. K. et al. Nivolumab plus chemotherapy versus placebo plus chemotherapy
+      in patients with HER2-negative, untreated, unresectable advanced or recurrent
+      gastric or gastro-oesophageal junction cancer (ATTRACTION-4): a randomised,
+      multicentre, double-blind, placebo-controlled, phase 3 trial. Lancet
+
+      Oncol. 23 , 234 -247 (2022).
+
+      Hong, Y. S. et al. S-1 plus oxaliplatin versus capecitabine plus oxaliplatin
+      for fi rstline treatment of patients with metastatic colorectal cancer: a randomised,
+      noninferiority phase 3 trial. Lancet Oncol. 13 , 1125 -1132 (2012).
+
+      Yamada, Y. et al. S-1 and irinotecan plus bevacizumab versus mFOLFOX6 or CapeOX
+      plus bevacizumab as fi rst-line treatment in patients with metastatic colorectal
+      cancer (TRICOLORE): a randomized, open-label, phase III, noninferiority trial.
+      Ann. Oncol. 29 , 624 -631 (2018).
+
+      Li, C. et al. Pathologic response of phase III study: perioperative camrelizumab
+      plus rivoceranib and chemotherapy versus chemotherapy for locally advanced gastric
+      cancer (DRAGON IV/CAP 05). J. Clin. Oncol. 43 , 464 -474 (2025).
+
+      Uesaka, K. et al. Adjuvant chemotherapy of S-1 versus gemcitabine for resected
+      pancreatic cancer: a phase 3, open-label, randomised, non-inferiority trial
+      (JASPAC 01). Lancet 388 , 248 -257 (2016).
+
+      Ueno, H. et al. Randomized phase III study of gemcitabine plus S-1, S-1 alone,
+      or gemcitabine alone in patients with locally advanced and metastatic pancreatic
+      cancer in Japan and Taiwan: GEST study. J. Clin. Oncol. 31 , 1640 -1648 (2013).
+
+      Takumoto, Y., Sasahara, Y., Narimatsu, H. & Akazawa, M. Comparative outcomes
+      of fi rst-line chemotherapy for metastatic pancreatic cancer among the regimens
+      used in Japan: a systematic review and network meta-analysis. JAMA Netw. Open
+      5 , e2145515 (2022).
+
+      Suenaga, M. et al. S-1 plus nab-paclitaxel is a promising regimen for pancreatic
+      cancer in a preclinical model. J. Surg. Oncol. 113 , 413 -419 (2016).
+
+      Zong, Y. et al. Nab-paclitaxel plus S-1 versus nab-paclitaxel plus gemcitabine
+      as fi rst-line chemotherapy in patients with advanced pancreatic ductal adenocarcinoma:
+      a randomized study. J. Cancer Res. Clin. Oncol. 147 , 1529 -1536 (2021).
+
+      Zong, Y. et al. Ef fi cacy and safety of nab-paclitaxel plus S-1 versus nab-paclitaxel
+      plus gemcitabine for fi rst-line chemotherapy in advanced pancreatic ductal
+      adenocarcinoma. Cancer Manag. Res. 12 , 12657 -12666 (2020).'
+    page: 8
+  - name: DATA AVAILABILITY / References
+    text: 'Jin, M. et al. Nab-paclitaxel plus S-1 versus nab-paclitaxel plus gemcitabine
+      in patients with advanced pancreatic cancer: a multicenter, randomized, phase
+      II study. Oncologist 29 , e1406 -e1418 (2024).
+
+      Shi, Y. et al. Nab-paclitaxel plus S-1 in advanced pancreatic adenocarcinoma
+      (NPSPAC): a single arm, single center, phase II trial. Oncotarget 8 , 92401
+      -92410 (2017).
+
+      Cui, H. et al. A Chinese retrospective multicenter study of fi rst-line chemotherapy
+      for advanced pancreatic cancer. Med. Sci. Monit. 26 , e927654 (2020).
+
+      Liu, Q. et al. Nab-paclitaxel plus S-1 with or without PD-1 inhibitor in pancreatic
+      ductal adenocarcinoma with only hepatic metastases: a retrospective cohort study.
+      Langenbecks Arch. Surg. 407 , 633 -643 (2022).
+
+      Syed, Y. Y. Surufatinib: fi rst approval. Drugs 81 , 727 -732 (2021).
+
+      Xu, J. et al. Surufatinib in advanced pancreatic neuroendocrine tumours (SANETp):
+      a randomised, double-blind, placebo-controlled, phase 3 study. Lancet Oncol.
+      21 , 1489 -1499 (2020).
+
+      Xu, J. et al. Surufatinib in advanced extrapancreatic neuroendocrine tumours
+      (SANET-ep): a randomised, double-blind, placebo-controlled, phase 3 study. Lancet
+      Oncol. 21 , 1500 -1512 (2020).
+
+      Cao, Y. et al. Surufatinib plus toripalimab in patients with advanced solid
+      tumors: a single-arm, open-label, phase 1 trial. J. Cancer Res. Clin. Oncol.
+      149 , 779 -789 (2023).
+
+      Chen, S. et al. Nab-paclitaxel and gemcitabine plus camrelizumab and radiotherapy
+      versus nab-paclitaxel and gemcitabine alone for locally advanced pancreatic
+      adenocarcinoma: a prospective cohort study. J. Hematol. Oncol. 16 , 26 (2023).
+
+      Guo, X. et al. Ef fi cacy of nab -paclitaxel vs. gemcitabine in combination
+      with S -1 for advanced pancreatic cancer: a multicenter phase II randomized
+      trial. Oncol. Lett. 27 , 161 (2024).
+
+      Li, H. W. & Tang, S. L. Colony stimulating factor-1 and its receptor in gastrointestinal
+      malignant tumors. J. Cancer 12 , 7111 -7119 (2021).
+
+      Gao, S. et al. Abstract 2781: mechanism study of surufatinib on the optimized
+      strategy of AG plus PD-1 antibody treatment in pancreatic cancer. Cancer Res.
+      83 , 2781 -2781 (2023).
+
+      Chandana, S. R. et al. Kinetics of CA19-9 decline in a randomized phase III
+      study of irinotecan liposome injection, oxaliplatin, 5- fl uorouracial/leucovorin
+      (NALIRIFOX) or nab-paclitaxel plus gemcitabine (GEM+NABP) in patients who have
+      not previously received chemotherapy for metastatic adenocarcinoma of the pancreas
+      (NAPOLI 3). J. Clin. Oncol. 42 , 687 -687 (2024).
+
+      Wang, L. et al. LBA61 HR070803 plus 5-FU/LV versus placebo plus 5-FU/LV in second-line
+      therapy for gemcitabine-refractory locally advanced or metastatic pancreatic
+      cancer: a multicentered, randomized, double-blind, parallel-controlled phase
+      III trial (HR-IRI-APC). Ann. Oncol. 33 , S1426 (2022).
+
+      Open Access This article is licensed under a Creative Commons Attribution 4.0
+      International License, which permits use, sharing,
+
+      adaptation, distribution and reproduction in any medium or format, as long as
+      you give appropriate credit to the original author(s) and the source, provide
+      a link to the Creative Commons licence, and indicate if changes were made. The
+      images or other third party material in this article are included in the article
+      '' s Creative Commons licence, unless indicated otherwise in a credit line to
+      the material. If material is not included in the article '' s Creative Commons
+      licence and your intended use is not permitted by statutory regulation or exceeds
+      the permitted use, you will need to obtain permission directly from the copyright
+      holder. To view a copy of this licence, visit http:// creativecommons.org/licenses/by/4.0/.
+
+      © The Author(s) 2025, corrected publication 2025'
+    page: 8
+  tables:
+  - table_id: TBL:0000
+    page: 4
+    bbox:
+    - 44.66274059740826
+    - 247.2429072584971
+    - 293.3530853115022
+    - 731.9298484033076
+    header:
+    - Table 1. Baseline
+    - characteristics
+    - ''
+    rows:
+    - - ''
+      - NASCA (N = 45)
+      - Nab-paclitaxel and gemcitabine (N = 45)
+    - - Sex, n (%)
+      - ''
+      - ''
+    - - Male
+      - 30 (66.7)
+      - 25 (55.6)
+    - - Female
+      - 15 (33.3)
+      - 20 (44.4)
+    - - Age (years)
+      - ''
+      - ''
+    - - Median (IQR)
+      - 59.0 (56.0, 61.0)
+      - 59.0 (55.0, 66.0)
+    - - Range
+      - 36.0 - 75.0
+      - 39.0 - 74.0
+    - - ECOG performance status, n
+      - (%)
+      - ''
+    - - '0'
+      - 18 (40.0)
+      - 14 (31.1)
+    - - '1'
+      - 27 (60.0)
+      - 31 (68.9)
+    - - Differentiation grade, n
+      - (%)
+      - ''
+    - - Undifferentiated
+      - 11 (24.4)
+      - 7 (15.6)
+    - - Poorly-differentiated
+      - 25 (55.6)
+      - 29 (64.4)
+    - - Moderately-differentiated
+      - 7 (15.6)
+      - 9 (20.0)
+    - - Well-differentiated
+      - 2 (4.4)
+      - '0'
+    - - Primary tumor location, n (%)
+      - ''
+      - ''
+    - - Head
+      - 18 (40.0)
+      - 19 (42.2)
+    - - Body/Tail
+      - 27 (60.0)
+      - 26 (57.8)
+    - - Stage, n (%)
+      - ''
+      - ''
+    - - Metastatic disease
+      - 37 (82.2)
+      - 36 (80.0)
+    - - Locally advanced
+      - 8 (17.8)
+      - 9 (20.0)
+    - - Sites of metastasis, n (%)
+      - ''
+      - ''
+    - - Liver
+      - 23 (51.1)
+      - 25 (55.6)
+    - - lymph nodes
+      - 24 (53.3)
+      - 20 (44.4)
+    - - Peritoneum
+      - 9 (20.0)
+      - 9 (20.0)
+    - - Lung
+      - 5 (11.1)
+      - 8 (17.8)
+    - - Other
+      - 3 (6.7)
+      - 3 (6.7)
+    - - Metastatic sites, n (%)
+      - ''
+      - ''
+    - - '1'
+      - 16 (35.6)
+      - 16 (35.6)
+    - - '2'
+      - 16 (35.6)
+      - 14 (31.1)
+    - - '3'
+      - 5 (11.1)
+      - 6 (13.3)
+    - - Prior resection of primary site
+      - ''
+      - ''
+    - - 'Yes'
+      - 6 (13.3)
+      - 9 (20.0)
+    - - 'No'
+      - 39 (86.7)
+      - 36 (80.0)
+    - - Baseline CA 19-9, U/mL
+      - ''
+      - ''
+    - - Median (IQR)
+      - 290.0 (47.4, 1635.0)
+      - 518.0 (98.5, 2998.0)
+    - - Baseline CEA, ng/mL
+      - ''
+      - ''
+    - - Median (IQR)
+      - 4.6 (2.5, 8.1)
+      - 3.6 (2.2, 12.6)
+    - - Prior biliary drainage, n (%)
+      - 7 (15.6)
+      - 4 (8.9)
+    asset_path: images/p0004_r002.png
+  - table_id: TBL:0001
+    page: 4
+    bbox:
+    - 310.5017223484814
+    - 545.8376502188726
+    - 560.1352572128176
+    - 732.5553947494138
+    header:
+    - Table 2. Tumor
+    - response
+    - response
+    rows:
+    - - Tumor response
+      - NASCA (N = 45)
+      - Nab-paclitaxel and gemcitabine (N = 45)
+    - - Partial response, n (%)
+      - 23 (51.1)
+      - 11 (24.4)
+    - - Stable disease, n (%)
+      - 18 (40.0)
+      - 29 (64.4)
+    - - Progressive disease, n (%)
+      - 4 (8.9)
+      - 5 (11.1)
+    - - Objective response rate, (95% CI)
+      - 51.1% (35.8 - 66.3)
+      - 24.4% (12.9 - 39.5)
+    - - Disease control rate, (95% CI)
+      - 91.1% (78.8 - 97.5)
+      - 88.9% (75.9 - 96.3)
+    - - Time to response (months), median (95% CI)
+      - 1.6 (1.5 - 2.7)
+      - 2.5 (1.4 - 3.8)
+    - - Duration of response (months), median (95% CI)
+      - 8.1 (5.8 - 13.3)
+      - 6.0 (2.3 - 13.0)
+    asset_path: images/p0004_r003.png
+  - table_id: TBL:0002
+    page: 6
+    bbox:
+    - 44.36233886433765
+    - 432.31958762110787
+    - 559.7274143069982
+    - 731.8275555509832
+    header:
+    - Table 3. Treatment-emergent adverse
+    - event in the safety population
+    - event in the safety population
+    - event in the safety population
+    - event in the safety population
+    - event in the safety population
+    - event in the safety population
+    - event in the safety population
+    - event in the safety population
+    rows:
+    - - ''
+      - NASCA group
+      - NASCA group
+      - NASCA group
+      - NASCA group
+      - Nab-paclitaxel and gemcitabine group
+      - Nab-paclitaxel and gemcitabine group
+      - Nab-paclitaxel and gemcitabine group
+      - Nab-paclitaxel and gemcitabine group
+    - - ''
+      - (N = 45)
+      - (N = 45)
+      - (N = 45)
+      - (N = 45)
+      - (N = 45)
+      - (N = 45)
+      - (N = 45)
+      - (N = 45)
+    - - ''
+      - All grades
+      - Grade 1 - 2
+      - Grade 3
+      - Grade 4
+      - All grades
+      - Grade 1 - 2
+      - Grade 3
+      - Grade 4
+    - - Decreased white blood cell count
+      - 34 (75.5%)
+      - 20 (44.4%)
+      - 10 (22.2%)
+      - 4 (8.9%)
+      - 33 (73.3%)
+      - 21 (46.7%)
+      - 8 (17.8%)
+      - 4 (8.9%)
+    - - Decreased neutrophil count
+      - 33 (73.3%)
+      - 18 (40.0%)
+      - 9 (20.0%)
+      - 6 (13.3%)
+      - 27 (60.0%)
+      - 11 (24.4%)
+      - 12 (26.7%)
+      - 4 (8.9%)
+    - - Decreased lymphocyte count
+      - 22 (48.9%)
+      - 13 (28.9%)
+      - 8 (17.8%)
+      - 1 (2.2%)
+      - 14 (31.1%)
+      - 11 (24.4%)
+      - 3 (6.7%)
+      - '0'
+    - - Anemia
+      - 21 (46.7%)
+      - 20 (44.4%)
+      - 1 (2.2%)
+      - '0'
+      - 31 (68.9%)
+      - 30 (66.7%)
+      - 1 (2.2%)
+      - '0'
+    - - Decreased platelet count
+      - 21 (46.7%)
+      - 20 (44.4%)
+      - 1 (2.2%)
+      - '0'
+      - 20 (44.4%)
+      - 16 (35.6%)
+      - 3 (6.7%)
+      - 1 (2.2%)
+    - - Alopecia
+      - 21 (46.7%)
+      - 21 (46.7%)
+      - '0'
+      - '0'
+      - 18 (40.0%)
+      - 18 (40.0%)
+      - '0'
+      - '0'
+    - - Peripheral neuropathy
+      - 20 (44.4%)
+      - 15 (33.3%)
+      - 4 (8.9%)
+      - 1 (2.2%)
+      - 9 (20.0%)
+      - 9 (20.0%)
+      - '0'
+      - '0'
+    - - Anorexia
+      - 20 (44.4%)
+      - 20 (44.4%)
+      - '0'
+      - '0'
+      - 18 (40.0%)
+      - 18 (40.0%)
+      - '0'
+      - '0'
+    - - Nausea
+      - 19 (42.2%)
+      - 19 (42.2%)
+      - '0'
+      - '0'
+      - 22 (48.9%)
+      - 22 (48.9%)
+      - '0'
+      - '0'
+    - - Vomiting
+      - 13 (28.9%)
+      - 13 (28.9%)
+      - '0'
+      - '0'
+      - 11 (24.4%)
+      - 11 (24.4%)
+      - '0'
+      - '0'
+    - - Increased alanine aminotransferase
+      - 16 (35.6%)
+      - 15 (33.3%)
+      - 1 (2.2%)
+      - '0'
+      - 16 (35.6%)
+      - 15 (33.3%)
+      - 1 (2.2%)
+      - '0'
+    - - Increased aspartate aminotransferase
+      - 16 (35.6%)
+      - 13 (28.9%)
+      - 3 (6.7%)
+      - '0'
+      - 17 (37.8%)
+      - 16 (35.6%)
+      - 1 (2.2%)
+      - '0'
+    - - Elevated bilirubin
+      - 14 (31.1%)
+      - 9 (20.0%)
+      - 5 (11.1%)
+      - '0'
+      - 7 (15.6%)
+      - 5 (11.1%)
+      - 1 (2.2%)
+      - 1 (2.2%)
+    - - Fatigue
+      - 11 (24.4%)
+      - 11 (24.4%)
+      - '0'
+      - '0'
+      - 9 (20.0%)
+      - 7 (15.6%)
+      - 2 (4.4%)
+      - '0'
+    - - Diarrhea
+      - 6 (13.3%)
+      - 5 (11.1%)
+      - 1 (2.2%)
+      - '0'
+      - 4 (8.9%)
+      - 4 (8.9%)
+      - '0'
+      - '0'
+    - - Rash
+      - 5 (11.1%)
+      - 4 (8.9%)
+      - 1 (2.2%)
+      - '0'
+      - 3 (6.7%)
+      - 3 (6.7%)
+      - '0'
+      - '0'
+    - - Abdominal pain
+      - 2 (4.4%)
+      - 2 (4.4%)
+      - '0'
+      - '0'
+      - 3 (6.7%)
+      - 3 (6.7%)
+      - '0'
+      - '0'
+    - - Albuminuria
+      - 2 (4.4%)
+      - 2 (4.4%)
+      - '0'
+      - '0'
+      - '0'
+      - '0'
+      - '0'
+      - '0'
+    - - Hypothyroidism
+      - 2 (4.4%)
+      - 2 (4.4%)
+      - '0'
+      - '0'
+      - '0'
+      - '0'
+      - '0'
+      - '0'
+    asset_path: images/p0006_r005.png
   images:
   - image_id: IMG:0000
-    caption: Fig.1
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 1
+    bbox:
+    - 525.5393217146396
+    - 710.3833617973423
+    - 550.1240847498178
+    - 735.1705218170241
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0001_r000.png
+  - image_id: IMG:0001
+    caption: 'Fig. 1 Trial pro fi le. Two deaths occurred in the NASCA group, one
+      due to liver failure and the other due to unspeci fi ed causes. In the nabpaclitaxel
+      and gemcitabine group, one death was attributed to an infection and one due
+      to unspeci fi ed causes
+
+
+      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->'
     page: 3
     bbox:
-    - 55.89899826049805
-    - 380.1260681152344
-    - 529.9080200195312
-    - 710.362060546875
+    - 54.392330325022336
+    - 80.63569339564924
+    - 529.8262214541435
+    - 410.75320311019954
     kind: figure
     extracted_values: {}
-    asset_path: images/p0003_r000.png
-  - image_id: IMG:0001
-    caption: Fig.2
+    asset_path: images/p0003_r001.png
+  - image_id: IMG:0002
+    caption: 'Fig. 2 Kaplan -Meier analyses of survival in the intention-to-treat
+      population as assessed by investigators. a Kaplan -Meier curves of progression-free
+      survival (%). b Kaplan -Meier curves of overall survival
+
+
+      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->'
     page: 5
     bbox:
-    - 112.8759994506836
-    - 59.301055908203125
-    - 472.8760070800781
-    - 545.1590576171875
+    - 111.66365816202014
+    - 243.27537867155127
+    - 473.9895721755921
+    - 730.8621696177105
     kind: figure
     extracted_values: {}
-    asset_path: images/p0005_r001.png
-  - image_id: IMG:0002
-    caption: Fig.3
+    asset_path: images/p0005_r004.png
+  - image_id: IMG:0003
+    caption: 'Fig. 3 Fluorescent multiplex immunohistochemistry analysis of baseline
+      tissue samples from 26 patients who received NASCA treatment. a Comparison of
+      the ratio of M1/M2 macrophage percentages in the stroma between patients with
+      partial response (PR) and those with stable disease (SD) or progressive disease
+      (PD). b Tumor shrinkage in patients with a higher ratio of M1/M2 macrophage
+      percentages in the stroma compared to those with a lower ratio, using a cutoff
+      value of 10. c Correlation between the ratio of M1/M2 macrophage percentages
+      in the stroma and tumor shrinkage. d Progression-free survival was analyzed
+      according to the ratio of M1 to M2 macrophage percentages, with patients divided
+      into high and low groups based on the median value. e Progression-free survival
+      was analyzed based on the levels of CD8 + cells, using the median as the cutoff
+      to de fi ne high and low groups. f Progression-free survival was analyzed in
+      relation to the levels of CD8 + PD-1 + cells, strati fi ed by the median value.
+      HR Hazard Ratio, NA not available 2
+
+
+      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->'
     page: 7
     bbox:
-    - 55.89899826049805
-    - 59.301025390625
-    - 529.9080200195312
-    - 350.1350402832031
+    - 54.08188746785745
+    - 439.37616201758846
+    - 530.0434852749108
+    - 730.8688747196637
     kind: figure
     extracted_values: {}
-    asset_path: images/p0007_r002.png
+    asset_path: images/p0007_r006.png
+  - image_id: IMG:0004
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 9
+    bbox:
+    - 300.7396277733147
+    - 590.7383387504656
+    - 343.8014025382697
+    - 605.6286080969985
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0009_r007.png

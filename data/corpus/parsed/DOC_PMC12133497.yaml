@@ -1,8 +1,25 @@
 corpus_version: 0.1.0
 parse:
-  backend: pymupdf
+  backend: docling
   degraded: []
   same_as: {}
+  route:
+    requested: auto
+    chosen: docling
+    reason: structured_pdf
+    probe:
+      page_count: 8
+      image_count: 5
+      table_candidates: 0
+      text_chars: 29782
+      avg_blocks_per_page: 15.0
+      multi_column_hint: true
+      text_extractable: true
+    attempts:
+    - backend: docling
+      status: ok
+      degraded: []
+      blocks: 89
 sections_meta:
 - section_id: SEC:PMC12133497#0000
   doc_id: DOC:PMC12133497
@@ -16,14 +33,15 @@ sections_meta:
   start_page: 1
   end_page: 1
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=1 page=1
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC12133497#0001
   doc_id: DOC:PMC12133497
   parent_section_id: null
-  section_path: Surufatinibrelatednephrotic
-  section_title: Surufatinibrelatednephrotic
+  section_path: OPEN ACCESS
+  section_title: OPEN ACCESS
   section_level: 1
   sort_order: 1
   start_page: 1
@@ -31,13 +49,12 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC12133497#0002
   doc_id: DOC:PMC12133497
   parent_section_id: null
-  section_path: syndromeinapancreatic
-  section_title: syndromeinapancreatic
+  section_path: COPYRIGHT
+  section_title: COPYRIGHT
   section_level: 1
   sort_order: 2
   start_page: 1
@@ -45,1925 +62,768 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC12133497#0003
   doc_id: DOC:PMC12133497
   parent_section_id: null
-  section_path: neuroendocrinetumor:acase
-  section_title: neuroendocrinetumor:acase
+  section_path: KEYWORDS
+  section_title: KEYWORDS
   section_level: 1
   sort_order: 3
   start_page: 1
-  end_page: 1
+  end_page: 6
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC12133497#0004
   doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: reportandreviewofliterature
-  section_title: reportandreviewofliterature
-  section_level: 1
-  sort_order: 4
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
-- section_id: SEC:PMC12133497#0005
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0004
-  section_path: reportandreviewofliterature / Introduction
+  parent_section_id: SEC:PMC12133497#0003
+  section_path: KEYWORDS / Introduction
   section_title: Introduction
   section_level: 2
-  sort_order: 5
+  sort_order: 4
   start_page: 1
   end_page: 1
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=1
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 13.5
+  - docling 版面信号 level=1 page=1
   - 命中标准章节名
-- section_id: SEC:PMC12133497#0006
+- section_id: SEC:PMC12133497#0005
   doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0005
-  section_path: reportandreviewofliterature / Introduction / ChengqianShi1,JinglianLin1,XiadanXiang1,WenlongBao2
-  section_title: ChengqianShi1,JinglianLin1,XiadanXiang1,WenlongBao2
-  section_level: 3
-  sort_order: 6
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=3 page=1
-  - 字号 11.0
-- section_id: SEC:PMC12133497#0007
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0005
-  section_path: reportandreviewofliterature / Introduction / andJieYang1*
-  section_title: andJieYang1*
-  section_level: 3
-  sort_order: 7
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=3 page=1
-  - 字号 11.0
-- section_id: SEC:PMC12133497#0008
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: Casepresentation
-  section_title: Casepresentation
-  section_level: 1
-  sort_order: 8
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=2
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0009
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 10.3389/fonc.2025.1546217
-  section_title: 10.3389/fonc.2025.1546217
-  section_level: 1
-  sort_order: 9
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12133497#0010
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0009
-  section_path: 10.3389/fonc.2025.1546217 / Case presentation
+  parent_section_id: SEC:PMC12133497#0003
+  section_path: KEYWORDS / Case presentation
   section_title: Case presentation
   section_level: 2
-  sort_order: 10
+  sort_order: 5
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=2
-- section_id: SEC:PMC12133497#0011
+  - docling 版面信号 level=1 page=2
+- section_id: SEC:PMC12133497#0006
   doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 738.7mg/L)afterhalfacourseoftreatment.Finally,thepatient
-  section_title: 738.7mg/L)afterhalfacourseoftreatment.Finally,thepatient
-  section_level: 1
-  sort_order: 11
-  start_page: 3
-  end_page: 3
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 738
-- section_id: SEC:PMC12133497#0012
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: '10.3389/fonc.2025.1546217 #2'
-  section_title: 10.3389/fonc.2025.1546217
-  section_level: 1
-  sort_order: 12
-  start_page: 3
-  end_page: 3
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12133497#0013
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0012
-  section_path: '10.3389/fonc.2025.1546217 #2 / Discussion'
+  parent_section_id: SEC:PMC12133497#0003
+  section_path: KEYWORDS / Discussion
   section_title: Discussion
   section_level: 2
-  sort_order: 13
+  sort_order: 6
   start_page: 3
-  end_page: 3
+  end_page: 5
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=3
-  - pymupdf 版面信号 level=1 page=3
-  - 字号 13.5
+  - docling 版面信号 level=1 page=3
   - 命中标准章节名
-- section_id: SEC:PMC12133497#0014
+- section_id: SEC:PMC12133497#0007
   doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: '10.3389/fonc.2025.1546217 #3'
-  section_title: 10.3389/fonc.2025.1546217
-  section_level: 1
-  sort_order: 14
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12133497#0015
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: '10.3389/fonc.2025.1546217 #4'
-  section_title: 10.3389/fonc.2025.1546217
-  section_level: 1
-  sort_order: 15
-  start_page: 5
-  end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12133497#0016
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: Data availabilitystatement
-  section_title: Data availabilitystatement
-  section_level: 1
-  sort_order: 16
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0017
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: Ethicsstatement
-  section_title: Ethicsstatement
-  section_level: 1
-  sort_order: 17
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0018
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: '10.3389/fonc.2025.1546217 #5'
-  section_title: 10.3389/fonc.2025.1546217
-  section_level: 1
-  sort_order: 18
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12133497#0019
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0018
-  section_path: '10.3389/fonc.2025.1546217 #5 / Data availability statement'
+  parent_section_id: SEC:PMC12133497#0003
+  section_path: KEYWORDS / Data availability statement
   section_title: Data availability statement
   section_level: 2
-  sort_order: 19
+  sort_order: 7
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=6
-- section_id: SEC:PMC12133497#0020
+  - docling 版面信号 level=1 page=6
+- section_id: SEC:PMC12133497#0008
   doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0018
-  section_path: '10.3389/fonc.2025.1546217 #5 / Ethics statement'
+  parent_section_id: SEC:PMC12133497#0003
+  section_path: KEYWORDS / Ethics statement
   section_title: Ethics statement
   section_level: 2
-  sort_order: 20
+  sort_order: 8
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=6
-- section_id: SEC:PMC12133497#0021
+  - docling 版面信号 level=1 page=6
+- section_id: SEC:PMC12133497#0009
   doc_id: DOC:PMC12133497
   parent_section_id: null
-  section_path: Authorcontributions
-  section_title: Authorcontributions
+  section_path: Confl ict of interest
+  section_title: Confl ict of interest
   section_level: 1
-  sort_order: 21
+  sort_order: 9
   start_page: 7
   end_page: 7
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=7
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0022
+  - docling 版面信号 level=1 page=7
+- section_id: SEC:PMC12133497#0010
   doc_id: DOC:PMC12133497
   parent_section_id: null
-  section_path: Conﬂictofinterest
-  section_title: Conﬂictofinterest
+  section_path: Publisher ' s note
+  section_title: Publisher ' s note
   section_level: 1
-  sort_order: 22
+  sort_order: 10
   start_page: 7
   end_page: 7
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=7
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0023
+  - docling 版面信号 level=1 page=7
+- section_id: SEC:PMC12133497#0011
   doc_id: DOC:PMC12133497
   parent_section_id: null
-  section_path: GenerativeAI statement
-  section_title: GenerativeAI statement
+  section_path: SUPPLEMENTARY FIGURE 1
+  section_title: SUPPLEMENTARY FIGURE 1
   section_level: 1
-  sort_order: 23
+  sort_order: 11
   start_page: 7
-  end_page: 7
+  end_page: 8
   heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  heading_confidence: 0.88
   evidence:
-  - pymupdf 版面信号 level=1 page=7
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0024
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: Publisher’snote
-  section_title: Publisher’snote
-  section_level: 1
-  sort_order: 24
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=7
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0025
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: Supplementarymaterial
-  section_title: Supplementarymaterial
-  section_level: 1
-  sort_order: 25
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=7
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0026
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: SUPPLEMENTARY FIGURE1
-  section_title: SUPPLEMENTARY FIGURE1
-  section_level: 1
-  sort_order: 26
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.66
-  evidence:
+  - docling 版面信号 level=1 page=7
   - 命中标准章节名
-- section_id: SEC:PMC12133497#0027
+- section_id: SEC:PMC12133497#0012
   doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 1.ChangA,ShermanSK,HoweJR,SahaiV.Progressinthemanagementof
-  section_title: 1.ChangA,ShermanSK,HoweJR,SahaiV.Progressinthemanagementof
-  section_level: 1
-  sort_order: 27
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 1
-- section_id: SEC:PMC12133497#0028
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 2.DasariA,ShenC,HalperinD,ZhaoB,ZhouS,XuY,etal.Trendsinthe
-  section_title: 2.DasariA,ShenC,HalperinD,ZhaoB,ZhouS,XuY,etal.Trendsinthe
-  section_level: 1
-  sort_order: 28
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 2
-- section_id: SEC:PMC12133497#0029
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 3.SyedYY.Surufatinib:ﬁrstapproval.Drugs.(2021)81:727–32.doi:10.1007/
-  section_title: 3.SyedYY.Surufatinib:ﬁrstapproval.Drugs.(2021)81:727–32.doi:10.1007/
-  section_level: 1
-  sort_order: 29
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 3
-- section_id: SEC:PMC12133497#0030
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 4.XuJ,ShenL,BaiC,WangW,LiJ,YuX,etal.Surufatinibinadvanced
-  section_title: 4.XuJ,ShenL,BaiC,WangW,LiJ,YuX,etal.Surufatinibinadvanced
-  section_level: 1
-  sort_order: 30
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 4
-- section_id: SEC:PMC12133497#0031
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 5.XuJ,ShenL,ZhouZ,LiJ,BaiC,ChiY,etal.Surufatinibinadvanced
-  section_title: 5.XuJ,ShenL,ZhouZ,LiJ,BaiC,ChiY,etal.Surufatinibinadvanced
-  section_level: 1
-  sort_order: 31
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 5
-- section_id: SEC:PMC12133497#0032
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 6.SulcinerML,ClancyTE.Surgicalmanagementofpancreaticneuroendocrine
-  section_title: 6.SulcinerML,ClancyTE.Surgicalmanagementofpancreaticneuroendocrine
-  section_level: 1
-  sort_order: 32
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 6
-- section_id: SEC:PMC12133497#0033
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 7.Malyszko J, Tesarova P, Capasso G, Capasso A. The link between kidney
-    disease
-  section_title: 7.Malyszko J, Tesarova P, Capasso G, Capasso A. The link between
-    kidney disease
-  section_level: 1
-  sort_order: 33
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 7
-- section_id: SEC:PMC12133497#0034
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 8.RosnerMH,JhaveriKD,McmahonBA,PerazellaMA.Onconephrology:The
-  section_title: 8.RosnerMH,JhaveriKD,McmahonBA,PerazellaMA.Onconephrology:The
-  section_level: 1
-  sort_order: 34
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 8
-- section_id: SEC:PMC12133497#0035
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 77. doi:10.3322/caac.21636
-  section_title: 77. doi:10.3322/caac.21636
-  section_level: 1
-  sort_order: 35
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 77
-- section_id: SEC:PMC12133497#0036
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 9.Pai P, Bone JM, Mcdicken I, Bell GM. Solid tumour and glomerulopathy.
-    Q J Med.
-  section_title: 9.Pai P, Bone JM, Mcdicken I, Bell GM. Solid tumour and glomerulopathy.
-    Q J Med.
-  section_level: 1
-  sort_order: 36
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 9
-- section_id: SEC:PMC12133497#0037
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 11.Jonasch E, Donskov F, Iliopoulos O, Rathmell WK, Narayan VK, Maughan
-    BL,
-  section_title: 11.Jonasch E, Donskov F, Iliopoulos O, Rathmell WK, Narayan VK, Maughan
-    BL,
-  section_level: 1
-  sort_order: 37
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 11
-- section_id: SEC:PMC12133497#0038
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 12.LaksS,VanLeeuwaardeR,PatelD,KeutgenXM,HammelP,NilubolN, etal.
-  section_title: 12.LaksS,VanLeeuwaardeR,PatelD,KeutgenXM,HammelP,NilubolN, etal.
-  section_level: 1
-  sort_order: 38
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 12
-- section_id: SEC:PMC12133497#0039
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 13.TangC,LivingstonMJ,SaﬁrsteinR,DongZ.Cisplatinnephrotoxicity:new
-  section_title: 13.TangC,LivingstonMJ,SaﬁrsteinR,DongZ.Cisplatinnephrotoxicity:new
-  section_level: 1
-  sort_order: 39
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 13
-- section_id: SEC:PMC12133497#0040
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 14.AliMA,ShahSS,TahirN,RehmanS,SaeedM,BajwaSF,etal.Efﬁcacyand
-  section_title: 14.AliMA,ShahSS,TahirN,RehmanS,SaeedM,BajwaSF,etal.Efﬁcacyand
-  section_level: 1
-  sort_order: 40
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 14
-- section_id: SEC:PMC12133497#0041
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 15.CaiT,ChengY,DuY,TanP,LiT,ChenY,etal.Efﬁcacyandsafetyof
-  section_title: 15.CaiT,ChengY,DuY,TanP,LiT,ChenY,etal.Efﬁcacyandsafetyof
-  section_level: 1
-  sort_order: 41
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 15
-- section_id: SEC:PMC12133497#0042
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 16.BenzingT,IngelﬁngerJR,SalantD.Insightsintoglomerularﬁltrationand
-  section_title: 16.BenzingT,IngelﬁngerJR,SalantD.Insightsintoglomerularﬁltrationand
-  section_level: 1
-  sort_order: 42
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 16
-- section_id: SEC:PMC12133497#0043
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 17.DaehnIS,DufﬁeldJS.Theglomerularﬁltrationbarrier:astructuraltargetfor
-  section_title: 17.DaehnIS,DufﬁeldJS.Theglomerularﬁltrationbarrier:astructuraltargetfor
-  section_level: 1
-  sort_order: 43
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 17
-- section_id: SEC:PMC12133497#0044
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 20.XuJ,LiJ,BaiC,XuN,ZhouZ,LiZ,etal.Surufatinibinadvancedwell-
-  section_title: 20.XuJ,LiJ,BaiC,XuN,ZhouZ,LiZ,etal.Surufatinibinadvancedwell-
-  section_level: 1
-  sort_order: 44
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 20
-- section_id: SEC:PMC12133497#0045
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 21.ZhuW,WangW,ShiY,ShenB,LiY.Surufatinib-inducedrenalthrombotic
-  section_title: 21.ZhuW,WangW,ShiY,ShenB,LiY.Surufatinib-inducedrenalthrombotic
-  section_level: 1
-  sort_order: 45
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 21
-- section_id: SEC:PMC12133497#0046
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 22.CivesM,StrosbergJR.Gastroenteropancreaticneuroendocrinetumors.CA:A
-  section_title: 22.CivesM,StrosbergJR.Gastroenteropancreaticneuroendocrinetumors.CA:A
-  section_level: 1
-  sort_order: 46
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 22
-- section_id: SEC:PMC12133497#0047
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: '10.3389/fonc.2025.1546217 #6'
-  section_title: 10.3389/fonc.2025.1546217
-  section_level: 1
-  sort_order: 47
-  start_page: 7
-  end_page: 7
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC12133497#0048
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0047
-  section_path: '10.3389/fonc.2025.1546217 #6 / Author contributions'
+  parent_section_id: SEC:PMC12133497#0011
+  section_path: SUPPLEMENTARY FIGURE 1 / Author contributions
   section_title: Author contributions
   section_level: 2
-  sort_order: 48
+  sort_order: 12
   start_page: 7
   end_page: 7
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=7
-- section_id: SEC:PMC12133497#0049
+  - docling 版面信号 level=1 page=7
+- section_id: SEC:PMC12133497#0013
   doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0047
-  section_path: '10.3389/fonc.2025.1546217 #6 / Funding'
+  parent_section_id: SEC:PMC12133497#0011
+  section_path: SUPPLEMENTARY FIGURE 1 / Funding
   section_title: Funding
   section_level: 2
-  sort_order: 49
+  sort_order: 13
   start_page: 7
   end_page: 7
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=7
-  - pymupdf 版面信号 level=1 page=7
-  - 字号 13.5
-- section_id: SEC:PMC12133497#0050
+  - docling 版面信号 level=1 page=7
+- section_id: SEC:PMC12133497#0014
   doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0047
-  section_path: '10.3389/fonc.2025.1546217 #6 / Conflict of interest'
+  parent_section_id: SEC:PMC12133497#0011
+  section_path: SUPPLEMENTARY FIGURE 1 / Conflict of interest
   section_title: Conflict of interest
   section_level: 2
-  sort_order: 50
+  sort_order: 14
   start_page: 7
   end_page: 7
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=2 page=7
-- section_id: SEC:PMC12133497#0051
+- section_id: SEC:PMC12133497#0015
   doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0047
-  section_path: '10.3389/fonc.2025.1546217 #6 / Generative AI statement'
+  parent_section_id: SEC:PMC12133497#0011
+  section_path: SUPPLEMENTARY FIGURE 1 / Generative AI statement
   section_title: Generative AI statement
   section_level: 2
-  sort_order: 51
-  start_page: 7
-  end_page: 7
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=7
-- section_id: SEC:PMC12133497#0052
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0047
-  section_path: '10.3389/fonc.2025.1546217 #6 / Publisher’s note'
-  section_title: Publisher’s note
-  section_level: 2
-  sort_order: 52
-  start_page: 7
-  end_page: 7
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=7
-- section_id: SEC:PMC12133497#0053
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0047
-  section_path: '10.3389/fonc.2025.1546217 #6 / Supplementary material'
-  section_title: Supplementary material
-  section_level: 2
-  sort_order: 53
-  start_page: 7
-  end_page: 7
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=7
-- section_id: SEC:PMC12133497#0054
-  doc_id: DOC:PMC12133497
-  parent_section_id: SEC:PMC12133497#0047
-  section_path: '10.3389/fonc.2025.1546217 #6 / References'
-  section_title: References
-  section_level: 2
-  sort_order: 54
+  sort_order: 15
   start_page: 7
   end_page: 7
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=7
-  - pymupdf 版面信号 level=1 page=7
-  - 字号 13.5
+  - docling 版面信号 level=1 page=7
+- section_id: SEC:PMC12133497#0016
+  doc_id: DOC:PMC12133497
+  parent_section_id: SEC:PMC12133497#0011
+  section_path: SUPPLEMENTARY FIGURE 1 / Publisher’s note
+  section_title: Publisher’s note
+  section_level: 2
+  sort_order: 16
+  start_page: 7
+  end_page: 7
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=7
+- section_id: SEC:PMC12133497#0017
+  doc_id: DOC:PMC12133497
+  parent_section_id: SEC:PMC12133497#0011
+  section_path: SUPPLEMENTARY FIGURE 1 / Supplementary material
+  section_title: Supplementary material
+  section_level: 2
+  sort_order: 17
+  start_page: 7
+  end_page: 7
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=7
+  - docling 版面信号 level=1 page=7
   - 命中标准章节名
-- section_id: SEC:PMC12133497#0055
+- section_id: SEC:PMC12133497#0018
   doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 23.RaymondE,DahanL,RaoulJ-L,BangYJ,BorbathI,Lombard-BohasC,etal.
-  section_title: 23.RaymondE,DahanL,RaoulJ-L,BangYJ,BorbathI,Lombard-BohasC,etal.
-  section_level: 1
-  sort_order: 55
-  start_page: 8
+  parent_section_id: SEC:PMC12133497#0011
+  section_path: SUPPLEMENTARY FIGURE 1 / References
+  section_title: References
+  section_level: 2
+  sort_order: 18
+  start_page: 7
   end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - 编号模式 23
-- section_id: SEC:PMC12133497#0056
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 24.AzarI,EsfandiarifardS,SinaiP,WazirA,FoulkeL,MehdiS,etal.Sunitinib-
-  section_title: 24.AzarI,EsfandiarifardS,SinaiP,WazirA,FoulkeL,MehdiS,etal.Sunitinib-
-  section_level: 1
-  sort_order: 56
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 24
-- section_id: SEC:PMC12133497#0057
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 25.BolleeG,PateyN,CazajousG,RobertC,GoujonJM,FakhouriF,etal.
-  section_title: 25.BolleeG,PateyN,CazajousG,RobertC,GoujonJM,FakhouriF,etal.
-  section_level: 1
-  sort_order: 57
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 25
-- section_id: SEC:PMC12133497#0058
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 26.KoH-C,LeeH-P,WuJ-D,MaTL,ShenCH,LinCT,etal.Sunitinib-related
-  section_title: 26.KoH-C,LeeH-P,WuJ-D,MaTL,ShenCH,LinCT,etal.Sunitinib-related
-  section_level: 1
-  sort_order: 58
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 26
-- section_id: SEC:PMC12133497#0059
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 27.Takahashi D, Nagahama K, Tsuura Y, Tanaka H, Tamura T. Sunitinib-induced
-  section_title: 27.Takahashi D, Nagahama K, Tsuura Y, Tanaka H, Tamura T. Sunitinib-induced
-  section_level: 1
-  sort_order: 59
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 27
-- section_id: SEC:PMC12133497#0060
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 28.Zonoozi S, Palmer M, Ursina T, Geara A. Worsening membranous nephropathy
-  section_title: 28.Zonoozi S, Palmer M, Ursina T, Geara A. Worsening membranous nephropathy
-  section_level: 1
-  sort_order: 60
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 28
-- section_id: SEC:PMC12133497#0061
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 29.StamellouE,SeikritC,TangSCW,BoorP,TesařV,FloegeJ,
-  section_title: 29.StamellouE,SeikritC,TangSCW,BoorP,TesařV,FloegeJ,
-  section_level: 1
-  sort_order: 61
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 29
-- section_id: SEC:PMC12133497#0062
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: 30.Cheung CK, Alexander S, Reich HN, Selvaskandan H, Zhang H, Barratt
-    J, et al.
-  section_title: 30.Cheung CK, Alexander S, Reich HN, Selvaskandan H, Zhang H, Barratt
-    J, et al.
-  section_level: 1
-  sort_order: 62
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 30
-- section_id: SEC:PMC12133497#0063
-  doc_id: DOC:PMC12133497
-  parent_section_id: null
-  section_path: '10.3389/fonc.2025.1546217 #7'
-  section_title: 10.3389/fonc.2025.1546217
-  section_level: 1
-  sort_order: 63
-  start_page: 8
-  end_page: 8
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
+  - PDF 内嵌书签 level=2 page=7
+  - docling 版面信号 level=1 page=7
+  - 命中标准章节名
 documents:
 - doc_id: DOC:PMC12133497
-  source_id: PUBMED
-  external_id: PMC12133497
+  source_id: PMC
   title: 'Surufatinib related nephrotic syndrome in a pancreatic neuroendocrine tumor:
     a case report and review of literature.'
   doc_type: JOURNAL_ARTICLE
   language: en
   license_tier: TIER_0
   sections:
-  - name: reportandreviewofliterature / Introduction / ChengqianShi1,JinglianLin1,XiadanXiang1,WenlongBao2
-    text: '1Departmentof Nephrology,The SecondAfﬁliatedHospital ofZhejiangChinese
-      MedicalUniversity,
-
-      Hangzhou,China,2Department ofTraditionalChinese Medicine,The CancerHospitalof
-      Universityof
-
-      Chinese Academyof Sciences(ZhejiangCancerHospital),Hangzhou, China
-
-      Pancreaticneuroendocrinetumors(pNETs)arerare,heterogenousneoplasms
-
-      originatingfrompancreaticneuroendocrinecells,whichregulatehormone
-
-      secretionandmetabolichomeostasis.Surgeryistheprimarymethodof
-
-      controlandpotentialcureforpNETsandtargetedtherapieshavealsobeen
-
-      investigated for low-grade inoperable or distant metastatic pNETs. Surufatinib,
-      an
-
-      oralangio-immunokinaseinhibitor,isapprovedfortreatinginoperableorlate-
-
-      stage,low-grade(G1andG2),well-differentiatedpNETsandextrapancreatic
-
-      neuroendocrine tumors. This study describes a case of nephrotic syndrome in
-      a
-
-      middle-aged woman with pNETs. This patient showed nephrotic syndrome after
-
-      surufatinib treatment 3 months and renal pathology suggested IgA nephropathy
-
-      with moderatepodocyte injury. However, the nephrotic syndromewas relieved
-
-      after2weeksofdiscontinuationofsurufatinib.Afterresumingtreatmentwith
-
-      low-dosesurufatinibfor2weeks,therandomproteinuriaquantiﬁcationwas
-
-      increased and the proteinuria turned negative after discontinuation of surufatinib
-
-      again.Itprovidesareferenceforsurufatinibrelatednephroticsyndromein
-
-      patientswithpNETsandthepotentialmechanismbetweensurufatiniband
-
-      podocyteinjuryin IgAnephropathy needstobeinvestigated.
-
-      KEYWORDS
-
-      pancreaticneuroendocrinetumors,IgAnephropathy,nephroticsyndrome,
-
-      surufatinib,podocyte
-
-      Pancreaticneuroendocrinetumors(pNETs)arerelativelyraremalignancieswith
-
-      highlyheterogeneousbiologicalbehavioranddiverseclinicalmanifestations(1).The
-
-      annualincidenceofpNETsfrom2000–2012was0.48per100000personsandthe
-
-      medianoverallsurvival(OS)was3.6years(2).Surgeryistheprimarytreatmentfor
-
-      improvingtheprognosisofpNETs,butthecombinationofsystemicdrugtherapy
-
-      combinedwithlocaltreatmentshouldbeadopted,forpatientswithdistantmetastases
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      01
-
-      OPEN ACCESS
-
-      EDITEDBY
-
-      KanjoormanaAryanManu,
-
-      Amala CancerResearchCentre,India
-
-      REVIEWEDBY
-
-      NataleCalomino,
-
-      UniversityofSiena, Italy
-
-      YanshuoCao,
-
-      Peking University,China
-
-      *CORRESPONDENCE
-
-      JieYang
-
-      bianfangyangjie@163.com
-
-      RECEIVED 16December 2024
-
-      ACCEPTED 28April2025
-
-      PUBLISHED 21May 2025
-
-      CITATION
-
-      ShiC, LinJ,XiangX, BaoW andYang J
-
-      (2025)Surufatinibrelated nephroticsyndrome
-
-      in a pancreaticneuroendocrinetumor: acase
-
-      reportandreview ofliterature.
-
-      Front. Oncol.15:1546217.
-
-      doi: 10.3389/fonc.2025.1546217
-
-      COPYRIGHT
-
-      © 2025 Shi, Lin, Xiang, Bao and Yang. This is an
-
-      open-access article distributed under the terms
-
-      of the Creative Commons Attribution License
-
-      (CC BY). The use,distributionorreproduction
-
-      in otherforumsis permitted,provided the
-
-      originalauthor(s)andthe copyrightowner(s)
-
-      arecredited andthat the originalpublication
-
-      in thisjournal iscited,in accordancewith
-
-      acceptedacademicpractice. Nouse,
-
-      distributionorreproduction ispermitted
-
-      whichdoesnotcomplywith theseterms.
-
-      TYPE CaseReport
-
-      PUBLISHED 21May2025
-
-      DOI 10.3389/fonc.2025.1546217'
+  - name: KEYWORDS / Introduction
+    text: 'EDITED BY Kanjoormana Aryan Manu, Amala Cancer Research Centre, India REVIEWED
+      BY Natale Calomino, University of Siena, Italy Yanshuo Cao, Peking University,
+      China *CORRESPONDENCE Jie Yang bianfangyangjie@163.com RECEIVED 16 December
+      2024 ACCEPTED 28 April 2025 PUBLISHED 21 May 2025 CITATION Shi C, Lin J, Xiang
+      X, Bao W and Yang J (2025) Surufatinib related nephrotic syndrome in a pancreatic
+      neuroendocrine tumor: a case report and review of literature. Front. Oncol.
+      15:1546217. doi: 10.3389/fonc.2025.1546217
+
+      © 2025 Shi, Lin, Xiang, Bao and Yang. This is an open-access article distributed
+      under the terms of the Creative Commons Attribution License (CC BY). The use,
+      distribution or reproduction in other forums is permitted, provided the original
+      author(s) and the copyright owner(s) are credited and that the original publication
+      in this journal is cited, in accordance with accepted academic practice. No
+      use, distribution or reproduction is permitted which does not comply with these
+      terms.
+
+      Chengqian Shi 1 , Jinglian Lin 1 , Xiadan Xiang 1 , Wenlong Bao 2 and Jie Yang
+      1 *
+
+      1 Department of Nephrology, The Second Af fi liated Hospital of Zhejiang Chinese
+      Medical University, Hangzhou, China, 2 Department of Traditional Chinese Medicine,
+      The Cancer Hospital of University of Chinese Academy of Sciences (Zhejiang Cancer
+      Hospital), Hangzhou, China
+
+      Pancreatic neuroendocrine tumors (pNETs) are rare, heterogenous neoplasms originating
+      from pancreatic neuroendocrine cells, which regulate hormone secretion and metabolic
+      homeostasis. Surgery is the primary method of control and potential cure for
+      pNETs and targeted therapies have also been investigated for low-grade inoperable
+      or distant metastatic pNETs. Surufatinib, an oral angio-immuno kinase inhibitor,
+      is approved for treating inoperable or latestage, low-grade (G1 and G2), well-differentiated
+      pNETs and extrapancreatic neuroendocrine tumors. This study describes a case
+      of nephrotic syndrome in a middle-aged woman with pNETs. This patient showed
+      nephrotic syndrome after surufatinib treatment 3 months and renal pathology
+      suggested IgA nephropathy with moderate podocyte injury. However, the nephrotic
+      syndrome was relieved after 2 weeks of discontinuation of surufatinib. After
+      resuming treatment with low-dose surufatinib for 2 weeks, the random proteinuria
+      quanti fi cation was increased and the proteinuria turned negative after discontinuation
+      of surufatinib again. It provides a reference for surufatinib related nephrotic
+      syndrome in patients with pNETs and the potential mechanism between surufatinib
+      and podocyte injury in IgA nephropathy needs to be investigated.
+
+      pancreatic neuroendocrine tumors, IgA nephropathy, nephrotic syndrome, surufatinib,
+      podocyte
+
+      Pancreatic neuroendocrine tumors (pNETs) are relatively rare malignancies with
+      highly heterogeneous biological behavior and diverse clinical manifestations
+      (1). The annual incidence of pNETs from 2000 -2012 was 0.48 per 100000 persons
+      and the median overall survival (OS) was 3.6 years (2). Surgery is the primary
+      treatment for improving the prognosis of pNETs, but the combination of systemic
+      drug therapy combined with local treatment should be adopted, for patients with
+      distant metastases or locally advanced that cannot be surgically removed at
+      low to intermediate grade (Grade 1 or Grade 2, G1 or G2).'
     page: 1
-  - name: 10.3389/fonc.2025.1546217 / Case presentation
-    text: 'orlocallyadvancedthatcannotbesurgicallyremovedatlowto
-
-      intermediategrade (Grade1orGrade2, G1 orG2).
-
-      Surufatinibisanoralangio-immunokinaseinhibitorthat
-
-      selectivelytargetsvascularendothelialgrowthfactor(VEGF)
-
-      receptors1-3,ﬁbroblastgrowthfactorreceptortype1(FGFR1),
-
-      and colony stimulating factor-1 receptor (CSF-1R) (3). Surufatinib
-
-      showedpromisingantitumoractivityandimprovedprogression-
-
-      freesurvivalwithanacceptablesafetyproﬁleinChinesepatients
-
-      withprogressive,advancedpNETsinthephaseIIISANET-ptrial
-
-      (NCT02589821)(4).Currently,surufatinibhasbeenapprovedfor
-
-      treatingpNETsandextrapancreaticneuroendocrinetumors
-
-      (epNETs)inChina(5).
-
-      In this study, we report a case of a 47-year-old woman suffering
-
-      frompNETs,withthetreatmentofsurufatinibfor3months.The
-
-      patient clinically showed nephrotic syndrome and Immunoglobulin
-
-      A(IgA)nephropathywithmoderatepodocyteinjuryin
-
-      renalpathology.
-
-      In2016,a47-year-oldwomanfoundpancreaticabnormalities
-
-      during a physical examination without any clinical manifestations.
-
-      Abdominalcomputedtomography(CT)showedthattheshapeof
-
-      the body and tail of the pancreas was thickened, with a huge mass of
-
-      about12*4cmandunevendensitywithCTvalueof41Hu
-
-      (Figure1A).AbdominalenhancedCTshowedcontinuous
-
-      enhancementofpancreaticmass,withmultipleenlargedlymph
-
-      nodesvisibleintheleftadrenalandspleenareas(Figures1B,C).
-
-      The rest of the patient’s examination and laboratory indicators were
-
-      normal.Combinedwithherimagingcharacteristics,laboratory
-
-      indicatorsandclinicalmanifestations,itwasconsideredthatthe
-
-      huge mass might be a pancreatic malignant tumor. In May 2016, the
-
-      patientunderwentsurgicalresectionofahugepancreaticmass,
-
-      splenectomy,andunilateraladrenalectomy.Postoperative
-
-      pathology(PathologicalID:201612356)suggestedapancreatic
-
-      neuroendocrinetumor(G2,8*7*6cm)(Figures2A,B).Basedon
-
-      theabovemedicaldata,thepatientwasdiagnosedwithanon-
-
-      functionalpancreaticneuroendocrinetumor (pNET).
-
-      In February 2023, the patient returned to the hospital for a re-
-
-      examination and an abdominal CT revealed multiple nodules in the
-
-      liver.Liverenhancedmagneticresonanceimagingindicated
-
-      multipleabnormalsignalsintheliverand,incombinationwith
-
-      medicalhistory,metastatictumorsareconsidered(Figures3A-C).
-
-      Subsequently,the5th, 6th,7th,and 8thsegmentsof theliver were
-
-      surgicallyremoved.Postoperativepathology(PathologicalID:
-
-      202307422)showedneuroendocrinetumorswerefoundinliver
-
-      tissue and the pancreas origin was ﬁrst considered (Figures 2C, D).
-
-      Then, in April of the same year, ultrasound-guided liver microwave
-
-      ablationwas performed.
-
-      Giventheriskofmultiplemetastasesandmalignancies,the
-
-      surufatinib300mgorallyoncedailywasinitiatedinthethird
-
-      weekaftercytoreductivesurgery.Previously,thepatienthad
-
-      hypertensionformorethansevenyearsanddiabetesformore
-
-      than four. At present, oral nifedipine controlled-release tablets of 30
-
-      mg once daily and metformin hydrochloride tablets of 200 mg once
-
-      dailywereused,thebloodpressureandbloodglucosewere
-
-      generallyundercontrol.
-
-      After3monthsoftreatment,thepatientgraduallydeveloped
-
-      edemainbothlowerlimbs,sometimesaccompaniedbyfacial
-
-      edema,withoutchesttightness,shortnessofbreath,nausea,
-
-      vomiting,orothersymptoms.Weconductedapreliminary
-
-      examinationandfoundthatproteinuriawaspositive(++)inthe
-
-      urine routine. Further evaluation found severe proteinuria (Urinary
-
-      microalbumin, UMa 1873.2 mg/L, 24-hour total protein 3184.5mg/
-
-      24handurinarymicroalbumin/creatinineratios,ACR264.3mg/
-
-      gCr), hypoproteinemia (albumin, Alb 26.4g/L) and hyperlipidemia
-
-      (triglyceride 2.25mmol/L). We diagnosed the patient with nephrotic
-
-      syndromebasedonclinicalmanifestationsandlaboratory
-
-      indicators.Toclarifythepatient’srenallesionsandpossible
-
-      causes,wearrangedanultrasound-guidedrenalbiopsy.Renal
-
-      pathologysuggestsIgAnephropathy(KM55negative)with
-
-      moderatepodocyteinjury(Figures4A-H).Consideringthe
-
-      atypicaldepositionofIgAantibodiesinrenalpathology,themore
-
-      signiﬁcantpodocytelesions,andthepatient’smedicalhistory,we
-
-      considerthistobetumorordrugrelatednephropathy.Therefore,
-
-      wediscontinuedsurufatinibandadjustedtheantihypertensive
-
-      drugs(sacubitrilvalsartansodiumtablets100mgtwicedaily)and
-
-      FIGURE1
-
-      (A)On a plainCTscan,the shape ofthe bodyandtailof thepancreaswas thickened,with
-      a hugemassof about12*4cm. (B) Inthe arterialphase,
-
-      thelesionsshowedsigniﬁcantenhancement.Multipleenlargedlymphnodescanbe seenin
-      the leftadrenal regionandtheinner courtyardofthe
-
-      spleen.(C) Inthe venous phase,theenhancement ofthe lesionsdecreased.
-
-      Shietal.
-
-      10.3389/fonc.2025.1546217
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      02'
+  - name: KEYWORDS / Case presentation
+    text: 'Surufatinib is an oral angio-immuno kinase inhibitor that selectively targets
+      vascular endothelial growth factor (VEGF) receptors 1-3, fi broblast growth
+      factor receptor type 1 (FGFR1), and colony stimulating factor-1 receptor (CSF-1R)
+      (3). Surufatinib showed promising antitumor activity and improved progressionfree
+      survival with an acceptable safety pro fi le in Chinese patients with progressive,
+      advanced pNETs in the phase III SANET-p trial (NCT02589821) (4). Currently,
+      surufatinib has been approved for treating pNETs and extrapancreatic neuroendocrine
+      tumors (epNETs) in China (5).
+
+      In this study, we report a case of a 47-year-old woman suffering from pNETs,
+      with the treatment of surufatinib for 3 months. The patient clinically showed
+      nephrotic syndrome and Immunoglobulin A (IgA) nephropathy with moderate podocyte
+      injury in renal pathology.
+
+      In 2016, a 47-year-old woman found pancreatic abnormalities during a physical
+      examination without any clinical manifestations. Abdominal computed tomography
+      (CT) showed that the shape of the body and tail of the pancreas was thickened,
+      with a huge mass of about 12 * 4cm and uneven density with CT value of 41Hu
+      (Figure 1A). Abdominal enhanced CT showed continuous enhancement of pancreatic
+      mass, with multiple enlarged lymph nodes visible in the left adrenal and spleen
+      areas (Figures 1B, C). The rest of the patient '' s examination and laboratory
+      indicators were normal. Combined with her imaging characteristics, laboratory
+      indicators and clinical manifestations, it was considered that the huge mass
+      might be a pancreatic malignant tumor. In May 2016, the patient underwent surgical
+      resection of a huge pancreatic mass, splenectomy, and unilateral adrenalectomy.
+      Postoperative pathology (Pathological ID: 201612356) suggested a pancreatic
+      neuroendocrine tumor (G2, 8*7*6 cm) (Figures 2A, B). Based on the above medical
+      data, the patient was diagnosed with a nonfunctional pancreatic neuroendocrine
+      tumor (pNET).
+
+      In February 2023, the patient returned to the hospital for a reexamination and
+      an abdominal CT revealed multiple nodules in the liver. Liver enhanced magnetic
+      resonance imaging indicated multiple abnormal signals in the liver and, in combination
+      with medical history, metastatic tumors are considered (Figures 3A-C). Subsequently,
+      the 5th, 6th, 7th, and 8th segments of the liver were surgically removed. Postoperative
+      pathology (Pathological ID: 202307422) showed neuroendocrine tumors were found
+      in liver tissue and the pancreas origin was fi rst considered (Figures 2C, D).
+      Then, in April of the same year, ultrasound-guided liver microwave ablation
+      was performed.
+
+      Given the risk of multiple metastases and malignancies, the surufatinib 300
+      mg orally once daily was initiated in the third week after cytoreductive surgery.
+      Previously, the patient had hypertension for more than seven years and diabetes
+      for more than four. At present, oral nifedipine controlled-release tablets of
+      30 mg once daily and metformin hydrochloride tablets of 200 mg once daily were
+      used, the blood pressure and blood glucose were generally under control.
+
+      After 3 months of treatment, the patient gradually developed edema in both lower
+      limbs, sometimes accompanied by facial edema, without chest tightness, shortness
+      of breath, nausea, vomiting, or other symptoms. We conducted a preliminary examination
+      and found that proteinuria was positive (+ +) in the urine routine. Further
+      evaluation found severe proteinuria (Urinary microalbumin, UMa 1873.2 mg/L,
+      24-hour total protein 3184.5mg/ 24h and urinary microalbumin/creatinine ratios,
+      ACR 264.3mg/ gCr), hypoproteinemia (albumin, Alb 26.4g/L) and hyperlipidemia
+      (triglyceride 2.25mmol/L). We diagnosed the patient with nephrotic syndrome
+      based on clinical manifestations and laboratory indicators. To clarify the patient
+      '' s renal lesions and possible causes, we arranged an ultrasound-guided renal
+      biopsy. Renal pathology suggests IgA nephropathy (KM55 negative) with moderate
+      podocyte injury (Figures 4A-H). Considering the atypical deposition of IgA antibodies
+      in renal pathology, the more signi fi cant podocyte lesions, and the patient
+      '' s medical history, we consider this to be tumor or drug related nephropathy.
+      Therefore, we discontinued surufatinib and adjusted the antihypertensive drugs
+      (sacubitril valsartan sodium tablets 100mg twice daily) and hypoglycemic drugs
+      (empagli fl ozin tablets 10 mg once daily) after communicating with the patient.
+      After two weeks of treatment, the patient '' s edema symptoms and proteinuria
+      urinalysis were signi fi cantly relieved (UMa 168.1 mg/L, ACR 103.1 mg/gCr)
+      accompanied by an increase in serum albumin (Alb 32.7g/L). Based on the consideration
+      of pNET, the oncology department recommended that the dose be reduced and the
+      patient re-started surufatinib (200 mg once daily) treatment, every 4 weeks
+      as a course. Regular monitoring of patient urinalysis showed a signi fi cant
+      increase in random proteinuria quanti fi cation (UMa 738.7 mg/L) after half
+      a course of treatment. Finally, the patient discontinued the surufatinib treatment
+      on our recommendation, and the urine protein was negative after multiple examinations
+      (UMa 86.8 mg/L, ACR 21.8 mg/gCr, Supplementary Figure 1). Antitumor therapy
+      was temporarily suspended based on multidisciplinary team consensus and patient
+      preference, with rigorous monitoring of tumor status and hepatic/renal function
+      parameters. A prede fi ned escalation protocol was established to initiate alternative
+      targeted agents (e.g., everolimus) or chemotherapeutic regimens should disease
+      progression occur.
+
+      FIGURE 1
+
+      (A) On a plain CT scan, the shape of the body and tail of the pancreas was thickened,
+      with a huge mass of about 12 * 4cm. (B) In the arterial phase, the lesions showed
+      signi fi cant enhancement. Multiple enlarged lymph nodes can be seen in the
+      left adrenal region and the inner courtyard of the spleen. (C) In the venous
+      phase, the enhancement of the lesions decreased.'
     page: 2
-  - name: '10.3389/fonc.2025.1546217 #2 / Discussion'
-    text: 'hypoglycemicdrugs(empagliﬂozintablets10mgoncedaily)after
-
-      communicating with the patient. After two weeks of treatment, the
-
-      patient’sedemasymptomsandproteinuriaurinalysiswere
-
-      signiﬁcantlyrelieved(UMa168.1mg/L,ACR103.1mg/gCr)
-
-      accompaniedbyanincreaseinserumalbumin(Alb32.7g/L).
-
-      BasedontheconsiderationofpNET,theoncologydepartment
-
-      recommendedthatthedosebereducedandthepatientre-started
-
-      surufatinib(200mgoncedaily)treatment,every4weeksasa
-
-      course.Regularmonitoringofpatienturinalysisshoweda
-
-      signiﬁcantincreaseinrandomproteinuriaquantiﬁcation(UMa
-
-      738.7mg/L)afterhalfacourseoftreatment.Finally,thepatient
-
-      discontinuedthesurufatinibtreatmentonourrecommendation,
-
-      andtheurineproteinwasnegativeaftermultipleexaminations
-
-      (UMa86.8mg/L,ACR21.8mg/gCr,SupplementaryFigure1).
-
-      Antitumortherapywastemporarilysuspendedbasedon
-
-      multidisciplinaryteamconsensusandpatientpreference,with
-
-      rigorousmonitoringoftumorstatusandhepatic/renalfunction
-
-      parameters.Apredeﬁnedescalationprotocolwasestablishedto
-
-      initiatealternativetargetedagents(e.g.,everolimus)or
-
-      chemotherapeuticregimensshoulddiseaseprogressionoccur.
-
-      WereportacaseofapNETpatienttreatedwithsurufatinib.
-
-      Nephroticsyndromeonsetoccurred3monthsafterthesurufatinib
-
-      treatment and ameliorated after surufatinib cessation. Unexpectedly,
-
-      renal biopsy revealed IgA nephropathy without TMA.
-
-      pNETs can be divided into functional or nonfunctional pNETs,
-
-      basedontheabilitytoelaborateactivehormones,whichcause
-
-      variousclinicalsymptoms,suchashypoglycemia,waterydiarrhea,
-
-      andsevereulcerdiathesis(1,6).Theincidenceofnonfunctioning
-
-      pNETsisincreasing,butpatientswithresectedfunctionalpNETs
-
-      have a better OS compared to patients with nonfunctional pNETs,
-
-      and a considerable proportion of functional pNETs may be detected
-
-      at earlier stages because of obvious clinical symptoms (1). However,
-
-      nonfunctionalpNETscanalsobeassociatedwithnonspeciﬁc
-
-      clinicalsymptoms,suchasobstructionofthedigestivetract,
-
-      jaundice,andpancreatitis,causedbytumorcompressionofthe
-
-      pancreaticobiliary duct or invasion of peripancreatic organs. pNETs
-
-      arecharacterizedbymultipleclinicalbehaviors,whichcanrange
-
-      fromsmallbenignlesionsorslow-growingindolenttumorsto
-
-      invasivelesionsorwidespreadmetastases(6).
-
-      Actually,manysolidandhematologicmalignanciesare
-
-      associatedwithkidneydisease,suchasmembranousnephropathy
-
-      (MN),Minimalchangedisease(MCD),IgAnephropathy,focal
-
-      segmentalglomerulosclerosis(FSGS),andother pathologicaltypes
-
-      of glomerular diseases (7, 8). MN is the most common pathological
-
-      typeinpatientswithsolidtumors,particularlyinlungandgastric
-
-      cancers, sometimes in renal cell carcinoma (RCC), prostate cancer,
-
-      andthymoma(9).Incomparison,MCDhasbeenreportedin
-
-      associationwithlungcancer,classicHodgkinlymphoma,
-
-      colorectalcancer,RCC,andthymomaandIgAnephropathycan
-
-      beassociatedwithRCC,andtumorsoftherespiratorytract,
-
-      nasopharynx,andbuccalmucosa(8,10).However,theexact
-
-      pathogenesisinmostcasesremainsuncertain.Severalstudies
-
-      havereportedtheassociationbetweenpancreaticcancerand
-
-      kidneydiseasessuchasMN,MCD,andIgAnephropathy(7,8),
-
-      butfewstudieshavereportedtheassociationbetweenpNETsand
-
-      glomerular diseases or the related pathological mechanisms, it may
-
-      manifest with RCC and pNETs in patients with von Hippel - Lindau
-
-      (VHL) disease(11, 12).
-
-      FIGURE2
-
-      (A, B) Pancreatic neuroendocrine tumors, immunohistochemistry and oncogene detection:
-      CAM5.2(+), PR(++,80%), AAT(+), Vim(-), CD10(-), Catenin\
-
-      b-Catenin(+)、CD117\c-kit(-), Ki-67(+, 2%). (C, D) Neuroendocrine tumor found
-      in liver tissue and considering pancreatic origin based on medical
-
-      history, immunohistochemistry: Hepa(-), AFP(-), CK19(-), CK20(+), CgA(+), Sy(+),
-      CD56(+), Ki-67(+, 5%), P53(+), SSTR2(+), CD10(-), b-Catenin(+).
-
-      Shietal.
-
-      10.3389/fonc.2025.1546217
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      03'
+  - name: KEYWORDS / Discussion
+    text: 'We report a case of a pNET patient treated with surufatinib. Nephrotic
+      syndrome onset occurred 3 months after the surufatinib treatment and ameliorated
+      after surufatinib cessation. Unexpectedly, renal biopsy revealed IgA nephropathy
+      without TMA.
+
+      pNETs can be divided into functional or nonfunctional pNETs, based on the ability
+      to elaborate active hormones, which cause various clinical symptoms, such as
+      hypoglycemia, watery diarrhea, and severe ulcer diathesis (1, 6). The incidence
+      of nonfunctioning pNETs is increasing, but patients with resected functional
+      pNETs have a better OS compared to patients with nonfunctional pNETs, and a
+      considerable proportion of functional pNETs may be detected at earlier stages
+      because of obvious clinical symptoms (1). However, nonfunctional pNETs can also
+      be associated with nonspeci fi c clinical symptoms, such as obstruction of the
+      digestive tract, jaundice, and pancreatitis, caused by tumor compression of
+      the pancreaticobiliary duct or invasion of peripancreatic organs. pNETs are
+      characterized by multiple clinical behaviors, which can range from small benign
+      lesions or slow-growing indolent tumors to invasive lesions or widespread metastases
+      (6).
+
+      Actually, many solid and hematologic malignancies are associated with kidney
+      disease, such as membranous nephropathy (MN), Minimal change disease (MCD),
+      IgA nephropathy, focal segmental glomerulosclerosis (FSGS), and other pathological
+      types of glomerular diseases (7, 8). MN is the most common pathological type
+      in patients with solid tumors, particularly in lung and gastric cancers, sometimes
+      in renal cell carcinoma (RCC), prostate cancer, and thymoma (9). In comparison,
+      MCD has been reported in association with lung cancer, classic Hodgkin lymphoma,
+      colorectal cancer, RCC, and thymoma and IgA nephropathy can be associated with
+      RCC, and tumors of the respiratory tract, nasopharynx, and buccal mucosa (8,
+      10). However, the exact pathogenesis in most cases remains uncertain. Several
+      studies have reported the association between pancreatic cancer and kidney diseases
+      such as MN, MCD, and IgA nephropathy (7, 8), but few studies have reported the
+      association between pNETs and glomerular diseases or the related pathological
+      mechanisms, it may manifest with RCC and pNETs in patients with von Hippel -
+      Lindau (VHL) disease (11, 12).
+
+      Signi fi cantly, not only the tumors itself can cause kidney disease, but the
+      newly developed or conventional anticancer chemotherapeutic agents are nephrotoxic
+      and can damage the kidney directly or indirectly, which can affect morbidity
+      and mortality in patients with cancer (7). Anticancer chemotherapeutic agents
+      can injure all nephron segments and the degree of damage is always related to
+      dose and duration. For example, cisplatin is an effective conventional anticancer
+      chemotherapeutic agent that is widely used against a variety of solid tumors,
+      but its clinical use is often limited due to nephrotoxicity, especially in the
+      proximal tubular epithelial cells (PTECs), which the pathological mechanisms
+      include DNA damage, mitochondrial pathology, oxidative stress and other stress
+      responses (13).
+
+      Surufatinib was fi rst approved in China for the treatment of late-stage, well-differentiated,
+      epNETs on 30 December 2020 and pNETs later (3). Previous trials and systematic
+      reviews had reported the ef fi cacy of surufatinib on epNETs and pNETs, signi
+      fi cantly improving progression-free survival in patients (4, 5, 14, 15). However,
+      the safety of newly developed anticancer agents is also the key point affecting
+      clinical use. Most participants had not less than one treatment-related adverse
+      event during the study [96% [108/113] in the surufatinib group vs. 92% [54/59]
+      in the placebo FIGURE 4
+
+      (A -C) Mild mesangial hyperplasia, mild interstitial fi brosis and tubular atrophy
+      with a small amount of in fl ammatory cell in fi ltration. (D) Masson staining
+      showed the deposition of fuchsinophilic proteins in mesangial area. (E) Mild
+      widening of the mesangial area and partial fusion of the foot processes (60%).
+      (F) Deposition of electron dense in the mesangial area. (G) IgA(+++), segment
+      deposition. (H) KM55(-).
+
+      group in SANET-p study (4), and 98% [126/129] in the surufatinib group vs. 96%
+      [65/68] in the placebo group in SANET-ep study (5)], primarily of grade 1 or
+      2. Surufatinib-related serious adverse events were reported in 22% [22/113]
+      in the SANET-p study (4) and 25% [32/129] in the SANET-ep study (5) compared
+      with in the placebo groups, 7% [4/59] and 13% [9/68], respectively. The most
+      common surufatinib-related adverse events of grade 3 or worse were hypertension
+      [38% [43/113] in the surufatinib group vs. 7% [4/ 59] in the placebo group in
+      SANET-p study (4), and 36% [47/129]
+
+      in the surufatinib group vs. 13% [9/68] in the placebo group in SANET-ep study
+      (5)], and proteinuria [10% [11/113] in the surufatinib group vs. 2% [1/59] in
+      the placebo group in SANET-p study (4), and 19% [25/129] in the surufatinib
+      group vs. 0% [0/68] in the placebo group in SANET-ep study (5)], respectively.
+      Meanwhile, combining all grades of adverse events, the major reason caused dose
+      interruption or reduction was proteinuria [22% [25/113] in the surufatinib group
+      vs. 2% [1/59] in the placebo group in SANET-p study (4), and 29% [38/129] in
+      the surufatinib group vs. 1% [1/68] in the placebo group in SANET-ep study (5)]
+      and hypertension (14% [16/113] in the surufatinib group vs. 2% [1/59] in the
+      placebo group in SANET-p study (4), and 16% [20/129] in the surufatinib group
+      vs. 1% [1/68] in the placebo group in SANET-ep study (5)). To a certain extent,
+      proteinuria has become one of the important adverse events affecting the clinical
+      application of drugs and the prognosis of patients with NETs.'
     page: 3
-  - name: '10.3389/fonc.2025.1546217 #3'
-    text: 'Signiﬁcantly,notonlythetumorsitselfcancausekidney
-
-      disease,butthenewlydevelopedorconventionalanticancer
-
-      chemotherapeuticagentsarenephrotoxicandcandamagethe
-
-      kidneydirectlyorindirectly,whichcanaffectmorbidityand
-
-      mortalityinpatientswithcancer(7).Anticancerchemotherapeutic
-
-      agents can injure all nephron segments and the degree of damage is
-
-      alwaysrelatedtodoseandduration.Forexample,cisplatinisan
-
-      effectiveconventionalanticancerchemotherapeuticagentthatis
-
-      widelyusedagainstavarietyofsolidtumors,butitsclinicaluseis
-
-      often limited due to nephrotoxicity, especially in the proximal tubular
-
-      epithelial cells (PTECs), which the pathological mechanisms include
-
-      DNAdamage,mitochondrialpathology,oxidativestressandother
-
-      stress responses (13).
-
-      SurufatinibwasﬁrstapprovedinChinaforthetreatmentof
-
-      late-stage,well-differentiated,epNETson30December2020and
-
-      pNETs later (3). Previous trials and systematic reviews had reported
-
-      theefﬁcacyofsurufatinibonepNETsandpNETs,signiﬁcantly
-
-      improvingprogression-freesurvivalinpatients(4,5,14,15).
-
-      However,thesafetyofnewlydevelopedanticanceragentsisalso
-
-      thekeypointaffectingclinicaluse.Mostparticipantshadnotless
-
-      thanonetreatment-relatedadverseeventduringthestudy[96%
-
-      [108/113]inthesurufatinibgroupvs.92%[54/59]intheplacebo
-
-      FIGURE3
-
-      (A)In the arterialphase,multiplenodulesin the liver.(B,C)On a magneticresonanceimaginganddiffusionweightedimaging,multiple
-      abnormal
-
-      signalsaredetectedin theliver.
-
-      Shietal.
-
-      10.3389/fonc.2025.1546217
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      04'
-    page: 4
-  - name: '10.3389/fonc.2025.1546217 #4'
-    text: 'group in SANET-p study (4), and 98% [126/129] in the surufatinib
-
-      group vs. 96% [65/68] in the placebo group in SANET-ep study (5)],
-
-      primarily of grade 1 or 2. Surufatinib-related serious adverse events
-
-      were reported in 22% [22/113] in the SANET-p study (4) and 25%
-
-      [32/129] in the SANET-ep study (5) compared with in the placebo
-
-      groups, 7% [4/59] and 13% [9/68], respectively. The most common
-
-      surufatinib-relatedadverseeventsofgrade3orworsewere
-
-      hypertension[38%[43/113]inthesurufatinibgroupvs.7%[4/
-
-      59] in the placebo group in SANET-p study (4), and 36% [47/129]
-
-      inthesurufatinibgroupvs.13%[9/68]intheplacebogroupin
-
-      SANET-epstudy(5)],andproteinuria[10%[11/113]inthe
-
-      surufatinibgroupvs.2%[1/59]intheplacebogroupinSANET-p
-
-      study (4), and 19% [25/129] in the surufatinib group vs. 0% [0/68]
-
-      intheplacebogroupinSANET-epstudy(5)],respectively.
-
-      Meanwhile,combiningallgradesofadverseevents,themajor
-
-      reasoncauseddoseinterruptionorreductionwasproteinuria
-
-      [22%[25/113]inthesurufatinibgroupvs.2%[1/59]inthe
-
-      placebogroupinSANET-pstudy(4),and29%[38/129]inthe
-
-      FIGURE4
-
-      (A–C) Mildmesangial hyperplasia,mildinterstitialﬁbrosisandtubularatrophywith
-      a smallamountof inﬂammatorycell inﬁltration.(D)Masson
-
-      stainingshowedthe depositionof fuchsinophilicproteins inmesangial area.(E) Mildwideningof
-      themesangial areaandpartial fusionofthe foot
-
-      processes(60%).(F)Depositionofelectron densein the mesangialarea.(G) IgA(+++),segmentdeposition.(H)KM55(-).
-
-      Shietal.
-
-      10.3389/fonc.2025.1546217
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      05'
-    page: 5
-  - name: '10.3389/fonc.2025.1546217 #5 / Data availability statement'
-    text: 'surufatinib group vs. 1% [1/68] in the placebo group in SANET-ep
-
-      study (5)] and hypertension (14% [16/113] in the surufatinib group
-
-      vs. 2% [1/59] in the placebo group in SANET-p study (4), and 16%
-
-      [20/129] in the surufatinib group vs. 1% [1/68] in the placebo group
-
-      inSANET-epstudy(5)).Toacertainextent,proteinuriahas
-
-      becomeoneoftheimportantadverseeventsaffectingtheclinical
-
-      applicationof drugsand theprognosisof patientswithNETs.
-
-      It is well known that proteinuria is one of the key biomarkers of
-
-      kidneyinjury,indicatingdisruptionordysfunctionofthe
-
-      glomerularﬁltrationbarrier(GFB).ThebreakdownofGFBmay
-
-      presentwithnephroticsyndrome(proteinuria,edema,
-
-      hypoalbuminemia,andhyperlipidemia),proteinuriawith
-
-      hypertension,orisolatedproteinuriainclinical.Inthe
-
-      mechanism,GFBbreakdownresultsinabnormalactivationof
-
-      glomerularcells,formationoflocalscartissue,glomerular
-
-      capillariesocclusion,nephronperfusionchanges,and
-
-      glomerulosclerosisinﬁnal,andmeanwhile,thepersistentserum
-
-      proteinleakagedamagestherenaltubularepithelium,eventually
-
-      leadingtotubulardysfunctionandtubulointerstitialﬁbrosis(16,
-
-      17). Until now, a considerable number of patients with proteinuria
-
-      duringtreatmenthadbeenreportedinnumeroussurufatinib
-
-      clinicaltrials(4,5, 18–20),butthemechanismofGFB breakdown
-
-      remainstobe furtherinvestigated.
-
-      Severalstudieshavereportednephrotoxicityassociatedwith
-
-      surufatinibfollowingitsapprovalfortreatment.Zhuetal.(21)
-
-      reportedacaseofnephroticsyndromeaftersurufatinibtreatment
-
-      and the renal biopsy conﬁrmed thrombotic microangiopathy (TMA).
-
-      Similarly,sunitinib,anoralkinaseinhibitorthattargetsVEGF
-
-      receptors1–3andplatelet-derivedgrowthfactor(PDGF)receptors,
-
-      hadbeenapprovedforpatientswithadvancedprogressivepNETs
-
-      over a decade (22, 23). Azar et al. (24) report a case of a patient with
-
-      persistenthematuriaaftersunitinib(50mgdailyatbedtime)
-
-      treatmentfortwoweeksandtherenalbiopsydemonstratedacute
-
-      interstitialnephritis(AIN).Bolleeetal.(25)reportacaseof
-
-      proteinuriaandhighbloodpressureaftersunitinib(37.5mgdaily
-
-      ona4/2schedule)treatmentforsixmonthsandtherenalbiopsy
-
-      showedtypicalfeaturesofTMA.Koetal.(26)reportacaseof
-
-      proteinuriaaftersunitinib(25–50mgdailyona3/1schedule)
-
-      treatmentforﬁvemonthsinapatientwithrenaltransplantation
-
-      andtheallograftrenal biopsyshowed FSGS,AIN, andacute tubular
-
-      injury. Takahashi et al. (27) report a case of nephrotic syndrome and
-
-      renal dysfunction after sunitinib (25–50 mg daily on a 4/2 schedule)
-
-      treatment for six months and the renal biopsy showed endothelial cell
-
-      injuryandFSGS.Zonoozietal.(28)reportacaseofnephrotic
-
-      syndromeaftersunitinibtreatmenttwoyearsandtherenalbiopsy
-
-      showedmembranousnephropathywithPLA2R-positive
-
-      immunoﬂuorescence.Thesereportshavedocumentedthe
-
-      nephrotoxicity with the varying clinical manifestations of surufatinib
-
-      or sunitinib, which target VEGF and related signaling pathways.
-
-      Thiscaseisuniqueinthattheameliorationofnephrotic
-
-      syndromeisassociatedwiththediscontinuationofsurufatinib
-
-      andtherenalbiopsyresults.Basedonknownstudies,pNET-
-
-      inducedIgAnephropathyandrelatedmanifestationsareunlikely.
-
-      Notably,theclinicalmanifestationsofthiscase,particularly
-
-      proteinuria,aresocloselyrelatedtosurufatinibtreatmentthat
-
-      drug-related nephrotic syndrome needs to be considered. However,
-
-      therenalbiopsyrevealedIgAnephropathywithmesangialcell
-
-      proliferation,moderatepodocyteinjury,mildrenaltubule,and
-
-      interstitial lesions, but no ﬁbrosis or TMA. Nephrotic syndrome is
-
-      an infrequent manifestation of IgA nephropathy, occurring in only
-
-      5% of cases (29, 30). We also detected KM55 antibody in renal tissue
-
-      buttheresultwasnegative.Basedonthetemporalcorrelation
-
-      betweensurufatinibadministrationandnephropathyonset,
-
-      coupledwithrenalbiopsyﬁndingsdemonstratingatypicalIgA
-
-      nephropathy,drug-inducedrenalinjurywasprioritizedinthe
-
-      etiologicalassessmentafterexcludingtumor-associated
-
-      nephropathyfeatures.Therefore,weconsiderthiscasetobe
-
-      secondaryasymptomaticIgAnephropathyandthattreatment
-
-      withsurufatinibadvanceskidneydiseaseanddamagesthe
-
-      podocytes.GiventhehistopathologicaldiagnosisofatypicalIgA
-
-      nephropathy with type 2 diabetes mellitus, the therapeutic strategy
-
-      encompassedsurufatinibdiscontinuationcoupledwithrenin-
-
-      angiotensinsysteminhibitorsandsodium-glucosecotransporter2
-
-      inhibitorsasﬁrst-lineintervention.Forpatientsexhibiting
-
-      suboptimalresponse,corticosteroids(e.g.,prednisone0.5mg/kg/
-
-      day)wererecommended,emergingadjunctivetherapiesincluding
-
-      mineralocorticoidreceptorantagonists(ﬁnerenone),endothelin
-
-      receptorantagonists(sparsentan),andtargeted-release
-
-      budesonide(Nefecon®)couldbeconsideredasindividualized
-
-      options(30).Inspiredbythis,furtherstudiesarerequiredto
-
-      conﬁrmNET-relatedorsurufatinib-relatedIgAnephropathy.
-
-      Inconclusion,surufatinibrepresentsanefﬁcaciousadditionin
-
-      patientswithwell-differentiatedNETs,regardlessofprevious
-
-      antitumortherapiesortumororigin.However,safetyshouldbe
-
-      consideredduringtreatment,suchasinthekidney,andthe
-
-      mechanismofsurufatinib-inducedproteinuriashouldbe
-
-      investigatedfurther.
-
-      Theoriginalcontributionspresentedinthestudyareincluded
-
-      inthearticle/SupplementaryMaterial.Furtherinquiriescanbe
-
-      directedtothecorrespondingauthor.
-
-      TherequirementofethicalapprovalwaswaivedbyEthics
-
-      CommitteeoftheSecondAfﬁliatedHospitalofZhejiang
-
-      UniversityofTraditionalChineseMedicineforthestudies
-
-      involvinghumans.Thestudieswereconductedinaccordance
-
-      withthelocallegislationandinstitutionalrequirements.The
-
-      participantsprovidedtheirwritteninformedconsentto
-
-      Shietal.
-
-      10.3389/fonc.2025.1546217
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      06'
+  - name: KEYWORDS / Data availability statement
+    text: 'It is well known that proteinuria is one of the key biomarkers of kidney
+      injury, indicating disruption or dysfunction of the glomerular fi ltration barrier
+      (GFB). The breakdown of GFB may present with nephrotic syndrome (proteinuria,
+      edema, hypoalbuminemia, and hyperlipidemia), proteinuria with hypertension,
+      or isolated proteinuria in clinical. In the mechanism, GFB breakdown results
+      in abnormal activation of glomerular cells, formation of local scar tissue,
+      glomerular capillaries occlusion, nephron perfusion changes, and glomerulosclerosis
+      in fi nal, and meanwhile, the persistent serum protein leakage damages the renal
+      tubular epithelium, eventually leading to tubular dysfunction and tubulointerstitial
+      fi brosis (16, 17). Until now, a considerable number of patients with proteinuria
+      during treatment had been reported in numerous surufatinib clinical trials (4,
+      5, 18 -20), but the mechanism of GFB breakdown remains to be further investigated.
+
+      Several studies have reported nephrotoxicity associated with surufatinib following
+      its approval for treatment. Zhu et al. (21) reported a case of nephrotic syndrome
+      after surufatinib treatment and the renal biopsy con fi rmed thrombotic microangiopathy
+      (TMA). Similarly, sunitinib, an oral kinase inhibitor that targets VEGF receptors
+      1 -3 and platelet-derived growth factor (PDGF) receptors, had been approved
+      for patients with advanced progressive pNETs over a decade (22, 23). Azar et
+      al. (24) report a case of a patient with persistent hematuria after sunitinib
+      (50 mg daily at bedtime) treatment for two weeks and the renal biopsy demonstrated
+      acute interstitial nephritis (AIN). Bollee et al. (25) report a case of proteinuria
+      and high blood pressure after sunitinib (37.5 mg daily on a 4/2 schedule) treatment
+      for six months and the renal biopsy showed typical features of TMA. Ko et al.
+      (26) report a case of proteinuria after sunitinib (25 -50 mg daily on a 3/1
+      schedule) treatment for fi ve months in a patient with renal transplantation
+      and the allograft renal biopsy showed FSGS, AIN, and acute tubular injury. Takahashi
+      et al. (27) report a case of nephrotic syndrome and renal dysfunction after
+      sunitinib (25 -50 mg daily on a 4/2 schedule) treatment for six months and the
+      renal biopsy showed endothelial cell injury and FSGS. Zonoozi et al. (28) report
+      a case of nephrotic syndrome after sunitinib treatment two years and the renal
+      biopsy showed membranous nephropathy with PLA2R-positive immuno fl uorescence.
+      These reports have documented the nephrotoxicity with the varying clinical manifestations
+      of surufatinib or sunitinib, which target VEGF and related signaling pathways.
+
+      This case is unique in that the amelioration of nephrotic syndrome is associated
+      with the discontinuation of surufatinib and the renal biopsy results. Based
+      on known studies, pNETinduced IgA nephropathy and related manifestations are
+      unlikely. Notably, the clinical manifestations of this case, particularly proteinuria,
+      are so closely related to surufatinib treatment that drug-related nephrotic
+      syndrome needs to be considered. However, the renal biopsy revealed IgA nephropathy
+      with mesangial cell proliferation, moderate podocyte injury, mild renal tubule,
+      and interstitial lesions, but no fi brosis or TMA. Nephrotic syndrome is an
+      infrequent manifestation of IgA nephropathy, occurring in only 5%of cases (29,
+      30). We also detected KM55 antibody in renal tissue but the result was negative.
+      Based on the temporal correlation between surufatinib administration and nephropathy
+      onset, coupled with renal biopsy fi ndings demonstrating atypical IgA nephropathy,
+      drug-induced renal injury was prioritized in the etiological assessment after
+      excluding tumor-associated nephropathy features.Therefore, we consider this
+      case to be secondary asymptomatic IgA nephropathy and that treatment with surufatinib
+      advances kidney disease and damages the podocytes. Given the histopathological
+      diagnosis of atypical IgA nephropathy with type 2 diabetes mellitus, the therapeutic
+      strategy encompassed surufatinib discontinuation coupled with reninangiotensin
+      system inhibitors and sodium-glucose cotransporter 2 inhibitors as fi rst-line
+      intervention. For patients exhibiting suboptimal response, corticosteroids (e.g.,
+      prednisone 0.5 mg/kg/ day) were recommended, emerging adjunctive therapies including
+      mineralocorticoid receptor antagonists ( fi nerenone), endothelin receptor antagonists
+      (sparsentan), and targeted-release budesonide (Nefecon ® ) could be considered
+      as individualized options (30). Inspired by this, further studies are required
+      to con fi rm NET-related or surufatinib-related IgA nephropathy.
+
+      In conclusion, surufatinib represents an ef fi cacious addition in patients
+      with well-differentiated NETs, regardless of previous antitumor therapies or
+      tumor origin. However, safety should be considered during treatment, such as
+      in the kidney, and the mechanism of surufatinib-induced proteinuria should be
+      investigated further.
+
+      The original contributions presented in the study are included in the article/Supplementary
+      Material. Further inquiries can be directed to the corresponding author.
+
+      The requirement of ethical approval was waived by Ethics Committee of the Second
+      Af fi liated Hospital of Zhejiang University of Traditional Chinese Medicine
+      for the studies involving humans. The studies were conducted in accordance with
+      the local legislation and institutional requirements. The participants provided
+      their written informed consent to participate in this study. Written informed
+      consent was obtained from the individual(s) for the publication of any potentially
+      identi fi able images or data included in this article.'
     page: 6
-  - name: '10.3389/fonc.2025.1546217 #6 / Author contributions'
-    text: 'participateinthisstudy.Writteninformedconsentwasobtained
+  - name: SUPPLEMENTARY FIGURE 1 / Author contributions
+    text: 'CS: Data curation, Funding acquisition, Writing -original draft. JL: Data
+      curation, Formal analysis, Writing -review & editing. XX: Writing -original
+      draft. WB: Data curation, Writing -review & editing. JY: Methodology, Resources,
+      Writing -review & editing.
 
-      fromtheindividual(s)forthepublicationofanypotentially
+      The author(s) declare that fi nancial support was received for the research
+      and/or publication of this article. This work was supported by the Traditional
+      Chinese Medicine science and Technology Plan Project of Zhejiang Province (grant
+      no. 2023ZR027).
 
-      identiﬁable imagesordataincludedinthisarticle.
+      The authors declare that the research was conducted in the absence of any commercial
+      or fi nancial relationships that could be construed as a potential con fl ict
+      of interest.
 
-      CS: Data curation, Funding acquisition, Writing – original draft. JL:
+      1. Chang A, Sherman SK, Howe JR, Sahai V. Progress in the management of pancreatic
+      neuroendocrine tumors. Annu Rev Med . (2022) 73:213 -29. doi: 10.1146/ annurev-med-042320-011248
 
-      Datacuration,Formalanalysis,Writing–review&editing.XX:
+      2. Dasari A, Shen C, Halperin D, Zhao B, Zhou S, Xu Y, et al. Trends in the
+      incidence, prevalence, and survival outcomes in patients with neuroendocrine
+      tumors in the United States. JAMA Oncol . (2017) 3:1335 -42. doi: 10.1001/jamaoncol.2017.0589
 
-      Writing–originaldraft.WB:Datacuration,Writing–review&
-
-      editing. JY: Methodology, Resources, Writing – review & editing.
-
-      The author(s) declare that ﬁnancial support was received for the
-
-      research and/or publication of this article. This work was supported
-
-      by theTraditional Chinese Medicinescienceand Technology Plan
-
-      Projectof ZhejiangProvince(grantno.2023ZR027).
-
-      Theauthorsdeclarethattheresearchwasconductedinthe
-
-      absence of anycommercial orﬁnancialrelationshipsthat couldbe
-
-      construedasa potentialconﬂictof interest.
-
-      Theauthor(s)declarethatnoGenerativeAIwasusedinthe
-
-      creation ofthismanuscript.
-
-      All claims expressed in this article are solely those of the authors
-
-      anddonotnecessarilyrepresentthoseoftheirafﬁliated
-
-      organizations,orthoseofthepublisher,theeditorsandthe
-
-      reviewers.Anyproductthatmaybeevaluatedinthisarticle,or
-
-      claimthatmaybemadebyitsmanufacturer,isnotguaranteedor
-
-      endorsedbythepublisher.
-
-      The Supplementary Material for this article can be found online
-
-      at: https://www.frontiersin.org/articles/10.3389/fonc.2025.1546217/
-
-      full#supplementary-material
-
-      SUPPLEMENTARY FIGURE1
-
-      Surufatinibtreatmentandclinicalcourse.ACR:Urinarymicroalbumin/
-
-      creatinineratios,UMa:Urinarymicroalbumin,ARB:Angiotensin
-
-      receptor blocker.
-
-      1.ChangA,ShermanSK,HoweJR,SahaiV.Progressinthemanagementof
-
-      pancreaticneuroendocrinetumors.AnnuRevMed.(2022)73:213–29.doi:10.1146/
-
-      annurev-med-042320-011248
-
-      2.DasariA,ShenC,HalperinD,ZhaoB,ZhouS,XuY,etal.Trendsinthe
-
-      incidence, prevalence, and survival outcomes in patientswith neuroendocrinetumors
-
-      in the United States. JAMA Oncol. (2017) 3:1335–42. doi: 10.1001/jamaoncol.2017.0589
-
-      3.SyedYY.Surufatinib:ﬁrstapproval.Drugs.(2021)81:727–32.doi:10.1007/
-
+      3. Syed YY. Surufatinib: fi rst approval. Drugs . (2021) 81:727 -32. doi: 10.1007/
       s40265-021-01489-y
 
-      4.XuJ,ShenL,BaiC,WangW,LiJ,YuX,etal.Surufatinibinadvanced
+      4. Xu J, Shen L, Bai C, Wang W, Li J, Yu X, et al. Surufatinib in advanced pancreatic
+      neuroendocrine tumors (SANET-p): a randomised, double-blind, placebocontrolled,
+      phase 3 study. Lancet Oncol . (2020) 21:1489 -99. doi: 10.1016/S1470-2045 (20)30493-9
 
-      pancreaticneuroendocrinetumors(SANET-p):arandomised,double-blind,placebo-
-
-      controlled,phase3study.LancetOncol.(2020)21:1489–99.doi:10.1016/S1470-2045
-
-      (20)30493-9
-
-      5.XuJ,ShenL,ZhouZ,LiJ,BaiC,ChiY,etal.Surufatinibinadvanced
-
-      extrapancreaticneuroendocrinetumours(SANET-ep):arandomised,double-blind,
-
-      placebo-controlled,phase3study.LancetOncol.(2020)21:1500–12.doi:10.1016/
-
+      5. Xu J, Shen L, Zhou Z, Li J, Bai C, Chi Y, et al. Surufatinib in advanced
+      extrapancreatic neuroendocrine tumours (SANET-ep): a randomised, double-blind,
+      placebo-controlled, phase 3 study. Lancet Oncol . (2020) 21:1500 -12. doi: 10.1016/
       S1470-2045(20)30496-4
 
-      6.SulcinerML,ClancyTE.Surgicalmanagementofpancreaticneuroendocrine
+      6. Sulciner ML, Clancy TE. Surgical management of pancreatic neuroendocrine
+      tumors. Cancers (Basel) . (2023) 15:2006. doi: 10.3390/cancers15072006
 
-      tumors.Cancers (Basel).(2023)15:2006.doi:10.3390/cancers15072006
-
-      7.Malyszko J, Tesarova P, Capasso G, Capasso A. The link between kidney disease
-
-      andcancer:complicationsandtreatment.Lancet.(2020)396:277–87.doi:10.1016/
-
+      7. Malyszko J, Tesarova P, Capasso G, Capasso A. The link between kidney disease
+      and cancer: complications and treatment. Lancet . (2020) 396:277 -87. doi: 10.1016/
       S0140-6736(20)30540-7
 
-      8.RosnerMH,JhaveriKD,McmahonBA,PerazellaMA.Onconephrology:The
+      8. Rosner MH, Jhaveri KD, Mcmahon BA, Perazella MA. Onconephrology: The intersections
+      between the kidney and cancer. CA: A Cancer J Clinicians . (2020) 71:47 -77.
+      doi: 10.3322/caac.21636
 
-      intersections between the kidney and cancer. CA: A Cancer J Clinicians. (2020)
-      71:47–
+      9. Pai P, Bone JM, Mcdicken I, Bell GM. Solid tumour and glomerulopathy. QJ
+      Med . (1996) 89:361 -7. doi: 10.1093/qjmed/89.5.361
 
-      77. doi:10.3322/caac.21636
-
-      9.Pai P, Bone JM, Mcdicken I, Bell GM. Solid tumour and glomerulopathy. Q J
-      Med.
-
-      (1996)89:361–7.doi: 10.1093/qjmed/89.5.361
-
-      10.Bacchetta J, Juillard L, Cochat P, Droz JP. Paraneoplastic glomerular diseases
-      and
-
-      Malignancies.CritRevOncology/Hematology.(2009)70:39–58.doi:10.1016/
-
+      10. Bacchetta J, Juillard L, Cochat P, Droz JP. Paraneoplastic glomerular diseases
+      and Malignancies. Crit Rev Oncology/Hematology . (2009) 70:39 -58. doi: 10.1016/
       j.critrevonc.2008.08.003
 
-      11.Jonasch E, Donskov F, Iliopoulos O, Rathmell WK, Narayan VK, Maughan BL,
+      11. Jonasch E, Donskov F, Iliopoulos O, Rathmell WK, Narayan VK, Maughan BL,
+      et al. Belzutifan for renal cell carcinoma in von hippel -lindau disease. New
+      Engl J Med . (2021) 385:2036 -46. doi: 10.1056/NEJMoa2103425
 
-      et al. Belzutifan for renal cell carcinoma in von hippel–lindau disease. New
-      Engl J Med.
+      The author(s) declare that no Generative AI was used in the creation of this
+      manuscript.
 
-      (2021)385:2036–46. doi: 10.1056/NEJMoa2103425
+      All claims expressed in this article are solely those of the authors and do
+      not necessarily represent those of their af fi liated organizations, or those
+      of the publisher, the editors and the reviewers. Any product that may be evaluated
+      in this article, or claim that may be made by its manufacturer, is not guaranteed
+      or endorsed by the publisher.
 
-      12.LaksS,VanLeeuwaardeR,PatelD,KeutgenXM,HammelP,NilubolN, etal.
+      The Supplementary Material for this article can be found online at: https://www.frontiersin.org/articles/10.3389/fonc.2025.1546217/
+      full#supplementary-material
 
-      ManagementrecommendationsforpancreaticmanifestationsofvonHippel–Lindau
+      Surufatinib treatment and clinical course. ACR: Urinary microalbumin/ creatinine
+      ratios, UMa: Urinary microalbumin, ARB: Angiotensin receptor blocker.
 
-      disease.Cancer.(2021)128:435–46. doi:10.1002/cncr.33978
+      12. Laks S, Van Leeuwaarde R, Patel D, Keutgen XM, Hammel P, Nilubol N, et al.
+      Management recommendations for pancreatic manifestations of von Hippel -Lindau
+      disease. Cancer . (2021) 128:435 -46. doi: 10.1002/cncr.33978
 
-      13.TangC,LivingstonMJ,SaﬁrsteinR,DongZ.Cisplatinnephrotoxicity:new
+      13. Tang C, Livingston MJ, Sa fi rstein R, Dong Z. Cisplatin nephrotoxicity:
+      new insights and therapeutic implications. Nat Rev Nephrol . (2022) 19:53 -72.
+      doi: 10.1038/ s41581-022-00631-7
 
-      insights and therapeutic implications. Nat Rev Nephrol. (2022) 19:53–72. doi:
-      10.1038/
+      14. Ali MA, Shah SS, Tahir N, Rehman S, Saeed M, Bajwa SF, et al. Ef fi cacy
+      and toxicity of surufatinib in neuroendocrine tumors: A systematic review and
+      meta-. J Neuroendocrinol . (2022) 34:e13149. doi: 10.1111/jne.13149
 
-      s41581-022-00631-7
+      15. Cai T, Cheng Y, Du Y, Tan P, Li T, Chen Y, et al. Ef fi cacy and safety
+      of surufatinib in the treatment of advanced solid tumors: a systematic evaluation
+      and meta -analysis. Oncol Lett . (2023) 25:273. doi: 10.3892/ol.2023.13859
 
-      14.AliMA,ShahSS,TahirN,RehmanS,SaeedM,BajwaSF,etal.Efﬁcacyand
+      16. Benzing T, Ingel fi nger JR, Salant D. Insights into glomerular fi ltration
+      and albuminuria. New Engl J Med . (2021) 384:1437 -46. doi: 10.1056/NEJMra1808786
 
-      toxicityofsurufatinibinneuroendocrinetumors:Asystematicreviewandmeta-.J
+      17. Daehn IS, Duf fi eld JS. The glomerular fi ltration barrier: a structural
+      target for novel kidney therapies. Nat Rev Drug Discov . (2021) 20:770 -88.
+      doi: 10.1038/s41573021-00242-0
 
-      Neuroendocrinol.(2022)34:e13149. doi:10.1111/jne.13149
+      18. Chen J, Ji Q, Bai C, Zheng X, Zhang Y, Shi F, et al. Surufatinib in chinese
+      patients with locally advanced or metastatic differentiated thyroid cancer and
+      medullary thyroid cancer: A multicenter, open-label, phase II trial. Thyroid
+      . (2020) 30:1245 -53. doi: 10.1089/thy.2019.0453
 
-      15.CaiT,ChengY,DuY,TanP,LiT,ChenY,etal.Efﬁcacyandsafetyof
+      19. Xu J, Bai Y, Sun H, Bai C, Jia R, Li Y, et al. A single-arm, multicenter,
+      open-label phase 2 trial of surufatinib in patients with unresectable or metastatic
+      biliary tract cancer. Cancer . (2021) 127:3975 -84. doi: 10.1002/cncr.v127.21
 
-      surufatinib in the treatment of advanced solid tumors: a systematic evaluation
-      and meta
+      20. Xu J, Li J, Bai C, Xu N, Zhou Z, Li Z, et al. Surufatinib in advanced welldifferentiated
+      neuroendocrine tumors: A multicenter, single-arm, open-label, phase ib/ II trial.
+      Clin Cancer Res . (2019) 25:3486 -94. doi: 10.1158/1078-0432.CCR-18-2994
 
-      −analysis.Oncol Lett.(2023) 25:273.doi:10.3892/ol.2023.13859
+      21. Zhu W, Wang W, Shi Y, Shen B, Li Y. Surufatinib-induced renal thrombotic
+      microangiopathy: fi rst case report and review of literature. Virchows Arch
+      . (2023) 483:561 -7. doi: 10.1007/s00428-023-03545-2
 
-      16.BenzingT,IngelﬁngerJR,SalantD.Insightsintoglomerularﬁltrationand
-
-      albuminuria. NewEnglJ Med.(2021) 384:1437–46. doi:10.1056/NEJMra1808786
-
-      17.DaehnIS,DufﬁeldJS.Theglomerularﬁltrationbarrier:astructuraltargetfor
-
-      novelkidneytherapies.NatRevDrugDiscov.(2021)20:770–88.doi:10.1038/s41573-
-
-      021-00242-0
-
-      18.Chen J, Ji Q, Bai C, Zheng X, Zhang Y, Shi F, et al. Surufatinib in chinese
-      patients
-
-      with locally advanced or metastatic differentiated thyroid cancer and medullary
-      thyroid
-
-      cancer:Amulticenter,open-label,phaseIItrial.Thyroid.(2020)30:1245–53.
-
-      doi:10.1089/thy.2019.0453
-
-      19.Xu J, Bai Y, Sun H, Bai C, Jia R, Li Y, et al. A single-arm, multicenter,
-      open-label
-
-      phase2trialofsurufatinibinpatientswithunresectableormetastaticbiliarytract
-
-      cancer.Cancer.(2021)127:3975–84. doi:10.1002/cncr.v127.21
-
-      20.XuJ,LiJ,BaiC,XuN,ZhouZ,LiZ,etal.Surufatinibinadvancedwell-
-
-      differentiated neuroendocrine tumors: A multicenter, single-arm, open-label,
-      phase ib/
-
-      II trial. ClinCancerRes.(2019)25:3486–94. doi:10.1158/1078-0432.CCR-18-2994
-
-      21.ZhuW,WangW,ShiY,ShenB,LiY.Surufatinib-inducedrenalthrombotic
-
-      microangiopathy:ﬁrstcasereportandreviewofliterature.VirchowsArch.(2023)
-
-      483:561–7. doi:10.1007/s00428-023-03545-2
-
-      22.CivesM,StrosbergJR.Gastroenteropancreaticneuroendocrinetumors.CA:A
-
-      Cancer JClinicians.(2018) 68:471–87.doi:10.3322/caac.21493
-
-      Shietal.
-
-      10.3389/fonc.2025.1546217
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      07'
+      22. Cives M, Strosberg JR. Gastroenteropancreatic neuroendocrine tumors. CA:
+      A Cancer J Clinicians . (2018) 68:471 -87. doi: 10.3322/caac.21493'
     page: 7
-  - name: 23.RaymondE,DahanL,RaoulJ-L,BangYJ,BorbathI,Lombard-BohasC,etal.
-    text: '23.RaymondE,DahanL,RaoulJ-L,BangYJ,BorbathI,Lombard-BohasC,etal.
+  - name: SUPPLEMENTARY FIGURE 1 / References
+    text: 'Raymond E, Dahan L, Raoul J-L, Bang YJ, Borbath I, Lombard-Bohas C, et
+      al. Sunitinib malate for the treatment of pancreatic neuroendocrine tumors.
+      New Engl J Med . (2011) 364:501 -13. doi: 10.1056/NEJMoa1003825
 
-      Sunitinibmalateforthetreatmentofpancreaticneuroendocrinetumors.NewEnglJ
+      Azar I, Esfandiarifard S, Sinai P, Wazir A, Foulke L, Mehdi S, et al. Sunitinibinduced
+      acute interstitial nephritis in a thrombocytopenic renal cell cancer patient.
+      Case Rep Oncological Med . (2017) 2017:1 -4. doi: 10.1155/2017/6328204
 
-      Med.(2011) 364:501–13.doi:10.1056/NEJMoa1003825
+      Bollee G, Patey N, Cazajous G, Robert C, Goujon JM, Fakhouri F, et al. Thrombotic
+      microangiopathy secondary to VEGF pathway inhibition by sunitinib. Nephrol Dialysis
+      Transplant . (2008) 24:682 -5. doi: 10.1093/ndt/gfn657
 
-      24.AzarI,EsfandiarifardS,SinaiP,WazirA,FoulkeL,MehdiS,etal.Sunitinib-
+      Ko H-C, Lee H-P, Wu J-D, Ma TL, Shen CH, Lin CT, et al. Sunitinib-related high-grade
+      proteinuria and allograft dysfunction in a kidney recipient: a rare case report.
+      BMC Nephrol . (2022) 23:150. doi: 10.1186/s12882-022-02789-5
 
-      inducedacuteinterstitialnephritisinathrombocytopenicrenalcellcancerpatient.
+      Takahashi D, Nagahama K, Tsuura Y, Tanaka H, Tamura T. Sunitinib-induced nephrotic
+      syndrome and irreversible renal dysfunction. Clin Exp Nephrol . (2011) 16:310
+      -5. doi: 10.1007/s10157-011-0543-9
 
-      CaseRep OncologicalMed.(2017)2017:1–4. doi:10.1155/2017/6328204
+      Zonoozi S, Palmer M, Ursina T, Geara A. Worsening membranous nephropathy in
+      a patient with GIST treated with sunitinib. BMJ Case Rep . (2021) 14:e243567.
+      doi: 10.1136/bcr-2021-243567
 
-      25.BolleeG,PateyN,CazajousG,RobertC,GoujonJM,FakhouriF,etal.
+      Stamellou E, Seikrit C, Tang SCW, Boor P, Tesar ̌ V, Floege J, et al. IgA nephropathy.
+      Nat Rev Dis Primers . (2023) 9:67. doi: 10.1038/s41572-02300476-9
 
-      ThromboticmicroangiopathysecondarytoVEGFpathwayinhibitionbysunitinib.
-
-      NephrolDialysisTransplant.(2008) 24:682–5.doi:10.1093/ndt/gfn657
-
-      26.KoH-C,LeeH-P,WuJ-D,MaTL,ShenCH,LinCT,etal.Sunitinib-related
-
-      high-gradeproteinuriaandallograftdysfunctioninakidneyrecipient:ararecase
-
-      report.BMCNephrol.(2022) 23:150.doi:10.1186/s12882-022-02789-5
-
-      27.Takahashi D, Nagahama K, Tsuura Y, Tanaka H, Tamura T. Sunitinib-induced
-
-      nephroticsyndromeandirreversiblerenaldysfunction.ClinExpNephrol.(2011)
-
-      16:310–5.doi:10.1007/s10157-011-0543-9
-
-      28.Zonoozi S, Palmer M, Ursina T, Geara A. Worsening membranous nephropathy
-
-      inapatientwithGISTtreatedwithsunitinib.BMJCaseRep.(2021)14:e243567.
-
-      doi:10.1136/bcr-2021-243567
-
-      29.StamellouE,SeikritC,TangSCW,BoorP,TesařV,FloegeJ,
-
-      etal.IgAnephropathy.NatRevDisPrimers.(2023)9:67.doi:10.1038/s41572-023-
-
-      00476-9
-
-      30.Cheung CK, Alexander S, Reich HN, Selvaskandan H, Zhang H, Barratt J, et
-      al.
-
+      Cheung CK, Alexander S, Reich HN, Selvaskandan H, Zhang H, Barratt J, et al.
       The pathogenesis of IgA nephropathy and implications for treatment. Nat Rev
-      Nephrol.
-
-      (2025) 21:9–23. doi:10.1038/s41581-024-00885-3
-
-      Shietal.
-
-      10.3389/fonc.2025.1546217
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      08'
-    page: 8
+      Nephrol . (2025) 21:9 -23. doi: 10.1038/s41581-024-00885-3'
+    page: 7
   tables: []
   images:
   - image_id: IMG:0000
-    caption: FIGURE1
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 1
+    bbox:
+    - 48.84559415662035
+    - 791.7775066015191
+    - 221.63251270642897
+    - 807.4248864502168
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0001_r000.png
+  - image_id: IMG:0001
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 1
+    bbox:
+    - 48.594766529633844
+    - 689.7451492560156
+    - 127.19070831454367
+    - 706.7917453617802
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0001_r001.png
+  - image_id: IMG:0002
+    caption: 'FIGURE 1
+
+
+      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->'
     page: 2
     bbox:
-    - 85.15299987792969
-    - 602.3622436523438
-    - 510.3489990234375
-    - 713.9905395507812
+    - 83.76497584020234
+    - 127.33762890447781
+    - 510.9621766181741
+    - 241.26229297240525
     kind: figure
     extracted_values: {}
-    asset_path: images/p0002_r000.png
-  - image_id: IMG:0001
-    caption: FIGURE2
+    asset_path: images/p0002_r002.png
+  - image_id: IMG:0003
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
     page: 3
     bbox:
-    - 85.15299987792969
-    - 94.73408508300781
-    - 510.3489990234375
-    - 315.609619140625
+    - 48.24536757694847
+    - 475.57747720940716
+    - 545.8993693154149
+    - 760.1446826388217
     kind: figure
     extracted_values: {}
-    asset_path: images/p0003_r001.png
-  - image_id: IMG:0002
-    caption: FIGURE3
+    asset_path: images/p0003_r003.png
+  - image_id: IMG:0004
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
     page: 4
     bbox:
-    - 99.38264465332031
-    - 94.73406982421875
-    - 496.17626953125
-    - 571.5213012695312
+    - 48.532397444299306
+    - 228.21148782613682
+    - 545.3098117848592
+    - 759.4900375113407
     kind: figure
     extracted_values: {}
-    asset_path: images/p0004_r002.png
-  - image_id: IMG:0003
-    caption: FIGURE4
+    asset_path: images/p0004_r004.png
+  - image_id: IMG:0005
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
     page: 5
     bbox:
-    - 141.90231323242188
-    - 94.73406982421875
-    - 453.7132873535156
-    - 594.0284423828125
+    - 140.84233496320755
+    - 247.30516168596375
+    - 454.2363655264419
+    - 748.1428349647603
     kind: figure
     extracted_values: {}
-    asset_path: images/p0005_r003.png
+    asset_path: images/p0005_r005.png

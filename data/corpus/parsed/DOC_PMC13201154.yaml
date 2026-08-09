@@ -1,8 +1,25 @@
 corpus_version: 0.1.0
 parse:
-  backend: pymupdf
+  backend: docling
   degraded: []
   same_as: {}
+  route:
+    requested: auto
+    chosen: docling
+    reason: structured_pdf
+    probe:
+      page_count: 6
+      image_count: 6
+      table_candidates: 0
+      text_chars: 26798
+      avg_blocks_per_page: 18.0
+      multi_column_hint: true
+      text_extractable: true
+    attempts:
+    - backend: docling
+      status: ok
+      degraded: []
+      blocks: 88
 sections_meta:
 - section_id: SEC:PMC13201154#0000
   doc_id: DOC:PMC13201154
@@ -18,14 +35,15 @@ sections_meta:
   start_page: 1
   end_page: 1
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=1 page=1
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13201154#0001
   doc_id: DOC:PMC13201154
   parent_section_id: null
-  section_path: Clinicalresponsein advanced
-  section_title: Clinicalresponsein advanced
+  section_path: OPEN ACCESS
+  section_title: OPEN ACCESS
   section_level: 1
   sort_order: 1
   start_page: 1
@@ -33,13 +51,12 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13201154#0002
   doc_id: DOC:PMC13201154
   parent_section_id: null
-  section_path: non-smallcelllungcancer
-  section_title: non-smallcelllungcancer
+  section_path: CITATION
+  section_title: CITATION
   section_level: 1
   sort_order: 2
   start_page: 1
@@ -47,13 +64,12 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13201154#0003
   doc_id: DOC:PMC13201154
   parent_section_id: null
-  section_path: withhighPD-L1expression
-  section_title: withhighPD-L1expression
+  section_path: COPYRIGHT
+  section_title: COPYRIGHT
   section_level: 1
   sort_order: 3
   start_page: 1
@@ -61,13 +77,12 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13201154#0004
   doc_id: DOC:PMC13201154
   parent_section_id: null
-  section_path: andMETexon14skipping
-  section_title: andMETexon14skipping
+  section_path: Yefei Ruan and Lin Qiu *
+  section_title: Yefei Ruan and Lin Qiu *
   section_level: 1
   sort_order: 4
   start_page: 1
@@ -75,671 +90,246 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13201154#0005
   doc_id: DOC:PMC13201154
   parent_section_id: null
-  section_path: mutation:acaseanalysisof
-  section_title: mutation:acaseanalysisof
+  section_path: KEYWORDS
+  section_title: KEYWORDS
   section_level: 1
   sort_order: 5
   start_page: 1
-  end_page: 1
+  end_page: 5
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13201154#0006
   doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: overcomingimmunotherapy
-  section_title: overcomingimmunotherapy
-  section_level: 1
+  parent_section_id: SEC:PMC13201154#0005
+  section_path: KEYWORDS / Introduction
+  section_title: Introduction
+  section_level: 2
   sort_order: 6
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  start_page: 2
+  end_page: 2
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - PDF 内嵌书签 level=2 page=2
+  - docling 版面信号 level=1 page=2
+  - 命中标准章节名
 - section_id: SEC:PMC13201154#0007
   doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: resistanceandliteraturereview
-  section_title: resistanceandliteraturereview
-  section_level: 1
+  parent_section_id: SEC:PMC13201154#0005
+  section_path: KEYWORDS / Case report
+  section_title: Case report
+  section_level: 2
   sort_order: 7
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  start_page: 2
+  end_page: 4
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - PDF 内嵌书签 level=2 page=2
+  - docling 版面信号 level=1 page=2
 - section_id: SEC:PMC13201154#0008
   doc_id: DOC:PMC13201154
   parent_section_id: SEC:PMC13201154#0007
-  section_path: resistanceandliteraturereview / YefeiRuanandLinQiu*
-  section_title: YefeiRuanandLinQiu*
-  section_level: 2
+  section_path: KEYWORDS / Case report / Patient information
+  section_title: Patient information
+  section_level: 3
   sort_order: 8
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  start_page: 2
+  end_page: 2
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - pymupdf 版面信号 level=3 page=1
-  - 字号 11.0
+  - PDF 内嵌书签 level=3 page=2
+  - docling 版面信号 level=1 page=2
 - section_id: SEC:PMC13201154#0009
   doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: Casereport
-  section_title: Casereport
-  section_level: 1
+  parent_section_id: SEC:PMC13201154#0007
+  section_path: KEYWORDS / Case report / Clinical examination and diagnosis
+  section_title: Clinical examination and diagnosis
+  section_level: 3
   sort_order: 9
   start_page: 2
   end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - pymupdf 版面信号 level=1 page=2
-  - 字号 13.5
+  - PDF 内嵌书签 level=3 page=2
+  - docling 版面信号 level=1 page=2
 - section_id: SEC:PMC13201154#0010
   doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 10.3389/fonc.2026.1807242
-  section_title: 10.3389/fonc.2026.1807242
-  section_level: 1
+  parent_section_id: SEC:PMC13201154#0007
+  section_path: KEYWORDS / Case report / Treatment process
+  section_title: Treatment process
+  section_level: 3
   sort_order: 10
   start_page: 2
   end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - 编号模式 10
+  - PDF 内嵌书签 level=3 page=2
+  - docling 版面信号 level=1 page=2
 - section_id: SEC:PMC13201154#0011
   doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0010
-  section_path: 10.3389/fonc.2026.1807242 / Introduction
-  section_title: Introduction
-  section_level: 2
+  parent_section_id: SEC:PMC13201154#0007
+  section_path: KEYWORDS / Case report / Follow-up and clinical outcomes
+  section_title: Follow-up and clinical outcomes
+  section_level: 3
   sort_order: 11
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
-  - PDF 内嵌书签 level=2 page=2
-  - pymupdf 版面信号 level=1 page=2
-  - 字号 13.5
-  - 命中标准章节名
+  - PDF 内嵌书签 level=3 page=2
+  - docling 版面信号 level=1 page=2
 - section_id: SEC:PMC13201154#0012
   doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0010
-  section_path: 10.3389/fonc.2026.1807242 / Case report
-  section_title: Case report
-  section_level: 2
-  sort_order: 12
-  start_page: 2
-  end_page: 2
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=2
-- section_id: SEC:PMC13201154#0013
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0010
-  section_path: 10.3389/fonc.2026.1807242 / Patientinformation
-  section_title: Patientinformation
-  section_level: 2
-  sort_order: 13
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=2 page=2
-  - 字号 12.0
-- section_id: SEC:PMC13201154#0014
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0010
-  section_path: 10.3389/fonc.2026.1807242 / Clinicalexaminationanddiagnosis
-  section_title: Clinicalexaminationanddiagnosis
-  section_level: 2
-  sort_order: 14
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=2 page=2
-  - 字号 12.0
-- section_id: SEC:PMC13201154#0015
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0010
-  section_path: 10.3389/fonc.2026.1807242 / Follow-upandclinicaloutcomes
-  section_title: Follow-upandclinicaloutcomes
-  section_level: 2
-  sort_order: 15
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=2 page=2
-  - 字号 12.0
-- section_id: SEC:PMC13201154#0016
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0015
-  section_path: 10.3389/fonc.2026.1807242 / Follow-upandclinicaloutcomes / Patient
-    information
-  section_title: Patient information
-  section_level: 3
-  sort_order: 16
-  start_page: 2
-  end_page: 2
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=3 page=2
-- section_id: SEC:PMC13201154#0017
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0015
-  section_path: 10.3389/fonc.2026.1807242 / Follow-upandclinicaloutcomes / Clinical
-    examination and diagnosis
-  section_title: Clinical examination and diagnosis
-  section_level: 3
-  sort_order: 17
-  start_page: 2
-  end_page: 2
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=3 page=2
-- section_id: SEC:PMC13201154#0018
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0015
-  section_path: 10.3389/fonc.2026.1807242 / Follow-upandclinicaloutcomes / Treatment
-    process
-  section_title: Treatment process
-  section_level: 3
-  sort_order: 18
-  start_page: 2
-  end_page: 2
-  heading_source: TOC_EXACT
-  heading_confidence: 0.98
-  evidence:
-  - PDF 内嵌书签 level=3 page=2
-  - pymupdf 版面信号 level=2 page=2
-  - 字号 12.0
-- section_id: SEC:PMC13201154#0019
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0015
-  section_path: 10.3389/fonc.2026.1807242 / Follow-upandclinicaloutcomes / Follow-up
-    and clinical outcomes
-  section_title: Follow-up and clinical outcomes
-  section_level: 3
-  sort_order: 19
-  start_page: 2
-  end_page: 2
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=3 page=2
-- section_id: SEC:PMC13201154#0020
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1807242 #2'
-  section_title: 10.3389/fonc.2026.1807242
-  section_level: 1
-  sort_order: 20
-  start_page: 3
-  end_page: 3
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13201154#0021
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0020
-  section_path: '10.3389/fonc.2026.1807242 #2 / Literaturereviewanddiscussion'
-  section_title: Literaturereviewanddiscussion
-  section_level: 2
-  sort_order: 21
-  start_page: 3
-  end_page: 3
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=2 page=3
-  - 字号 12.0
-- section_id: SEC:PMC13201154#0022
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0021
-  section_path: '10.3389/fonc.2026.1807242 #2 / Literaturereviewanddiscussion / Literature
-    review and discussion'
+  parent_section_id: SEC:PMC13201154#0007
+  section_path: KEYWORDS / Case report / Literature review and discussion
   section_title: Literature review and discussion
   section_level: 3
-  sort_order: 22
+  sort_order: 12
   start_page: 3
-  end_page: 3
+  end_page: 4
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=3 page=3
-- section_id: SEC:PMC13201154#0023
+  - docling 版面信号 level=1 page=3
+- section_id: SEC:PMC13201154#0013
   doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1807242 #3'
-  section_title: 10.3389/fonc.2026.1807242
-  section_level: 1
-  sort_order: 23
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13201154#0024
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: Authorcontributions
-  section_title: Authorcontributions
-  section_level: 1
-  sort_order: 24
-  start_page: 5
-  end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
-- section_id: SEC:PMC13201154#0025
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1807242 #4'
-  section_title: 10.3389/fonc.2026.1807242
-  section_level: 1
-  sort_order: 25
-  start_page: 5
-  end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13201154#0026
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0025
-  section_path: '10.3389/fonc.2026.1807242 #4 / Conclusion'
+  parent_section_id: SEC:PMC13201154#0005
+  section_path: KEYWORDS / Conclusion
   section_title: Conclusion
   section_level: 2
-  sort_order: 26
+  sort_order: 13
   start_page: 5
   end_page: 5
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=5
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
+  - docling 版面信号 level=1 page=5
   - 命中标准章节名
-- section_id: SEC:PMC13201154#0027
+- section_id: SEC:PMC13201154#0014
   doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0025
-  section_path: '10.3389/fonc.2026.1807242 #4 / Author contributions'
+  parent_section_id: SEC:PMC13201154#0005
+  section_path: KEYWORDS / Author contributions
   section_title: Author contributions
   section_level: 2
-  sort_order: 27
+  sort_order: 14
   start_page: 5
   end_page: 5
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=5
-- section_id: SEC:PMC13201154#0028
+  - docling 版面信号 level=1 page=5
+- section_id: SEC:PMC13201154#0015
   doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0025
-  section_path: '10.3389/fonc.2026.1807242 #4 / Funding'
+  parent_section_id: SEC:PMC13201154#0005
+  section_path: KEYWORDS / Funding
   section_title: Funding
   section_level: 2
-  sort_order: 28
+  sort_order: 15
   start_page: 5
   end_page: 5
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=5
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
-- section_id: SEC:PMC13201154#0029
+  - docling 版面信号 level=1 page=5
+- section_id: SEC:PMC13201154#0016
   doc_id: DOC:PMC13201154
   parent_section_id: null
-  section_path: Conﬂictofinterest
-  section_title: Conﬂictofinterest
+  section_path: Confl ict of interest
+  section_title: Confl ict of interest
   section_level: 1
-  sort_order: 29
+  sort_order: 16
   start_page: 6
   end_page: 6
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
-- section_id: SEC:PMC13201154#0030
+  - docling 版面信号 level=1 page=6
+- section_id: SEC:PMC13201154#0017
   doc_id: DOC:PMC13201154
   parent_section_id: null
-  section_path: GenerativeAI statement
-  section_title: GenerativeAI statement
+  section_path: Publisher ' s note
+  section_title: Publisher ' s note
   section_level: 1
-  sort_order: 30
+  sort_order: 17
   start_page: 6
   end_page: 6
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
-- section_id: SEC:PMC13201154#0031
+  - docling 版面信号 level=1 page=6
+- section_id: SEC:PMC13201154#0018
   doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: Publisher’snote
-  section_title: Publisher’snote
-  section_level: 1
-  sort_order: 31
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
-- section_id: SEC:PMC13201154#0032
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 2.LiJJ,SaabJ,BrayV,WilliamsonJ,PalA,YipPY,etal.Histopathological
-  section_title: 2.LiJJ,SaabJ,BrayV,WilliamsonJ,PalA,YipPY,etal.Histopathological
-  section_level: 1
-  sort_order: 32
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 2
-- section_id: SEC:PMC13201154#0033
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: '3.Fujino T, Suda K, Mitsudomi T. Lung cancer with MET exon 14 skipping
-    mutation:'
-  section_title: '3.Fujino T, Suda K, Mitsudomi T. Lung cancer with MET exon 14 skipping
-    mutation:'
-  section_level: 1
-  sort_order: 33
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 3
-- section_id: SEC:PMC13201154#0034
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 4.GhoshP,PecoraI,ParkM.MechanisticinsightsintoMETexon14skipping
-  section_title: 4.GhoshP,PecoraI,ParkM.MechanisticinsightsintoMETexon14skipping
-  section_level: 1
-  sort_order: 34
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 4
-- section_id: SEC:PMC13201154#0035
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 5.AntoineM,VieiraT,FalletV,HamardC,DuruisseauxM,CadranelJ,etal.
-  section_title: 5.AntoineM,VieiraT,FalletV,HamardC,DuruisseauxM,CadranelJ,etal.
-  section_level: 1
-  sort_order: 35
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 5
-- section_id: SEC:PMC13201154#0036
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 6.EditorialOfﬁceofChineseJournalofLungCancer.Expertconsensusontargeted
-  section_title: 6.EditorialOfﬁceofChineseJournalofLungCancer.Expertconsensusontargeted
-  section_level: 1
-  sort_order: 36
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 6
-- section_id: SEC:PMC13201154#0037
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 7.Lee JB, Shim JS,Cho BC.Evolving roles ofMET as a therapeutictarget
-    inNSCLC
-  section_title: 7.Lee JB, Shim JS,Cho BC.Evolving roles ofMET as a therapeutictarget
-    inNSCLC
-  section_level: 1
-  sort_order: 37
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 7
-- section_id: SEC:PMC13201154#0038
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 8.CortelliniA,BrunettiL,DiFazioGR,GarboE,PinatoDJ,NaidooJ,etal.
-  section_title: 8.CortelliniA,BrunettiL,DiFazioGR,GarboE,PinatoDJ,NaidooJ,etal.
-  section_level: 1
-  sort_order: 38
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 8
-- section_id: SEC:PMC13201154#0039
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 10.UeharaY,WatanabeK,HakozakiT,YomotaM,HosomiY.Efﬁcacyof ﬁrst-line
-  section_title: 10.UeharaY,WatanabeK,HakozakiT,YomotaM,HosomiY.Efﬁcacyof ﬁrst-line
-  section_level: 1
-  sort_order: 39
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13201154#0040
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 12.PecciF,LiH,DiFedericoA,WuJ,ChenH,GariazzoE,etal.First-lineMET
-  section_title: 12.PecciF,LiH,DiFedericoA,WuJ,ChenH,GariazzoE,etal.First-lineMET
-  section_level: 1
-  sort_order: 40
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 12
-- section_id: SEC:PMC13201154#0041
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 8. doi:10.1093/annonc/mdz167
-  section_title: 8. doi:10.1093/annonc/mdz167
-  section_level: 1
-  sort_order: 41
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 8
-- section_id: SEC:PMC13201154#0042
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 14.DengJ-Y,GaoM,FanX,YanH-H,LuoW-C,YangM-Y,etal.Clinicaland
-  section_title: 14.DengJ-Y,GaoM,FanX,YanH-H,LuoW-C,YangM-Y,etal.Clinicaland
-  section_level: 1
-  sort_order: 42
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 14
-- section_id: SEC:PMC13201154#0043
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 18. doi:10.1158/1078-0432.CCR-23-1207
-  section_title: 18. doi:10.1158/1078-0432.CCR-23-1207
-  section_level: 1
-  sort_order: 43
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 18
-- section_id: SEC:PMC13201154#0044
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 16.XueQ,WangY,ZhengQ,HuangZ,LinY,JinY,etal.METexon14skipping
-  section_title: 16.XueQ,WangY,ZhengQ,HuangZ,LinY,JinY,etal.METexon14skipping
-  section_level: 1
-  sort_order: 44
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 16
-- section_id: SEC:PMC13201154#0045
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 21.AlzofonN,JimenoA.Capmatinibfornon-smallcelllungcancer.DrugsToday
-  section_title: 21.AlzofonN,JimenoA.Capmatinibfornon-smallcelllungcancer.DrugsToday
-  section_level: 1
-  sort_order: 45
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 21
-- section_id: SEC:PMC13201154#0046
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 22.WuY-L,SmitEF,BauerTM.Capmatinibforpatientswithnon-smallcelllung
-  section_title: 22.WuY-L,SmitEF,BauerTM.Capmatinibforpatientswithnon-smallcelllung
-  section_level: 1
-  sort_order: 46
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 22
-- section_id: SEC:PMC13201154#0047
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: 23.Gow C-H,HsiehM-S,ChenY-L,LiuY-N, WuS-G,Shih J-Y.Survivaloutcomes
-  section_title: 23.Gow C-H,HsiehM-S,ChenY-L,LiuY-N, WuS-G,Shih J-Y.Survivaloutcomes
-  section_level: 1
-  sort_order: 47
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 23
-- section_id: SEC:PMC13201154#0048
-  doc_id: DOC:PMC13201154
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1807242 #5'
-  section_title: 10.3389/fonc.2026.1807242
-  section_level: 1
-  sort_order: 48
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13201154#0049
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0048
-  section_path: '10.3389/fonc.2026.1807242 #5 / Conflict of interest'
+  parent_section_id: SEC:PMC13201154#0017
+  section_path: Publisher ' s note / Conflict of interest
   section_title: Conflict of interest
   section_level: 2
-  sort_order: 49
+  sort_order: 18
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=2 page=6
-- section_id: SEC:PMC13201154#0050
+- section_id: SEC:PMC13201154#0019
   doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0048
-  section_path: '10.3389/fonc.2026.1807242 #5 / Generative AI statement'
+  parent_section_id: SEC:PMC13201154#0017
+  section_path: Publisher ' s note / Generative AI statement
   section_title: Generative AI statement
   section_level: 2
-  sort_order: 50
-  start_page: 6
-  end_page: 6
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=6
-- section_id: SEC:PMC13201154#0051
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0048
-  section_path: '10.3389/fonc.2026.1807242 #5 / Publisher’s note'
-  section_title: Publisher’s note
-  section_level: 2
-  sort_order: 51
-  start_page: 6
-  end_page: 6
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=6
-- section_id: SEC:PMC13201154#0052
-  doc_id: DOC:PMC13201154
-  parent_section_id: SEC:PMC13201154#0048
-  section_path: '10.3389/fonc.2026.1807242 #5 / References'
-  section_title: References
-  section_level: 2
-  sort_order: 52
+  sort_order: 19
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=6
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
+  - docling 版面信号 level=1 page=6
+- section_id: SEC:PMC13201154#0020
+  doc_id: DOC:PMC13201154
+  parent_section_id: SEC:PMC13201154#0017
+  section_path: Publisher ' s note / Publisher’s note
+  section_title: Publisher’s note
+  section_level: 2
+  sort_order: 20
+  start_page: 6
+  end_page: 6
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
+  evidence:
+  - PDF 内嵌书签 level=2 page=6
+- section_id: SEC:PMC13201154#0021
+  doc_id: DOC:PMC13201154
+  parent_section_id: SEC:PMC13201154#0017
+  section_path: Publisher ' s note / References
+  section_title: References
+  section_level: 2
+  sort_order: 21
+  start_page: 6
+  end_page: 6
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=6
+  - docling 版面信号 level=1 page=6
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC13201154
-  source_id: PUBMED
-  external_id: PMC13201154
+  source_id: PMC
   title: 'Clinical response in advanced non-small cell lung cancer with high PD-L1
     expression and &lt;i&gt;MET&lt;/i&gt; exon 14 skipping mutation: a case analysis
     of overcoming immunotherapy resistance and literature review.'
@@ -747,996 +337,515 @@ documents:
   language: en
   license_tier: TIER_0
   sections:
-  - name: resistanceandliteraturereview / YefeiRuanandLinQiu*
-    text: 'The Afﬁliated YangmingHospitalofNingbo University,YuyaoPeople’sHospital,Yuyao,China
+  - name: 'Clinical response in advanced non-small cell lung cancer with high PD-L1
+      expression and MET exon 14 skipping mutation: a case analysis of overcoming
+      immunotherapy resistance and literature review'
+    text: 'EDITED BY
 
-      In the precisionmanagement ofnon-smallcell lungcancer (NSCLC), identifying
+      Alberto Pavan, Azienda ULSS 3 Serenissima, Italy
 
-      drivermutationsandevaluatingimmune-relatedbiomarkersareessential.Yet,
+      REVIEWED BY Stefano Frega, Veneto Institute of Oncology (IRCCS), Italy Tao Li,
 
+      People '' s Liberation Army General Hospital, China
+
+      *CORRESPONDENCE Lin Qiu tai_ss@163.com
+
+      RECEIVED 09 February 2026 REVISED 06 April 2026 ACCEPTED 20 April 2026 PUBLISHED
+      12 May 2026
+
+      Ruan Y and Qiu L (2026) Clinical response in advanced non-small cell lung cancer
+      with high PD-L1 expression and MET exon 14 skipping mutation: a case analysis
+      of overcoming immunotherapy resistance and literature review. Front. Oncol.
+      16:1807242. doi: 10.3389/fonc.2026.1807242
+
+      © 2026 Ruan and Qiu. This is an openaccess article distributed under the terms
+      of the Creative Commons Attribution License (CC BY). The use, distribution or
+      reproduction in other forums is permitted, provided the original author(s) and
+      the copyright owner(s) are credited and that the original publication in this
+      journal is cited, in accordance with accepted academic practice. No use, distribution
+      or reproduction is permitted which does not comply with these terms.
+
+      The Af fi liated Yangming Hospital of Ningbo University, Yuyao People '' s Hospital,
+      Yuyao, China
+
+      In the precision management of non-small cell lung cancer (NSCLC), identifying
+      driver mutations and evaluating immune-related biomarkers are essential. Yet,
       clear therapeutic protocols remain absent for tumors that concurrently carry
-      MET
-
-      exon14skippingmutations(METex14)anddemonstrateelevatedprogrammed
-
-      deathligand-1(PD-L1)expression.Thisreportdetailsthecaseofa79-year-old
-
+      MET exon 14 skipping mutations ( MET ex14) and demonstrate elevated programmed
+      death ligand-1 (PD-L1) expression. This report details the case of a 79-year-old
       male with a prolonged smoking history who quit 20 years ago, diagnosed with
-      left
-
-      lungNSCLC.PathologicalanalysisrevealedhighPD-L1expressioninthetumor
-
-      (tumorproportionscore99%),alongsideaMETex14mutation.Initialtherapy
-
-      employedthePD-1inhibitorTislelizumab,yieldingaprogression-freesurvival
-
-      (PFS)of7months.TreatmentwasthenmodiﬁedtotheMETtyrosinekinase
-
-      inhibitor(MET-TKI)Savolitinib,whichledtomarkedtumorreduction.Following
-
-      discontinuationofSavolitinibduetodrug-inducedliverinjury,Tislelizumab,
-
-      previouslyassociatedwithresistance,wasreintroducedasa“rechallenge”suc-
-
-      cessfullyre-establishingdiseasecontrol.Thisdistinctivetherapeuticsequence
-
-      providesclinicalevidencethat“METinhibitorsmaycounteractacquiredresis-
-
-      tancetoPD-1inhibitors”.Beyondunderscoringthevalueofpersonalizedtreat-
-
-      ment in the intricate setting of coexisting high PD-L1 expression and MET-driven
-
-      mutations,this casehints at anovel strategy:sequential MET inhibitortreatment
-
-      restoresensitivitytoimmunotherapyresponsesbymodifyingthetumormicro-
-
-      environment. Coupled with a systematic review of pertinent literature, this
-      article
-
-      explores the clinical features, therapeutic challenges, potential resistance
-      mech-
-
-      anisms,andmanagementapproachesforsuchpatients.Italsooutlinesfuture
-
-      researchavenuesforcombinationorsequentialtherapies,aimingtofurnisha
-
-      moreholisticreferenceforclinicaldecision-making.
-
-      KEYWORDS
-
-      MET14exon skippingmutation,non-small celllungcancer, programmeddeath-ligand
-
-      1,savolitinib,tislelizumab
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      01
-
-      OPEN ACCESS
-
-      EDITEDBY
-
-      Alberto Pavan,
-
-      AziendaULSS3 Serenissima,Italy
-
-      REVIEWEDBY
-
-      Stefano Frega,
-
-      Veneto Instituteof Oncology(IRCCS),
-
-      Italy
-
-      TaoLi,
-
-      People’s LiberationArmyGeneral
-
-      Hospital,China
-
-      *CORRESPONDENCE
-
-      Lin Qiu
-
-      tai_ss@163.com
-
-      RECEIVED 09 February2026
-
-      REVISED 06April 2026
-
-      ACCEPTED 20April2026
-
-      PUBLISHED 12May 2026
-
-      CITATION
-
-      Ruan YandQiu L (2026)Clinical
-
-      responsein advancednon-small
-
-      cell lungcancer withhighPD-L1
-
-      expressionand MET exon14
-
-      skippingmutation:a caseanalysis
-
-      ofovercoming immunotherapy
-
-      resistanceandliteraturereview.
-
-      Front. Oncol.16:1807242.
-
-      doi: 10.3389/fonc.2026.1807242
-
-      COPYRIGHT
-
-      © 2026 Ruan and Qiu. This is an open-
-
-      access article distributed under the terms
-
-      of the Creative Commons Attribution
-
-      License (CC BY). The use,distributionor
-
-      reproductionin otherforumsis
-
-      permitted,providedthe original
-
-      author(s)andthecopyrightowner(s)are
-
-      credited andthat the originalpublication
-
-      in thisjournal iscited,in accordance
-
-      with acceptedacademicpractice.No
-
-      use,distributionor reproductionis
-
-      permittedwhichdoesnotcomplywith
-
-      theseterms.
-
-      TYPE Review
-
-      PUBLISHED 12May2026
-
-      DOI 10.3389/fonc.2026.1807242'
+      left lung NSCLC. Pathological analysis revealed high PD-L1 expression in the
+      tumor (tumor proportion score 99%), alongside a MET ex14 mutation. Initial therapy
+      employed the PD-1 inhibitor Tislelizumab, yielding a progression-free survival
+      (PFS) of 7 months. Treatment was then modi fi ed to the MET tyrosine kinase
+      inhibitor ( MET -TKI) Savolitinib, which led to marked tumor reduction. Following
+      discontinuation of Savolitinib due to drug-induced liver injury, Tislelizumab,
+      previously associated with resistance, was reintroduced as a '' rechallenge
+      '' successfully re-establishing disease control. This distinctive therapeutic
+      sequence provides clinical evidence that '' MET inhibitors may counteract acquired
+      resistance to PD-1 inhibitors '' . Beyond underscoring the value of personalized
+      treatment in the intricate setting of coexisting high PD-L1 expression and MET
+      -driven mutations, this case hints at a novel strategy: sequential MET inhibitor
+      treatment restore sensitivity to immunotherapy responses by modifying the tumor
+      microenvironment. Coupled with a systematic review of pertinent literature,
+      this article explores the clinical features, therapeutic challenges, potential
+      resistance mechanisms, and management approaches for such patients. It also
+      outlines future research avenues for combination or sequential therapies, aiming
+      to furnish a more holistic reference for clinical decision-making.
+
+      MET14 exon skipping mutation, non-small cell lung cancer, programmed death-ligand
+      1, savolitinib, tislelizumab'
     page: 1
-  - name: 10.3389/fonc.2026.1807242 / Follow-upandclinicaloutcomes / Patient information
-    text: 'Non-smallcelllungcancer(NSCLC)istheleadingcauseof
-
-      cancer-related death worldwide. Over the last ten years, advances in
-
-      decipheringtumordevelopmentmechanismshaveledtonotable
-
-      improvements in therapeutic approaches (1). For advanced NSCLC,
-
-      current personalized precision medicine relies on three main pillars:
-
-      targetedtreatmentsforspeciﬁcdrivergenealterations,immuno-
-
-      therapycenteredonimmune-checkpointinhibitors(ICIs),and
-
-      chemotherapypairedwithanti-angiogenicagents.Amongthese,
-
-      METex14isarelativelyrareoncogenicdriveralteration,foundin
-
-      about3%–4%ofNSCLCcasesandmorefrequentlyobservedin
-
-      olderindividuals,women,andnon-smokers(2,3).Thisgenetic
-
-      changedisruptstheubiquitin-mediateddegradationoftheMET
-
-      receptor,leadingtosustainedactivationofdownstreamsignaling
-
-      cascadesthatfostertumorinitiationandprogression(4).This
-
-      alterationisnotablyenrichedinpulmonarysarcomatoidcarci-
-
-      noma,ahistologicsubtypeassociatedwithaggressivebehavior
-
-      and unfavorableprognosis(5).Today, MET tyrosine kinaseinhib-
-
-      itorsdesignedtotargetMETex14(suchascapmatinib,tepotinib,
-
-      andsavolitinib)havedemonstratedhighobjectiveresponserates,
-
-      establishingthemasthestandardofcareforthesepatients(6, 7).
-
-      Meanwhile,forpatientswhosetumorsshowaPD-L1tumor
-
-      proportion score (TPS) of 50% or higher, monotherapy with a PD-
-
-      1/PD-L1 monoclonal antibody has become the established ﬁrst-line
-
-      treatment(8,9).However,whenbothhighPD-L1expressionand
-
-      METex14 mutation, two molecular characteristics with well-deﬁned
-
-      therapeuticrelevance,coexistinthesameindividual,adistinct
-
-      clinicalconundrumarises:shouldtargetedtherapyorimmuno-
-
-      therapytakeprecedence?Atpresent,noclearconsensusorguide-
-
-      lineexiststodirectmanagementstrategiesforsuch“double-
-
-      positive” cases. Some available data indicate that patients harboring
-
-      METmutationsgenerallyrespondpoorlytoimmunotherapyand
-
-      experienceshorterprogression-freesurvival(10).Nevertheless,
-
-      recentinvestigationshavehighlightedthatinasubgroupwith
-
-      exceptionallyhighPD-L1expression(TPS≥80%),immunotherapy
-
-      mightshowefﬁcacycomparabletoorevensurpassingthatof
-
-      targetedtherapy,therebyquestioningtheconventionalwisdomof
-
-      prioritizingtargetedtreatment(11,12).Hence,determiningthe
-
-      optimaltherapeuticapproachforthisrareyetclinicallyimportant
-
-      patientgrouphas emergedasa pressingnecessity.
-
-      Herein,wepresentachallengingcaseofadvancedNSCLC
-
-      harboring both a high PD-L1 TPS and a METex14 mutation, illustrat-
-
-      ingauniquesequentialtreatmentstrategyandraisingimportant
-
-      questions regarding therapeutic interplay and resistance mechanisms.
-
-      Thepatientisa79-year-oldmalewithasigniﬁcantsmoking
-
-      history,whoquitsmokingtwentyyearsago.InNovember2022,a
-
-      chest CT scan identiﬁed a space-occupying lesion in the right upper
-
-      lunglobe,promptingreferraltoourinstitutionforfurtherevalu-
-
-      ation.Uponadmission,physicalexaminationrevealedabarrel-
-
-      shapedchest,diminishedbreathsoundsbilaterally,andnoother
-
-      notable positiveﬁndings.
-
-      Contrast-enhancedchestCTdemonstratedasolidnodule
-
-      measuringapproximately20×27mmintherightupperlobe,
-
-      accompaniedbymediastinallymphadenopathy(Figure1).An
-
-      ultrasound-guidedtransbronchialneedleaspirationbiopsyofthe
-
-      4Rmediastinallymphnodeswasperformedviabronchoscopyto
-
-      establishapathologicaldiagnosis.Histopathologicalexamination
-
-      conﬁrmed non-small cell lung carcinoma. Subsequent immunohis-
-
-      tochemical analysis showed tumor cells with diffuse strong positiv-
-
-      ityforthyroidtranscriptionfactor-1(TTF-1),whileP40staining
-
-      wasweaklypositiveinonlyaminorityofcells,supportinga
-
-      diagnosisoflungadenocarcinoma(Figure2).Fortumorstaging,
-
-      whole-bodybonescintigraphy(ECT)wasconducted,revealing
-
-      evidenceofbonemetastasis.PD-L1immunohistochemicaltesting
-
-      ofthetumortissueindicatedhighexpression,withatumor
-
-      proportionscore(TPS)of99%.Additionally,molecularpatholog-
-
-      icalanalysisofthetumortissuevianext-generationsequencing
-
-      identiﬁedthefollowingdrivergenemutations:METexon14
-
-      skippingmutation,TP53p.R273Hpointmutation,andMET
-
-      exon 16p.H1094Ypointmutation.
-
-      BeginninginDecember2022,thepatientwastreatedwith
-
-      Tislelizumabmonotherapy,administeredeverythreeweeksata
-
-      doseof200mg.Aftersixcyclesoftreatment,imagingfollow-up
-
-      demonstrated a reduction in lesions, with efﬁcacy assessed as partial
-
-      response(Figure3AversusB).Thepatientthencontinuedthis
-
-      regimen as maintenance therapy, completing a total of eight cycles.
-
-      However,subsequentimagingfollow-uprevealedlocoregional
-
-      diseaseprogression,indicatedbyanincreaseinthesizeofthe
-
-      primary lunglesion(Figure3C).
-
-      Given the detection of a METex14 through driver gene testing,
-
-      theclinicaltreatmentapproachwasmodiﬁedtotargetedtherapy,
-
-      initiatingoralSavolitinibatadailydoseof400mg.Twomonths
-
-      aftertreatmentinitiation,follow-upchestCTshowedamarked
-
-      reductioninlesions,indicatingcleartherapeuticbeneﬁt
-
-      (Figure 3D). Nevertheless, during Savolitinib treatment, the patient
-
-      developedseveredrug-inducedliverinjury,meetingcriteriafor
-
-      Grade3(severe)hepatotoxicityaccordingtoCTCAEv5.0.
-
-      Consequently,Savolitinibwaspromptlydiscontinued,andliver-
-
-      protectiveandenzyme-loweringtreatmentswerecommenced.
-
-      Afteroveramonthofsymptomaticsupportivecare,thepatient’s
-
-      liver functionparametersreturnedtothenormalrange.
-
-      Followingfurtherdiscussionwiththepatientandobtaining
-
-      informedconsent,anti-tumortherapywithTislelizumabwasre-
-
-      sumed onNovember29,2023.
-
-      AfterresumingTislelizumabtherapy,routineimagingsurveil-
-
-      lance revealed stable lesions with no evidence of disease progression
-
-      (Figure4).Currently,thepatientremainsinstableconditionand
-
-      Ruan andQiu
-
-      10.3389/fonc.2026.1807242
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      02'
+  - name: KEYWORDS / Case report / Patient information
+    text: 'Non-small cell lung cancer (NSCLC) is the leading cause of cancer-related
+      death worldwide. Over the last ten years, advances in deciphering tumor development
+      mechanisms have led to notable improvements in therapeutic approaches (1). For
+      advanced NSCLC, current personalized precision medicine relies on three main
+      pillars: targeted treatments for speci fi c driver gene alterations, immunotherapy
+      centered on immune-checkpoint inhibitors(ICIs), and chemotherapy paired with
+      anti-angiogenic agents. Among these, MET ex14 is a relatively rare oncogenic
+      driver alteration, found in about 3% -4% of NSCLC cases and more frequently
+      observed in older individuals, women, and non-smokers (2, 3). This genetic change
+      disrupts the ubiquitin-mediated degradation of the MET receptor, leading to
+      sustained activation of downstream signaling cascades that foster tumor initiation
+      and progression (4). This alteration is notably enriched in pulmonary sarcomatoid
+      carcinoma, a histologic subtype associated with aggressive behavior and unfavorable
+      prognosis (5). Today, MET tyrosine kinase inhibitors designed to target MET
+      ex14 (such as capmatinib, tepotinib, and savolitinib) have demonstrated high
+      objective response rates, establishing them as the standard of care for these
+      patients (6, 7).
+
+      Meanwhile, for patients whose tumors show a PD-L1 tumor proportion score (TPS)
+      of 50% or higher, monotherapy with a PD1/PD-L1 monoclonal antibody has become
+      the established fi rst-line treatment (8, 9). However, when both high PD-L1
+      expression and MET ex14 mutation, two molecular characteristics with well-de
+      fi ned therapeutic relevance, coexist in the same individual, a distinct clinical
+      conundrum arises: should targeted therapy or immunotherapy take precedence?
+      At present, no clear consensus or guideline exists to direct management strategies
+      for such '' doublepositive '' cases. Some available data indicate that patients
+      harboring MET mutations generally respond poorly to immunotherapy and experience
+      shorter progression-free survival (10). Nevertheless, recent investigations
+      have highlighted that in a subgroup with exceptionally high PD-L1 expression
+      (TPS ≥ 80%), immunotherapy might show ef fi cacy comparable to or even surpassing
+      that of targeted therapy, thereby questioning the conventional wisdom of prioritizing
+      targeted treatment (11, 12). Hence, determining the optimal therapeutic approach
+      for this rare yet clinically important patient group has emerged as a pressing
+      necessity.
+
+      Herein, we present a challenging case of advanced NSCLC harboring both a high
+      PD-L1 TPS and a MET ex14 mutation, illustrating a unique sequential treatment
+      strategy and raising important questions regarding therapeutic interplay and
+      resistance mechanisms.
+
+      The patient is a 79-year-old male with a signi fi cant smoking history, who
+      quit smoking twenty years ago. In November 2022, a chest CT scan identi fi ed
+      a space-occupying lesion in the right upper lung lobe, prompting referral to
+      our institution for further evaluation. Upon admission, physical examination
+      revealed a barrelshaped chest, diminished breath sounds bilaterally, and no
+      other notable positive fi ndings.
+
+      Contrast-enhanced chest CT demonstrated a solid nodule measuring approximately
+      20×27 mm in the right upper lobe, accompanied by mediastinal lymphadenopathy
+      (Figure 1). An ultrasound-guided transbronchial needle aspiration biopsy of
+      the 4R mediastinal lymph nodes was performed via bronchoscopy to establish a
+      pathological diagnosis. Histopathological examination con fi rmed non-small
+      cell lung carcinoma. Subsequent immunohistochemical analysis showed tumor cells
+      with diffuse strong positivity for thyroid transcription factor-1 (TTF-1), while
+      P40 staining was weakly positive in only a minority of cells, supporting a diagnosis
+      of lung adenocarcinoma (Figure 2). For tumor staging, whole-body bone scintigraphy
+      (ECT) was conducted, revealing evidence of bone metastasis. PD-L1 immunohistochemical
+      testing of the tumor tissue indicated high expression, with a tumor proportion
+      score (TPS) of 99%. Additionally, molecular pathological analysis of the tumor
+      tissue via next-generation sequencing identi fi ed the following driver gene
+      mutations: MET exon 14 skipping mutation, TP53 p.R273H point mutation, and MET
+      exon 16 p.H1094Y point mutation.
+
+      Beginning in December 2022, the patient was treated with Tislelizumab monotherapy,
+      administered every three weeks at a dose of 200 mg. After six cycles of treatment,
+      imaging follow-up demonstrated a reduction in lesions, with ef fi cacy assessed
+      as partial response (Figure 3A versus B). The patient then continued this regimen
+      as maintenance therapy, completing a total of eight cycles. However, subsequent
+      imaging follow-up revealed locoregional disease progression, indicated by an
+      increase in the size of the primary lung lesion (Figure 3C).
+
+      Given the detection of a MET ex14 through driver gene testing, the clinical
+      treatment approach was modi fi ed to targeted therapy, initiating oral Savolitinib
+      at a daily dose of 400 mg. Two months after treatment initiation, follow-up
+      chest CT showed a marked reduction in lesions, indicating clear therapeutic
+      bene fi t (Figure 3D). Nevertheless, during Savolitinib treatment, the patient
+      developed severe drug-induced liver injury, meeting criteria for Grade 3 (severe)
+      hepatotoxicity according to CTCAE v5.0. Consequently, Savolitinib was promptly
+      discontinued, and liverprotective and enzyme-lowering treatments were commenced.
+      After over a month of symptomatic supportive care, the patient '' s liver function
+      parameters returned to the normal range.
+
+      Following further discussion with the patient and obtaining informed consent,
+      anti-tumor therapy with Tislelizumab was resumed on November 29, 2023.
+
+      After resuming Tislelizumab therapy, routine imaging surveillance revealed stable
+      lesions with no evidence of disease progression (Figure 4). Currently, the patient
+      remains in stable condition and continues to receive treatment under close monitoring.
+      The most recent disease reassessment on September 25, 2025 showed sustained
+      disease control, resulting in a total follow-up duration of thirty-three months
+      from initial treatment. The detailed treatment timeline is shown in Figure 5.'
     page: 2
-  - name: '10.3389/fonc.2026.1807242 #2 / Literaturereviewanddiscussion / Literature
-      review and discussion'
-    text: 'continuestoreceivetreatmentunderclosemonitoring.Themost
+  - name: KEYWORDS / Case report / Literature review and discussion
+    text: 'The patient described in this report is a 79-year-old male with a long-standing
+      history of tobacco use. This feature stands in notable contrast to the typical
+      pro fi le outlined in prior studies, where MET ex14 are more commonly observed
+      in older, female, and non-smoking individuals. Although evidence suggests that
+      the ef fi cacy of ICIs may be reduced in MET ex14-mutated NSCLC (10, 13), this
+      patient achieved a PFS of 7 months with fi rst-line tislelizumab. This outcome
+      may be related to the high TPS of 99% for PD-L1 expression on tumor cells. These
+      fi ndings indicate that in cases of extremely high PD-L1 expression, ICIs may
+      remain a viable initial treatment option. Furthermore, this suggests that the
+      tumor '' s response to treatment may be in fl uenced by multiple factors, including
+      but not limited to PD-L1 expression level (14), Tumor Mutational Burden (TMB)
+      (15), and co-occurring genetic alterations (16) (such as the TP53 mutation found
+      in this case). Recent investigations have similarly noted that within the subgroup
+      of patients exhibiting very high PD-L1 expression (TPS ≥ 80%), ICIs have demonstrated
+      considerable therapeutic promise (11, 12).
 
-      recentdiseasereassessmentonSeptember25,2025showedsus-
+      The distinctiveness of this case is further evident in its subsequent management.
+      After acquired resistance to tislelizumab emerged, switching to the MET -TKI
+      savolitinib led to marked tumor reduction, indicating that high PD-L1 expression
+      does not compromise the ef fi cacy of targeted agents. More importantly, upon
+      discontinuation of savolitinib due to drug-induced liver injury, readministration
+      of tislelizumab continued to maintain disease stability. This unique treatment
+      sequence raises a critical clinical question: why did immunotherapy regain ef
+      fi cacy following discontinuation of targeted therapy? Existing literature has
+      more frequently documented primary resistance to ICIs in patients with MET ex14
+      mutations or the potential heightened risk of ICI-related adverse events following
+      MET -TKI therapy (17), whereas case reports successfully overcoming immune resistance
+      through sequential treatment remain relatively scarce. Moreover, some case reports
+      suggest that the combined use of anti-CTLA-4 and anti-PD1 antibodies might overcome
+      PD-1 inhibitor resistance in MET ex14-mutated NSCLC (18). A plausible hypothesis
+      explaining the success of the immunotherapy re-challenge in this case is that
+      savolitinib, by effectively inhibiting the MET ex14-driven oncogenic pathway,
+      may have modulated the tumor microenvironment (TME). Preclinical and clinical
+      evidence suggests that MET signaling may promote an immunosuppressive TME through
+      mechanisms such as recruiting myeloid-derived suppressor cells or upregulating
+      alternative immune checkpoints (19). Therefore, MET -TKI treatment may have
+      partially '' reset '' the TME, making it more conducive to T-cell-mediated cytotoxicity,
+      thereby restoring sensitivity to PD-1 blockade. However, this mechanistic explanation
+      remains speculative, and research data are limited.
 
-      taineddiseasecontrol,resultinginatotalfollow-updurationof
+      FIGURE 3
 
-      thirty-threemonthsfrominitialtreatment.Thedetailedtreatment
-
-      timelineisshowninFigure5.
-
-      The patient described in this report is a 79-year-old male with a
-
-      long-standing history of tobacco use. This feature stands in notable
-
-      contrasttothetypicalproﬁleoutlinedinpriorstudies,where
-
-      METex14aremorecommonlyobservedinolder,female,and
-
-      non-smokingindividuals.Althoughevidencesuggeststhatthe
-
-      efﬁcacyofICIsmaybereducedinMETex14-mutatedNSCLC
-
-      (10,13),thispatientachievedaPFSof7monthswithﬁrst-line
-
-      tislelizumab. This outcome may be related to the high TPS of 99%
-
-      for PD-L1 expression on tumor cells. These ﬁndings indicate that in
-
-      cases of extremely high PD-L1 expression, ICIs may remain a viable
-
-      initial treatment option. Furthermore, this suggests that the tumor’s
-
-      responsetotreatmentmaybeinﬂuencedbymultiplefactors,
-
-      includingbutnotlimitedtoPD-L1expressionlevel(14),Tumor
-
-      MutationalBurden(TMB)(15),andco-occurringgeneticaltera-
-
-      tions(16)(suchastheTP53mutationfoundinthiscase).Recent
-
-      investigationshavesimilarlynotedthatwithinthesubgroupof
-
-      patientsexhibitingveryhighPD-L1expression(TPS≥80%),ICIs
-
-      havedemonstratedconsiderabletherapeuticpromise(11,12).
-
-      Thedistinctivenessofthiscaseisfurtherevidentinitssubse-
-
-      quentmanagement.Afteracquiredresistancetotislelizumab
-
-      emerged,switchingtotheMET-TKIsavolitinibledtomarked
-
-      tumorreduction,indicatingthathighPD-L1expressiondoesnot
-
-      compromise the efﬁcacy of targeted agents. More importantly, upon
-
-      discontinuationof savolitinibduetodrug-inducedliverinjury,re-
-
-      administrationoftislelizumabcontinuedtomaintaindiseasesta-
-
-      bility.Thisuniquetreatmentsequenceraisesacriticalclinical
-
-      FIGURE2
-
-      (A)hematoxylinand eosin stain100x.(B)IHCfor TTF-1100x: +.(C) IHCfor P40100x:
-      individual+.
-
-      FIGURE1
-
-      Redarrowsindicatethe primarylunglesionandmetastaticlymphnodes.
-
-      Ruan andQiu
-
-      10.3389/fonc.2026.1807242
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      03'
+      (A) The computed tomography (CT) scan before treatment. (B) the CT scan after
+      6 cycles of administration of tislelizumab, showing that the tumor signi fi
+      cant reduction. (C) The CT scan after 8 cycles of administration of tislelizumab,
+      showing that the tumor had increased in size. It indicates that the tumor has
+      developed resistance to tislelizumab. (D) the CT scan conducted two months after
+      the administration of savolitinib showed that the tumor shrank again.'
     page: 3
-  - name: '10.3389/fonc.2026.1807242 #3'
-    text: 'question:whydidimmunotherapyregainefﬁcacyfollowingdis-
-
-      continuationoftargetedtherapy?Existingliteraturehasmore
-
-      frequentlydocumentedprimaryresistancetoICIsinpatientswith
-
-      METex14 mutations or the potential heightened risk of ICI-related
-
-      adverseeventsfollowingMET-TKItherapy(17),whereascase
-
-      reportssuccessfullyovercomingimmuneresistancethroughse-
-
-      quentialtreatmentremainrelativelyscarce.Moreover,somecase
-
-      reports suggest that the combined use of anti-CTLA-4 and anti-PD-
-
-      1antibodiesmightovercomePD-1inhibitorresistancein
-
-      METex14-mutated NSCLC (18). A plausible hypothesis explaining
-
-      thesuccessoftheimmunotherapyre-challengeinthiscaseisthat
-
-      savolitinib, by effectively inhibiting the METex14-driven oncogenic
-
-      pathway,mayhavemodulatedthetumormicroenvironment
-
-      (TME). Preclinicaland clinical evidence suggeststhat MET signal-
-
-      ingmaypromoteanimmunosuppressiveTMEthroughmecha-
-
-      nismssuchasrecruitingmyeloid-derivedsuppressorcellsor
-
-      upregulatingalternativeimmunecheckpoints(19).Therefore,
-
-      MET-TKItreatmentmayhavepartially“reset”theTME,making
-
-      FIGURE4
-
-      (A)The CTscanafter administrationofsavolitinib. (B)theCT scanrecheckedbeforeusingtislelizumabagain.
-      (C–F) duringthesecondtreatment
-
-      withtislelizumab,the CTscanshowsthat thetumorremainsstable.
-
-      FIGURE3
-
-      (A)The computedtomography(CT) scanbeforetreatment.(B)the CTscanafter6 cyclesofadministration
-      oftislelizumab,showingthat thetumor
-
-      signiﬁcantreduction.(C)The CTscanafter 8cyclesof administrationoftislelizumab,showingthat
-      thetumor hadincreasedin size.Itindicatesthat
-
-      thetumorhas developedresistance totislelizumab.(D)the CTscanconductedtwomonthsafter
-      theadministrationof savolitinibshowedthat the
-
-      tumorshrankagain.
-
-      FIGURE5
-
-      Treatmenttimeline.
-
-      Ruan andQiu
-
-      10.3389/fonc.2026.1807242
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      04'
-    page: 4
-  - name: '10.3389/fonc.2026.1807242 #4 / Conclusion'
-    text: 'it more conducive to T-cell-mediated cytotoxicity, thereby restoring
-
-      sensitivity to PD-1 blockade. However, this mechanistic explanation
-
-      remainsspeculative,and researchdataarelimited.
-
-      Thecomplexityofthiscasenecessitatesconsiderationofother
-
-      contributing factors. First, the tumor’s molecular proﬁle is complex,
-
-      withconcurrentTP53andMETex14mutations.Intheabsenceof
-
-      variantallelefrequencydata,assessingclonaldynamicsanddeter-
-
-      mining whether the METex14 alteration is a truncal driver event is
-
-      challenging.Second,thepatient’ssigniﬁcantsmokinghistorycon-
-
-      trasts with the typical METex14 mutated population and may have
-
-      contributedtoauniquetumormutationalburdenandimmuno-
-
-      geniclandscape,potentiallyconfoundingthetreatmentresponse
-
-      pattern. Third, the clinical context of the tislelizumab re-challenge is
-
-      unique: savolitinib was discontinued due to toxicity while the tumor
-
-      wasinastateofresponse,notradiographicprogression.This
-
-      minimalresidualdisease(MRD)scenariomayrepresentabiolo-
-
-      gicalbackgroundwhereimmunesurveillanceismoreeffective,
-
-      differing from the standard scenario of TKI treatment progression.
-
-      Thisexempliﬁestheneedforcarefulclinicaljudgmentinindivid-
-
-      ualizedoncology.
-
-      Throughtheuniqueandeffectivetreatmentsequenceof“tar-
-
-      getedtherapyafterimmunotherapyresistance,followedbyre-
-
-      challengewithimmunotherapy,”thiscaseprovidesvaluablein-
-
-      sightsforindividualizedtreatmentinNSCLCpatientswithhigh
-
-      PD-L1expressionandconcurrentMETex14mutation.Itscore
-
-      signiﬁcanceliesinprovidingpreliminaryclinicalevidencethat
-
-      MET-TKIsmayreverseacquiredresistancetoPD-1inhibitors,
-
-      offeringanewperspectiveontreatmentstrategiesforthisspeciﬁc
-
-      patientsubgroup.
-
-      Themanagementofthiscaseunderscorestheintricaciesin-
-
-      volvedinclinicaldecision-makingandthepotentialquandaries
-
-      encounteredinNSCLCpatientswhoexhibitbothhighPD-L1
-
-      expressionandMETex14mutations.Whileexistingnationaland
-
-      internationalguidelinestypicallyadvocatetargetedtherapyasthe
-
-      frontlinestandardforindividualswithMETex14mutations(3,6,
-
-      20–22),inreal-worldclinicalpractice,theselectionofinitial
-
-      treatmentsforpatientscontinuestodivergesigniﬁcantly.This
-
-      variabilitystemsfromamultitudeoffactors,includingdrug
-
-      availability,disparitiesinregionalapprovals,andclinicianprefer-
-
-      ences. Furthermore, this case and recent research data indicate that
-
-      for patients with extremely high PD-L1 expression (TPS ≥80%), the
-
-      medianoverallsurvival(mOS)withimmunotherapy(withor
-
-      withoutchemotherapy)issigniﬁcantlybetterthanthatwith
-
-      single-agentMET-TKItreatment,suggestingthatimmunotherapy
-
-      can also be considered an effective initial treatment option (11, 12).
-
-      Thisﬁndingchallengesthesingularmodelof“targetedtherapy
-
-      ﬁrst”andunderscorestheimportanceofindividualizedtreatment
-
-      decisionsbasedonmultidimensionalbiomarkers.Akeyclinical
-
-      misconceptionisthatfocusingsolelyondrivergenemutations
-
-      whileoverlookingextremelyhighPD-L1expressionmaylead
-
-      patientstomisstheopportunitytobeneﬁtfromimmunotherapy.
-
-      Additionally,itmustbeanticipatedthatresistancetoMET-TKIs
-
-      willeventuallydevelop(23,24).Therefore,forsuch“double-
-
-      positive”patients,comprehensivemolecularpathologyand
-
-      immuneproﬁlinganalysisformsthefoundationfordeveloping
-
-      precise treatmentstrategies.
-
-      TheMET-TKImediatedimmunere-sensitizationmechanism
-
-      proposed throughour observationin thiscase ishypothetical,and
-
-      theinterpretationisinherentlylimitedbythenatureofasingle
-
-      retrospectivecasereport.Validationthroughprospectivestudies
-
-      andtranslationalresearchisneeded.Additionally,thisstudylacks
-
-      baselineTMBdatatosupportthepotentialreasonsfortheinitial
-
-      effectiveness of immunotherapy, and no re-biopsy was performed at
-
-      diseaseprogressiontoanalyzespeciﬁcresistancemechanisms.
-
-      Therefore,thegeneralizabilityofitsconclusionsislimited,and
-
-      whetherthisexperienceappliestoabroaderMETex14mutated
-
-      NSCLCpopulation remainsuncertain.
-
-      This case report, along with a literature review, indicates that for
-
-      patientswithadvancednon-smallcelllungcancerexhibiting
-
-      exceptionallyhighPD-L1expressionlevelsandconcurrent
-
-      METex14skippingmutations.Therefore,clinicaltreatmentdeci-
-
-      sionsshouldbehighlyindividualized.Immunotherapyremainsa
-
-      viable option as part of ﬁrst-line treatment. The observed phenom-
-
-      enonof“successfulreversalofacquiredresistancetoPD-1inhib-
-
-      itors through MET tyrosine kinase inhibitors” offers a novel clinical
-
-      perspective and practical foundation for overcoming immunother-
-
-      apy resistance.
-
-      Inthefuture,byfurtherdeepeningbasicresearchandclinical
-
-      translationalexploration,weaimtoidentifybiomarkersthatcan
-
-      predict the response to immunotherapy or targeted therapy, thereby
-
-      clarifyingthetargetpopulationforprioritizingimmunotherapyor
-
-      targetedtherapyamong“double-positive”patients;utilizemulti-
-
-      omics technologies (such as single-cell RNA sequencing and spatial
-
-      transcriptomics)todeeplyelucidatethemolecularandimmuno-
-
-      logical mechanisms by which MET inhibitors reverse immunother-
-
-      apyresistance;explorenewcombinationoroptimizedsequential
-
-      treatmentmodalitiesofMET-TKIsandICIs,whileproperlyman-
-
-      agingpotentialoverlappingtoxicities(suchashepatotoxicityand
-
-      interstitialpneumonia).Thiswillcontributetodevelopingmore
-
-      optimizedandprecisetreatmentstrategiesforthisspeciﬁcpa-
-
-      tientpopulation.
-
-      YR:Writing –originaldraft.LQ:Writing– review& editing.
-
-      Theauthor(s)declaredthatﬁnancialsupportwasnotreceived
-
-      forthisworkand/oritspublication.
-
-      Ruan andQiu
-
-      10.3389/fonc.2026.1807242
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      05'
+  - name: KEYWORDS / Conclusion
+    text: 'The complexity of this case necessitates consideration of other contributing
+      factors. First, the tumor '' s molecular pro fi le is complex, with concurrent
+      TP53 and MET ex14 mutations. In the absence of variant allele frequency data,
+      assessing clonal dynamics and determining whether the MET ex14 alteration is
+      a truncal driver event is challenging. Second, the patient '' s signi fi cant
+      smoking history contrasts with the typical MET ex14 mutated population and may
+      have contributed to a unique tumor mutational burden and immunogenic landscape,
+      potentially confounding the treatment response pattern. Third, the clinical
+      context of the tislelizumab re-challenge is unique: savolitinib was discontinued
+      due to toxicity while the tumor was in a state of response, not radiographic
+      progression. This minimal residual disease (MRD) scenario may represent a biological
+      background where immune surveillance is more effective, differing from the standard
+      scenario of TKI treatment progression. This exempli fi es the need for careful
+      clinical judgment in individualized oncology.
+
+      Through the unique and effective treatment sequence of '' targeted therapy after
+      immunotherapy resistance, followed by rechallenge with immunotherapy, '' this
+      case provides valuable insights for individualized treatment in NSCLC patients
+      with high PD-L1 expression and concurrent MET ex14 mutation. Its core signi
+      fi cance lies in providing preliminary clinical evidence that MET -TKIs may
+      reverse acquired resistance to PD-1 inhibitors, offering a new perspective on
+      treatment strategies for this speci fi c patient subgroup.
+
+      The management of this case underscores the intricacies involved in clinical
+      decision-making and the potential quandaries encountered in NSCLC patients who
+      exhibit both high PD-L1 expression and MET ex14 mutations. While existing national
+      and international guidelines typically advocate targeted therapy as the frontline
+      standard for individuals with MET ex14 mutations (3, 6, 20 -22), in real-world
+      clinical practice, the selection of initial treatments for patients continues
+      to diverge signi fi cantly. This variability stems from a multitude of factors,
+      including drug availability, disparities in regional approvals, and clinician
+      preferences. Furthermore, this case and recent research data indicate that for
+      patients with extremely high PD-L1 expression (TPS ≥ 80%), the median overall
+      survival (mOS) with immunotherapy (with or without chemotherapy) is signi fi
+      cantly better than that with single-agent MET -TKI treatment, suggesting that
+      immunotherapy can also be considered an effective initial treatment option (11,
+      12). This fi nding challenges the singular model of '' targeted therapy fi rst
+      '' and underscores the importance of individualized treatment decisions based
+      on multidimensional biomarkers. A key clinical misconception is that focusing
+      solely on driver gene mutations while overlooking extremely high PD-L1 expression
+      may lead patients to miss the opportunity to bene fi t from immunotherapy. Additionally,
+      it must be anticipated that resistance to MET -TKIs will eventually develop
+      (23, 24). Therefore, for such '' doublepositive '' patients, comprehensive molecular
+      pathology and immune pro fi ling analysis forms the foundation for developing
+      precise treatment strategies.
+
+      The MET -TKI mediated immune re-sensitization mechanism proposed through our
+      observation in this case is hypothetical, and the interpretation is inherently
+      limited by the nature of a single retrospective case report. Validation through
+      prospective studies and translational research is needed. Additionally, this
+      study lacks baseline TMB data to support the potential reasons for the initial
+      effectiveness of immunotherapy, and no re-biopsy was performed at disease progression
+      to analyze speci fi c resistance mechanisms. Therefore, the generalizability
+      of its conclusions is limited, and whether this experience applies to a broader
+      MET ex14 mutated NSCLC population remains uncertain.
+
+      This case report, along with a literature review, indicates that for patients
+      with advanced non-small cell lung cancer exhibiting exceptionally high PD-L1
+      expression levels and concurrent MET ex14 skipping mutations. Therefore, clinical
+      treatment decisions should be highly individualized. Immunotherapy remains a
+      viable option as part of fi rst-line treatment. The observed phenomenon of ''
+      successful reversal of acquired resistance to PD-1 inhibitors through MET tyrosine
+      kinase inhibitors '' offers a novel clinical perspective and practical foundation
+      for overcoming immunotherapy resistance.
+
+      In the future, by further deepening basic research and clinical translational
+      exploration, we aim to identify biomarkers that can predict the response to
+      immunotherapy or targeted therapy, thereby clarifying the target population
+      for prioritizing immunotherapy or targeted therapy among '' double-positive
+      '' patients; utilize multiomics technologies (such as single-cell RNA sequencing
+      and spatial transcriptomics) to deeply elucidate the molecular and immunological
+      mechanisms by which MET inhibitors reverse immunotherapy resistance; explore
+      new combination or optimized sequential treatment modalities of MET-TKIs and
+      ICIs, while properly managing potential overlapping toxicities (such as hepatotoxicity
+      and interstitial pneumonia). This will contribute to developing more optimized
+      and precise treatment strategies for this speci fi c patient population.
+
+      YR: Writing -original draft. LQ: Writing -review & editing.
+
+      The author(s) declared that fi nancial support was not received for this work
+      and/or its publication.'
     page: 5
-  - name: '10.3389/fonc.2026.1807242 #5 / Conflict of interest'
-    text: 'Theauthor(s)declaredthatthisworkwasconductedinthe
+  - name: Publisher ' s note / Conflict of interest
+    text: 'The author(s) declared that this work was conducted in the absence of any
+      commercial or fi nancial relationships that could be construed as a potential
+      con fl ict of interest.
 
-      absence of anycommercial orﬁnancialrelationshipsthat couldbe
+      The author(s) declared that generative AI was not used in the creation of this
+      manuscript.
 
-      construedasa potentialconﬂictof interest.
+      Any alternative text (alt text) provided alongside fi gures in this article
+      has been generated by Frontiers with the support of arti fi cial
 
-      Theauthor(s)declaredthatgenerativeAIwasnotusedinthe
+      1. Hendriks LEL, Remon J, Faivre-Finn C, Garassino MC, Heymach JV, Kerr KM,
+      et al. Non-small-cell lung cancer. Nat Rev Dis Primers . (2024) 10:71. doi:
+      10.1038/s41572024-00551-9
 
-      creationof thismanuscript.
+      2. Li JJ, Saab J, Bray V, Williamson J, Pal A, Yip PY, et al. Histopathological
+      associations, molecular fi ndings and clinical outcomes of patients with non-small
+      cell lung carcinoma with MET alterations: a 3-year retrospective Australian
+      case series. Pathology . (2026) 58:41 -51. doi: 10.1016/j.pathol.2025.07.009
 
-      Any alternative text (alt text) provided alongside ﬁgures in this
+      3. Fujino T, Suda K, Mitsudomi T. Lung cancer with MET exon 14 skipping mutation:
+      genetic feature, current treatments, and future challenges. Lung Cancer Auckl
+      . (2021) 12:35 -50. doi: 10.2147/LCTT.S269307
 
-      article has been generated by Frontiers with the support of artiﬁcial
+      4. Ghosh P, Pecora I, Park M. Mechanistic insights into MET exon 14 skipping
+      mutations and their role in tumor progression. Biochem Soc Trans . (2025) 53:
+      BST20253091. doi: 10.1042/BST20253091
 
-      intelligenceandreasonableeffortshavebeenmadetoensure
-
-      accuracy,includingreviewbytheauthorswhereverpossible.If
-
-      you identifyanyissues,pleasecontact us.
-
-      All claims expressed in this article are solely those of the authors
-
-      anddonotnecessarilyrepresentthoseoftheirafﬁliatedorganiza-
-
-      tions, or those of thepublisher,the editors and thereviewers. Any
-
-      product that may be evaluatedin this article, or claimthat may be
-
-      madebyitsmanufacturer,isnotguaranteedorendorsedby
-
-      thepublisher.
-
-      1.Hendriks LEL, Remon J, Faivre-Finn C, Garassino MC, Heymach JV, Kerr KM, et
-      al.
-
-      Non-small-celllungcancer.NatRevDisPrimers.(2024)10:71.doi:10.1038/s41572-
-
-      024-00551-9
-
-      2.LiJJ,SaabJ,BrayV,WilliamsonJ,PalA,YipPY,etal.Histopathological
-
-      associations,molecularﬁndingsandclinicaloutcomesofpatientswithnon-smallcell
-
-      lungcarcinomawithMETalterations:a3-yearretrospectiveAustraliancaseseries.
-
-      Pathology.(2026) 58:41–51. doi:10.1016/j.pathol.2025.07.009
-
-      3.Fujino T, Suda K, Mitsudomi T. Lung cancer with MET exon 14 skipping mutation:
-
-      geneticfeature,currenttreatments,andfuturechallenges.LungCancerAuckl.(2021)
-
-      12:35–50. doi: 10.2147/LCTT.S269307
-
-      4.GhoshP,PecoraI,ParkM.MechanisticinsightsintoMETexon14skipping
-
-      mutationsandtheirroleintumorprogression.BiochemSocTrans.(2025)53:
-
-      BST20253091.doi: 10.1042/BST20253091
-
-      5.AntoineM,VieiraT,FalletV,HamardC,DuruisseauxM,CadranelJ,etal.
-
-      Pulmonarysarcomatoidcarcinoma.AnnPathol.(2016)36:44–54.doi:10.1016/
-
+      5. Antoine M, Vieira T, Fallet V, Hamard C, Duruisseaux M, Cadranel J, et al.
+      Pulmonary sarcomatoid carcinoma. Ann Pathol . (2016) 36:44 -54. doi: 10.1016/
       j.annpat.2015.11.007
 
-      6.EditorialOfﬁceofChineseJournalofLungCancer.Expertconsensusontargeted
+      6. Editorial Of fi ce of Chinese Journal of Lung Cancer. Expert consensus on
+      targeted therapy of NSCLC with MET exon 14 skipping mutation. Zhongguo Fei Ai
+      Za Zhi . (2023) 26:416 -28. doi: 10.3779/j.issn.1009-3419.2023.102.19
 
-      therapyofNSCLCwithMETexon14skippingmutation.ZhongguoFeiAiZaZhi.
+      7. Lee JB, Shim JS, Cho BC. Evolving roles of MET as a therapeutic target in
+      NSCLC and beyond. Nat Rev Clin Oncol . (2025) 22:640 -66. doi: 10.1038/s41571-025-01051-9
 
-      (2023)26:416–28.doi: 10.3779/j.issn.1009-3419.2023.102.19
+      8. Cortellini A, Brunetti L, Di Fazio GR, Garbo E, Pinato DJ, Naidoo J, et al.
+      Determinants of 5-year survival in patients with advanced NSCLC with PD-L1 ≥
+      50% treated with fi rst-line pembrolizumab outside of clinical trials: results
+      from the Pembro-real 5Y global registry. J Immunother Cancer . (2025) 13:e010674.
+      doi: 10.1136/jitc-2024-010674
 
-      7.Lee JB, Shim JS,Cho BC.Evolving roles ofMET as a therapeutictarget inNSCLC
+      9. Teng M, Chen S, Yang B, Wang Y, Han R, An M, et al. Determining the optimal
+      PD -1/PD -L1 inhibitors for the fi rst -line treatment of non -small -cell lung
+      cancer with high -level PD -L1 expression in China. Cancer Med . (2021) 10:6344
+      -53. doi: 10.1002/ cam4.4191
 
-      andbeyond.NatRevClinOncol.(2025) 22:640–66. doi:10.1038/s41571-025-01051-9
+      10. Uehara Y, Watanabe K, Hakozaki T, Yomota M, Hosomi Y. Ef fi cacy of fi rst-line
+      immune checkpoint inhibitors in patients with advanced NSCLC with KRAS, MET,
+      FGFR, RET, BRAF, and HER2 alterations. Thorac Cancer . (2022) 13:1703 -11. doi:
+      10.1111/1759-7714.14448
 
-      8.CortelliniA,BrunettiL,DiFazioGR,GarboE,PinatoDJ,NaidooJ,etal.
+      11. Jeong H, Koh J, Kim S, Yim J, Song SG, Kim H, et al. Cell-intrinsic PD-L1
+      signaling drives immunosuppression by myeloid-derived suppressor cells through
+      IL-6/Jak/Stat3 in PD-L1-high lung cancer. J Immunother Cancer . (2025) 13:e010612.
+      doi: 10.1136/jitc2024-010612
 
-      Determinantsof5-yearsurvivalinpatientswithadvancedNSCLCwithPD-L1≥50%
+      12. Pecci F, Li H, Di Federico A, Wu J, Chen H, Gariazzo E, et al. First-line
+      MET tyrosine kinase inhibitors versus immunotherapy ± chemotherapy for patients
+      with METexon 14 skipping mutant metastatic NSCLC. Clin Cancer Res . (2025) 31:4802
+      -13. doi: 10.1158/1078-0432.CCR-25-1735
 
-      treatedwithﬁrst-linepembrolizumaboutsideofclinicaltrials:resultsfromthe
+      intelligence and reasonable efforts have been made to ensure accuracy, including
+      review by the authors wherever possible. If you identify any issues, please
+      contact us.
 
-      Pembro-real5Yglobalregistry.JImmunotherCancer.(2025)13:e010674.
+      All claims expressed in this article are solely those of the authors and do
+      not necessarily represent those of their af fi liated organizations, or those
+      of the publisher, the editors and the reviewers. Any product that may be evaluated
+      in this article, or claim that may be made by its manufacturer, is not guaranteed
+      or endorsed by the publisher.
 
-      doi:10.1136/jitc-2024-010674
+      13. Mazieres J, Drilon A, Lusque A, Mhanna L, Cortot AB, Mezquita L, et al.
+      Immune checkpoint inhibitors for patients with advanced lung cancer and oncogenic
+      driver alterations: results from the IMMUNOTARGET registry. Ann Oncol . (2019)
+      30:1321 -8. doi: 10.1093/annonc/mdz167
 
-      9.Teng M, Chen S, Yang B, Wang Y, Han R, An M, et al. Determining the optimal
-      PD‐
+      14. Deng J-Y, Gao M, Fan X, Yan H-H, Luo W-C, Yang M-Y, et al. Clinical and
+      dynamic circulating cytokines pro fi le features of long-term progression-free
+      survival bene fi t to immune checkpoint inhibitors in advanced non -small cell
+      lung cancer. Cancer Immunol Immunother . (2025) 74:173. doi: 10.1007/s00262-025-03984-7
 
-      1/PD‐L1 inhibitors for the ﬁrst‐line treatment of non‐small‐cell lung cancer
-      with high‐
+      15. Thummalapalli R, Ricciuti B, Bandlamudi C, Muldoon D, Rizvi H, Elkrief A,
+      et al. Clinical and molecular features of long-term response to immune checkpoint
+      inhibitors in patients with advanced non -small cell lung cancer. Clin Cancer
+      Res . (2023) 29:4408 -18. doi: 10.1158/1078-0432.CCR-23-1207
 
-      levelPD‐L1expressioninChina.CancerMed.(2021)10:6344–53.doi:10.1002/
+      16. Xue Q, Wang Y, Zheng Q, Huang Z, Lin Y, Jin Y, et al. MET exon 14 skipping
+      mutations in lung cancer: clinical -pathological characteristics and immune
+      microenvironment. Curr Oncol . (2025) 32:403. doi: 10.3390/curroncol32070403
 
-      cam4.4191
-
-      10.UeharaY,WatanabeK,HakozakiT,YomotaM,HosomiY.Efﬁcacyof ﬁrst-line
-
-      immunecheckpointinhibitorsinpatientswithadvancedNSCLCwithKRAS,MET,
-
-      FGFR,RET,BRAF,andHER2alterations.ThoracCancer.(2022)13:1703–11.
-
-      doi:10.1111/1759-7714.14448
-
-      11.Jeong H, Koh J, Kim S, Yim J, Song SG, Kim H, et al. Cell-intrinsic PD-L1
-      signaling
-
-      drives immunosuppression by myeloid-derived suppressor cells through IL-6/Jak/Stat3
-
-      in PD-L1-high lung cancer. J Immunother Cancer. (2025) 13:e010612. doi: 10.1136/jitc-
-
-      2024-010612
-
-      12.PecciF,LiH,DiFedericoA,WuJ,ChenH,GariazzoE,etal.First-lineMET
-
-      tyrosinekinaseinhibitorsversusimmunotherapy±chemotherapyforpatientswith
-
-      MET exon 14 skipping mutant metastatic NSCLC. Clin Cancer Res. (2025) 31:4802–13.
-
-      doi:10.1158/1078-0432.CCR-25-1735
-
-      13.Mazieres J, Drilon A, Lusque A, Mhanna L, Cortot AB, Mezquita L, et al. Immune
-
-      checkpointinhibitorsforpatientswithadvancedlungcancerandoncogenicdriver
-
-      alterations: results from the IMMUNOTARGET registry. Ann Oncol. (2019) 30:1321–
-
-      8. doi:10.1093/annonc/mdz167
-
-      14.DengJ-Y,GaoM,FanX,YanH-H,LuoW-C,YangM-Y,etal.Clinicaland
-
-      dynamiccirculatingcytokinesproﬁlefeaturesoflong-termprogression-freesurvival
-
-      beneﬁttoimmunecheckpointinhibitorsinadvancednon–smallcelllungcancer.
-
-      Cancer ImmunolImmunother.(2025)74:173.doi:10.1007/s00262-025-03984-7
-
-      15.Thummalapalli R, Ricciuti B, Bandlamudi C, Muldoon D, Rizvi H, Elkrief A,
-      et al.
-
-      Clinical and molecular features of long-term response to immune checkpoint inhibitors
-
-      in patients with advanced non–small cell lung cancer. Clin Cancer Res. (2023)
-      29:4408–
-
-      18. doi:10.1158/1078-0432.CCR-23-1207
-
-      16.XueQ,WangY,ZhengQ,HuangZ,LinY,JinY,etal.METexon14skipping
-
-      mutationsinlungcancer:clinical–pathologicalcharacteristicsandimmunemicroen-
-
-      vironment.CurrOncol.(2025)32:403.doi:10.3390/curroncol32070403
-
-      17.Tatsuhige R, Yokoo K, Hatakeyama T, Nagao T, Ota S, Yamada G, et al. Interstitial
-
+      17. Tatsuhige R, Yokoo K, Hatakeyama T, Nagao T, Ota S, Yamada G, et al. Interstitial
       lung disease due to tepotinib after durvalumab in a patient with lung adenocarcinoma
+      harbouring MET exon 14 skipping mutation: a case report. Case Rep Oncol . (2025)
+      18:144 -50. doi: 10.1159/000543251
 
-      harbouringMETexon14skippingmutation:acasereport.CaseRepOncol.(2025)
+      18. Chen Z, Zhu F, Li C, Li J, Cheng B, Xiong S, et al. Non-small cell lung
+      cancer with MET exon 14 skipping alteration responding to immunotherapy: a case
+      report. Ann Transl Med . (2021) 9:424. doi: 10.21037/atm-20-6829
 
-      18:144–50.doi:10.1159/000543251
+      19. Jabbarzadeh Kaboli P, Roozitalab G, Farghadani R, Eskandarian Z, Zerrouqi
+      A. c-MET and the immunological landscape of cancer: novel therapeutic strategies
+      for enhanced antitumor immunity. Front Immunol . (2024) 15:1498391. doi: 10.3389/
+      fi mmu.2024.1498391
 
-      18.Chen Z, Zhu F, Li C, Li J, Cheng B, Xiong S, et al. Non-small cell lung cancer
-      with
+      20. Takeda M, Ota M, Iwama E, Sugawara S, Shukuya T, Umemura S, et al. A phase
+      II, open label, single-arm study on the ef fi cacy of cabozantinib in patients
+      with advanced/ metastatic nonsmall cell lung cancer harboring MET exon 14 alterations
+      who developed acquired resistance to tepotinib or capmatinib (CAPTURE trial).
+      Clin Lung Cancer . (2025) 26:e232 -5. doi: 10.1016/j.cllc.2024.12.004
 
-      METexon14skippingalterationrespondingtoimmunotherapy:acasereport.Ann
+      21. Alzofon N, Jimeno A. Capmatinib for non-small cell lung cancer. Drugs Today
+      Barc . (2021) 57:17 -25. doi: 10.1358/dot.2021.57.1.3239638
 
-      TranslMed.(2021)9:424.doi:10.21037/atm-20-6829
+      22. Wu Y-L, Smit EF, Bauer TM. Capmatinib for patients with non-small cell lung
+      cancer with MET exon 14 skipping mutations: a review of preclinical and clinical
+      studies. Cancer Treat Rev . (2021) 95:102173. doi: 10.1016/j.ctrv.2021.102173
 
-      19.Jabbarzadeh Kaboli P, Roozitalab G, Farghadani R, Eskandarian Z, Zerrouqi
-      A. c-MET
+      23. Gow C-H, Hsieh M-S, Chen Y-L, Liu Y-N, Wu S-G, Shih J-Y. Survival outcomes
+      and prognostic factors of lung cancer patients with the MET exon 14 skipping
+      mutation: a single-center real-world study. Front Oncol . (2023) 13:1113696.
+      doi: 10.3389/fonc.2023.1113696
 
-      and the immunological landscape of cancer: novel therapeutic strategies for
-      enhanced anti-
-
-      tumor immunity. Front Immunol. (2024) 15:1498391. doi: 10.3389/ﬁmmu.2024.1498391
-
-      20.Takeda M, Ota M, Iwama E, Sugawara S, Shukuya T, Umemura S, et al. A phase
-      II,
-
-      open label, single-arm study on the efﬁcacy of cabozantinib in patients with
-      advanced/
-
-      metastaticnonsmallcelllungcancerharboringMETexon14alterationswho
-
-      developedacquiredresistancetotepotiniborcapmatinib(CAPTUREtrial).Clin
-
-      Lung Cancer.(2025)26:e232–5. doi:10.1016/j.cllc.2024.12.004
-
-      21.AlzofonN,JimenoA.Capmatinibfornon-smallcelllungcancer.DrugsToday
-
-      Barc.(2021)57:17–25.doi:10.1358/dot.2021.57.1.3239638
-
-      22.WuY-L,SmitEF,BauerTM.Capmatinibforpatientswithnon-smallcelllung
-
-      cancerwithMETexon14skippingmutations:areviewofpreclinicalandclinical
-
-      studies. CancerTreatRev.(2021) 95:102173.doi:10.1016/j.ctrv.2021.102173
-
-      23.Gow C-H,HsiehM-S,ChenY-L,LiuY-N, WuS-G,Shih J-Y.Survivaloutcomes
-
-      andprognosticfactorsoflungcancerpatientswiththeMETexon14skipping
-
-      mutation:asingle-centerreal-worldstudy.FrontOncol.(2023)13:1113696.
-
-      doi:10.3389/fonc.2023.1113696
-
-      24.Spitaleri G, Trillo Aliaga P, Attili I, Del Signore E, Corvaja C, Corti C,
-      et al. MET in
-
-      non-small-celllungcancer(NSCLC):cross‘alongandwindingroad’lookingfora
-
-      target. CancersBsl.(2023)15:4779.doi:10.3390/cancers15194779
-
-      Ruan andQiu
-
-      10.3389/fonc.2026.1807242
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      06'
+      24. Spitaleri G, Trillo Aliaga P, Attili I, Del Signore E, Corvaja C, Corti
+      C, et al. MET in non-small-cell lung cancer (NSCLC): cross '' a long and winding
+      road '' looking for a target. Cancers Bsl . (2023) 15:4779. doi: 10.3390/cancers15194779'
     page: 6
   tables: []
   images:
   - image_id: IMG:0000
-    caption: FIGURE1
-    page: 3
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 1
     bbox:
-    - 63.382999420166016
-    - 82.9990234375
-    - 531.0419921875
-    - 386.98590087890625
+    - 47.996463814274875
+    - 761.269766248756
+    - 157.513077297489
+    - 794.0839524061763
     kind: figure
     extracted_values: {}
-    asset_path: images/p0003_r000.png
+    asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: FIGURE2
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 1
+    bbox:
+    - 47.77852892297156
+    - 688.1942412595711
+    - 126.60359378629012
+    - 704.623668078447
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0001_r001.png
+  - image_id: IMG:0002
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
     page: 3
     bbox:
-    - 63.382999420166016
-    - 673.0020141601562
-    - 531.0989990234375
-    - 746.3619995117188
+    - 47.885433176835264
+    - 425.25042807239805
+    - 545.5382325001061
+    - 767.7299330993776
     kind: figure
     extracted_values: {}
-    asset_path: images/p0003_r001.png
-  - image_id: IMG:0002
-    caption: FIGURE3
-    page: 4
-    bbox:
-    - 63.325958251953125
-    - 82.99859619140625
-    - 531.0423583984375
-    - 312.3214111328125
-    kind: figure
-    extracted_values: {}
-    asset_path: images/p0004_r002.png
+    asset_path: images/p0003_r002.png
   - image_id: IMG:0003
-    caption: FIGURE4
-    page: 4
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 3
     bbox:
-    - 63.32600021362305
-    - 399.9120178222656
-    - 531.0989990234375
-    - 474.6898498535156
+    - 48.04580100920412
+    - 65.64479945375717
+    - 545.9708271327515
+    - 178.3829268544664
     kind: figure
     extracted_values: {}
-    asset_path: images/p0004_r003.png
+    asset_path: images/p0003_r003.png
   - image_id: IMG:0004
-    caption: FIGURE5
+    caption: 'FIGURE 3
+
+
+      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->'
     page: 4
     bbox:
-    - 63.382999420166016
-    - 552.9830322265625
-    - 531.0419921875
-    - 610.4126586914062
+    - 50.88776467319915
+    - 527.8002822386486
+    - 537.1987387665806
+    - 765.9763322068686
     kind: figure
     extracted_values: {}
     asset_path: images/p0004_r004.png
+  - image_id: IMG:0005
+    caption: '(A) The computed tomography (CT) scan before treatment. (B) the CT scan
+      after 6 cycles of administration of tislelizumab, showing that the tumor signi
+      fi cant reduction. (C) The CT scan after 8 cycles of administration of tislelizumab,
+      showing that the tumor had increased in size. It indicates that the tumor has
+      developed resistance to tislelizumab. (D) the CT scan conducted two months after
+      the administration of savolitinib showed that the tumor shrank again.
+
+
+      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->'
+    page: 4
+    bbox:
+    - 48.53127900730787
+    - 328.241873412528
+    - 545.6679559223479
+    - 450.9493980556328
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0004_r005.png
+  - image_id: IMG:0006
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 4
+    bbox:
+    - 48.356127193820186
+    - 201.07922328024165
+    - 545.6915308945632
+    - 298.30561674977355
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0004_r006.png

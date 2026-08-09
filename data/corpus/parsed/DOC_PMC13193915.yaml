@@ -1,9 +1,25 @@
 corpus_version: 0.1.0
 parse:
-  backend: pymupdf
-  degraded:
-  - table_structure
+  backend: docling
+  degraded: []
   same_as: {}
+  route:
+    requested: auto
+    chosen: docling
+    reason: structured_pdf
+    probe:
+      page_count: 6
+      image_count: 5
+      table_candidates: 1
+      text_chars: 27439
+      avg_blocks_per_page: 17.5
+      multi_column_hint: true
+      text_extractable: true
+    attempts:
+    - backend: docling
+      status: ok
+      degraded: []
+      blocks: 93
 sections_meta:
 - section_id: SEC:PMC13193915#0000
   doc_id: DOC:PMC13193915
@@ -17,14 +33,15 @@ sections_meta:
   start_page: 1
   end_page: 1
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=1 page=1
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13193915#0001
   doc_id: DOC:PMC13193915
   parent_section_id: null
-  section_path: Primarytesticular
-  section_title: Primarytesticular
+  section_path: OPEN ACCESS
+  section_title: OPEN ACCESS
   section_level: 1
   sort_order: 1
   start_page: 1
@@ -32,13 +49,12 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13193915#0002
   doc_id: DOC:PMC13193915
   parent_section_id: null
-  section_path: neuroendocrinetumorwith
-  section_title: neuroendocrinetumorwith
+  section_path: REVIEWED BY
+  section_title: REVIEWED BY
   section_level: 1
   sort_order: 2
   start_page: 1
@@ -46,13 +62,12 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13193915#0003
   doc_id: DOC:PMC13193915
   parent_section_id: null
-  section_path: retroperitoneallymphnodes
-  section_title: retroperitoneallymphnodes
+  section_path: CITATION
+  section_title: CITATION
   section_level: 1
   sort_order: 3
   start_page: 1
@@ -60,13 +75,12 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13193915#0004
   doc_id: DOC:PMC13193915
   parent_section_id: null
-  section_path: metastasis:acasereport
-  section_title: metastasis:acasereport
+  section_path: COPYRIGHT
+  section_title: COPYRIGHT
   section_level: 1
   sort_order: 4
   start_page: 1
@@ -74,1633 +88,718 @@ sections_meta:
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 21.0
+  - docling 版面信号 level=1 page=1
 - section_id: SEC:PMC13193915#0005
   doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0004
-  section_path: metastasis:acasereport / Introduction
+  parent_section_id: null
+  section_path: KEYWORDS
+  section_title: KEYWORDS
+  section_level: 1
+  sort_order: 5
+  start_page: 1
+  end_page: 4
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - docling 版面信号 level=1 page=1
+- section_id: SEC:PMC13193915#0006
+  doc_id: DOC:PMC13193915
+  parent_section_id: SEC:PMC13193915#0005
+  section_path: KEYWORDS / Introduction
   section_title: Introduction
   section_level: 2
-  sort_order: 5
+  sort_order: 6
   start_page: 1
   end_page: 1
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=1
-  - pymupdf 版面信号 level=1 page=1
-  - 字号 13.5
+  - docling 版面信号 level=1 page=1
   - 命中标准章节名
-- section_id: SEC:PMC13193915#0006
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0005
-  section_path: metastasis:acasereport / Introduction / MingZhang,QianWang, FahimullahHamid,
-    JiehaoWu,
-  section_title: MingZhang,QianWang, FahimullahHamid, JiehaoWu,
-  section_level: 3
-  sort_order: 6
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=3 page=1
-  - 字号 11.0
 - section_id: SEC:PMC13193915#0007
   doc_id: DOC:PMC13193915
   parent_section_id: SEC:PMC13193915#0005
-  section_path: metastasis:acasereport / Introduction / JiaxueHanand PengfeiShen*
-  section_title: JiaxueHanand PengfeiShen*
-  section_level: 3
-  sort_order: 7
-  start_page: 1
-  end_page: 1
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=3 page=1
-  - 字号 11.0
-- section_id: SEC:PMC13193915#0008
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: Casepresentation
-  section_title: Casepresentation
-  section_level: 1
-  sort_order: 8
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=2
-  - 字号 13.5
-- section_id: SEC:PMC13193915#0009
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 10.3389/fonc.2026.1766386
-  section_title: 10.3389/fonc.2026.1766386
-  section_level: 1
-  sort_order: 9
-  start_page: 2
-  end_page: 2
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13193915#0010
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0009
-  section_path: 10.3389/fonc.2026.1766386 / Case presentation
+  section_path: KEYWORDS / Case presentation
   section_title: Case presentation
   section_level: 2
-  sort_order: 10
+  sort_order: 7
   start_page: 2
   end_page: 2
   heading_source: TOC_EXACT
-  heading_confidence: 0.95
+  heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=2
-- section_id: SEC:PMC13193915#0011
+  - docling 版面信号 level=1 page=2
+- section_id: SEC:PMC13193915#0008
   doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1766386 #2'
-  section_title: 10.3389/fonc.2026.1766386
-  section_level: 1
-  sort_order: 11
-  start_page: 3
-  end_page: 3
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13193915#0012
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0011
-  section_path: '10.3389/fonc.2026.1766386 #2 / Discussion'
+  parent_section_id: SEC:PMC13193915#0005
+  section_path: KEYWORDS / Discussion
   section_title: Discussion
   section_level: 2
-  sort_order: 12
+  sort_order: 8
   start_page: 3
-  end_page: 3
+  end_page: 4
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=3
-  - pymupdf 版面信号 level=1 page=3
-  - 字号 13.5
+  - docling 版面信号 level=1 page=3
   - 命中标准章节名
+- section_id: SEC:PMC13193915#0009
+  doc_id: DOC:PMC13193915
+  parent_section_id: null
+  section_path: Confl ict of interest
+  section_title: Confl ict of interest
+  section_level: 1
+  sort_order: 9
+  start_page: 5
+  end_page: 5
+  heading_source: HEADING_REGEX
+  heading_confidence: 0.72
+  evidence:
+  - docling 版面信号 level=1 page=5
+- section_id: SEC:PMC13193915#0010
+  doc_id: DOC:PMC13193915
+  parent_section_id: SEC:PMC13193915#0009
+  section_path: Confl ict of interest / Conclusion
+  section_title: Conclusion
+  section_level: 2
+  sort_order: 10
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+  - docling 版面信号 level=1 page=5
+  - 命中标准章节名
+- section_id: SEC:PMC13193915#0011
+  doc_id: DOC:PMC13193915
+  parent_section_id: SEC:PMC13193915#0009
+  section_path: Confl ict of interest / Data availability statement
+  section_title: Data availability statement
+  section_level: 2
+  sort_order: 11
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+  - docling 版面信号 level=1 page=5
+- section_id: SEC:PMC13193915#0012
+  doc_id: DOC:PMC13193915
+  parent_section_id: SEC:PMC13193915#0009
+  section_path: Confl ict of interest / Ethics statement
+  section_title: Ethics statement
+  section_level: 2
+  sort_order: 12
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
+  evidence:
+  - PDF 内嵌书签 level=2 page=5
+  - docling 版面信号 level=1 page=5
 - section_id: SEC:PMC13193915#0013
   doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1766386 #3'
-  section_title: 10.3389/fonc.2026.1766386
-  section_level: 1
+  parent_section_id: SEC:PMC13193915#0009
+  section_path: Confl ict of interest / Author contributions
+  section_title: Author contributions
+  section_level: 2
   sort_order: 13
-  start_page: 4
-  end_page: 4
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
+  start_page: 5
+  end_page: 5
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - 编号模式 10
+  - PDF 内嵌书签 level=2 page=5
+  - docling 版面信号 level=1 page=5
 - section_id: SEC:PMC13193915#0014
   doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: Dataavailabilitystatement
-  section_title: Dataavailabilitystatement
-  section_level: 1
+  parent_section_id: SEC:PMC13193915#0009
+  section_path: Confl ict of interest / Funding
+  section_title: Funding
+  section_level: 2
   sort_order: 14
   start_page: 5
   end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
+  - PDF 内嵌书签 level=2 page=5
+  - docling 版面信号 level=1 page=5
 - section_id: SEC:PMC13193915#0015
   doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: Ethicsstatement
-  section_title: Ethicsstatement
-  section_level: 1
+  parent_section_id: SEC:PMC13193915#0009
+  section_path: Confl ict of interest / Conflict of interest
+  section_title: Conflict of interest
+  section_level: 2
   sort_order: 15
   start_page: 5
   end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  heading_source: TOC_EXACT
+  heading_confidence: 0.95
   evidence:
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
+  - PDF 内嵌书签 level=2 page=5
 - section_id: SEC:PMC13193915#0016
   doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: Authorcontributions
-  section_title: Authorcontributions
-  section_level: 1
+  parent_section_id: SEC:PMC13193915#0009
+  section_path: Confl ict of interest / Generative AI statement
+  section_title: Generative AI statement
+  section_level: 2
   sort_order: 16
   start_page: 5
   end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
+  heading_source: TOC_EXACT
+  heading_confidence: 0.98
   evidence:
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
+  - PDF 内嵌书签 level=2 page=5
+  - docling 版面信号 level=1 page=5
 - section_id: SEC:PMC13193915#0017
   doc_id: DOC:PMC13193915
   parent_section_id: null
-  section_path: Conﬂictofinterest
-  section_title: Conﬂictofinterest
+  section_path: Publisher ' s note
+  section_title: Publisher ' s note
   section_level: 1
   sort_order: 17
-  start_page: 5
-  end_page: 5
+  start_page: 6
+  end_page: 6
   heading_source: HEADING_REGEX
   heading_confidence: 0.72
   evidence:
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
+  - docling 版面信号 level=1 page=6
 - section_id: SEC:PMC13193915#0018
   doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: GenerativeAI statement
-  section_title: GenerativeAI statement
-  section_level: 1
-  sort_order: 18
-  start_page: 5
-  end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
-- section_id: SEC:PMC13193915#0019
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1766386 #4'
-  section_title: 10.3389/fonc.2026.1766386
-  section_level: 1
-  sort_order: 19
-  start_page: 5
-  end_page: 5
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13193915#0020
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0019
-  section_path: '10.3389/fonc.2026.1766386 #4 / Conclusion'
-  section_title: Conclusion
-  section_level: 2
-  sort_order: 20
-  start_page: 5
-  end_page: 5
-  heading_source: TOC_EXACT
-  heading_confidence: 0.98
-  evidence:
-  - PDF 内嵌书签 level=2 page=5
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
-  - 命中标准章节名
-- section_id: SEC:PMC13193915#0021
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0019
-  section_path: '10.3389/fonc.2026.1766386 #4 / Data availability statement'
-  section_title: Data availability statement
-  section_level: 2
-  sort_order: 21
-  start_page: 5
-  end_page: 5
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=5
-- section_id: SEC:PMC13193915#0022
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0019
-  section_path: '10.3389/fonc.2026.1766386 #4 / Ethics statement'
-  section_title: Ethics statement
-  section_level: 2
-  sort_order: 22
-  start_page: 5
-  end_page: 5
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=5
-- section_id: SEC:PMC13193915#0023
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0019
-  section_path: '10.3389/fonc.2026.1766386 #4 / Author contributions'
-  section_title: Author contributions
-  section_level: 2
-  sort_order: 23
-  start_page: 5
-  end_page: 5
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=5
-- section_id: SEC:PMC13193915#0024
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0019
-  section_path: '10.3389/fonc.2026.1766386 #4 / Funding'
-  section_title: Funding
-  section_level: 2
-  sort_order: 24
-  start_page: 5
-  end_page: 5
-  heading_source: TOC_EXACT
-  heading_confidence: 0.98
-  evidence:
-  - PDF 内嵌书签 level=2 page=5
-  - pymupdf 版面信号 level=1 page=5
-  - 字号 13.5
-- section_id: SEC:PMC13193915#0025
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0019
-  section_path: '10.3389/fonc.2026.1766386 #4 / Conflict of interest'
-  section_title: Conflict of interest
-  section_level: 2
-  sort_order: 25
-  start_page: 5
-  end_page: 5
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=5
-- section_id: SEC:PMC13193915#0026
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0019
-  section_path: '10.3389/fonc.2026.1766386 #4 / Generative AI statement'
-  section_title: Generative AI statement
-  section_level: 2
-  sort_order: 26
-  start_page: 5
-  end_page: 5
-  heading_source: TOC_EXACT
-  heading_confidence: 0.95
-  evidence:
-  - PDF 内嵌书签 level=2 page=5
-- section_id: SEC:PMC13193915#0027
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: Publisher’snote
-  section_title: Publisher’snote
-  section_level: 1
-  sort_order: 27
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.72
-  evidence:
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
-- section_id: SEC:PMC13193915#0028
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 2.ParkJS,KimJ,ElghiatyA,HamWS.Recentglobaltrendsintesticularcancer
-  section_title: 2.ParkJS,KimJ,ElghiatyA,HamWS.Recentglobaltrendsintesticularcancer
-  section_level: 1
-  sort_order: 28
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 2
-- section_id: SEC:PMC13193915#0029
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 4.SinglaN,BagrodiaA,BarabanE,FankhauserCD,GedYMA.Testiculargermcell
-  section_title: 4.SinglaN,BagrodiaA,BarabanE,FankhauserCD,GedYMA.Testiculargermcell
-  section_level: 1
-  sort_order: 29
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 4
-- section_id: SEC:PMC13193915#0030
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 5.AmineMM,MohamedB,MouradH,MajedH,SlimC,MehdiB,etal.
-  section_title: 5.AmineMM,MohamedB,MouradH,MajedH,SlimC,MehdiB,etal.
-  section_level: 1
-  sort_order: 30
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 5
-- section_id: SEC:PMC13193915#0031
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 6.MochH,CubillaAL,HumphreyPA,ReuterVE,UlbrightTM.The2016WHO
-  section_title: 6.MochH,CubillaAL,HumphreyPA,ReuterVE,UlbrightTM.The2016WHO
-  section_level: 1
-  sort_order: 31
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 6
-- section_id: SEC:PMC13193915#0032
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 7.DonohueJP,ZacharyJM,MaynardBR.Distributionofnodalmetastasesin
-  section_title: 7.DonohueJP,ZacharyJM,MaynardBR.Distributionofnodalmetastasesin
-  section_level: 1
-  sort_order: 32
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 7
-- section_id: SEC:PMC13193915#0033
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 8.FossåSD,OusS,StenwigAE,LienHH,AassN,KaalhusO.Distributionof
-  section_title: 8.FossåSD,OusS,StenwigAE,LienHH,AassN,KaalhusO.Distributionof
-  section_level: 1
-  sort_order: 33
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 8
-- section_id: SEC:PMC13193915#0034
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 9.GrossmannM,KouCJ,VergonetB,SoderstromM,RendoMJ,LeeLE.Acaseof
-  section_title: 9.GrossmannM,KouCJ,VergonetB,SoderstromM,RendoMJ,LeeLE.Acaseof
-  section_level: 1
-  sort_order: 34
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 9
-- section_id: SEC:PMC13193915#0035
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 11.InternationalGermCellCancerCollaborativeGroup.Internationalgermcell
-  section_title: 11.InternationalGermCellCancerCollaborativeGroup.Internationalgermcell
-  section_level: 1
-  sort_order: 35
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 11
-- section_id: SEC:PMC13193915#0036
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 12.DomloEA,AlmayoufFA,SulaimanSM,AlluhaybAA,AlrumehAS.Primary
-  section_title: 12.DomloEA,AlmayoufFA,SulaimanSM,AlluhaybAA,AlrumehAS.Primary
-  section_level: 1
-  sort_order: 36
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 12
-- section_id: SEC:PMC13193915#0037
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 13.BangashHK,HayneD,ThyerIA.Metastaticprimarytesticularcarcinoidtumor
-  section_title: 13.BangashHK,HayneD,ThyerIA.Metastaticprimarytesticularcarcinoidtumor
-  section_level: 1
-  sort_order: 37
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 13
-- section_id: SEC:PMC13193915#0038
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 14.Prunoiu VM, Marincas AM, Alexandru A, Radu M, Proca TM, Ravas MM,
-    et al. A
-  section_title: 14.Prunoiu VM, Marincas AM, Alexandru A, Radu M, Proca TM, Ravas
-    MM, et al. A
-  section_level: 1
-  sort_order: 38
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 14
-- section_id: SEC:PMC13193915#0039
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 15.DarreT,DoukoureB,KouyateM,DjiwaT,KwameD,Napo-KouraG.Arare
-  section_title: 15.DarreT,DoukoureB,KouyateM,DjiwaT,KwameD,Napo-KouraG.Arare
-  section_level: 1
-  sort_order: 39
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 15
-- section_id: SEC:PMC13193915#0040
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 19.Małkiewicz B, Świrkosz G, Lewandowski W, Demska K, Szczepaniak
-    Z, Karwacki J,
-  section_title: 19.Małkiewicz B, Świrkosz G, Lewandowski W, Demska K, Szczepaniak
-    Z, Karwacki J,
-  section_level: 1
-  sort_order: 40
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 19
-- section_id: SEC:PMC13193915#0041
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 20.XiaoT,LuoLH,GuoLF,WangLQ,FengL.Primarytesticularneuroendocrine
-  section_title: 20.XiaoT,LuoLH,GuoLF,WangLQ,FengL.Primarytesticularneuroendocrine
-  section_level: 1
-  sort_order: 41
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 20
-- section_id: SEC:PMC13193915#0042
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 21.HobdayTJ,QinR,Reidy-LagunesD,MooreMJ,StrosbergJ,KaubischA,etal.
-  section_title: 21.HobdayTJ,QinR,Reidy-LagunesD,MooreMJ,StrosbergJ,KaubischA,etal.
-  section_level: 1
-  sort_order: 42
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 21
-- section_id: SEC:PMC13193915#0043
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 23.XuJ,ShenL,BaiC,WangW,LiJ,YuX,etal.Surufatinibinadvancedpancreatic
-  section_title: 23.XuJ,ShenL,BaiC,WangW,LiJ,YuX,etal.Surufatinibinadvancedpancreatic
-  section_level: 1
-  sort_order: 43
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 23
-- section_id: SEC:PMC13193915#0044
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 24.LuX,YanS,KoralKA,ChenZ.Surufatinibforthetreatmentofadvanced
-  section_title: 24.LuX,YanS,KoralKA,ChenZ.Surufatinibforthetreatmentofadvanced
-  section_level: 1
-  sort_order: 44
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 24
-- section_id: SEC:PMC13193915#0045
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 926. doi:10.1080/14737140.2021.1944110
-  section_title: 926. doi:10.1080/14737140.2021.1944110
-  section_level: 1
-  sort_order: 45
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 926
-- section_id: SEC:PMC13193915#0046
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 25.SorbyeH,WelinS,LangerSW,VestermarkLW,HoltN,OsterlundP,etal.
-  section_title: 25.SorbyeH,WelinS,LangerSW,VestermarkLW,HoltN,OsterlundP,etal.
-  section_level: 1
-  sort_order: 46
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 25
-- section_id: SEC:PMC13193915#0047
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: 26.MochH, Amin MB,Berney DM, CompératEM,Gill AJ,HartmannA,et al.The
-  section_title: 26.MochH, Amin MB,Berney DM, CompératEM,Gill AJ,HartmannA,et al.The
-  section_level: 1
-  sort_order: 47
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 26
-- section_id: SEC:PMC13193915#0048
-  doc_id: DOC:PMC13193915
-  parent_section_id: null
-  section_path: '10.3389/fonc.2026.1766386 #5'
-  section_title: 10.3389/fonc.2026.1766386
-  section_level: 1
-  sort_order: 48
-  start_page: 6
-  end_page: 6
-  heading_source: HEADING_REGEX
-  heading_confidence: 0.62
-  evidence:
-  - 编号模式 10
-- section_id: SEC:PMC13193915#0049
-  doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0048
-  section_path: '10.3389/fonc.2026.1766386 #5 / Publisher’s note'
+  parent_section_id: SEC:PMC13193915#0017
+  section_path: Publisher ' s note / Publisher’s note
   section_title: Publisher’s note
   section_level: 2
-  sort_order: 49
+  sort_order: 18
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
   heading_confidence: 0.95
   evidence:
   - PDF 内嵌书签 level=2 page=6
-- section_id: SEC:PMC13193915#0050
+- section_id: SEC:PMC13193915#0019
   doc_id: DOC:PMC13193915
-  parent_section_id: SEC:PMC13193915#0048
-  section_path: '10.3389/fonc.2026.1766386 #5 / References'
+  parent_section_id: SEC:PMC13193915#0017
+  section_path: Publisher ' s note / References
   section_title: References
   section_level: 2
-  sort_order: 50
+  sort_order: 19
   start_page: 6
   end_page: 6
   heading_source: TOC_EXACT
   heading_confidence: 0.98
   evidence:
   - PDF 内嵌书签 level=2 page=6
-  - pymupdf 版面信号 level=1 page=6
-  - 字号 13.5
+  - docling 版面信号 level=1 page=6
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC13193915
-  source_id: PUBMED
-  external_id: PMC13193915
+  source_id: PMC
   title: 'Primary testicular neuroendocrine tumor with retroperitoneal lymph nodes
     metastasis: a case report.'
   doc_type: JOURNAL_ARTICLE
   language: en
   license_tier: TIER_0
   sections:
-  - name: metastasis:acasereport / Introduction / MingZhang,QianWang, FahimullahHamid,
-      JiehaoWu,
-    text: 'Departmentof Urology,Institute ofUrology, WestChinaHospital,SichuanUniversity,Chengdu,
+  - name: KEYWORDS / Introduction
+    text: 'in Oncology
 
-      Sichuan, China
+      EDITED BY Sharon R. Pine, University of Colorado Anschutz Medical Campus, United
+      States
 
-      Testicularneuroendocrinetumor(TNET)isanexceedinglyraremalignancywith
+      Markus Angerer, University Medical Center HamburgEppendorf, Germany Vijayabhaskar
+      R., Meenakshi Mission Hospital and Research Centre, India
 
-      variablebiologicalbehavior.Wereporta49-year-oldmalepresentingwith
-
-      painlessrighttesticularenlargement.PrimaryTNET(G1)wasdiagnosedafter
-
-      extensivepathologicalsamplingandtheclinicalexclusionofextra-testicular
-
-      primarysitesviacontrast-enhancedCT.Followingradicalorchiectomy,the
-
-      patientunderwentlaparoscopicretroperitoneallymphnodedissection
-
-      (RPLND),whichconﬁrmedmetastaticinvolvement(7/13nodes).Although
-
-      severeintraoperativeadhesionstothegreatvesselswereencountered,athor-
-
-      ough dissection was performed, and postoperative imaging showed no measur-
-
-      able macroscopic residual disease, consistent with a clinical R0 resection.
-      Based
-
-      onamultidisciplinaryteam(MDT)assessmentofthehighriskforsubclinical
-
-      microscopic residuals, adjuvant therapy with surufatinib, a multi-targeted TKI,
-      was
-
-      initiated.Acompleteresponse(CR)wasachievedeightmonthspostoperatively,
-
-      deﬁnedbythedisappearanceofalltargetlesionsonfollow-upcontrast-
-
-      enhancedCTaccordingtoRECIST1.1criteria.Thepatientremainsdisease-free
-
-      at the one-year follow-up,suggestingthat targeted therapy may be a promising
-
-      andeffectiveoptionformetastaticG1TNET followingsurgicaldebulking.
-
-      KEYWORDS
-
-      casereport,metastasis,orchiectomy,surufatinib,testicularneuroendocrinetumor
-
-      Testiculartumorisoneofthemostcommonmalignanttumorsofthemalegenitou-
-
-      rinary system. Although it accounts for only 1% of all adult cancers, its incidence
-      is higher in
-
-      young men aged 15 to 35 years (1–3). Germ cell tumors (GCTs) are the most common
-      type,
-
-      accountingforapproximately90-95%ofcases,whichincludeseminomasandnon-
-
-      seminomatousgermcelltumors(NSGCTs)(4).Testicularneuroendocrinetumors
-
-      (TNET) are a rare subtype, typically characterized by high invasiveness and
-      poor prognosis
-
-      (5).Theimmunophenotypeoftesticularneuroendocrinetumoroftenshowspositivityfor
-
-      Synaptophysin (Syn), Chromogranin A (CgA), and CD56, distinguishing it from
-      other types
-
-      of testiculartumors(6).
-
-      Inthemetastaticprocessoftesticulartumor,retroperitoneallymphnodesarea
-
-      common siteof metastasis,especiallyinnon-seminomatousandneuroendocrinesubtypes
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      01
-
-      OPEN ACCESS
-
-      EDITEDBY
-
-      Sharon R.Pine,
-
-      UniversityofColorado AnschutzMedical
-
-      Campus,UnitedStates
-
-      REVIEWEDBY
-
-      MarkusAngerer,
-
-      UniversityMedicalCenterHamburg-
-
-      Eppendorf,Germany
-
-      VijayabhaskarR.,
-
-      MeenakshiMission Hospitaland
-
-      ResearchCentre,India
-
-      *CORRESPONDENCE
-
-      PengfeiShen
+      *CORRESPONDENCE Pengfei Shen
 
       cdhx510@163.com
 
-      RECEIVED 12December 2025
+      RECEIVED 12 December 2025 REVISED 09 April 2026 ACCEPTED 28 April 2026 PUBLISHED
+      08 May 2026
 
-      REVISED 09April 2026
+      Zhang M, Wang Q, Hamid F, Wu J, Han J and Shen P (2026) Primary testicular neuroendocrine
+      tumor with retroperitoneal lymph nodes metastasis: a case report. Front. Oncol.
+      16:1766386. doi: 10.3389/fonc.2026.1766386
 
-      ACCEPTED 28April2026
+      © 2026 Zhang, Wang, Hamid, Wu, Han and Shen. This is an open-access article
+      distributed under the terms of the Creative Commons Attribution License (CC
+      BY). The use, distribution or reproduction in other forums is permitted, provided
+      the original author(s) and the copyright owner(s) are credited and that the
+      original publication in this journal is cited, in accordance with accepted academic
+      practice. No use, distribution or reproduction is permitted which does not comply
+      with these terms.
 
-      PUBLISHED 08 May2026
+      Ming Zhang, Qian Wang, Fahimullah Hamid, Jiehao Wu, Jiaxue Han and Pengfei Shen
+      *
 
-      CITATION
+      Department of Urology, Institute of Urology, West China Hospital, Sichuan University,
+      Chengdu, Sichuan, China
 
-      ZhangM,WangQ, HamidF,Wu J,
+      Testicular neuroendocrine tumor (TNET) is an exceedingly rare malignancy with
+      variable biological behavior. We report a 49-year-old male presenting with painless
+      right testicular enlargement. Primary TNET (G1) was diagnosed after extensive
+      pathological sampling and the clinical exclusion of extra-testicular primary
+      sites via contrast-enhanced CT. Following radical orchiectomy, the patient underwent
+      laparoscopic retroperitoneal lymph node dissection (RPLND), which con fi rmed
+      metastatic involvement (7/13 nodes). Although severe intraoperative adhesions
+      to the great vessels were encountered, a thorough dissection was performed,
+      and postoperative imaging showed no measurable macroscopic residual disease,
+      consistent with a clinical R0 resection. Based on a multidisciplinary team (MDT)
+      assessment of the high risk for subclinical microscopic residuals, adjuvant
+      therapy with surufatinib, a multi-targeted TKI, was initiated. A complete response
+      (CR) was achieved eight months postoperatively, de fi ned by the disappearance
+      of all target lesions on follow-up contrastenhanced CT according to RECIST 1.1
+      criteria. The patient remains disease-free at the one-year follow-up, suggesting
+      that targeted therapy may be a promising and effective option for metastatic
+      G1 TNET following surgical debulking.
 
-      HanJ andShenP (2026)Primary
+      case report, metastasis, orchiectomy, surufatinib, testicular neuroendocrine
+      tumor
 
-      testicularneuroendocrinetumor
+      Testicular tumor is one of the most common malignant tumors of the male genitourinary
+      system. Although it accounts for only 1% of all adult cancers, its incidence
+      is higher in young men aged 15 to 35 years (1 -3). Germ cell tumors (GCTs) are
+      the most common type, accounting for approximately 90-95% of cases, which include
+      seminomas and nonseminomatous germ cell tumors (NSGCTs) (4). Testicular neuroendocrine
+      tumors (TNET) are a rare subtype, typically characterized by high invasiveness
+      and poor prognosis (5). The immunophenotype of testicular neuroendocrine tumor
+      often shows positivity for Synaptophysin (Syn), Chromogranin A (CgA), and CD56,
+      distinguishing it from other types of testicular tumors (6).
 
-      with retroperitoneallymphnodes
-
-      metastasis:a casereport.
-
-      Front. Oncol.16:1766386.
-
-      doi: 10.3389/fonc.2026.1766386
-
-      COPYRIGHT
-
-      © 2026 Zhang, Wang, Hamid, Wu, Han
-
-      and Shen. This is an open-access article
-
-      distributed under the terms of the
-
-      Creative Commons Attribution License
-
-      (CC BY). The use,distributionor
-
-      reproductionin otherforumsis
-
-      permitted,providedthe original
-
-      author(s)andthecopyrightowner(s)are
-
-      credited andthat the originalpublication
-
-      in thisjournal iscited,in accordance
-
-      with acceptedacademicpractice.No
-
-      use,distributionor reproductionis
-
-      permittedwhichdoesnotcomplywith
-
-      theseterms.
-
-      TYPE CaseReport
-
-      PUBLISHED 08May2026
-
-      DOI 10.3389/fonc.2026.1766386'
+      In the metastatic process of testicular tumor, retroperitoneal lymph nodes are
+      a common site of metastasis, especially in non-seminomatous and neuroendocrine
+      subtypes of testicular tumor (7). Studies have shown that retroperitoneal lymph
+      nodes are the '' fi rst station '' for testicular tumor metastasis, particularly
+      during lymphatic spread (8). Right-sided testicular tumors are more likely to
+      metastasize to the lymph nodes between the abdominal aorta and inferior vena
+      cava due to anatomical features (9). However, it is important to note that some
+      highly invasive neuroendocrine testicular tumors may exhibit earlier hematogenous
+      metastasis rather than solely lymphatic spread (10). Despite this, retroperitoneal
+      lymph node metastasis remains a key factor in determining the prognosis of testicular
+      tumor (11). Most patients may be asymptomatic in the early stages, and as the
+      disease progresses, retroperitoneal lymph node metastasis often presents with
+      abdominal discomfort and bilateral lower limb edema (12). For testicular tumor
+      patients with retroperitoneal lymph node metastasis, timely surgical removal
+      of the primary tumor and metastatic lymph nodes, combined with chemotherapy
+      or targeted therapy, is crucial for improving survival (13).'
     page: 1
-  - name: 10.3389/fonc.2026.1766386 / Case presentation
-    text: 'oftesticulartumor(7).Studieshaveshownthatretroperitoneal
-
-      lymphnodesarethe“ﬁrststation”fortesticulartumormetastasis,
-
-      particularlyduringlymphaticspread(8).Right-sidedtesticular
-
-      tumors are more likely to metastasize to the lymph nodes between
-
-      theabdominalaortaandinferiorvenacavaduetoanatomical
-
-      features(9).However,itisimportanttonotethatsomehighly
-
-      invasiveneuroendocrinetesticulartumorsmayexhibitearlier
-
-      hematogenousmetastasisratherthansolelylymphaticspread
-
-      (10).Despitethis,retroperitoneallymphnodemetastasisremains
-
-      akeyfactorindeterminingtheprognosisoftesticulartumor(11).
-
-      Most patients may be asymptomaticin theearly stages,and as the
-
-      diseaseprogresses,retroperitoneallymphnodemetastasisoften
-
-      presentswithabdominaldiscomfortandbilaterallowerlimb
-
-      edema(12).Fortesticulartumorpatientswithretroperitoneal
-
-      lymphnodemetastasis,timelysurgicalremovaloftheprimary
-
-      tumorandmetastaticlymphnodes,combinedwithchemotherapy
-
-      ortargeted therapy,iscrucialfor improvingsurvival(13).
-
-      Themanagementofgermcelltumorsischaracterizedby
-
-      prolongedtreatmentcoursesandcomplextherapeuticregimens,
-
-      whichrequireclosemultidisciplinarycollaboration.Throughout
-
-      the treatment process, coordinated assessment by surgeons, medical
-
-      oncologists, and radiologists is essential. An integrated, multidisci-
-
-      plinaryapproachhasthepotentialtofurtherimprovepatient
-
-      survival.Wepresentthecaseofa49-year-oldmalepatientdiag-
-
-      nosedwithtesticularneuroendocrinetumorwithretroperitoneal
-
-      lymphnodemetastasis.Aftercomprehensivetreatmentbyamul-
-
-      tidisciplinaryteam,includingprimarytumorresection,retroperi-
-
-      toneal lymph node dissection, and targeted drug therapy, signiﬁcant
-
-      therapeutic effects were achieved. This case provides insight into the
-
-      diagnosisandtreatmentstrategyfortesticularneuroendocrine
-
-      tumorwithretroperitoneallymphnodemetastasis,offeringvalua-
-
-      bleclinicalimplications.
-
-      A49-year-oldmalepresentedwithapainlessswellingofthe
-
-      righttesticleforoversixmonths.Hehadahistoryofcholecystec-
-
-      tomyandappendectomy.Physicalexaminationrevealedahard
-
-      massintherighttesticle(approximately5cm),withlimited
-
-      mobilityandnoobvioustenderness;inguinallymphnodeswere
-
-      notpalpable.ColorDopplerultrasoundofthemalereproductive
-
-      systemindicateda solid-cysticmassin theright testicle.
-
-      To exclude a potential extra-testicular primary source, extensive
-
-      imagingworkupswereperformed.Preoperativechestandabdom-
-
-      inalenhancedCTshowedenlargementoftherighttesticlewitha
-
-      transversediameterofapproximately5.5cm×5.5cm;anodular
-
-      lesionneartherightabdominalaortawasidentiﬁed,suggesting
-
-      possiblelymphnodemetastasis(approximately1.5cmindiame-
-
-      ter).Noevidenceofprimarymalignancyinthegastrointestinal
-
-      tract,lungs,orpancreaswasobserved.Alltumormarkerswere
-
-      negative,withbeta-humanchorionicgonadotropin(b-HCG)<0.6
-
-      mIU/mL,alpha-fetoprotein(AFP)5.22ng/mL,andD-dimer3.07
-
-      mg/L,whileotherhematologicalparameterswerewithinthe
-
-      normalrange.Afterpreoperativeexaminationandtheexclusion
-
-      ofsurgicalcontraindications,rightorchiectomywasperformed.
-
-      Intraoperatively,therighttesticleshowedahard,nodularmass,
-
-      approximately5cmindiameter,adherenttothescrotalwall.The
-
-      testiclewasdissected,anditshowedaﬁsh-likeappearanceupon
-
-      incision(Figure1).Thehistologicalspecimenwasthoroughly
-
-      examinedviaextensivesampling.Immunohistochemicalanalysis
-
-      conﬁrmedtheneuroendocrinenatureofthetumor,withpositive
-
-      stainingforCK(Pan),CD56,Syn,andCgA.Toexcludesexcord-
-
-      stromaltumorsandothermimics,additionalmarkersincluding
-
-      Inhibin, SF-1, WT1, Vimentin, and FoxL2 were tested, all of which
-
-      werenegative.TheKi-67labelingindexwas1%,consistentwitha
-
-      grade 1 (G1) neuroendocrine tumor. No components of teratoma or
-
-      germ cell tumor in situ were identiﬁed, supporting the diagnosis of a
-
-      pureprimarytesticularNET. (Figures2A,B).
-
-      Twomonthsaftertheinitialsurgery,whichallowedforsufﬁ-
-
-      cientphysicalrecoveryandmultidisciplinaryteam(MDT)discus-
-
-      sion,an18F-ﬂuorodeoxyglucose(18F-FDG)positronemission
-
-      tomography-computedtomography(PET/CT)scanrevealedele-
-
-      vated glucosemetabolism inthe retroperitoneallymph nodesnear
-
-      the right abdominal aorta (Figure 3), with a maximum standardized
-
-      uptakevalue(SUVmax)of3.75.Theﬁndingssuggestednodal
-
-      metastasis,withthelargestlesionmeasuringapproximately2cm.
-
-      FollowingaMDTdiscussion,thepatientwasrecommendedfor
-
-      retroperitoneallymphnodedissection(RPLND).Duringthelapa-
-
-      roscopic RPLND, enlarged lymph nodes (approximately 2 × 2 cm)
-
-      wereidentiﬁedneartheabdominalaortaandinferiorvenacava.
-
-      Althoughsevereadhesionstotheaorticandvenouswallswere
-
-      encountered,theoperatingsurgeonperformedameticulousdis-
-
-      section,andthemetastaticterritorywasthoroughlycleared.
-
-      Postoperativecontrast-enhancedCTshowedonlypostoperative
-
-      changeswithnodeﬁniteevidenceofmacroscopicresidualmasses,
-
-      consistent with a clinical R0 resection. Pathological examination of
-
-      theexcisedtissuerevealedmetastasisfromagrade1neuroendo-
-
-      crinetumorintherightretroperitoneallymphnodes(7/13).
-
-      ImmunohistochemistryresultswerepositiveforCK(Pan),Syn,
-
-      CgA, CD56, andKi-67(1-2%)(Figures2C–E).
-
-      Postoperatively,the patient continued follow-up in the depart-
-
-      ment of oncology and initiated oral surufatinib at 300 mg daily. One
-
-      FIGURE1
-
-      Gross specimenof therighttestis.(A) Overallview ofthe specimen.
-
-      (B) Longitudinalsectionof thespecimen.
-
-      Zhangetal.
-
-      10.3389/fonc.2026.1766386
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      02'
+  - name: KEYWORDS / Case presentation
+    text: 'The management of germ cell tumors is characterized by prolonged treatment
+      courses and complex therapeutic regimens, which require close multidisciplinary
+      collaboration. Throughout the treatment process, coordinated assessment by surgeons,
+      medical oncologists, and radiologists is essential. An integrated, multidisciplinary
+      approach has the potential to further improve patient survival. We present the
+      case of a 49-year-old male patient diagnosed with testicular neuroendocrine
+      tumor with retroperitoneal lymph node metastasis. After comprehensive treatment
+      by a multidisciplinary team, including primary tumor resection, retroperitoneal
+      lymph node dissection, and targeted drug therapy, signi fi cant therapeutic
+      effects were achieved. This case provides insight into the diagnosis and treatment
+      strategy for testicular neuroendocrine tumor with retroperitoneal lymph node
+      metastasis, offering valuable clinical implications.
+
+      A 49-year-old male presented with a painless swelling of the right testicle
+      for over six months. He had a history of cholecystectomy and appendectomy. Physical
+      examination revealed a hard mass in the right testicle (approximately 5 cm),
+      with limited mobility and no obvious tenderness; inguinal lymph nodes were not
+      palpable. Color Doppler ultrasound of the male reproductive system indicated
+      a solid-cystic mass in the right testicle.
+
+      To exclude a potential extra-testicular primary source, extensive imaging workups
+      were performed. Preoperative chest and abdominal enhanced CT showed enlargement
+      of the right testicle with a transverse diameter of approximately 5.5 cm × 5.5
+      cm; a nodular lesion near the right abdominal aorta was identi fi ed, suggesting
+      possible lymph node metastasis (approximately 1.5 cm in diameter). No evidence
+      of primary malignancy in the gastrointestinal tract, lungs, or pancreas was
+      observed. All tumor markers were negative, with beta-human chorionic gonadotropin
+      ( b -HCG) <0.6 mIU/mL, alpha-fetoprotein (AFP) 5.22 ng/mL, and D-dimer 3.07
+      mg/L, while other hematological parameters were within the normal range. After
+      preoperative examination and the exclusion of surgical contraindications, right
+      orchiectomy was performed.
+
+      Intraoperatively, the right testicle showed a hard, nodular mass, approximately
+      5 cm in diameter, adherent to the scrotal wall. The testicle was dissected,
+      and it showed a fi sh-like appearance upon incision (Figure 1). The histological
+      specimen was thoroughly examined via extensive sampling. Immunohistochemical
+      analysis con fi rmed the neuroendocrine nature of the tumor, with positive staining
+      for CK (Pan), CD56, Syn, and CgA. To exclude sex cordstromal tumors and other
+      mimics, additional markers including Inhibin, SF-1, WT1, Vimentin, and FoxL2
+      were tested, all of which were negative. The Ki-67 labeling index was 1%, consistent
+      with a grade 1 (G1) neuroendocrine tumor. No components of teratoma or germ
+      cell tumor in situ were identi fi ed, supporting the diagnosis of a pure primary
+      testicular NET. (Figures 2A, B).
+
+      Two months after the initial surgery, which allowed for suf fi cient physical
+      recovery and multidisciplinary team (MDT) discussion, an 18F- fl uorodeoxyglucose
+      (18F-FDG) positron emission tomography-computed tomography (PET/CT) scan revealed
+      elevated glucose metabolism in the retroperitoneal lymph nodes near the right
+      abdominal aorta (Figure 3), with a maximum standardized uptake value (SUVmax)
+      of 3.75. The fi ndings suggested nodal metastasis, with the largest lesion measuring
+      approximately 2 cm. Following a MDT discussion, the patient was recommended
+      for retroperitoneal lymph node dissection (RPLND). During the laparoscopic RPLND,
+      enlarged lymph nodes (approximately 2 × 2 cm) were identi fi ed near the abdominal
+      aorta and inferior vena cava. Although severe adhesions to the aortic and venous
+      walls were encountered, the operating surgeon performed a meticulous dissection,
+      and the metastatic territory was thoroughly cleared. Postoperative contrast-enhanced
+      CT showed only postoperative changes with no de fi nite evidence of macroscopic
+      residual masses, consistent with a clinical R0 resection. Pathological examination
+      of the excised tissue revealed metastasis from a grade 1 neuroendocrine tumor
+      in the right retroperitoneal lymph nodes (7/13). Immunohistochemistry results
+      were positive for CK (Pan), Syn, CgA, CD56, and Ki-67 (1-2%) (Figures 2C -E).
+
+      Postoperatively, the patient continued follow-up in the department of oncology
+      and initiated oral surufatinib at 300 mg daily. One month after the RPLND, a
+      68Ga-labeled somatostatin analogue (68Ga-DOTATATE) PET/CT was performed to evaluate
+      the somatostatin receptor 2 (SSTR2) status and systemic tumor burden. The scan
+      showed no de fi nite evidence of SSTR2-positive recurrence or metastasis (Figure
+      4). During surufatinib treatment, the patient exhibited a favorable safety pro
+      fi le with no signi fi cant treatmentemergent adverse events reported, demonstrating
+      excellent drug tolerance. Eight months postoperatively, follow-up contrast-enhanced
+      CT demonstrated the complete disappearance of the residual para-aortic lymph
+      nodes. According to the Response Evaluation Criteria in Solid Tumors (RECIST)
+      version 1.1, the patient achieved a complete response (CR), with no evidence
+      of disease recurrence or new metastasis observed during over one-year follow-up
+      period.'
     page: 2
-  - name: '10.3389/fonc.2026.1766386 #2 / Discussion'
-    text: 'monthaftertheRPLND,a68Ga-labeledsomatostatinanalogue
+  - name: KEYWORDS / Discussion
+    text: 'Testicular neuroendocrine tumor is a rare entity with variable biological
+      behavior, accounting for only 0.2% of all testicular tumors
 
-      (68Ga-DOTATATE)PET/CTwasperformedtoevaluatetheso-
-
-      matostatinreceptor2(SSTR2)statusandsystemictumorburden.
-
-      The scan showed no deﬁnite evidence of SSTR2-positive recurrence
-
-      ormetastasis(Figure4).Duringsurufatinibtreatment,thepatient
-
-      exhibitedafavorablesafetyproﬁlewithnosigniﬁcanttreatment-
-
-      emergentadverseeventsreported,demonstratingexcellentdrug
-
-      tolerance.Eightmonthspostoperatively,follow-upcontrast-en-
-
-      hanced CT demonstrated the complete disappearance of the resid-
-
-      ual para-aortic lymph nodes. According to the Response Evaluation
-
-      Criteria in Solid Tumors (RECIST) version 1.1, the patient achieved
-
-      a complete response (CR), with no evidence of disease recurrence or
-
-      newmetastasisobservedduringoverone-yearfollow-upperiod.
-
-      Testicularneuroendocrinetumorisarareentitywithvariable
-
-      biological behavior, accounting for only 0.2% of all testicular tumors
-
-      FIGURE2
-
-      Histopathologicalandimmunohistochemicalcharacterizationof theprimarytumorandmetastaticlymphnodes.
-      (A) Hematoxylinandeosin(H&E)
-
-      stainingofthe righttesticulartumorshowinghighlydifferentiated neuroendocrinecellsarranged
-      inanorganoid,nested patternwith characteristic
-
-      nuclearchromatin.(B)Immunohistochemical(IHC)stainingof theprimarytumordemonstratingstrong
-      anddiffuse cytoplasmicexpression of
-
-      Synaptophysin(Syn),supportingthe neuroendocrineorigin(200×).(C) H&E stainingof
-      therightretroperitoneal lymphnodeshowing metastatic
-
-      involvementwith morphologicalfeaturesconsistent withthe primarytesticulartumor(200×).(D)
-      Diffuseandintensecytoplasmicpositivity for
-
-      Synaptophysin(Syn)in themetastaticlymphnodetissue (200×).(E) Immunohistochemicalstaining
-      forChromograninA(CgA) inthe metastatic
-
-      lymphnode,showingfocalpositiveimmunoreactivity(200×).
-
-      FIGURE3
-
-      18F-FDG PET/CTimagingafter radicalorchiectomy.(A)The18F-FDGPET/CTscanrevealedthesystemic
-      tumorburdentwomonthsafterright
-
-      orchiectomy.(B) The18F-FDGPET/CTscanrevealedthat glucosemetabolismwaselevatedin
-      theretroperitoneal lymphnodesneartheright
-
-      abdominalaorta.(C) The18F-FDGPET/CTscanshowednolesionof increasedglucosemetabolismin
-      bothlungs.
-
-      Zhangetal.
-
-      10.3389/fonc.2026.1766386
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      03'
-    page: 3
-  - name: '10.3389/fonc.2026.1766386 #3'
-    text: '(5).Itsrarityandnonspeciﬁcclinicalpresentation,whichoften
-
-      overlapswithmorecommongermcelltumors,posesigniﬁcant
-
-      diagnosticpitfalls.Asobservedinourcaseandsupportedbya
-
-      meta-analysisof132TNETcases,mostpatientspresentwitha
-
-      painless mass and normal serum tumor markers (AFP, b-HCG, and
-
-      LDH)(14).Theprimarydiagnosticchallengeliesindistinguishing
-
-      “pure”TNETfrommetastaticNETorTNETarisingwithina
-
-      teratoma,thelatterofwhichmayfollowadifferentclinicalcourse
-
-      (15–17). In our patient,the integrated use ofmedical imagingand a
-
-      speciﬁcimmunohistochemicalpanelwasnotmerelysupportivebut
-
-      essentialfordiagnosticexclusion.Speciﬁcally,PET/CTwasinstru-
-
-      mentalinrulingoutanextra-testicularprimaryorigin,whilethe
-
-      negativeexpressionofgermcellandsexcord-stromalmarkers
-
-      conﬁrmed the “pure” nature of the TNET. This multimodal diagnostic
-
-      approachiscriticalfornavigatingthepitfallsassociatedwithsucha
-
-      rare and poorly deﬁned entity.
-
-      Whileradicalorchiectomyremainsthestandardforcontrolling
-
-      the primary lesion and providing deﬁnitive staging, the management
-
-      ofmetastaticdiseaseisfarlessstandardized.Theroleandlimitsof
-
-      RPLND in TNET deserve careful consideration. In conventional germ
-
-      cell tumors, thelymphatic spread follows a well-established anatom-
-
-      icaldrainagetothepara-aorticandinteraortocavalnodes(18,19).
-
-      However,forTNET,thetherapeuticbeneﬁtofRPLNDislessclear,
-
-      especiallyforG1lesions.Inthiscase,althoughthemetastaticnodal
-
-      masswasinextricablyadheredtothegreatvessels,ameticulous
-
-      dissectionwasperformedtoclearthemetastaticterritory.
-
-      Postoperative imaging identiﬁed no measurable macroscopic residual
-
-      masses, consistent with a clinical R0 resection. However, this surgical
-
-      experienceunderscoresa critical clinical uncertainty: the presence of
-
-      severe intraoperative adhesions suggests a high risk of microscopic or
-
-      subclinical residual disease, even when radiologically negative.
-
-      ManagementofmetastaticTNETrequiresamultidisciplinary
-
-      approach,withacomprehensivetreatmentstrategybeingessential
-
-      (20).Whileradicalorchiectomy,astandardtreatment,andRPLND
-
-      effectivelyreducethevisibletumorburdenandprovideadeﬁnitive
-
-      pathologicalbasis,thepotentialforsubclinicalrecurrenceremainsa
-
-      challenge.ThemanagementofmetastatictesticularNETswithgross
-
-      residualdiseaseremainsaclinicalchallenge,andtheselectionof
-
-      adjuvanttherapyrequirescarefulconsiderationoftumorbiology.
-
-      Currentsystemicandlocaladjuvantoptionsincludeobservation,
-
-      somatostatin analogs (SSAs), targeted therapies, radiotherapy, systemic
-
-      chemotherapy. In this case, adjuvant chemotherapy and radiotherapy
-
-      were not pursued based on a MDT consensus. Conventional cytotoxic
-
-      chemotherapy (e.g., platinum-based regimens) is typically reserved for
-
-      high-grade neuroendocrinecarcinomas (G3) withrapidproliferation.
-
-      In contrast, well-differentiated G1 NETs, such as the one in our patient
-
-      (Ki-67indexof1%),areinherentlyresistantto chemotherapydueto
-
-      theirslowmitoticrate.Similarly,theroleofradiotherapyforgross
-
-      residual disease in the aortocaval region is poorly deﬁned for low-grade
-
-      NETs.ThelowproliferativeactivityofG1cellstranslatestolimited
-
-      radiosensitivity,andtherisksofradiation-inducedmorbidityoften
-
-      outweigh the marginal local control beneﬁts.
-
-      The selection of surufatinib as the systemic treatment was justiﬁed
-
-      bybothcurrentclinicalguidelinesanditsuniquepharmacological
-
-      proﬁle(21).SurufatinibisanoralTKIthatsimultaneouslytargets
-
-      vascularendothelialgrowthfactorreceptors(VEGFR1,2,and3),
-
-      ﬁbroblast growthfactorreceptor1(FGFR1),andcolony-stimulating
-
-      factor 1 receptor (CSF-1R). Unlike many other TKIs, its triple-target
-
-      mechanism exerts potent anti-angiogenic effects while modulating the
-
-      tumorimmunemicroenvironmentbyinhibitingtumor-associated
-
-      macrophages.BasedontherobustevidencefromtheSANET-ep
-
-      andSANET-pphaseIIItrials,surufatinibhasbeenofﬁciallyrecom-
-
-      mendedasastandardsystemictherapyforG1/G2neuroendocrine
-
-      tumors(22–24).Giventhesevereintraoperativeadhesionsandthe
-
-      associatedriskofmicroscopicresiduals,thissystemictargetedap-
-
-      proach offered a more comprehensive therapeutic beneﬁt compared to
-
-      localizedmeasures.Theeffectivenessofthisstrategywasretrospec-
-
-      tivelyvalidatedbytheachievementofasustainedCRaccordingto
-
-      FIGURE4
-
-      68Ga-DOTATATEPET/CTassessment followingRPLND.(A)The68Ga-DOTATATEPET/CTscanrevealedthe
-      systemictumorburdenonemonths
-
-      afterpostoperativechangesin therightabdominal wall,inguinalregion, para-aorticarea,
-      andmesentericterritory.(B) The68Ga-DOTATATEPET/CT
-
-      scanrevealedpostoperativechangesin therightabdominalwall, inguinalregion,para-aorticarea,andmesenteric
-      territory.(C) The68Ga-DOTATATE
-
-      PET/CTscanshowedno abnormal68Ga-DOTATATEavidity inbothlungs.
-
-      Zhangetal.
-
-      10.3389/fonc.2026.1766386
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      04'
-    page: 4
-  - name: '10.3389/fonc.2026.1766386 #4 / Conclusion'
-    text: 'RECIST1.1criteria,withthecompletedisappearanceofallpostop-
-
-      erative anatomical shadows at the para-aortic site.
-
-      Inprognosticevaluationoftesticularneuroendocrinetumor,
-
-      theKi-67proliferativeindexandtumordifferentiationarekey
-
-      prognostic factors (6). Studies have shown that lower Ki-67 indexes
-
-      andbettertumordifferentiationcorrelatewithbetterprognosis
-
-      (25).Inthiscase,thepatient’slowKi-67indexandgoodtumor
-
-      differentiation suggest a relatively favorable prognosis. Although the
-
-      presenceofretroperitoneallymphnodemetastasisincreasesthe
-
-      complexityanddifﬁcultyoftreatment,combinedsurgeryand
-
-      targetedtherapyeffectivelycontrolledthedisease.Currently,the
-
-      patientremainsdisease-freewithnonewmetastasisordisease
-
-      activity,suggestingapositivetreatmentoutcome.However,long-
-
-      termfollow-upisstillrequiredtoassesspotentialrecurrenceor
-
-      metastaticlesions.
-
-      This case provides valuable insights into the treatment of testicular
-
-      neuroendocrine tumor. Surgical resection played an important role in
-
-      controlling the primary tumor, conﬁrming the diagnosis, and reducing
-
-      tumor burden, while targeted therapy effectively controlled metastatic
-
-      disease.Althoughthereisnostandardizedtreatmentprotocolfor
-
-      testicular neuroendocrine tumor (26), this case suggests that individ-
-
-      ualized treatment, particularly combining surgery with targeted drugs,
-
-      may offer a potential therapeutic strategy for similar cases. However,
-
-      the long-term efﬁcacy of combined surgery and surufatinib remains to
-
-      be established, as this report is based on a single case with a relatively
-
-      short follow-up period. As awareness of this rare cancer grows, more
-
-      standardized and personalized treatment strategies may be developed
-
-      to optimize outcomes and prognosis for these patients.
-
-      ManagingmetastaticG1TNETischallenginggivenitslimited
-
-      responsivenesstoconventionaladjuvanttreatments.Ourstudysug-
-
-      gests that the integration of surgical debulking and adjuvant targeted
-
-      therapywithsurufatinibprovidesaneffectivemeansofachievinga
-
-      sustainedcompleteresponse.Whilethiscaseoffersapromising
-
-      therapeuticstrategyforsuchraremalignancies,extendedfollow-up
-
-      is necessary to validate the long-term clinical outcomes.
-
-      The original contributions presented in the study are included in
-
-      thearticle/supplementarymaterial.Furtherinquiriescanbedirected
-
-      to the corresponding author.
-
-      ThestudiesinvolvinghumanswereapprovedbyWestChina
-
-      HospitalofSichuanUniversity.Thestudieswereconductedin
-
-      accordancewiththelocallegislationandinstitutionalrequirements.
-
-      Theparticipantsprovidedtheirwritteninformedconsenttopartici-
-
-      pate inthisstudy.Writteninformedconsent wasobtainedfromthe
-
-      individual(s) for the publication of any potentially identiﬁable images
-
-      or data included in this article.
-
-      MZ:Datacuration,Methodology,Writing–originaldraft,
-
-      Writing–review&editing.QW:Datacuration,Formalanalysis,
-
-      Methodology,Software,Writing–review&editing.FH:Data
-
-      curation,Writing–originaldraft.JW:Datacuration,Formal
-
-      analysis,Writing–originaldraft.JH:Datacuration,Software,
-
-      Writing–review&editing.PS:Supervision,Writing–original
-
-      draft, Writing– review& editing.
-
-      Theauthor(s)declaredthatﬁnancialsupportwasnotreceived
-
-      forthisworkand/oritspublication.
-
-      Theauthor(s)declaredthatthisworkwasconductedinthe
-
-      absence of anycommercial orﬁnancial relationshipsthat couldbe
-
-      construedasapotentialconﬂictof interest.
-
-      Theauthor(s)declaredthatgenerativeAIwasnotusedinthe
-
-      creation ofthismanuscript.
-
-      Any alternative text (alt text) provided alongside ﬁgures in this
-
-      article has been generated by Frontiers with the support of artiﬁcial
-
-      intelligenceandreasonableeffortshavebeenmadetoensure
-
-      accuracy,includingreviewbytheauthorswhereverpossible.If
-
-      you identifyanyissues,pleasecontact us.
-
-      Zhangetal.
-
-      10.3389/fonc.2026.1766386
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      05'
-    page: 5
-  - name: '10.3389/fonc.2026.1766386 #5 / Publisher’s note'
-    text: 'All claims expressed in this article are solely those of the authors
-
-      anddonotnecessarilyrepresentthoseoftheirafﬁliated
-
-      organizations,orthoseofthepublisher,theeditorsandthe
-
-      reviewers.Anyproductthatmaybeevaluatedinthisarticle,or
-
-      claimthatmaybemadebyitsmanufacturer,isnotguaranteedor
-
-      endorsedbythepublisher.
-
-      1.Siegel RL, Giaquinto AN, Jemal A. Cancer statistics, 2024. CA Cancer J Clin.
-      (2024)
-
-      74(1):12–49. doi: 10.3322/caac.21820
-
-      2.ParkJS,KimJ,ElghiatyA,HamWS.Recentglobaltrendsintesticularcancer
-
-      incidenceandmortality.Medicine(Baltimore).(2018)97(37):e12390.doi:10.1097/
-
-      md.0000000000012390
-
-      3.Posfai B, Kuthi L, Varga L, Laczo I, Revesz J, Kranicz R, et al. The colorful
-      palette of
-
-      neuroendocrineneoplasmsinthegenitourinarytract.AnticancerRes.(2018)38
-
-      (6):3243–3254. doi:10.21873/anticanres.12589
-
-      4.SinglaN,BagrodiaA,BarabanE,FankhauserCD,GedYMA.Testiculargermcell
-
-      tumors:a review.JAMA.(2025) 333(9):793–803.doi:10.1016/j.eururo.2025.09.3578
-
-      5.AmineMM,MohamedB,MouradH,MajedH,SlimC,MehdiB,etal.
-
-      Neuroendocrinetesticulartumors:asystematicreviewandmeta-analysis.CurrUrol.
-
-      (2017)10(1):15–25.doi: 10.1159/000447146
-
-      6.MochH,CubillaAL,HumphreyPA,ReuterVE,UlbrightTM.The2016WHO
-
-      classiﬁcationoftumoursofthe urinarysystemandmalegenitalorgans-partA:renal,
-
-      penile,andtesticulartumours.EurUrol.(2016)70(1):93–105.doi:10.1016/
-
-      j.eururo.2016.02.029
-
-      7.DonohueJP,ZacharyJM,MaynardBR.Distributionofnodalmetastasesin
-
-      nonseminomatoustestiscancer.JUrol.(1982)128(2):315–320.doi:10.1016/s0022-
-
-      5347(17)52904-3
-
-      8.FossåSD,OusS,StenwigAE,LienHH,AassN,KaalhusO.Distributionof
-
-      retroperitoneallymphnodemetastasesinpatientswithnon-seminomatoustesticular
-
-      cancerinclinicalstageI. EurUrol.(1990)17(2):107–112. doi:10.1159/000464016
-
-      9.GrossmannM,KouCJ,VergonetB,SoderstromM,RendoMJ,LeeLE.Acaseof
-
-      non-seminomatous germ cell tumor complicated by tumor thrombus in an active
-      duty
-
-      soldier.MilMed.(2024)189(7-8):e1835–e1838.doi:10.1093/milmed/usae174
-
-      10.GhoreiﬁA, Liang T, Ballas L, Sherrod A, Djaladat H. Testicular carcinoid
-      tumor in
-
-      apatientwithcontralateralclassicseminoma.Urology.(2020)141:e32–e34.
-
-      doi:10.1016/j.urology.2020.04.011
-
-      11.InternationalGermCellCancerCollaborativeGroup.Internationalgermcell
-
-      consensusclassiﬁcation:aprognosticfactor-basedstagingsystemformetastaticgerm
-
-      cellcancers.JClin Oncol.(1997)15(2):594–603. doi:10.32388/dsjgih
-
-      12.DomloEA,AlmayoufFA,SulaimanSM,AlluhaybAA,AlrumehAS.Primary
-
-      neuroendocrine tumor of the testis associated with cardiac symptoms: a case
-      report and
-
-      literaturereview.Cureus.(2024) 16(5):e59955.doi:10.7759/cureus.59955
-
-      13.BangashHK,HayneD,ThyerIA.Metastaticprimarytesticularcarcinoidtumor
-
-      managed with radical orchiectomy, retroperitoneal lymph node dissection and
-      inferior
-
-      venacavaexcision:casereport.UrolCaseRep.(2017)15:56–58.doi:10.1016/
-
-      j.eucr.2017.09.004
-
-      14.Prunoiu VM, Marincas AM, Alexandru A, Radu M, Proca TM, Ravas MM, et al.
       A
 
-      rare case of a testicular teratoma associated with a neuroendocrine tumour.
-      Chirurgia
+      FIGURE 4
 
-      (Bucur).(2019) 114(2):300–306.doi:10.21614/chirurgia.114.2.300
+      68 Ga-DOTATATE PET/CT assessment following RPLND. (A) The 68 Ga-DOTATATE PET/CT
+      scan revealed the systemic tumor burden one months after postoperative changes
+      in the right abdominal wall, inguinal region, para-aortic area, and mesenteric
+      territory. (B) The 68 Ga-DOTATATE PET/CT scan revealed postoperative changes
+      in the right abdominal wall, inguinal region, para-aortic area, and mesenteric
+      territory. (C) The 68 Ga-DOTATATE PET/CT scan showed no abnormal 68 Ga-DOTATATE
+      avidity in both lungs.
 
-      15.DarreT,DoukoureB,KouyateM,DjiwaT,KwameD,Napo-KouraG.Arare
+      (5). Its rarity and nonspeci fi c clinical presentation, which often overlaps
+      with more common germ cell tumors, pose signi fi cant diagnostic pitfalls. As
+      observed in our case and supported by a meta-analysis of 132 TNET cases, most
+      patients present with a painless mass and normal serum tumor markers (AFP, b
+      -HCG, and LDH) (14). The primary diagnostic challenge lies in distinguishing
+      '' pure '' TNET from metastatic NET or TNET arising within a teratoma, the latter
+      of which may follow a different clinical course (15 -17). In our patient, the
+      integrated use of medical imaging and a speci fi c immunohistochemical panel
+      was not merely supportive but essential for diagnostic exclusion. Speci fi cally,
+      PET/CT was instrumental in ruling out an extra-testicular primary origin, while
+      the negative expression of germ cell and sex cord-stromal markers con fi rmed
+      the '' pure '' nature of the TNET. This multimodal diagnostic approach is critical
+      for navigating the pitfalls associated with such a rare and poorly de fi ned
+      entity.
 
-      testiculartumor:primarycarcinoidtumor.Tumori.(2019)105(6):NP20–NP23.
+      While radical orchiectomy remains the standard for controlling the primary lesion
+      and providing de fi nitive staging, the management of metastatic disease is
+      far less standardized. The role and limits of RPLND in TNET deserve careful
+      consideration. In conventional germ cell tumors, the lymphatic spread follows
+      a well-established anatomical drainage to the para-aortic and interaortocaval
+      nodes (18, 19). However, for TNET, the therapeutic bene fi t of RPLND is less
+      clear, especially for G1 lesions. In this case, although the metastatic nodal
+      mass was inextricably adhered to the great vessels, a meticulous dissection
+      was performed to clear the metastatic territory. Postoperative imaging identi
+      fi ed no measurable macroscopic residual masses, consistent with a clinical
+      R0 resection. However, this surgical experience underscores a critical clinical
+      uncertainty: the presence of severe intraoperative adhesions suggests a high
+      risk of microscopic or subclinical residual disease, even when radiologically
+      negative.
 
-      doi:10.1177/0300891619832263
+      Management of metastatic TNET requires a multidisciplinary approach, with a
+      comprehensive treatment strategy being essential (20). While radical orchiectomy,
+      a standard treatment, and RPLND
 
-      16.Widmeier E, Fullgraf H, Waller CF. Complete remission of Cdx-2 positive primary
+      effectively reduce the visible tumor burden and provide a de fi nitive pathological
+      basis, the potential for subclinical recurrence remains a challenge. The management
+      of metastatic testicular NETs with gross residual disease remains a clinical
+      challenge, and the selection of adjuvant therapy requires careful consideration
+      of tumor biology. Current systemic and local adjuvant options include observation,
+      somatostatin analogs (SSAs), targeted therapies, radiotherapy, systemic chemotherapy.
+      In this case, adjuvant chemotherapy and radiotherapy were not pursued based
+      on a MDT consensus. Conventional cytotoxic chemotherapy (e.g., platinum-based
+      regimens) is typically reserved for high-grade neuroendocrine carcinomas (G3)
+      with rapid proliferation. In contrast, well-differentiated G1 NETs, such as
+      the one in our patient (Ki-67 index of 1%), are inherently resistant to chemotherapy
+      due to their slow mitotic rate. Similarly, the role of radiotherapy for gross
+      residual disease in the aortocaval region is poorly de fi ned for low-grade
+      NETs. The low proliferative activity of G1 cells translates to limited radiosensitivity,
+      and the risks of radiation-induced morbidity often outweigh the marginal local
+      control bene fi ts.
 
-      testicular carcinoid tumor: 10-years follow-up and literature review. BMC Urol.
-      (2020)
+      The selection of surufatinib as the systemic treatment was justi fi ed by both
+      current clinical guidelines and its unique pharmacological pro fi le (21). Surufatinib
+      is an oral TKI that simultaneously targets vascular endothelial growth factor
+      receptors (VEGFR 1, 2, and 3), fi broblast growth factor receptor 1 (FGFR1),
+      and colony-stimulating factor 1 receptor (CSF-1R). Unlike many other TKIs, its
+      triple-target mechanism exerts potent anti-angiogenic effects while modulating
+      the tumor immune microenvironment by inhibiting tumor-associated macrophages.
+      Based on the robust evidence from the SANET-ep and SANET-p phase III trials,
+      surufatinib has been of fi cially recommended as a standard systemic therapy
+      for G1/G2 neuroendocrine tumors (22 -24). Given the severe intraoperative adhesions
+      and the associated risk of microscopic residuals, this systemic targeted approach
+      offered a more comprehensive therapeutic bene fi t compared to localized measures.
+      The effectiveness of this strategy was retrospectively validated by the achievement
+      of a sustained CR according to
 
-      20(1):197. doi:10.1186/s12894-020-00768-2
+      C'
+    page: 3
+  - name: Confl ict of interest / Conclusion
+    text: 'RECIST 1.1 criteria, with the complete disappearance of all postoperative
+      anatomical shadows at the para-aortic site.
 
-      17.Albalawi AA, Bedaiwi AK, Alotaibi MA, Bedaiwi K. Testicular neuroendocrine
-      tumors: a
+      In prognostic evaluation of testicular neuroendocrine tumor, the Ki-67 proliferative
+      index and tumor differentiation are key prognostic factors (6). Studies have
+      shown that lower Ki-67 indexes and better tumor differentiation correlate with
+      better prognosis (25). In this case, the patient '' s low Ki-67 index and good
+      tumor differentiation suggest a relatively favorable prognosis. Although the
+      presence of retroperitoneal lymph node metastasis increases the complexity and
+      dif fi culty of treatment, combined surgery and targeted therapy effectively
+      controlled the disease. Currently, the patient remains disease-free with no
+      new metastasis or disease activity, suggesting a positive treatment outcome.
+      However, longterm follow-up is still required to assess potential recurrence
+      or metastatic lesions.
 
-      case report and literature review. Cureus. (2023) 15(4):e37370. doi: 10.7759/cureus.37370
+      This case provides valuable insights into the treatment of testicular neuroendocrine
+      tumor. Surgical resection played an important role in controlling the primary
+      tumor, con fi rming the diagnosis, and reducing tumor burden, while targeted
+      therapy effectively controlled metastatic disease. Although there is no standardized
+      treatment protocol for testicular neuroendocrine tumor (26), this case suggests
+      that individualized treatment, particularly combining surgery with targeted
+      drugs, may offer a potential therapeutic strategy for similar cases. However,
+      the long-term ef fi cacy of combined surgery and surufatinib remains to be established,
+      as this report is based on a single case with a relatively short follow-up period.
+      As awareness of this rare cancer grows, more standardized and personalized treatment
+      strategies may be developed to optimize outcomes and prognosis for these patients.
 
-      18.Hale GR, Teplitsky S, Truong H, Gold SA, Bloom JB, Agarwal PK. Lymph node
-      imaging
+      Managing metastatic G1 TNET is challenging given its limited responsiveness
+      to conventional adjuvant treatments. Our study suggests that the integration
+      of surgical debulking and adjuvant targeted therapy with surufatinib provides
+      an effective means of achieving a sustained complete response. While this case
+      offers a promising therapeutic strategy for such rare malignancies, extended
+      follow-up is necessary to validate the long-term clinical outcomes.
 
-      in testicular cancer. Transl Androl Urol. (2018) 7(5):864–874. doi: 10.21037/tau.2018.07.18
+      The original contributions presented in the study are included in the article/supplementary
+      material. Further inquiries can be directed to the corresponding author.
 
-      19.Małkiewicz B, Świrkosz G, Lewandowski W, Demska K, Szczepaniak Z, Karwacki
-      J,
+      The studies involving humans were approved by West China Hospital of Sichuan
+      University. The studies were conducted in accordance with the local legislation
+      and institutional requirements. The participants provided their written informed
+      consent to participate in this study. Written informed consent was obtained
+      from the individual(s) for the publication of any potentially identi fi able
+      images or data included in this article.
 
-      etal.Lymphnodedissectionintesticularcancer:thestateoftheartandfuture
+      MZ: Data curation, Methodology, Writing -original draft, Writing -review & editing.
+      QW: Data curation, Formal analysis, Methodology, Software, Writing -review &
+      editing. FH: Data curation, Writing -original draft. JW: Data curation, Formal
+      analysis, Writing -original draft. JH: Data curation, Software, Writing -review
+      & editing. PS: Supervision, Writing -original draft, Writing -review & editing.
 
-      perspectives. Curr Oncol Rep. (2024) 26(4):318–335. doi: 10.1007/s11912-024-01511-y
+      The author(s) declared that fi nancial support was not received for this work
+      and/or its publication.
 
-      20.XiaoT,LuoLH,GuoLF,WangLQ,FengL.Primarytesticularneuroendocrine
+      The author(s) declared that this work was conducted in the absence of any commercial
+      or fi nancial relationships that could be construed as a potential con fl ict
+      of interest.
 
-      tumorwithliverlymphnodemetastasis:acasereportandreviewoftheliterature.
+      The author(s) declared that generative AI was not used in the creation of this
+      manuscript.
 
-      WorldJ ClinCases.(2022)10(32):12028–12035.doi:10.12998/wjcc.v10.i32.12028
+      Any alternative text (alt text) provided alongside fi gures in this article
+      has been generated by Frontiers with the support of arti fi cial intelligence
+      and reasonable efforts have been made to ensure accuracy, including review by
+      the authors wherever possible. If you identify any issues, please contact us.'
+    page: 5
+  - name: Publisher ' s note / Publisher’s note
+    text: 'All claims expressed in this article are solely those of the authors and
+      do not necessarily represent those of their af fi liated
 
-      21.HobdayTJ,QinR,Reidy-LagunesD,MooreMJ,StrosbergJ,KaubischA,etal.
+      1. Siegel RL, Giaquinto AN, Jemal A. Cancer statistics, 2024. CA Cancer J Clin
+      . (2024) 74(1):12 -49. doi: 10.3322/caac.21820
 
-      Multicenter phase II trial of temsirolimus and bevacizumab in pancreaticneuroendo-
+      2. Park JS, Kim J, Elghiaty A, Ham WS. Recent global trends in testicular cancer
+      incidence and mortality. Medicine (Baltimore) . (2018) 97(37):e12390. doi: 10.1097/
+      md.0000000000012390
 
-      crine tumors.JClinOncol.(2015)33(14):1551–1556.doi:10.1200/jco.2014.56.2082
+      3. Posfai B, Kuthi L, Varga L, Laczo I, Revesz J, Kranicz R, et al. The colorful
+      palette of neuroendocrine neoplasms in the genitourinary tract. Anticancer Res
+      . (2018) 38 (6):3243 -3254. doi: 10.21873/anticanres.12589
 
-      22.Xu J, Shen L, Zhou Z, Li J, Bai C, Chi Y, et al. Surufatinib in advanced
-      extrapancreatic
+      4. Singla N, Bagrodia A, Baraban E, Fankhauser CD, Ged YMA. Testicular germ
+      cell tumors: a review. JAMA . (2025) 333(9):793 -803. doi: 10.1016/j.eururo.2025.09.3578
 
+      5. Amine MM, Mohamed B, Mourad H, Majed H, Slim C, Mehdi B, et al. Neuroendocrine
+      testicular tumors: a systematic review and meta-analysis. Curr Urol . (2017)
+      10(1):15 -25. doi: 10.1159/000447146
+
+      6. Moch H, Cubilla AL, Humphrey PA, Reuter VE, Ulbright TM. The 2016 WHO classi
+      fi cation of tumours of the urinary system and male genital organs-part A: renal,
+      penile, and testicular tumours. Eur Urol . (2016) 70(1):93 -105. doi: 10.1016/
+      j.eururo.2016.02.029
+
+      7. Donohue JP, Zachary JM, Maynard BR. Distribution of nodal metastases in nonseminomatous
+      testis cancer. J Urol . (1982) 128(2):315 -320. doi: 10.1016/s00225347(17)52904-3
+
+      8. Fosså SD, Ous S, Stenwig AE, Lien HH, Aass N, Kaalhus O. Distribution of
+      retroperitoneal lymph node metastases in patients with non-seminomatous testicular
+      cancer in clinical stage I. Eur Urol . (1990) 17(2):107 -112. doi: 10.1159/000464016
+
+      9. Grossmann M, Kou CJ, Vergonet B, Soderstrom M, Rendo MJ, Lee LE. A case of
+      non-seminomatous germ cell tumor complicated by tumor thrombus in an active
+      duty soldier. Mil Med . (2024) 189(7-8):e1835 -e1838. doi: 10.1093/milmed/usae174
+
+      10. Ghorei fi A, Liang T, Ballas L, Sherrod A, Djaladat H. Testicular carcinoid
+      tumor in a patient with contralateral classic seminoma. Urology . (2020) 141:e32
+      -e34. doi: 10.1016/j.urology.2020.04.011
+
+      11. International Germ Cell Cancer Collaborative Group. International germ cell
+      consensus classi fi cation: a prognostic factor-based staging system for metastatic
+      germ cell cancers. J Clin Oncol . (1997) 15(2):594 -603. doi: 10.32388/dsjgih
+
+      12. Domlo EA, Almayouf FA, Sulaiman SM, Alluhayb AA, Alrumeh AS. Primary neuroendocrine
+      tumor of the testis associated with cardiac symptoms: a case report and literature
+      review. Cureus . (2024) 16(5):e59955. doi: 10.7759/cureus.59955
+
+      13. Bangash HK, Hayne D, Thyer IA. Metastatic primary testicular carcinoid tumor
+      managed with radical orchiectomy, retroperitoneal lymph node dissection and
+      inferior vena cava excision: case report. Urol Case Rep . (2017) 15:56 -58.
+      doi: 10.1016/ j.eucr.2017.09.004
+
+      organizations, or those of the publisher, the editors and the reviewers. Any
+      product that may be evaluated in this article, or claim that may be made by
+      its manufacturer, is not guaranteed or endorsed by the publisher.
+
+      Prunoiu VM, Marincas AM, Alexandru A, Radu M, Proca TM, Ravas MM, et al. A rare
+      case of a testicular teratoma associated with a neuroendocrine tumour. Chirurgia
+      (Bucur) . (2019) 114(2):300 -306. doi: 10.21614/chirurgia.114.2.300
+
+      15. Darre T, Doukoure B, Kouyate M, Djiwa T, Kwame D, Napo-Koura G. A rare testicular
+      tumor: primary carcinoid tumor. Tumori . (2019) 105(6):NP20 -NP23. doi: 10.1177/0300891619832263
+
+      Widmeier E, Fullgraf H, Waller CF. Complete remission of Cdx-2 positive primary
+      testicular carcinoid tumor: 10-years follow-up and literature review. BMC Urol
+      . (2020) 20(1):197. doi: 10.1186/s12894-020-00768-2
+
+      Albalawi AA, Bedaiwi AK, Alotaibi MA, Bedaiwi K. Testicular neuroendocrine tumors:
+      a case report and literature review. Cureus . (2023) 15(4):e37370. doi: 10.7759/cureus.37370
+
+      Hale GR, Teplitsky S, Truong H, Gold SA, Bloom JB, Agarwal PK. Lymph node imaging
+      in testicular cancer. Transl Androl Urol . (2018) 7(5):864 -874. doi: 10.21037/tau.2018.07.18
+
+      Ma ł kiewicz B, Ś wirkosz G, Lewandowski W, Demska K, Szczepaniak Z, Karwacki
+      J, et al. Lymph node dissection in testicular cancer: the state of the art and
+      future perspectives. Curr Oncol Rep . (2024) 26(4):318 -335. doi: 10.1007/s11912-024-01511-y
+
+      Xiao T, Luo LH, Guo LF, Wang LQ, Feng L. Primary testicular neuroendocrine tumor
+      with liver lymph node metastasis: a case report and review of the literature.
+      World J Clin Cases . (2022) 10(32):12028 -12035. doi: 10.12998/wjcc.v10.i32.12028
+
+      Hobday TJ, Qin R, Reidy-Lagunes D, Moore MJ, Strosberg J, Kaubisch A, et al.
+      Multicenter phase II trial of temsirolimus and bevacizumab in pancreatic neuroendocrine
+      tumors. J Clin Oncol . (2015) 33(14):1551 -1556. doi: 10.1200/jco.2014.56.2082
+
+      Xu J, Shen L, Zhou Z, Li J, Bai C, Chi Y, et al. Surufatinib in advanced extrapancreatic
       neuroendocrine tumours (SANET-ep): a randomised, double-blind, placebo-controlled,
-      phase
+      phase 3 study. Lancet Oncol . (2020) 21(11):1500 -1512. doi: 10.1016/s1470-2045(20)30496-4
 
-      3 study. Lancet Oncol. (2020) 21(11):1500–1512. doi: 10.1016/s1470-2045(20)30496-4
-
-      23.XuJ,ShenL,BaiC,WangW,LiJ,YuX,etal.Surufatinibinadvancedpancreatic
-
+      Xu J, Shen L, Bai C, Wang W, Li J, Yu X, et al. Surufatinib in advanced pancreatic
       neuroendocrine tumours (SANET-p): a randomised, double-blind, placebo-controlled,
-      phase
+      phase 3 study. Lancet Oncol . (2020) 21(11):1489 -1499. doi: 10.1016/s1470-2045(20)30493-9
 
-      3 study. Lancet Oncol. (2020) 21(11):1489–1499. doi: 10.1016/s1470-2045(20)30493-9
+      Lu X, Yan S, Koral KA, Chen Z. Surufatinib for the treatment of advanced extrapancreatic
+      neuroendocrine tumors. Expert Rev Anticancer Ther . (2021) 21(9):917 -926. doi:
+      10.1080/14737140.2021.1944110
 
-      24.LuX,YanS,KoralKA,ChenZ.Surufatinibforthetreatmentofadvanced
+      Sorbye H, Welin S, Langer SW, Vestermark LW, Holt N, Osterlund P, et al. Predictive
+      and prognostic factors for treatment and survival in 305 patients with advanced
+      gastrointestinal neuroendocrine carcinoma (WHO G3): the NORDIC NEC study. Ann
+      Oncol . (2013) 24(1):152 -160. doi: 10.1093/annonc/mds276
 
-      extrapancreatic neuroendocrine tumors. Expert Rev Anticancer Ther. (2021) 21(9):917–
-
-      926. doi:10.1080/14737140.2021.1944110
-
-      25.SorbyeH,WelinS,LangerSW,VestermarkLW,HoltN,OsterlundP,etal.
-
-      Predictiveandprognosticfactorsfortreatmentandsurvivalin305patientswith
-
-      advancedgastrointestinalneuroendocrinecarcinoma(WHOG3):theNORDICNEC
-
-      study. Ann Oncol.(2013) 24(1):152–160.doi:10.1093/annonc/mds276
-
-      26.MochH, Amin MB,Berney DM, CompératEM,Gill AJ,HartmannA,et al.The
-
-      2022WorldHealthOrganizationclassiﬁcationoftumoursoftheurinarysystemand
-
-      malegenitalorgans-partA:renal,penile,andtesticulartumours.EurUrol.(2022)82
-
-      (5):458–468.doi:10.1016/j.eururo.2022.06.016
-
-      Zhangetal.
-
-      10.3389/fonc.2026.1766386
-
-      FrontiersinOncology
-
-      frontiersin.org
-
-      06'
+      26. Moch H, Amin MB, Berney DM, Compérat EM, Gill AJ, Hartmann A, et al. The
+      2022 World Health Organization classi fi cation of tumours of the urinary system
+      and male genital organs-part A: renal, penile, and testicular tumours. Eur Urol
+      . (2022) 82 (5):458 -468. doi: 10.1016/j.eururo.2022.06.016'
     page: 6
-  tables:
-  - table_id: TBL:0000
-    page: 1
-    bbox:
-    - 54.10790261989686
-    - 378.3121337890625
-    - 76.12216440836589
-    - 395.77301025390625
-    header:
-    - ITATION
-    - Col2
-    rows:
-    - - hang M
-      - hang M
-    - - an J
-      - an
-    asset_path: images/p0001_r000.png
+  tables: []
   images:
   - image_id: IMG:0000
-    caption: FIGURE1
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 1
+    bbox:
+    - 48.016557508209694
+    - 761.3532746847523
+    - 157.39318695951317
+    - 794.0476243299327
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0001_r000.png
+  - image_id: IMG:0001
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 1
+    bbox:
+    - 47.78973619603247
+    - 688.135426916338
+    - 126.646819658273
+    - 704.3995146582826
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0001_r001.png
+  - image_id: IMG:0002
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
     page: 2
     bbox:
-    - 318.5574035644531
-    - 566.7591552734375
-    - 531.15576171875
-    - 737.3480224609375
+    - 303.5068490650317
+    - 65.22779111765908
+    - 546.1731077233659
+    - 284.3201272276423
     kind: figure
     extracted_values: {}
-    asset_path: images/p0002_r001.png
-  - image_id: IMG:0001
-    caption: FIGURE2
+    asset_path: images/p0002_r002.png
+  - image_id: IMG:0003
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
     page: 3
     bbox:
-    - 155.50900268554688
-    - 82.9990234375
-    - 438.9729919433594
-    - 306.141845703125
-    kind: figure
-    extracted_values: {}
-    asset_path: images/p0003_r002.png
-  - image_id: IMG:0002
-    caption: FIGURE3
-    page: 3
-    bbox:
-    - 84.64248657226562
-    - 557.5181884765625
-    - 509.8389892578125
-    - 728.3338623046875
+    - 48.31499695974958
+    - 452.48875977152034
+    - 545.1579791917834
+    - 768.0133279378817
     kind: figure
     extracted_values: {}
     asset_path: images/p0003_r003.png
-  - image_id: IMG:0003
-    caption: FIGURE4
-    page: 4
+  - image_id: IMG:0004
+    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->
+    page: 3
     bbox:
-    - 84.64248657226562
-    - 82.9990234375
-    - 509.8389892578125
-    - 266.7969970703125
+    - 48.61877284444313
+    - 65.09850938185923
+    - 545.8861160279259
+    - 294.32143308156367
     kind: figure
     extracted_values: {}
-    asset_path: images/p0004_r004.png
+    asset_path: images/p0003_r004.png
+  - image_id: IMG:0005
+    caption: 'FIGURE 4
+
+
+      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
+      -->'
+    page: 4
+    bbox:
+    - 83.87693405507852
+    - 574.5560683246697
+    - 509.6482383675154
+    - 757.5681690268844
+    kind: figure
+    extracted_values: {}
+    asset_path: images/p0004_r005.png
