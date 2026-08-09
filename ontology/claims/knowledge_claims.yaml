@@ -1,11 +1,14 @@
 # KnowledgeClaim + Provenance（Knowledge ≠ Truth）
 # source_id / evidence_ids 使用三层 ID 中的 Evidence 层（pubmed: / eln: / ev:）
+# claim_status: validated → World Model knowledge；extracted → provenance only
 claims:
   - claim_id: claim:savo_targets_met
     subject_id: HMD:ENT:DC:savolitinib
     predicate: targets
     object_id: HMD:ENT:TGT:MET
     confidence: 0.95
+    claim_status: validated
+    source_count: 2
     source_id: pubmed:00000001
     source_type: literature
     extracted_by: seed
@@ -19,6 +22,8 @@ claims:
     predicate: investigates
     object_id: HMD:ENT:IND:nsclc
     confidence: 0.93
+    claim_status: validated
+    source_count: 1
     source_id: pubmed:00000001
     source_type: literature
     extracted_by: seed
@@ -32,6 +37,8 @@ claims:
     predicate: associatedWith
     object_id: HMD:ENT:IND:nsclc
     confidence: 0.9
+    claim_status: validated
+    source_count: 1
     source_id: pubmed:00000001
     source_type: literature
     extracted_by: seed
@@ -45,6 +52,8 @@ claims:
     predicate: belongsTo
     object_id: HMD:ENT:PRG:met_nsclc
     confidence: 1.0
+    claim_status: validated
+    source_count: 1
     source_id: SEED_INTERNAL
     source_type: manual
     extracted_by: seed
@@ -56,6 +65,8 @@ claims:
     predicate: testedIn
     object_id: HMD:ENT:EXP:2025_012
     confidence: 1.0
+    claim_status: validated
+    source_count: 1
     source_id: eln:EXP-2025-012
     source_type: eln
     extracted_by: seed
@@ -69,6 +80,8 @@ claims:
     predicate: hasAssay
     object_id: HMD:ENT:ASY:met_ic50
     confidence: 1.0
+    claim_status: validated
+    source_count: 1
     source_id: lims:ASY-001
     source_type: lims
     extracted_by: seed
@@ -82,6 +95,8 @@ claims:
     predicate: targets
     object_id: HMD:ENT:TGT:MET
     confidence: 0.88
+    claim_status: validated
+    source_count: 1
     source_id: patent:US20260000001
     source_type: patent
     extracted_by: seed
@@ -89,3 +104,20 @@ claims:
     span: >-
       compounds of the invention inhibit MET kinase activity
     created_at: "2026-01-01T00:00:00Z"
+
+  # extracted 样例：仅 provenance，不进 knowledge 边
+  - claim_id: claim:savo_inhibits_met_extracted
+    subject_id: HMD:ENT:DC:savolitinib
+    predicate: inhibits
+    object_id: HMD:ENT:TGT:MET
+    object_value: MET phosphorylation
+    confidence: 0.72
+    claim_status: extracted
+    source_count: 1
+    source_id: pubmed:00000001
+    source_type: literature
+    extracted_by: tri_modal
+    evidence_ids: [ev:lit:savo_met_1]
+    span: >-
+      Savolitinib inhibits MET phosphorylation in EGFR-positive models
+    created_at: "2026-08-09T00:00:00Z"

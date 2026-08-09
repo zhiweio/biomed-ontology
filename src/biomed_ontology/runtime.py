@@ -51,6 +51,7 @@ def open_dual_surface(
     from biomed_ontology.foundation.world import load_world_model
     from biomed_ontology.tools import ToolApi
 
+    # bern2_url=None → load_world_model 读 HMD_BERN2_URL；显式 "" 可关闭远程
     world = load_world_model(bern2_url=bern2_url)
     foundation = FoundationApi(world)
 

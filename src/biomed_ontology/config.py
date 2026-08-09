@@ -76,6 +76,20 @@ class Settings(BaseSettings):
     # OpenMetadata 唯一 Admin（业务读写共用此账号）
     openmetadata_email: str = "noparking188@gmail.com"
     openmetadata_password: SecretStr = SecretStr("Hello123456,")
+
+    # --- Document Lake / Iceberg / Trino ------------------------------------
+    minio_endpoint: str = "http://localhost:9000"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: SecretStr = SecretStr("minioadmin")
+    minio_secure: bool = False
+    minio_documents_bucket: str = "hmd-documents"
+    minio_lake_bucket: str = "hmd-lake"
+    iceberg_rest_uri: str = "http://localhost:8181"
+    trino_host: str = "localhost"
+    trino_port: int = Field(default=8080, gt=0)
+    trino_catalog: str = "iceberg"
+    trino_schema: str = "hmd"
+
     bios_license_ack: str = ""
     bios_init: Literal["full", "subset"] = "full"
     bios_max_concepts: int = Field(default=0, ge=0)  # 0 = 全量不截断
@@ -105,6 +119,8 @@ class Settings(BaseSettings):
         "graphdb_url",
         "bern2_url",
         "openmetadata_url",
+        "minio_endpoint",
+        "iceberg_rest_uri",
     )
     @classmethod
     def _strip_trailing_slash(cls, v: str) -> str:

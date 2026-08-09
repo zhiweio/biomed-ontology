@@ -14,5 +14,11 @@
 | D10 | 许可分层贯穿全链路 | `licensing.py`、named graph、LicenseScope | [Tier](../licensing/tiers.md)、[RDF](../ontology/rdf.md) |
 | D11 | （与 D10 配套）许可感知 RDF 查询 | `ontology/rdf.py` | [RDF](../ontology/rdf.md) |
 | D12 | 仅归一化不够；要有事实层与质量层才叫底座 | `hmd_fact.yaml` | [分层](../architecture/layers.md) |
+| D13 | Evidence ∥ Claim 双线并行，不全量转 Ontology | `lake/ingest.py` | [Document Pipeline](../architecture/document-pipeline.md) |
+| D14 | ingest 默认 `claim_status=extracted`；validated 才进 knowledge | `hmd_enterprise.yaml` | [Document Pipeline](../architecture/document-pipeline.md) |
+| D15 | 双写硬依赖 BERN2；Tree Chunk 为正式 Evidence Object | `corpus/tree.py`、`lake/steps.py` | [chunks](../parse/chunks.md) |
+| D16 | 复杂入湖用 Prefect；业务逻辑只在 steps | `lake/flows.py` | [Document Pipeline](../architecture/document-pipeline.md) |
+| D17 | BIOS_v3 常挂 `graph:biomedical`；UMLS 等可扩展 | `bios.py`、`biomedical_sources.py` | [Foundation](../architecture/foundation.md) |
+| D18 | OM 经 Trino 官方 connector 治理 Iceberg；不止 Glossary | `lake/om_governance.py` | [OpenMetadata](../architecture/openmetadata.md) |
 
 实现细节以源码与 schema 描述为准；本表供跳转。新增决策时：写进相关 schema 字段描述 + 本表一行 + 必要时加不变量条目。

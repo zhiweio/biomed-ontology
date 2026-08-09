@@ -115,7 +115,15 @@ def load_world_model(
     默认分层路径：``ontology/{entities,dictionary,claims}``
     + ``data/foundation/{evidence,assets}``。
     若 ``root`` 下仍有完整 monolithic YAML（测试夹具），则全部从 ``root`` 读取。
+
+    ``bern2_url`` 缺省时读 ``HMD_BERN2_URL`` / ``settings.bern2_url``；
+    未配置则 ER 仅走企业词典（不访问远程 BERN2）。
     """
+    if bern2_url is None:
+        from biomed_ontology.config import settings
+
+        bern2_url = settings.bern2_url or None
+    bern2_url = (bern2_url or "").rstrip("/") or None
     base = root or DEFAULT_FOUNDATION
     if (base / "enterprise_entities.yaml").exists():
         entities_path = base / "enterprise_entities.yaml"
@@ -256,6 +264,7 @@ def _maybe_ent(value: str) -> str:
 
 
 def _parse_claim(row: dict[str, Any]) -> KnowledgeClaim:
+    src_count = row.get("source_count")
     return KnowledgeClaim(
         claim_id=row["claim_id"],
         subject_id=row["subject_id"],
@@ -263,6 +272,8 @@ def _parse_claim(row: dict[str, Any]) -> KnowledgeClaim:
         object_id=row.get("object_id"),
         object_value=row.get("object_value"),
         confidence=float(row.get("confidence", 1.0)),
+        claim_status=str(row.get("claim_status") or "validated"),
+        source_count=int(src_count) if src_count is not None else None,
         source_id=row.get("source_id"),
         source_type=row.get("source_type", "manual"),
         extracted_by=row.get("extracted_by", "seed"),

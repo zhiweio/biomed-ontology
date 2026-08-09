@@ -81,6 +81,13 @@ dev = [
 docs = [
     "mkdocs-material>=9.5.0",
 ]
+lake = [
+    "minio>=7.2.0",
+    "pyiceberg[s3fs]>=0.7.0",
+    "pyarrow>=17.0.0",
+    "prefect>=3.0.0",
+    "trino>=0.330.0",
+]
 
 [project.scripts]
 hmd = "biomed_ontology.cli:app"

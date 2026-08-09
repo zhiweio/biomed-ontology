@@ -19,7 +19,7 @@ from biomed_ontology.foundation.graphs import (
 )
 from biomed_ontology.foundation.world import WorldModel, entity_iri, load_world_model
 
-__all__ = ["SyncResult", "sync_world_model"]
+__all__ = ["SyncResult", "append_extracted_claims", "sync_world_model"]
 
 
 @dataclass
@@ -170,15 +170,20 @@ def _claims_turtle(wm: WorldModel) -> tuple[str, str]:
     ]
     for c in wm.claims:
         subj = f"<{entity_iri(c.subject_id)}>"
-        if c.object_id:
+        status = (c.claim_status or "validated").strip() or "validated"
+        # 仅 validated 物化 knowledge 边，避免抽取垃圾场
+        if status == "validated" and c.object_id:
             obj = f"<{entity_iri(c.object_id)}>"
             know.append(f"{subj} hmd:{c.predicate} {obj} .")
         claim = f"<{HMD_NS}claim/{_esc_iri(c.claim_id)}>"
         prov_lines.append(f"{claim} a hmd:KnowledgeClaim ;")
         prov_lines.append(f"  hmd:subject {subj} ;")
         prov_lines.append(f'  hmd:predicate "{_esc(c.predicate)}" ;')
+        prov_lines.append(f'  hmd:claimStatus "{_esc(status)}" ;')
         if c.object_id:
             prov_lines.append(f"  hmd:object <{entity_iri(c.object_id)}> ;")
+        if c.object_value:
+            prov_lines.append(f'  hmd:objectValue "{_esc(c.object_value)}" ;')
         if c.source_id:
             prov_lines.append(f'  hmd:sourceId "{_esc(c.source_id)}" ;')
             prov_lines.append(f'  prov:wasDerivedFrom "{_esc(c.source_id)}" ;')
@@ -186,6 +191,8 @@ def _claims_turtle(wm: WorldModel) -> tuple[str, str]:
             prov_lines.append(f'  hmd:sourceType "{_esc(c.source_type)}" ;')
         if c.span:
             prov_lines.append(f'  hmd:span "{_esc(c.span)}" ;')
+        if c.source_count is not None:
+            prov_lines.append(f"  hmd:sourceCount {int(c.source_count)} ;")
         for eid in c.evidence_ids:
             prov_lines.append(f'  hmd:evidenceId "{_esc(eid)}" ;')
         prov_lines.append(f'  hmd:extractedBy "{_esc(c.extracted_by)}" ;')
@@ -194,74 +201,100 @@ def _claims_turtle(wm: WorldModel) -> tuple[str, str]:
     return "\n".join(know), "\n".join(prov_lines)
 
 
+def append_extracted_claims(gdb: GraphDbClient, claims: list[Any]) -> int:
+    """增量写入 extracted claims 到 provenance（不 clear、不写 knowledge）。"""
+    from biomed_ontology.foundation.graphs import GRAPH_PROVENANCE
+
+    if not claims:
+        return 0
+    lines = [
+        "@prefix hmd: <" + HMD_NS + "> .",
+        "@prefix prov: <http://www.w3.org/ns/prov#> .",
+        "",
+    ]
+    n = 0
+    for c in claims:
+        status = getattr(c, "claim_status", None) or "extracted"
+        if status != "extracted":
+            continue
+        subj = f"<{entity_iri(c.subject_id)}>"
+        claim = f"<{HMD_NS}claim/{_esc_iri(c.claim_id)}>"
+        lines.append(f"{claim} a hmd:KnowledgeClaim ;")
+        lines.append(f"  hmd:subject {subj} ;")
+        lines.append(f'  hmd:predicate "{_esc(c.predicate)}" ;')
+        lines.append('  hmd:claimStatus "extracted" ;')
+        if c.object_id:
+            lines.append(f"  hmd:object <{entity_iri(c.object_id)}> ;")
+        if getattr(c, "object_value", None):
+            lines.append(f'  hmd:objectValue "{_esc(c.object_value)}" ;')
+        if c.source_id:
+            lines.append(f'  hmd:sourceId "{_esc(c.source_id)}" ;')
+            lines.append(f'  prov:wasDerivedFrom "{_esc(c.source_id)}" ;')
+        if c.source_type:
+            lines.append(f'  hmd:sourceType "{_esc(c.source_type)}" ;')
+        if c.span:
+            lines.append(f'  hmd:span "{_esc(c.span)}" ;')
+        for eid in c.evidence_ids or []:
+            lines.append(f'  hmd:evidenceId "{_esc(eid)}" ;')
+        lines.append(f'  hmd:extractedBy "{_esc(c.extracted_by)}" ;')
+        lines.append(f"  hmd:confidence {c.confidence} .")
+        lines.append("")
+        n += 1
+    if n:
+        gdb.load_turtle("\n".join(lines), graph_uri=GRAPH_PROVENANCE)
+    return n
+
+
 def _upsert_evidence_milvus(wm: WorldModel, uri: str) -> int:
-    """Foundation seed → Milvus。种子体量小，用确定性 dense 占位（非生产语料嵌入）。"""
+    """Foundation seed → Milvus Evidence Object 字段。"""
+    from biomed_ontology.lake.evidence_index import upsert_evidence_objects
+
+    chunks = []
+    for e in wm.evidence:
+        chunks.append(
+            type(
+                "E",
+                (),
+                {
+                    "chunk_id": e.chunk_id or e.evidence_id,
+                    "parent_id": "",
+                    "doc_id": e.doc_id or "",
+                    "section_path": "",
+                    "node_kind": "sentence",
+                    "text": e.quote or e.text,
+                    "entity_ids": list(e.entity_ids),
+                    "concept_ids": list(e.entity_ids),
+                },
+            )()
+        )
+    # 保留 seed evidence_id：先走通用 upsert，再覆盖主键行
+    n = upsert_evidence_objects(chunks, uri=uri)
+    if not wm.evidence:
+        return n
+    from pymilvus import MilvusClient
+
+    client = MilvusClient(uri=uri)
     rows: list[dict[str, Any]] = []
     for i, e in enumerate(wm.evidence):
         vec = [((i + 1) * (j + 1) % 97) / 97.0 for j in range(32)]
         rows.append(
             {
                 "evidence_id": e.evidence_id,
+                "chunk_id": (e.chunk_id or e.evidence_id)[:128],
+                "parent_id": "",
+                "doc_id": (e.doc_id or "")[:256],
+                "section_path": "",
+                "node_kind": "sentence",
                 "text": (e.quote or e.text)[:8000],
                 "quote": (e.quote or e.text)[:8000],
                 "entity_ids": list(e.entity_ids)[:64],
-                "doc_id": (e.doc_id or "")[:256],
                 "collection": (e.collection or "literature")[:64],
                 "score": float(e.score),
                 "dense": vec,
             }
         )
-    return _raw_milvus_upsert(uri, rows)
-
-
-def _raw_milvus_upsert(uri: str, rows: list[dict[str, Any]]) -> int:
-    from pymilvus import DataType, MilvusClient
-
-    client = MilvusClient(uri=uri)
-    name = "foundation_evidence"
-    # schema 演进：缺字段则重建
-    need_recreate = True
-    if client.has_collection(name):
-        try:
-            info = client.describe_collection(name)
-            fields = {f["name"] for f in info.get("fields", [])}
-            required = {
-                "evidence_id",
-                "text",
-                "quote",
-                "entity_ids",
-                "doc_id",
-                "collection",
-                "score",
-                "dense",
-            }
-            need_recreate = not required <= fields
-        except Exception:
-            need_recreate = True
-    if need_recreate:
-        if client.has_collection(name):
-            client.drop_collection(name)
-        schema = MilvusClient.create_schema(auto_id=False, enable_dynamic_field=True)
-        schema.add_field("evidence_id", DataType.VARCHAR, is_primary=True, max_length=128)
-        schema.add_field("text", DataType.VARCHAR, max_length=8192)
-        schema.add_field("quote", DataType.VARCHAR, max_length=8192)
-        schema.add_field(
-            "entity_ids",
-            DataType.ARRAY,
-            element_type=DataType.VARCHAR,
-            max_capacity=64,
-            max_length=128,
-        )
-        schema.add_field("doc_id", DataType.VARCHAR, max_length=256)
-        schema.add_field("collection", DataType.VARCHAR, max_length=64)
-        schema.add_field("score", DataType.FLOAT)
-        schema.add_field("dense", DataType.FLOAT_VECTOR, dim=32)
-        idx = client.prepare_index_params()
-        idx.add_index(field_name="dense", metric_type="IP", index_type="FLAT")
-        client.create_collection(name, schema=schema, index_params=idx)
-
-    client.upsert(collection_name=name, data=rows)
-    client.flush(name)
+    client.upsert(collection_name="foundation_evidence", data=rows)
+    client.flush("foundation_evidence")
     return len(rows)
 
 

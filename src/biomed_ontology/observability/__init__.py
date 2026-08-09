@@ -1,7 +1,8 @@
 """可观测四支柱的运行时底座（L7）。
 
 设计上刻意不依赖 OTel SDK 与 OpenSearch：本模块只定义采集契约与内存/JSONL 落盘，
-真实部署时把 `TraceRecorder` 换成 OTel exporter、把 `JsonlStore` 换成 Iceberg 写入即可，
+真实部署时把 `TraceRecorder` 换成 OTel exporter、把 `JsonlStore` 换成 Iceberg 写入
+（见 `biomed_ontology.lake` REST Catalog），接口保持 `append` / `read_all` 不变，
 被埋点的业务代码一行不用改。
 
 四支柱各自回答一个问题：

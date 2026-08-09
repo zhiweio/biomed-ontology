@@ -130,6 +130,12 @@ tasks:
       - docker compose -f {{.FOUNDATION_COMPOSE}} up -d {{.MILVUS_SERVICES}}
       - 'echo "Milvus: http://localhost:19530 (project hmd-foundation)"'
 
+  lake:up:
+    desc: 启动 MinIO + Iceberg REST + Trino（湖表 / OM connector）
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} up -d minio iceberg-rest trino
+      - 'echo "MinIO :9000  Iceberg REST :8181  Trino :8080"'
+
   milvus:down:
     desc: 仅停止 Milvus 三服务（不拆 GraphDB/OM）
     cmds:
@@ -230,23 +236,16 @@ tasks:
         fi
 
   foundation:bern2:detect:
-    desc: 探测 BERN2 加速后端（写入 .bern2.env：ACCEL/RUNTIME）
+    desc: 探测 BERN2 加速后端（写入 .bern2.env：ACCEL/RUNTIME；默认本机 native）
     cmds:
       - |
         set -euo pipefail
-        # 覆盖：BERN2_ACCEL=cuda|cpu  BERN2_RUNTIME=docker|native
+        # 覆盖：BERN2_ACCEL=cuda|mps|cpu  BERN2_RUNTIME=docker|native
+        # 默认本机（native）；Docker 需显式 BERN2_RUNTIME=docker 或 task bern2:up:docker
         OS="$(uname -s)"
         ARCH="$(uname -m)"
-        RUNTIME="${BERN2_RUNTIME:-}"
+        RUNTIME="${BERN2_RUNTIME:-native}"
         ACCEL="${BERN2_ACCEL:-}"
-        if [ -z "$RUNTIME" ]; then
-          if [ "$OS" = "Darwin" ] && [ "${BERN2_PREFER_NATIVE:-1}" = "1" ]; then
-            # Apple Silicon：Docker 无法透传 MPS，默认走原生以用 GPU
-            RUNTIME=native
-          else
-            RUNTIME=docker
-          fi
-        fi
         if [ -z "$ACCEL" ]; then
           if [ "$RUNTIME" = "native" ] && [ "$OS" = "Darwin" ]; then
             ACCEL=mps
@@ -277,11 +276,16 @@ tasks:
         cat docker/bern2/.bern2.env
 
   foundation:up:bern2:
-    desc: 构建并启动 BERN2（自动 macOS MPS 原生 / Linux CUDA Docker）
+    desc: 构建并启动 BERN2（默认本机 native；BERN2_RUNTIME=docker 走容器）
     deps: [foundation:bern2:detect]
     cmds:
       - |
         set -euo pipefail
+        if curl -sS -m 2 -o /dev/null -X POST http://127.0.0.1:8888/plain \
+            -H 'Content-Type: application/json' -d '{"text":"EGFR"}' 2>/dev/null; then
+          echo "BERN2 already up → http://127.0.0.1:8888（跳过启动）"
+          exit 0
+        fi
         if [ ! -f docker/bern2/resources/.fetched ] && [ -z "$(ls -A "${BERN2_RESOURCES:-docker/bern2/resources}" 2>/dev/null || true)" ]; then
           echo "缺少 BERN2 resources。请先：task foundation:bern2:fetch"
           exit 2
@@ -324,11 +328,67 @@ tasks:
           pkill -f 'GNormPlusServer.main.jar' 2>/dev/null || true
           pkill -f 'tmVar2Server.main.jar' 2>/dev/null || true
           pkill -f 'python -u server.py' 2>/dev/null || true
+          pkill -f 'disease_normalizer' 2>/dev/null || true
+          pkill -f 'gnormplus-normalization' 2>/dev/null || true
           rm -f docker/bern2/.bern2.pid
           echo "BERN2 native stopped"
         fi
         docker compose -f {{.FOUNDATION_COMPOSE}} -f docker/docker-compose.bern2-cuda.yml --profile bern2 stop bern2 2>/dev/null || \
           docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 stop bern2 2>/dev/null || true
+
+  # --- BERN2 快捷入口（默认本机；已有 foundation:*:bern2 仍保留）------------
+  bern2:up:
+    desc: 本机启动 BERN2（默认；已在 :8888 则跳过）
+    cmds:
+      - BERN2_RUNTIME=native task foundation:up:bern2
+
+  bern2:up:docker:
+    desc: Docker 启动 BERN2（macOS 强制 CPU）
+    cmds:
+      - BERN2_RUNTIME=docker task foundation:up:bern2
+
+  bern2:down:
+    desc: 停止 BERN2（native + docker profile）
+    cmds:
+      - task: foundation:down:bern2
+
+  bern2:status:
+    desc: 查看 BERN2 是否在 :8888 就绪
+    cmds:
+      - |
+        set -euo pipefail
+        code="$(curl -sS -m 5 -o /tmp/bern2_status.json -w "%{http_code}" -X POST http://127.0.0.1:8888/plain \
+          -H 'Content-Type: application/json' -d '{"text":"EGFR"}' || echo 000)"
+        if [ "$code" = "200" ]; then
+          echo "BERN2 UP → http://127.0.0.1:8888"
+          python3 -c 'import json;d=json.load(open("/tmp/bern2_status.json"));anns=d.get("annotations") or [];print("annotations",len(anns));[print(" ",a.get("mention"),a.get("obj"),a.get("id")) for a in anns[:5]]'
+          if [ -f docker/bern2/.bern2.pid ]; then echo "native pid=$(cat docker/bern2/.bern2.pid)"; fi
+          if [ -f docker/bern2/.bern2.env ]; then echo "---"; cat docker/bern2/.bern2.env; fi
+        else
+          echo "BERN2 DOWN（:8888 无响应，http=$code）"
+          echo "启动：task bern2:up  或  task bern2:up:docker"
+          exit 1
+        fi
+
+  bern2:wait:
+    desc: 等待 BERN2 /plain 就绪（最长约 15 分钟）
+    cmds:
+      - |
+        set -euo pipefail
+        for i in $(seq 1 180); do
+          if curl -sS -m 5 -o /dev/null -X POST http://127.0.0.1:8888/plain \
+              -H 'Content-Type: application/json' -d '{"text":"EGFR"}' 2>/dev/null; then
+            echo "BERN2 ready (attempt $i)"
+            task bern2:status
+            exit 0
+          fi
+          if [ $((i % 6)) -eq 0 ]; then
+            echo "waiting… $i ($(date +%H:%M:%S))"
+          fi
+          sleep 5
+        done
+        echo "TIMEOUT waiting for BERN2" >&2
+        exit 1
 
   foundation:down:
     desc: 拆除 hmd-foundation 全栈（含 Milvus + BERN2 profile）

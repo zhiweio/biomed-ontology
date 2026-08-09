@@ -139,19 +139,21 @@ def fetch_claims(
     enterprise_id: str,
     *,
     predicate: str | None = None,
+    include_extracted: bool = False,
 ) -> list[KnowledgeClaim]:
     iri = entity_iri(enterprise_id)
     pred_filter = f'FILTER(?pred = "{predicate}")' if predicate else ""
     q = f"""
     PREFIX hmd: <{HMD_NS}>
     PREFIX prov: <http://www.w3.org/ns/prov#>
-    SELECT ?claim ?pred ?subj ?obj ?conf ?source ?stype ?span ?extracted ?evid
+    SELECT ?claim ?pred ?subj ?obj ?conf ?source ?stype ?span ?extracted ?evid ?status ?objval
     WHERE {{
       GRAPH <{GRAPH_PROVENANCE}> {{
         ?claim a hmd:KnowledgeClaim ;
                hmd:subject ?subj ;
                hmd:predicate ?pred .
         OPTIONAL {{ ?claim hmd:object ?obj }}
+        OPTIONAL {{ ?claim hmd:objectValue ?objval }}
         OPTIONAL {{ ?claim hmd:confidence ?conf }}
         OPTIONAL {{ ?claim hmd:sourceId ?source }}
         OPTIONAL {{ ?claim prov:wasDerivedFrom ?source }}
@@ -159,6 +161,7 @@ def fetch_claims(
         OPTIONAL {{ ?claim hmd:span ?span }}
         OPTIONAL {{ ?claim hmd:extractedBy ?extracted }}
         OPTIONAL {{ ?claim hmd:evidenceId ?evid }}
+        OPTIONAL {{ ?claim hmd:claimStatus ?status }}
       }}
       FILTER(?subj = <{iri}> || ?obj = <{iri}>)
       {pred_filter}
@@ -171,6 +174,9 @@ def fetch_claims(
         cid = claim_iri.rsplit("/", 1)[-1] if claim_iri else row.get("pred", "claim")
         subj = enterprise_id_from_iri(row.get("subj", "")) or ""
         obj = enterprise_id_from_iri(row.get("obj", "")) if row.get("obj") else None
+        status = (row.get("status") or "validated").strip() or "validated"
+        if not include_extracted and status == "extracted":
+            continue
         if cid not in by_id:
             conf_raw = row.get("conf") or "1.0"
             try:
@@ -182,7 +188,9 @@ def fetch_claims(
                 subject_id=subj,
                 predicate=row.get("pred") or "",
                 object_id=obj,
+                object_value=row.get("objval") or None,
                 confidence=conf,
+                claim_status=status,
                 source_id=row.get("source") or None,
                 source_type=row.get("stype") or "manual",
                 extracted_by=row.get("extracted") or "graphdb",
@@ -193,7 +201,7 @@ def fetch_claims(
         if evid and evid not in by_id[cid].evidence_ids:
             by_id[cid].evidence_ids.append(evid)
 
-    # 若 provenance 空，回落 knowledge 图三元组
+    # 若 provenance 空，回落 knowledge 图三元组（视为 validated）
     if not by_id:
         q2 = f"""
         PREFIX hmd: <{HMD_NS}>
@@ -219,6 +227,7 @@ def fetch_claims(
                 predicate=pred,
                 object_id=obj,
                 confidence=1.0,
+                claim_status="validated",
                 source_type="graphdb",
                 extracted_by="graphdb",
             )

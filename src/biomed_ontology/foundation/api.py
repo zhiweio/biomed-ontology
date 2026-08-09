@@ -243,21 +243,35 @@ class FoundationApi:
             }
 
     def get_relationships(
-        self, enterprise_id: str, *, predicate: str | None = None
+        self,
+        enterprise_id: str,
+        *,
+        predicate: str | None = None,
+        include_extracted: bool = False,
     ) -> dict[str, Any]:
         with observe_retrieval(
             "graphdb.provenance+knowledge",
             op="get_relationships",
-            input_summary={"enterprise_id": enterprise_id, "predicate": predicate},
+            input_summary={
+                "enterprise_id": enterprise_id,
+                "predicate": predicate,
+                "include_extracted": include_extracted,
+            },
         ) as obs:
             obs["backend"] = "graphdb"
             obs["why"] = {
                 "graphs": [GRAPH_PROVENANCE, GRAPH_KNOWLEDGE],
                 "yaml_fallback": False,
+                "default_claim_status": "validated",
             }
             gdb = self._require_graphdb()
             try:
-                claims = fetch_claims(gdb, enterprise_id, predicate=predicate)
+                claims = fetch_claims(
+                    gdb,
+                    enterprise_id,
+                    predicate=predicate,
+                    include_extracted=include_extracted,
+                )
             except Exception as exc:
                 raise BackendUnavailableError(f"GraphDB 读关系失败：{exc}") from exc
             obs["output"] = {"claim_count": len(claims)}
@@ -265,6 +279,7 @@ class FoundationApi:
                 "ontology_release_id": self.world.release_id,
                 "enterprise_id": enterprise_id,
                 "claims": [c.to_dict() for c in claims],
+                "include_extracted": include_extracted,
                 "backend": "graphdb",
             }
 

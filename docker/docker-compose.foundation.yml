@@ -1,5 +1,5 @@
 # Enterprise Biomedical World Model — 真实联调栈（单一 Compose 项目）
-# 含：Milvus（etcd/minio/standalone）+ GraphDB + OpenMetadata
+# 含：Milvus（etcd/minio/standalone）+ GraphDB + OpenMetadata + Iceberg REST + Trino
 # 启动全栈：task foundation:up（GraphDB 10 Free 默认无 license；BIOS 全量需 HMD_BIOS_LICENSE_ACK）
 # 仅 Milvus：task milvus:up（同一项目，子集服务）
 # BERN2：task foundation:up:bern2（需预先 download resources；自动 macOS MPS / Linux CUDA）
@@ -10,6 +10,9 @@ name: hmd-foundation
 include:
   # Evidence Index；与 GraphDB/OM 同属 hmd-foundation，禁止再起 hmd-milvus
   - path: milvus-standalone.yml
+    env_file: []
+  # Iceberg REST Catalog + Trino（湖表查询 / OM 官方 connector）
+  - path: docker-compose.lake.yml
     env_file: []
 
 services:

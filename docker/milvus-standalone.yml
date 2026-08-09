@@ -35,6 +35,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
+      # 9000 = S3 API（宿主机 lake/PyIceberg/Trino 需要）；9001 = Console
+      - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
     volumes:
       - ./volumes/minio:/minio_data

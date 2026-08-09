@@ -1,17 +1,22 @@
-# 切片与包装纸过滤
+# 切片与 Tree Chunk（Evidence Object）
 
-源码：`src/biomed_ontology/corpus/`（`chunk_document` 等）。
+源码：`src/biomed_ontology/corpus/`（`chunk_document`、`tree.py`）。
 
 ## 切片在流水线中的位置
 
 ```text
-Document（语料 YAML）
-  → chunk_document
-  → 每片 normalize → concept_ids
-  → 进入 BM25/向量索引 + 概念倒排
+Document（语料 YAML / parse）
+  → build_document_tree（Tree Chunk 引擎）
+  → tree_to_chunks → Evidence Object 叶节点
+  → BERN2 entity_ids + Milvus / Iceberg
 ```
 
-切片是检索的原子单位，也是 Citationware 还原的锚点（`chunk_id` → section 成员集合）。
+扁平 `chunk_document` 仍可用于文献检索装配；入湖双写以 **Tree Chunk** 为准。  
+Evidence Object 字段：`chunk_id`, `parent_id`, `section_path`, `node_kind`, `entity_ids[]`。
+
+树结构：`document → section → paragraph → sentence`（+ `table` / `figure` / `caption`）。
+
+切片是检索与 Citationware 的原子单位（`chunk_id` → section / 父节点可回溯）。
 
 ## 包装纸过滤：为什么必须做
 

@@ -122,6 +122,7 @@ classes:
     description: >-
       带出处的知识断言。Knowledge ≠ Truth；
       Claim + Provenance + Evidence 才可被 Agent 消费。
+      claim_status=extracted 仅为候选；validated 才可物化为 World Model knowledge 边。
     slots:
       - claim_id
       - subject_id
@@ -129,6 +130,8 @@ classes:
       - object_id
       - object_value
       - confidence
+      - claim_status
+      - source_count
       - source_id
       - source_type
       - extracted_by
@@ -142,6 +145,8 @@ classes:
       subject_id:
         required: true
       predicate:
+        required: true
+      claim_status:
         required: true
 
 slots:
@@ -219,6 +224,12 @@ slots:
     range: string
   confidence:
     range: float
+  claim_status:
+    range: ClaimStatusEnum
+    description: extracted=自动抽取候选；validated=企业认可的 World Model 事实
+  source_count:
+    range: integer
+    description: 独立来源/证据条数（多源佐证）
   source_id:
     range: string
   source_type:
@@ -271,6 +282,13 @@ enums:
       deprecated:
       draft:
 
+  ClaimStatusEnum:
+    permissible_values:
+      extracted:
+        description: 自动抽取候选；仅写 provenance，不物化 knowledge 边
+      validated:
+        description: 经策展/规则验证；可物化为 World Model knowledge 边
+
   ClaimPredicateEnum:
     permissible_values:
       targets:
@@ -293,6 +311,18 @@ enums:
         description: 断言被某证据条目支持（object 宜为 Evidence ID，勿倒置主体）
       sameAsExternal:
         description: 映射到外部概念
+      inhibits:
+        description: 抑制（如磷酸化/通路活性）
+      hasActivityIn:
+        description: 在模型或疾病场景中显示活性
+      hasMechanism:
+        description: 作用机制
+      inPathway:
+        description: 参与通路
+      hasBiomarker:
+        description: 关联生物标志物
+      hasResult:
+        description: 实验结果类断言
 
   ProvenanceSourceTypeEnum:
     permissible_values:

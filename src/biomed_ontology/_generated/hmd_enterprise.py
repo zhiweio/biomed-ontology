@@ -605,6 +605,17 @@ class EntityStatusEnum(str, Enum):
     draft = "draft"
 
 
+class ClaimStatusEnum(str, Enum):
+    extracted = "extracted"
+    """
+    自动抽取候选；仅写 provenance，不物化 knowledge 边
+    """
+    validated = "validated"
+    """
+    经策展/规则验证；可物化为 World Model knowledge 边
+    """
+
+
 class ClaimPredicateEnum(str, Enum):
     targets = "targets"
     """
@@ -645,6 +656,30 @@ class ClaimPredicateEnum(str, Enum):
     sameAsExternal = "sameAsExternal"
     """
     映射到外部概念
+    """
+    inhibits = "inhibits"
+    """
+    抑制（如磷酸化/通路活性）
+    """
+    hasActivityIn = "hasActivityIn"
+    """
+    在模型或疾病场景中显示活性
+    """
+    hasMechanism = "hasMechanism"
+    """
+    作用机制
+    """
+    inPathway = "inPathway"
+    """
+    参与通路
+    """
+    hasBiomarker = "hasBiomarker"
+    """
+    关联生物标志物
+    """
+    hasResult = "hasResult"
+    """
+    实验结果类断言
     """
 
 
@@ -836,12 +871,13 @@ class Publication(EnterpriseEntity):
 
 class KnowledgeClaim(ConfiguredBaseModel):
     """
-    带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。
+    带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。 claim_status=extracted 仅为候选；validated 才可物化为 World Model knowledge 边。
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/enterprise',
          'slot_usage': {'claim_id': {'identifier': True,
                                      'name': 'claim_id',
                                      'required': True},
+                        'claim_status': {'name': 'claim_status', 'required': True},
                         'predicate': {'name': 'predicate', 'required': True},
                         'subject_id': {'name': 'subject_id', 'required': True}}})
 
@@ -851,6 +887,8 @@ class KnowledgeClaim(ConfiguredBaseModel):
     object_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     object_value: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     confidence: Optional[float] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
+    claim_status: ClaimStatusEnum = Field(default=..., description="""extracted=自动抽取候选；validated=企业认可的 World Model 事实""", json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
+    source_count: Optional[int] = Field(default=None, description="""独立来源/证据条数（多源佐证）""", json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     source_id: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     source_type: Optional[ProvenanceSourceTypeEnum] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })
     extracted_by: Optional[str] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['KnowledgeClaim']} })

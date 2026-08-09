@@ -78,6 +78,11 @@ uv run hmd foundation resolve "赛沃替尼"             # Rich：命中 + 反�
 uv run hmd foundation resolve "HMPL-504" --json      # 机器可读（含 aliases）
 uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
 uv run hmd foundation sync                           # YAML 校验入库 → GraphDB + Milvus + OM（幂等，三后端必达）
+# Document Lake 双写（BERN2 必接；claim=extracted；Trino+OM 治理）
+uv sync --extra lake
+task lake:up
+uv run hmd lake ensure && uv run hmd lake init
+uv run hmd lake ingest-doc --source pubmed --doc-id DOC:demo --corpus-yaml data/corpus/….yaml --bern2-url http://localhost:8888
 uv run hmd foundation evolve-mine                    # Rich：候选/跳过；不自动改本体
 uv run hmd foundation evolve-mine --json             # 机器可读（含 skipped）
 uv run hmd foundation golden --candidate HMPL-504 --json   # 单路径 JSON

@@ -135,6 +135,11 @@ class Chunk:
     concept_ids: list[str] = field(default_factory=list)
     concept_ids_expanded: list[str] = field(default_factory=list)
     labels: list[str] = field(default_factory=list)
+    # Evidence Object 树字段（Tree Chunk 引擎填充；扁平 chunk_document 可为空）
+    parent_id: str = ""
+    section_path: str = ""
+    node_kind: str = ""
+    entity_ids: list[str] = field(default_factory=list)
 
 
 class CorpusFile(BaseModel):

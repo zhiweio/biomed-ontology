@@ -126,18 +126,23 @@ graph:inference    ← 推导关系（可选物化）
 入库：策展 YAML 在 `ontology/{entities,dictionary,claims}/`；evidence/assets 样例在 `data/foundation/`。
 经 `ontology:validate` → `hmd foundation sync`（幂等）写入 GraphDB + Milvus + OM。查询层不读 YAML。
 
-## 入湖流水线（目标形态）
+## 入湖流水线（双线并行）
+
+详见 [Document Pipeline](document-pipeline.md) 与 [OpenMetadata × Trino](openmetadata.md)。
 
 ```text
-PubMed / Patents / ELN / LIMS / Assay / Docs
-        → Prefect（后续）
-        → parse（含多模态）
-        → BERN2
-        → Entity Resolution → Enterprise IDs
-        → Knowledge + PROV → GraphDB
-        → Evidence → Milvus
-        → Assets/Glossary → OpenMetadata
+PubMed / Patents / Vendor / ELN / LIMS / Docs
+        → MinIO（原文）
+        → Prefect Flow（复杂编排）/ hmd lake ingest-doc
+        → Tree Chunk Engine
+        ├─► Evidence Object → Milvus + Iceberg
+        └─► BERN2（必接）→ Claims(extracted) → Iceberg + GraphDB provenance
+                （仅 validated 策展后 → GraphDB knowledge）
+        → Trino ← Iceberg REST
+        → OpenMetadata（官方 Trino connector：治理 + 血缘）
 ```
+
+BIOS_v3 **正常挂载** `graph:biomedical`（`hmd foundation bios-load` / `foundation:up` init）。UMLS 等子集见 `foundation/biomedical_sources.py` 扩展点。
 
 ## 联调栈（Taskfile）
 

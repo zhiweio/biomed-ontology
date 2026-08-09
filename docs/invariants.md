@@ -36,6 +36,11 @@
 | Milvus 必选 | Evidence Index；生产路径失败不回落 LocalBackend |
 | Semantic Ops 隐藏后端 | Agent 默认不拼 SPARQL / 原始向量 API |
 | Knowledge ≠ Truth | Claim + Provenance + Evidence 才可消费 |
+| extracted ≠ validated | ingest 只写 extracted；仅 validated 物化 knowledge 边 |
+| 双线并行 | Evidence Index ∥ Claim 抽取；禁止全量文档转 Ontology |
+| BERN2 双写硬依赖 | `hmd lake ingest-*` 无可达 BERN2 必须失败 |
+| BIOS 常挂 GraphDB | `graph:biomedical` 为正常路径；空图不得假装已挂载 |
+| OM ≠ 第二图谱 | Iceberg 经 Trino 治理/血缘；禁止 NER/BIOS 实体灌 Glossary |
 | BIOS 许可闸门 | 全量需 `HMD_BIOS_LICENSE_ACK`；子集仅测试 / CI |
 | GraphDB Free ≠ 生产 | 文档与运维不得把 Free 写成生产架构决策 |
 

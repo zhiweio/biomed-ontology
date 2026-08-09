@@ -56,6 +56,8 @@ class KnowledgeClaim:
     object_id: str | None = None
     object_value: str | None = None
     confidence: float = 1.0
+    claim_status: str = "validated"
+    source_count: int | None = None
     source_id: str | None = None
     source_type: str = "manual"
     extracted_by: str = "seed"
