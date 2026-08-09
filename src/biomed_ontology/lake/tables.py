@@ -1,4 +1,4 @@
-"""Iceberg 表写入（同 doc_id / document_id 幂等：先删后写）。"""
+"""Iceberg 表写入（同 doc_id / document_id 幂等：partial overwrite）。"""
 
 from __future__ import annotations
 
@@ -20,8 +20,23 @@ __all__ = [
 ]
 
 
-def _escape_literal(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("'", "''")
+def _rows_to_arrow(table: Any, rows: Sequence[dict[str, Any]]) -> Any:
+    import pyarrow as pa
+
+    schema = table.schema()
+    names = [f.name for f in schema.fields]
+    payload = [{k: r.get(k) for k in names} for r in rows]
+    return pa.Table.from_pylist(payload, schema=schema.as_arrow())
+
+
+def _filter_exists(table: Any, filt: Any, filter_column: str) -> bool:
+    """Cheap existence probe; avoids delete/overwrite on empty matches (UserWarning)."""
+    arrow = table.scan(
+        row_filter=filt,
+        selected_fields=(filter_column,),
+        limit=1,
+    ).to_arrow()
+    return bool(arrow is not None and arrow.num_rows > 0)
 
 
 def replace_rows(
@@ -30,20 +45,29 @@ def replace_rows(
     filter_value: str,
     rows: Sequence[dict[str, Any]],
 ) -> int:
-    """按列等值删除后追加（空 rows 也删除，保证重跑可清空）。"""
-    import pyarrow as pa
+    """按列等值覆盖写入（空 rows 也清空，保证重跑可幂等）。
+
+    对齐 PyIceberg partial overwrite：
+    ``table.overwrite(df, overwrite_filter=EqualTo(...))``。
+    无匹配行时退化为 ``append``（上游对 empty delete 会发 UserWarning）。
+    """
+    from pyiceberg.expressions import EqualTo
 
     cat = open_catalog()
     table = cat.load_table(table_name)
-    expr = f"{filter_column} = '{_escape_literal(filter_value)}'"
-    table.delete(expr)
+    filt = EqualTo(filter_column, filter_value)
+    exists = _filter_exists(table, filt, filter_column)
+
     if not rows:
+        if exists:
+            table.delete(filt)
         return 0
-    schema = table.schema()
-    names = [f.name for f in schema.fields]
-    payload = [{k: r.get(k) for k in names} for r in rows]
-    arrow = pa.Table.from_pylist(payload, schema=schema.as_arrow())
-    table.append(arrow)
+
+    arrow = _rows_to_arrow(table, rows)
+    if exists:
+        table.overwrite(arrow, overwrite_filter=filt)
+    else:
+        table.append(arrow)
     return len(rows)
 
 
@@ -51,15 +75,10 @@ def _append(table_name: str, rows: Sequence[dict[str, Any]]) -> int:
     """无键追加（内部/测试用）。生产路径请用 replace_rows。"""
     if not rows:
         return 0
-    import pyarrow as pa
 
     cat = open_catalog()
     table = cat.load_table(table_name)
-    schema = table.schema()
-    names = [f.name for f in schema.fields]
-    payload = [{k: r.get(k) for k in names} for r in rows]
-    arrow = pa.Table.from_pylist(payload, schema=schema.as_arrow())
-    table.append(arrow)
+    table.append(_rows_to_arrow(table, rows))
     return len(rows)
 
 

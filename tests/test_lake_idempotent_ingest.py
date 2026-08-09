@@ -45,8 +45,9 @@ def test_append_documents_replace_by_doc_id() -> None:
     assert replace.call_args[0][1:3] == ("doc_id", "DOC:A")
 
 
-def test_replace_rows_delete_then_append() -> None:
+def test_replace_rows_overwrite_when_exists() -> None:
     import pyarrow as pa
+    from pyiceberg.expressions import EqualTo
 
     fake_table = MagicMock()
     schema = MagicMock()
@@ -55,6 +56,9 @@ def test_replace_rows_delete_then_append() -> None:
         [("document_id", pa.large_string()), ("chunk_id", pa.large_string())]
     )
     fake_table.schema.return_value = schema
+    existing = MagicMock()
+    existing.num_rows = 1
+    fake_table.scan.return_value.to_arrow.return_value = existing
     cat = MagicMock()
     cat.load_table.return_value = fake_table
 
@@ -66,8 +70,58 @@ def test_replace_rows_delete_then_append() -> None:
             [{"document_id": "DOC:A", "chunk_id": "CHK:1"}],
         )
     assert n == 1
-    fake_table.delete.assert_called_once_with("document_id = 'DOC:A'")
+    fake_table.overwrite.assert_called_once()
+    kwargs = fake_table.overwrite.call_args.kwargs
+    assert kwargs["overwrite_filter"] == EqualTo("document_id", "DOC:A")
+    fake_table.append.assert_not_called()
+    fake_table.delete.assert_not_called()
+
+
+def test_replace_rows_append_when_missing() -> None:
+    import pyarrow as pa
+
+    fake_table = MagicMock()
+    schema = MagicMock()
+    schema.fields = [MagicMock(name="document_id"), MagicMock(name="chunk_id")]
+    schema.as_arrow.return_value = pa.schema(
+        [("document_id", pa.large_string()), ("chunk_id", pa.large_string())]
+    )
+    fake_table.schema.return_value = schema
+    empty = MagicMock()
+    empty.num_rows = 0
+    fake_table.scan.return_value.to_arrow.return_value = empty
+    cat = MagicMock()
+    cat.load_table.return_value = fake_table
+
+    with patch.object(lake_tables, "open_catalog", return_value=cat):
+        n = lake_tables.replace_rows(
+            "hmd.evidence_chunks",
+            "document_id",
+            "DOC:A",
+            [{"document_id": "DOC:A", "chunk_id": "CHK:1"}],
+        )
+    assert n == 1
     fake_table.append.assert_called_once()
+    fake_table.overwrite.assert_not_called()
+    fake_table.delete.assert_not_called()
+
+
+def test_replace_rows_empty_deletes_only_when_exists() -> None:
+    from pyiceberg.expressions import EqualTo
+
+    fake_table = MagicMock()
+    existing = MagicMock()
+    existing.num_rows = 1
+    fake_table.scan.return_value.to_arrow.return_value = existing
+    cat = MagicMock()
+    cat.load_table.return_value = fake_table
+
+    with patch.object(lake_tables, "open_catalog", return_value=cat):
+        n = lake_tables.replace_rows("hmd.evidence_chunks", "document_id", "DOC:A", [])
+    assert n == 0
+    fake_table.delete.assert_called_once_with(EqualTo("document_id", "DOC:A"))
+    fake_table.append.assert_not_called()
+    fake_table.overwrite.assert_not_called()
 
 
 def test_upsert_evidence_objects_purges_doc_before_write() -> None:
