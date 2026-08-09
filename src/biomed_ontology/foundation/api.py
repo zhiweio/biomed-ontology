@@ -17,6 +17,7 @@ from biomed_ontology.foundation.graphs import (
     GRAPH_KNOWLEDGE,
     GRAPH_ONTOLOGY,
     GRAPH_PROVENANCE,
+    GRAPH_PROVENANCE_EXTRACTED,
 )
 from biomed_ontology.foundation.models import EvidenceHit
 from biomed_ontology.foundation.obs_log import observe_retrieval
@@ -237,6 +238,7 @@ class FoundationApi:
                     "ontology": GRAPH_ONTOLOGY,
                     "knowledge": GRAPH_KNOWLEDGE,
                     "provenance": GRAPH_PROVENANCE,
+                    "provenance_extracted": GRAPH_PROVENANCE_EXTRACTED,
                     "biomedical": GRAPH_BIOMEDICAL,
                 },
                 "backend": "graphdb",
@@ -260,7 +262,11 @@ class FoundationApi:
         ) as obs:
             obs["backend"] = "graphdb"
             obs["why"] = {
-                "graphs": [GRAPH_PROVENANCE, GRAPH_KNOWLEDGE],
+                "graphs": [
+                    GRAPH_PROVENANCE,
+                    GRAPH_PROVENANCE_EXTRACTED,
+                    GRAPH_KNOWLEDGE,
+                ],
                 "yaml_fallback": False,
                 "default_claim_status": "validated",
             }

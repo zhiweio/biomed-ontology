@@ -17,6 +17,7 @@ from biomed_ontology.foundation.graphs import (
     GRAPH_KNOWLEDGE,
     GRAPH_ONTOLOGY,
     GRAPH_PROVENANCE,
+    GRAPH_PROVENANCE_EXTRACTED,
     HMD_NS,
 )
 from biomed_ontology.foundation.ids import EnterpriseKind, mint_enterprise_id
@@ -55,6 +56,7 @@ class WorldModel:
             "ontology": GRAPH_ONTOLOGY,
             "knowledge": GRAPH_KNOWLEDGE,
             "provenance": GRAPH_PROVENANCE,
+            "provenance_extracted": GRAPH_PROVENANCE_EXTRACTED,
         }
     )
 

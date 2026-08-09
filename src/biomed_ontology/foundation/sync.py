@@ -15,6 +15,7 @@ from biomed_ontology.foundation.graphs import (
     GRAPH_KNOWLEDGE,
     GRAPH_ONTOLOGY,
     GRAPH_PROVENANCE,
+    GRAPH_PROVENANCE_EXTRACTED,
     HMD_NS,
 )
 from biomed_ontology.foundation.world import WorldModel, entity_iri, load_world_model
@@ -65,12 +66,14 @@ def sync_world_model(
         ttl_know, ttl_prov = _claims_turtle(wm)
         gdb.clear_graph(GRAPH_KNOWLEDGE)
         gdb.load_turtle(ttl_know, graph_uri=GRAPH_KNOWLEDGE)
+        # 仅替换 seed provenance；湖侧 extracted 图独立，不随 sync 清空
         gdb.clear_graph(GRAPH_PROVENANCE)
         gdb.load_turtle(ttl_prov, graph_uri=GRAPH_PROVENANCE)
         graphdb_ok = True
         details.append(
             f"graphdb: ontology={len(wm.entities)} entities, "
-            f"knowledge+provenance claims={len(wm.claims)}"
+            f"knowledge+provenance claims={len(wm.claims)} "
+            f"(extracted graph preserved: {GRAPH_PROVENANCE_EXTRACTED})"
         )
     else:
         details.append("graphdb: unreachable — skipped RDF sync")
@@ -202,9 +205,7 @@ def _claims_turtle(wm: WorldModel) -> tuple[str, str]:
 
 
 def append_extracted_claims(gdb: GraphDbClient, claims: list[Any]) -> int:
-    """增量写入 extracted claims 到 provenance（不 clear、不写 knowledge）。"""
-    from biomed_ontology.foundation.graphs import GRAPH_PROVENANCE
-
+    """幂等写入 extracted claims → provenance_extracted（按 sourceId 先删后写，不写 knowledge）。"""
     if not claims:
         return 0
     lines = [
@@ -213,6 +214,7 @@ def append_extracted_claims(gdb: GraphDbClient, claims: list[Any]) -> int:
         "",
     ]
     n = 0
+    source_ids: set[str] = set()
     for c in claims:
         status = getattr(c, "claim_status", None) or "extracted"
         if status != "extracted":
@@ -228,6 +230,7 @@ def append_extracted_claims(gdb: GraphDbClient, claims: list[Any]) -> int:
         if getattr(c, "object_value", None):
             lines.append(f'  hmd:objectValue "{_esc(c.object_value)}" ;')
         if c.source_id:
+            source_ids.add(str(c.source_id))
             lines.append(f'  hmd:sourceId "{_esc(c.source_id)}" ;')
             lines.append(f'  prov:wasDerivedFrom "{_esc(c.source_id)}" ;')
         if c.source_type:
@@ -240,10 +243,33 @@ def append_extracted_claims(gdb: GraphDbClient, claims: list[Any]) -> int:
         lines.append(f"  hmd:confidence {c.confidence} .")
         lines.append("")
         n += 1
+    for sid in sorted(source_ids):
+        _delete_extracted_by_source(gdb, sid)
     if n:
-        gdb.load_turtle("\n".join(lines), graph_uri=GRAPH_PROVENANCE)
+        gdb.load_turtle("\n".join(lines), graph_uri=GRAPH_PROVENANCE_EXTRACTED)
     return n
 
+
+def _delete_extracted_by_source(gdb: GraphDbClient, source_id: str) -> None:
+    """删除某文档在 extracted 图中的全部 KnowledgeClaim 三元组。"""
+    sid = _esc(source_id)
+    gdb.update(
+        f"""
+        PREFIX hmd: <{HMD_NS}>
+        DELETE {{
+          GRAPH <{GRAPH_PROVENANCE_EXTRACTED}> {{
+            ?c ?p ?o .
+          }}
+        }}
+        WHERE {{
+          GRAPH <{GRAPH_PROVENANCE_EXTRACTED}> {{
+            ?c a hmd:KnowledgeClaim ;
+               hmd:sourceId "{sid}" ;
+               ?p ?o .
+          }}
+        }}
+        """
+    )
 
 def _upsert_evidence_milvus(wm: WorldModel, uri: str) -> int:
     """Foundation seed → Milvus Evidence Object 字段。"""

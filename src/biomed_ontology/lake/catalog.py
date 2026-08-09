@@ -33,6 +33,9 @@ def open_catalog(cfg: Settings | None = None) -> Any:
         "s3.access-key-id": cfg.minio_access_key,
         "s3.secret-access-key": cfg.minio_secret_key.get_secret_value(),
         "s3.path-style-access": "true",
+        # MinIO 无真实 region；显式 us-east-1 避免 botocore "Unable to resolve region"
+        "s3.region": "us-east-1",
+        "client.region": "us-east-1",
         "warehouse": f"s3://{cfg.minio_lake_bucket}/",
     }
     return load_catalog("hmd", **props)

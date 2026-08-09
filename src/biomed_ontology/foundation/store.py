@@ -14,6 +14,7 @@ from biomed_ontology.foundation.graphs import (
     GRAPH_KNOWLEDGE,
     GRAPH_ONTOLOGY,
     GRAPH_PROVENANCE,
+    GRAPH_PROVENANCE_EXTRACTED,
     HMD_NS,
 )
 from biomed_ontology.foundation.models import EnterpriseEntity, KnowledgeClaim
@@ -143,12 +144,8 @@ def fetch_claims(
 ) -> list[KnowledgeClaim]:
     iri = entity_iri(enterprise_id)
     pred_filter = f'FILTER(?pred = "{predicate}")' if predicate else ""
-    q = f"""
-    PREFIX hmd: <{HMD_NS}>
-    PREFIX prov: <http://www.w3.org/ns/prov#>
-    SELECT ?claim ?pred ?subj ?obj ?conf ?source ?stype ?span ?extracted ?evid ?status ?objval
-    WHERE {{
-      GRAPH <{GRAPH_PROVENANCE}> {{
+    # seed provenance ∪ 湖侧 extracted（sync 只替换前者）
+    claim_pattern = f"""
         ?claim a hmd:KnowledgeClaim ;
                hmd:subject ?subj ;
                hmd:predicate ?pred .
@@ -162,6 +159,20 @@ def fetch_claims(
         OPTIONAL {{ ?claim hmd:extractedBy ?extracted }}
         OPTIONAL {{ ?claim hmd:evidenceId ?evid }}
         OPTIONAL {{ ?claim hmd:claimStatus ?status }}
+    """
+    q = f"""
+    PREFIX hmd: <{HMD_NS}>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    SELECT ?claim ?pred ?subj ?obj ?conf ?source ?stype ?span ?extracted ?evid ?status ?objval
+    WHERE {{
+      {{
+        GRAPH <{GRAPH_PROVENANCE}> {{
+          {claim_pattern}
+        }}
+      }} UNION {{
+        GRAPH <{GRAPH_PROVENANCE_EXTRACTED}> {{
+          {claim_pattern}
+        }}
       }}
       FILTER(?subj = <{iri}> || ?obj = <{iri}>)
       {pred_filter}

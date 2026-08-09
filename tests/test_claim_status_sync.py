@@ -2,8 +2,16 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
+from biomed_ontology.foundation.graphs import (
+    GRAPH_KNOWLEDGE,
+    GRAPH_ONTOLOGY,
+    GRAPH_PROVENANCE,
+    GRAPH_PROVENANCE_EXTRACTED,
+)
 from biomed_ontology.foundation.models import KnowledgeClaim
-from biomed_ontology.foundation.sync import _claims_turtle
+from biomed_ontology.foundation.sync import _claims_turtle, sync_world_model
 from biomed_ontology.foundation.world import WorldModel
 
 
@@ -44,3 +52,38 @@ def test_seed_loads_extracted_claim() -> None:
     assert extracted, "seed 应含 extracted 样例"
     assert validated
     assert all(c.predicate for c in extracted)
+
+
+def test_sync_clears_seed_provenance_not_extracted_graph() -> None:
+    """foundation sync 不得 CLEAR provenance_extracted（湖侧幂等结果保留）。"""
+    wm = WorldModel(release_id="t", entities={}, claims=[])
+    gdb = MagicMock()
+    gdb.health.return_value = True
+    cleared: list[str] = []
+
+    def _clear(uri: str) -> None:
+        cleared.append(uri)
+
+    gdb.clear_graph.side_effect = _clear
+
+    with (
+        patch("biomed_ontology.foundation.sync.ensure_repository"),
+        patch("biomed_ontology.foundation.sync._upsert_evidence_milvus", return_value=0),
+        patch("biomed_ontology.foundation.sync.OpenMetadataClient") as om_cls,
+    ):
+        om = om_cls.from_settings.return_value
+        om.ping.return_value = None
+        om.upsert_assets.return_value = 0
+        sync_world_model(
+            wm,
+            graphdb=gdb,
+            require_graphdb=True,
+            require_milvus=True,
+            require_om=True,
+        )
+
+    assert GRAPH_ONTOLOGY in cleared
+    assert GRAPH_KNOWLEDGE in cleared
+    assert GRAPH_PROVENANCE in cleared
+    assert GRAPH_PROVENANCE_EXTRACTED not in cleared
+

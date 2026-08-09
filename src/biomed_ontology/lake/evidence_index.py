@@ -7,7 +7,7 @@ from typing import Any, Sequence
 from biomed_ontology.config import settings
 from biomed_ontology.lake.claim_bridge import evidence_id_for_chunk
 
-__all__ = ["upsert_evidence_objects"]
+__all__ = ["delete_evidence_by_doc", "upsert_evidence_objects"]
 
 _COLLECTION = "foundation_evidence"
 _DIM = 32
@@ -27,12 +27,43 @@ def _field(obj: Any, *names: str, default: Any = None) -> Any:
     return default
 
 
-def upsert_evidence_objects(chunks: Sequence[Any], *, uri: str | None = None) -> int:
+def _escape_milvus_str(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def delete_evidence_by_doc(doc_id: str, *, uri: str | None = None) -> None:
+    """删除某文档在 foundation_evidence 中的全部行（孤儿清理）。"""
+    if not doc_id:
+        return
+    from pymilvus import MilvusClient
+
+    uri = uri or settings.milvus_uri
+    client = MilvusClient(uri=uri)
+    if not client.has_collection(_COLLECTION):
+        return
+    expr = f'doc_id == "{_escape_milvus_str(doc_id)}"'
+    try:
+        client.delete(collection_name=_COLLECTION, filter=expr)
+    except TypeError:
+        client.delete(collection_name=_COLLECTION, expr=expr)
+    client.flush(_COLLECTION)
+
+
+def upsert_evidence_objects(
+    chunks: Sequence[Any],
+    *,
+    uri: str | None = None,
+    doc_id: str | None = None,
+) -> int:
+    """Upsert Evidence Objects；若给 ``doc_id`` 则先按文档删再写（幂等）。"""
     from pymilvus import DataType, MilvusClient
 
     uri = uri or settings.milvus_uri
     client = MilvusClient(uri=uri)
     _ensure_collection(client)
+    # 仅显式 doc_id 时按文档清孤儿（lake ingest）；seed sync 不传，避免误删
+    if doc_id:
+        delete_evidence_by_doc(doc_id, uri=uri)
     rows: list[dict[str, Any]] = []
     for i, ch in enumerate(chunks):
         chunk_id = _field(ch, "chunk_id", "evidence_id")

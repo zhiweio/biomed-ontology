@@ -37,6 +37,8 @@
 | Semantic Ops 隐藏后端 | Agent 默认不拼 SPARQL / 原始向量 API |
 | Knowledge ≠ Truth | Claim + Provenance + Evidence 才可消费 |
 | extracted ≠ validated | ingest 只写 extracted；仅 validated 物化 knowledge 边 |
+| 同 doc_id 幂等 | 入湖/入 ontology 重跑按文档替换，禁止 Iceberg/extracted 图行翻倍 |
+| extracted 图独立 | 湖侧 claims 在 `provenance_extracted`；seed sync 不得 CLEAR 该图 |
 | 双线并行 | Evidence Index ∥ Claim 抽取；禁止全量文档转 Ontology |
 | BERN2 双写硬依赖 | `hmd lake ingest-*` 无可达 BERN2 必须失败 |
 | BIOS 常挂 GraphDB | `graph:biomedical` 为正常路径；空图不得假装已挂载 |

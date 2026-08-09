@@ -44,6 +44,18 @@ OpenMetadata ← Trino（官方 connector）← Iceberg REST Catalog
 - 硬依赖：`HMD_BERN2_URL`；不可达则失败
 - ingest **禁止**自动 `validated`
 
+## 幂等（同 `doc_id` 重跑）
+
+| Sink | 策略 |
+|---|---|
+| MinIO | 同 object key overwrite |
+| Iceberg `documents` / `evidence_chunks` / `knowledge_claims` | 按 `doc_id` / `document_id` **先删后写** |
+| Milvus `foundation_evidence` | 按 `doc_id` 删孤儿后 upsert（`evidence_id` 主键） |
+| GraphDB | 湖侧写入 `graph/provenance_extracted`；按 `hmd:sourceId` 先删后写 |
+| OpenMetadata document asset | glossary term upsert by FQN |
+
+`hmd foundation sync` 只 replace seed 的 `graph/provenance`，**不清** `graph/provenance_extracted`。
+
 ## BIOS
 
 BIOS_v3 **正常挂载** `graph:biomedical`（`hmd foundation bios-load`）。UMLS 等见 `foundation/biomedical_sources.py` 扩展点。

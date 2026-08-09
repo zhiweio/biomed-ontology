@@ -94,7 +94,8 @@ def put_document(
                     "title": ctx.doc_id,
                     "license_tier": "TIER_0",
                 }
-            ]
+            ],
+            doc_id=ctx.doc_id,
         )
     except Exception as exc:
         ctx.errors.append(f"iceberg.documents: {exc}")
@@ -165,11 +166,11 @@ def write_evidence(ctx: IngestContext) -> IngestContext:
         for c in ctx.chunks
     ]
     try:
-        append_evidence_chunks(rows)
+        append_evidence_chunks(rows, document_id=ctx.doc_id)
     except Exception as exc:
         ctx.errors.append(f"iceberg.evidence_chunks: {exc}")
     try:
-        ctx.evidence_n = upsert_evidence_objects(ctx.chunks)
+        ctx.evidence_n = upsert_evidence_objects(ctx.chunks, doc_id=ctx.doc_id)
     except Exception as exc:
         ctx.errors.append(f"milvus.foundation_evidence: {exc}")
         raise
@@ -223,7 +224,7 @@ def write_claims(ctx: IngestContext, *, bern2_url: str | None = None) -> IngestC
         for c in claims
     ]
     try:
-        append_knowledge_claims(claim_rows)
+        append_knowledge_claims(claim_rows, document_id=ctx.doc_id)
     except Exception as exc:
         ctx.errors.append(f"iceberg.knowledge_claims: {exc}")
 
