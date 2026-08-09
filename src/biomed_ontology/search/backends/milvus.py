@@ -268,12 +268,21 @@ class MilvusBackend:
         names = {f["name"] for f in info.get("fields", ())}
         return tuple(f for f in _METRIC if f in names)
 
-    def upsert(self, rows: list[dict[str, Any]], *, flush: bool = True) -> int:
+    def upsert(
+        self,
+        rows: list[dict[str, Any]],
+        *,
+        flush: bool = True,
+        batch_size: int = 128,
+    ) -> int:
         """`rows` 需含元数据与 `text`；向量在此处算，调用方不必知道模型。
 
         默认 flush：Milvus 的默认一致性是 Bounded，不 flush 时刚写的数据查不到，
         而失败形态是“检索返回空” —— 看起来像召回差，不像数据没进去。
         分批写入时传 `flush=False`，最后自行调一次。
+
+        ``batch_size``：按批 encode+upsert，避免一次加载整库文本/图像把 FD
+        打满（macOS 默认 soft limit 256 时常见 Errno 24）。
         """
         if not rows:
             return 0
@@ -285,15 +294,20 @@ class MilvusBackend:
             )
         if self.release_id:
             rows = [{**r, "release_id": r.get("release_id") or self.release_id} for r in rows]
-        bundles = self.embedder.encode(
-            [str(r["text"]) for r in rows],
-            images=[self._asset(r.get("asset_path"), r.get("doc_id")) for r in rows],
-        )
-        payload = [{**row, **bundle} for row, bundle in zip(rows, bundles, strict=True)]
-        self.client.upsert(collection_name=self.collection, data=payload)
+        step = max(1, int(batch_size))
+        written = 0
+        for i in range(0, len(rows), step):
+            batch = rows[i : i + step]
+            bundles = self.embedder.encode(
+                [str(r["text"]) for r in batch],
+                images=[self._asset(r.get("asset_path"), r.get("doc_id")) for r in batch],
+            )
+            payload = [{**row, **bundle} for row, bundle in zip(batch, bundles, strict=True)]
+            self.client.upsert(collection_name=self.collection, data=payload)
+            written += len(payload)
         if flush:
             self.client.flush(self.collection)
-        return len(payload)
+        return written
 
     # ----------------------------------------------------------------- 检索
 

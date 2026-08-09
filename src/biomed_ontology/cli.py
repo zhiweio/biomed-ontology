@@ -530,6 +530,8 @@ def index_cmd(
     ),
 ) -> None:
     """把知识库切片写入 Milvus + Iceberg（Tree Chunk SSOT，同 release_id）。"""
+    import sys
+
     from biomed_ontology.config import settings
     from biomed_ontology.embed import get_embedder
     from biomed_ontology.lake.chunk_store import chunks_to_evidence_rows
@@ -545,9 +547,27 @@ def index_cmd(
 
     kb = build_literature_base(with_graph=False)
     registry = load_registry()
+    asset_root = DATA_ROOT / "assets"
+
+    # Iceberg 先于 embedder：避免 FlagEmbedding/多模态打开成百上千 FD 后再扫湖。
+    lake_n = 0
+    try:
+        from biomed_ontology.lake.catalog import ensure_lake_tables
+
+        ensure_lake_tables()
+        lake_rows = chunks_to_evidence_rows(
+            kb.chunks, documents=kb.documents, release_id=kb.release_id
+        )
+        lake_n = append_evidence_chunks(lake_rows)
+    except Exception as exc:
+        # EMFILE 时 Rich/emoji 再 import 会二次炸；用纯文本。
+        print(
+            f"Iceberg dual-write 失败（Citationware 需要 evidence_chunks）：{exc}",
+            file=sys.stderr,
+        )
+        raise typer.Exit(1) from exc
 
     model = get_embedder(embedder)
-    asset_root = DATA_ROOT / "assets"
     backend = MilvusBackend(
         uri=settings.milvus_uri,
         token=settings.milvus_token.get_secret_value(),
@@ -572,22 +592,7 @@ def index_cmd(
     ]
     for row in rows:
         row["release_id"] = kb.release_id
-    written = backend.upsert(rows)
-
-    lake_n = 0
-    try:
-        from biomed_ontology.lake.catalog import ensure_lake_tables
-
-        ensure_lake_tables()
-        lake_rows = chunks_to_evidence_rows(
-            kb.chunks, documents=kb.documents, release_id=kb.release_id
-        )
-        lake_n = append_evidence_chunks(lake_rows)
-    except Exception as exc:
-        console.print(
-            f"[red]Iceberg dual-write 失败（Citationware 需要 evidence_chunks）：{exc}[/red]"
-        )
-        raise typer.Exit(1) from exc
+    written = backend.upsert(rows, batch_size=128)
 
     table = Table(title=f"索引 {backend.collection}")
     table.add_column("指标")

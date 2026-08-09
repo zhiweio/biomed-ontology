@@ -27,6 +27,38 @@ def test_append_evidence_chunks_calls_replace_by_document_id() -> None:
     )
 
 
+def test_append_evidence_chunks_reuses_catalog_across_docs() -> None:
+    """整库 dual-write 不得每文档 open_catalog（否则易 Errno 24）。"""
+    rows = [
+        {"chunk_id": "CHK:1", "document_id": "DOC:A", "content": "a"},
+        {"chunk_id": "CHK:2", "document_id": "DOC:B", "content": "b"},
+    ]
+    fake_table = MagicMock()
+    schema = MagicMock()
+    schema.fields = [MagicMock(name="document_id"), MagicMock(name="chunk_id"), MagicMock(name="content")]
+    import pyarrow as pa
+
+    schema.as_arrow.return_value = pa.schema(
+        [
+            ("document_id", pa.large_string()),
+            ("chunk_id", pa.large_string()),
+            ("content", pa.large_string()),
+        ]
+    )
+    fake_table.schema.return_value = schema
+    empty = MagicMock()
+    empty.num_rows = 0
+    fake_table.scan.return_value.to_arrow.return_value = empty
+    cat = MagicMock()
+    cat.load_table.return_value = fake_table
+
+    with patch.object(lake_tables, "open_catalog", return_value=cat) as open_cat:
+        n = lake_tables.append_evidence_chunks(rows)
+    assert n == 2
+    assert open_cat.call_count == 1
+    assert fake_table.append.call_count == 2
+
+
 def test_append_knowledge_claims_empty_still_replaces() -> None:
     with patch.object(lake_tables, "replace_rows", return_value=0) as replace:
         n = lake_tables.append_knowledge_claims([], document_id="DOC:A")
