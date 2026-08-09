@@ -578,7 +578,13 @@ class FoundationApi:
             kind = str(ctx.get("entity_kind") or ctx.get("entity", {}).get("entity_kind") or "")
             path = _path_for_kind(kind)
             backends = ctx.get("backends") or {}
-            kb_leg = _kb_golden_leg(tools, candidate_key) if tools is not None else None
+            entity = ctx.get("entity") or {}
+            kb_aliases = _kb_query_aliases(entity, candidate_key)
+            kb_leg = (
+                _kb_golden_leg(tools, candidate_key, aliases=kb_aliases)
+                if tools is not None
+                else None
+            )
             # WM 段走完即基础 ok；传入 tools 时必须文献腿也过
             kb_ok = True if kb_leg is None else bool(kb_leg.get("ok"))
             ok = kb_ok and bool(ctx.get("entity") or ctx.get("found", True))
@@ -601,6 +607,11 @@ class FoundationApi:
                 "bios": len(ctx.get("bios_bridges") or []),
                 "kb_hits": (kb_leg or {}).get("hit_count"),
             }
+            reason = None if ok else _golden_fail_reason(
+                resolve_ok=True,
+                entity_ok=bool(ctx.get("entity") or ctx.get("found", True)),
+                kb_leg=kb_leg,
+            )
             return {
                 "ok": ok,
                 "path": path,
@@ -611,6 +622,7 @@ class FoundationApi:
                 "context": ctx,
                 "backends": backends,
                 "kb": kb_leg,
+                "reason": reason,
                 "evaluation": {
                     "yaml_fallback": False,
                     "backends_ok": _backends_ok(backends),
@@ -624,43 +636,152 @@ class FoundationApi:
             }
 
 
-def _kb_golden_leg(tools: Any, query: str) -> dict[str, Any]:
-    """文献腿：search_documents → restore_context。"""
-    try:
-        search = tools.search_documents(query, top_k=5)
-        hits = search.get("results") or []
-        restore_ok = False
-        chunk_id = None
-        if hits:
-            chunk_id = hits[0].get("chunk_id")
-            if chunk_id:
-                restored = tools.restore_context(chunk_id)
-                # ToolApi.restore_context 信封字段是 full_text / doc_id，
-                # 不是 document/sections/text；warnings 非空表示工具层失败。
-                fatal = any(
-                    str(w).startswith(
-                        ("NOT_FOUND", "LICENSE_DENIED", "INTERNAL_ERROR", "CONTRACT_VIOLATION")
+def _kb_query_aliases(entity: dict[str, Any], query: str) -> list[str]:
+    """文献检索备用表面形：英文 preferred / Latin aliases 优先于 CJK。
+
+    中文别名在英文文献库常 0 命中；金路径在 resolve 成功后应按企业实体别名重试。
+    """
+    qnorm = str(query or "").strip().casefold()
+    seen: set[str] = set()
+    latin: list[str] = []
+    cjk: list[str] = []
+
+    def _push(raw: Any) -> None:
+        text = str(raw or "").strip()
+        if not text:
+            return
+        key = text.casefold()
+        if key == qnorm or key in seen:
+            return
+        seen.add(key)
+        if any("\u4e00" <= ch <= "\u9fff" for ch in text):
+            cjk.append(text)
+        else:
+            latin.append(text)
+
+    _push(entity.get("preferred_label_en"))
+    for alias in entity.get("aliases") or []:
+        _push(alias)
+    _push(entity.get("preferred_label_zh"))
+    return [*latin, *cjk]
+
+
+def _kb_golden_leg(
+    tools: Any,
+    query: str,
+    *,
+    aliases: list[str] | None = None,
+) -> dict[str, Any]:
+    """文献腿：search_documents → restore_context。
+
+    先查原始 query；0 命中时按 aliases 顺序重试（通常含 preferred_label_en）。
+    """
+    tried: list[str] = []
+    queries: list[str] = []
+    for candidate in [query, *(aliases or [])]:
+        text = str(candidate or "").strip()
+        if not text or text in tried:
+            continue
+        tried.append(text)
+        queries.append(text)
+
+    last_error: str | None = None
+    empty_leg: dict[str, Any] | None = None
+    for q in queries:
+        try:
+            search = tools.search_documents(q, top_k=5)
+            hits = search.get("results") or []
+            restore_ok = False
+            chunk_id = None
+            if hits:
+                chunk_id = hits[0].get("chunk_id")
+                if chunk_id:
+                    restored = tools.restore_context(chunk_id)
+                    # ToolApi.restore_context 信封字段是 full_text / doc_id，
+                    # 不是 document/sections/text；warnings 非空表示工具层失败。
+                    fatal = any(
+                        str(w).startswith(
+                            (
+                                "NOT_FOUND",
+                                "LICENSE_DENIED",
+                                "INTERNAL_ERROR",
+                                "CONTRACT_VIOLATION",
+                            )
+                        )
+                        for w in (restored.get("warnings") or [])
                     )
-                    for w in (restored.get("warnings") or [])
-                )
-                restore_ok = (not fatal) and bool(
-                    restored.get("full_text") or restored.get("doc_id")
-                )
-        return {
-            "ok": len(hits) >= 1 and restore_ok,
-            "hit_count": len(hits),
-            "chunk_id": chunk_id,
-            "restore_ok": restore_ok,
-            "query": query,
-        }
-    except Exception as exc:  # noqa: BLE001 — 金路径必须显式失败
-        return {
-            "ok": False,
-            "error": str(exc),
-            "hit_count": 0,
-            "restore_ok": False,
-            "query": query,
-        }
+                    restore_ok = (not fatal) and bool(
+                        restored.get("full_text") or restored.get("doc_id")
+                    )
+                leg = {
+                    "ok": restore_ok,
+                    "hit_count": len(hits),
+                    "chunk_id": chunk_id,
+                    "restore_ok": restore_ok,
+                    "query": q,
+                    "query_original": query,
+                    "query_tried": list(tried[: tried.index(q) + 1]),
+                }
+                # 有命中但 restore 失败：不再换别名（问题在 citationware，非 query）
+                return leg
+            empty_leg = {
+                "ok": False,
+                "hit_count": 0,
+                "chunk_id": None,
+                "restore_ok": False,
+                "query": q,
+                "query_original": query,
+                "query_tried": list(tried[: tried.index(q) + 1]),
+            }
+        except Exception as exc:  # noqa: BLE001 — 金路径必须显式失败
+            last_error = str(exc)
+            empty_leg = {
+                "ok": False,
+                "error": last_error,
+                "hit_count": 0,
+                "restore_ok": False,
+                "query": q,
+                "query_original": query,
+                "query_tried": list(tried[: tried.index(q) + 1]),
+            }
+
+    if empty_leg is not None:
+        empty_leg["query"] = query
+        empty_leg["query_tried"] = tried
+        if last_error and "error" not in empty_leg:
+            empty_leg["error"] = last_error
+        return empty_leg
+    return {
+        "ok": False,
+        "hit_count": 0,
+        "chunk_id": None,
+        "restore_ok": False,
+        "query": query,
+        "query_original": query,
+        "query_tried": tried,
+        "error": last_error,
+    }
+
+
+def _golden_fail_reason(
+    *,
+    resolve_ok: bool,
+    entity_ok: bool,
+    kb_leg: dict[str, Any] | None,
+) -> str:
+    if not resolve_ok:
+        return "candidate_unresolved"
+    if not entity_ok:
+        return "entity_context_missing"
+    if kb_leg is None:
+        return "golden_path_failed"
+    if int(kb_leg.get("hit_count") or 0) < 1:
+        return "kb_search_empty"
+    if not kb_leg.get("restore_ok"):
+        return "kb_restore_failed"
+    if not kb_leg.get("ok"):
+        return "kb_leg_failed"
+    return "golden_path_failed"
 
 
 def _path_for_kind(kind: str) -> str:

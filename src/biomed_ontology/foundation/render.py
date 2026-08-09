@@ -54,29 +54,41 @@ def render_golden_path(
 ) -> None:
     """分步展示 resolve → entity → graph → evidence → assets。"""
     out = console or Console()
-    if not result.get("ok"):
-        out.print(
-            Panel(
-                escape(str(result.get("reason") or result)),
-                title="[bold red]Golden Path FAILED[/]",
-                border_style="red",
-                box=box.ROUNDED,
-            )
-        )
-        return
-
+    ok = bool(result.get("ok"))
     ctx = result.get("context") or {}
     entity = ctx.get("entity") or {}
     canonical = result.get("canonical_entity") or ctx.get("enterprise_id") or "?"
     query = _resolve_query(result)
 
+    # 早期失败（未 resolve / 无 context）：紧凑失败面板，不 dump 整份 dict
+    if not ok and not ctx:
+        out.print()
+        out.print(
+            _failure_header_panel(
+                query=query,
+                canonical=canonical if canonical != "?" else None,
+                reason=str(result.get("reason") or "golden_path_failed"),
+                path=result.get("path"),
+            )
+        )
+        out.print()
+        if result.get("resolve"):
+            out.print(Rule("[dim]① Resolve[/]", style="dim"))
+            out.print(_resolve_panel(result))
+            out.print()
+        out.print(_failure_footer(result, canonical=str(canonical)))
+        out.print()
+        return
+
     out.print()
     out.print(
         _header_panel(
             query=query,
-            canonical=canonical,
+            canonical=str(canonical),
             entity=entity,
             path=result.get("path"),
+            ok=ok,
+            reason=str(result.get("reason") or "") if not ok else None,
         )
     )
     out.print()
@@ -93,7 +105,7 @@ def render_golden_path(
         out.print()
 
         out.print(Rule("[dim]③ World Model Graph[/]", style="dim"))
-        out.print(_graph_tree(ctx, canonical=canonical, entity=entity))
+        out.print(_graph_tree(ctx, canonical=str(canonical), entity=entity))
         out.print()
 
         out.print(Rule("[dim]④ Evidence · Citationware[/]", style="dim"))
@@ -110,7 +122,15 @@ def render_golden_path(
             out.print(_kb_panel(kb))
             out.print()
 
-    out.print(_footer(ctx, canonical=canonical))
+        if not ok:
+            out.print(Rule("[dim]Diagnosis[/]", style="dim"))
+            out.print(_failure_diagnosis_panel(result))
+            out.print()
+
+    if ok:
+        out.print(_footer(ctx, canonical=str(canonical)))
+    else:
+        out.print(_failure_footer(result, canonical=str(canonical)))
     out.print()
 
 
@@ -302,6 +322,8 @@ def _header_panel(
     canonical: str,
     entity: dict[str, Any],
     path: str | None,
+    ok: bool = True,
+    reason: str | None = None,
 ) -> Panel:
     label_en = entity.get("preferred_label_en") or ""
     label_zh = entity.get("preferred_label_zh") or ""
@@ -309,7 +331,10 @@ def _header_panel(
     aliases = entity.get("aliases") or []
 
     title = Text()
-    title.append("Golden Path", style="bold bright_white")
+    if ok:
+        title.append("Golden Path", style="bold bright_white")
+    else:
+        title.append("Golden Path FAILED", style="bold red")
     if path:
         title.append("  ·  ", style="dim")
         title.append(path, style="dim cyan")
@@ -333,8 +358,13 @@ def _header_panel(
         body.append("\n")
         body.append("aliases  ", style="dim")
         body.append(shown + more, style="dim")
+    if not ok and reason:
+        body.append("\n")
+        body.append("reason  ", style="dim")
+        body.append(escape(reason), style="bold red")
 
-    return Panel(body, title=title, border_style="bright_blue", box=box.ROUNDED, padding=(1, 2))
+    border = "bright_blue" if ok else "red"
+    return Panel(body, title=title, border_style=border, box=box.ROUNDED, padding=(1, 2))
 
 
 def _steps_panel(result: dict[str, Any]) -> Panel:
@@ -342,25 +372,44 @@ def _steps_panel(result: dict[str, Any]) -> Panel:
     hit = _primary_resolve_hit(result)
     method = (hit or {}).get("resolution_method") or "—"
     conf = (hit or {}).get("confidence")
+    kb = result.get("kb")
+    resolve_ok = hit is not None and bool(hit.get("canonical_entity"))
+    entity_ok = bool(ctx.get("entity"))
+    targets_n = len(ctx.get("targets") or [])
+    diseases_n = len(ctx.get("diseases") or [])
+    evidence_n = len(ctx.get("evidence") or [])
+    assets_n = len(ctx.get("internal_assets") or [])
 
     conf_s = f"  conf={conf:.2f}" if conf is not None else ""
-    rows: list[tuple[str, str, str]] = [
-        ("1", "Resolve", f"[cyan]{escape(str(method))}[/]{conf_s}"),
-        ("2", "Targets", f"[bold]{len(ctx.get('targets') or [])}[/]"),
-        ("3", "Diseases", f"[bold]{len(ctx.get('diseases') or [])}[/]"),
-        ("4", "Evidence", f"[bold]{len(ctx.get('evidence') or [])}[/]  citationware"),
-        ("5", "Assets", f"[bold]{len(ctx.get('internal_assets') or [])}[/]  ELN/LIMS"),
+    # WM 计数步：有 entity context 即视为通过（0 命中不标红，留给 diagnosis）
+    rows: list[tuple[bool, str, str, str]] = [
+        (resolve_ok, "1", "Resolve", f"[cyan]{escape(str(method))}[/]{conf_s}"),
+        (entity_ok, "2", "Entity", "[green]ok[/]" if entity_ok else "[red]missing[/]"),
+        (entity_ok, "3", "Targets", f"[bold]{targets_n}[/]"),
+        (entity_ok, "4", "Diseases", f"[bold]{diseases_n}[/]"),
+        (entity_ok, "5", "Evidence", f"[bold]{evidence_n}[/]  citationware"),
+        (entity_ok, "6", "Assets", f"[bold]{assets_n}[/]  ELN/LIMS"),
     ]
+    if kb is not None:
+        kb_ok = bool(kb.get("ok"))
+        hits = int(kb.get("hit_count") or 0)
+        q = escape(str(kb.get("query") or ""))
+        detail = f"[bold]{hits}[/] hits  query=[cyan]{q}[/]"
+        if kb.get("query_original") and kb.get("query") != kb.get("query_original"):
+            detail += f"  via alias from [dim]{escape(str(kb['query_original']))}[/]"
+        rows.append((kb_ok, "7", "KB Lit", detail))
 
     table = Table(box=None, show_header=False, padding=(0, 1))
     table.add_column("ok", width=2)
     table.add_column("step", style="dim", width=3)
     table.add_column("name", style="bold", width=10)
     table.add_column("detail")
-    for step, name, detail in rows:
-        table.add_row("[green]✓[/]", step, name, detail)
+    for step_ok, step, name, detail in rows:
+        mark = "[green]✓[/]" if step_ok else "[red]✗[/]"
+        table.add_row(mark, step, name, detail)
 
-    return Panel(table, title="[bold]Trace[/]", border_style="dim", box=box.SIMPLE)
+    border = "dim" if result.get("ok") else "red"
+    return Panel(table, title="[bold]Trace[/]", border_style=border, box=box.SIMPLE)
 
 
 def _resolve_panel(result: dict[str, Any]) -> Panel:
@@ -545,6 +594,12 @@ def _kb_panel(kb: dict[str, Any]) -> Panel:
     ok = bool(kb.get("ok"))
     grid.add_row("status", "[bold green]OK[/]" if ok else "[bold red]FAIL[/]")
     grid.add_row("query", escape(str(kb.get("query") or "")))
+    original = kb.get("query_original")
+    if original and original != kb.get("query"):
+        grid.add_row("original", escape(str(original)))
+    tried = kb.get("query_tried") or []
+    if len(tried) > 1:
+        grid.add_row("tried", ", ".join(escape(str(q)) for q in tried[:6]))
     grid.add_row("hits", str(kb.get("hit_count") or 0))
     if kb.get("chunk_id"):
         grid.add_row("chunk", escape(str(kb["chunk_id"])))
@@ -590,6 +645,134 @@ def _footer(ctx: dict[str, Any], *, canonical: str) -> Panel:
     text.append(escape(canonical), style="yellow")
     text.append(")", style="dim")
     return Panel(text, border_style="bright_green", box=box.ROUNDED)
+
+
+_FAIL_REASON_HINTS = {
+    "candidate_unresolved": "mention not in enterprise dictionary / seed aliases",
+    "entity_context_missing": "GraphDB entity card missing after resolve",
+    "kb_search_empty": "literature search returned 0 hits (try EN preferred label)",
+    "kb_restore_failed": "search hit but restore_context failed (citationware)",
+    "kb_leg_failed": "literature search + restore leg did not pass",
+}
+
+
+def _failure_header_panel(
+    *,
+    query: str,
+    canonical: str | None,
+    reason: str,
+    path: str | None,
+) -> Panel:
+    title = Text()
+    title.append("Golden Path FAILED", style="bold red")
+    if path:
+        title.append("  ·  ", style="dim")
+        title.append(str(path), style="dim cyan")
+
+    body = Text()
+    if query:
+        body.append(escape(query), style="bold yellow")
+        if canonical:
+            body.append("  →  ", style="dim")
+            body.append(escape(canonical), style="bold bright_cyan")
+        else:
+            body.append("  →  ", style="dim")
+            body.append("UNMAPPED", style="bold red")
+    elif canonical:
+        body.append(escape(canonical), style="bold bright_cyan")
+    else:
+        body.append("no query", style="dim")
+    body.append("\n")
+    body.append("reason  ", style="dim")
+    body.append(escape(reason), style="bold red")
+    hint = _FAIL_REASON_HINTS.get(reason)
+    if hint:
+        body.append("\n")
+        body.append("hint    ", style="dim")
+        body.append(hint, style="dim")
+    return Panel(body, title=title, border_style="red", box=box.ROUNDED, padding=(1, 2))
+
+
+def _failure_diagnosis_panel(result: dict[str, Any]) -> Panel:
+    reason = str(result.get("reason") or "golden_path_failed")
+    evaluation = result.get("evaluation") or {}
+    kb = result.get("kb") or {}
+    backends = result.get("backends") or (result.get("context") or {}).get("backends") or {}
+
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(style="dim", justify="right", min_width=12)
+    grid.add_column()
+    grid.add_row("reason", f"[bold red]{escape(reason)}[/]")
+    hint = _FAIL_REASON_HINTS.get(reason)
+    if hint:
+        grid.add_row("hint", escape(hint))
+
+    if evaluation:
+        checks = Table(box=None, show_header=False, padding=(0, 1))
+        checks.add_column("ok", width=2)
+        checks.add_column("name")
+        for key, label in (
+            ("backends_ok", "WM backends ok"),
+            ("bios_graphdb", "BIOS bridges"),
+            ("milvus_evidence", "Milvus evidence"),
+            ("openmetadata_assets", "OM assets"),
+            ("kb_search_nonempty", "KB search hits"),
+            ("kb_restore_ok", "KB restore"),
+        ):
+            if key not in evaluation:
+                continue
+            value = evaluation.get(key)
+            mark = "[green]✓[/]" if value else "[red]✗[/]"
+            style = "white" if value else "red"
+            checks.add_row(mark, f"[{style}]{escape(label)}[/]")
+        grid.add_row("checks", checks)
+
+    if kb:
+        kb_bits = [
+            f"hits={kb.get('hit_count') or 0}",
+            f"restore={'ok' if kb.get('restore_ok') else 'fail'}",
+            f"query={kb.get('query') or '—'}",
+        ]
+        tried = kb.get("query_tried") or []
+        if tried:
+            kb_bits.append("tried=" + ",".join(str(q) for q in tried[:4]))
+        grid.add_row("kb", escape("  ".join(kb_bits)))
+    if backends:
+        parts = [f"{k}={v}" for k, v in backends.items()]
+        grid.add_row("backends", escape("  ".join(parts)))
+
+    return Panel(grid, title="Failure Diagnosis", border_style="red", box=box.ROUNDED)
+
+
+def _failure_footer(result: dict[str, Any], *, canonical: str) -> Panel:
+    reason = str(result.get("reason") or "golden_path_failed")
+    query = _resolve_query(result)
+    text = Text()
+    text.append("✗ ", style="bold red")
+    text.append("Golden Path failed", style="bold")
+    text.append(f"  ·  {escape(reason)}", style="red")
+    if canonical and canonical != "?":
+        text.append(f"  ·  {escape(canonical)}", style="dim")
+    text.append("\n")
+    text.append("next  ", style="dim")
+    if reason == "candidate_unresolved":
+        text.append("hmd foundation resolve --text ", style="cyan")
+        text.append(escape(query or "<mention>"), style="yellow")
+        text.append("  ·  check data/seed aliases", style="dim")
+    elif reason.startswith("kb_"):
+        text.append("hmd tools search --query ", style="cyan")
+        entity = (result.get("context") or {}).get("entity") or {}
+        en = entity.get("preferred_label_en") or "savolitinib"
+        text.append(escape(str(en)), style="yellow")
+        text.append("  ·  ", style="dim")
+        text.append("hmd foundation golden --candidate ", style="cyan")
+        text.append(escape(str(en)), style="yellow")
+    else:
+        text.append("hmd foundation golden --candidate ", style="cyan")
+        text.append(escape(query or canonical or "HMPL-504"), style="yellow")
+        text.append("  ·  ", style="dim")
+        text.append("hmd serve --mcp", style="cyan")
+    return Panel(text, border_style="red", box=box.ROUNDED)
 
 
 def _primary_resolve_hit(result: dict[str, Any]) -> dict[str, Any] | None:

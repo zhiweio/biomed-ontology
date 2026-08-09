@@ -150,6 +150,46 @@ def test_kb_golden_leg_recognizes_restore_context_envelope() -> None:
     assert leg2["ok"] is False
 
 
+def test_kb_golden_leg_retries_english_alias_after_cjk_miss() -> None:
+    """中文表面形在英文文献库 0 命中时，应按 preferred_label_en 重试。"""
+    from unittest.mock import MagicMock
+
+    from biomed_ontology.foundation.api import _kb_golden_leg, _kb_query_aliases
+
+    entity = {
+        "preferred_label_en": "savolitinib",
+        "preferred_label_zh": "赛沃替尼",
+        "aliases": ["HMPL-504", "volitinib", "沃瑞沙"],
+    }
+    aliases = _kb_query_aliases(entity, "赛沃替尼")
+    assert aliases[0] == "savolitinib"
+    assert "HMPL-504" in aliases
+    assert "赛沃替尼" not in aliases  # 原始 query 不重复
+
+    tools = MagicMock()
+
+    def _search(query: str, top_k: int = 5):  # noqa: ARG001
+        if query == "赛沃替尼":
+            return {"results": []}
+        if query == "savolitinib":
+            return {"results": [{"chunk_id": "CHK:txt.savo", "doc_id": "DOC:savo"}]}
+        return {"results": []}
+
+    tools.search_documents.side_effect = _search
+    tools.restore_context.return_value = {
+        "doc_id": "DOC:savo",
+        "full_text": "savolitinib inhibits MET",
+        "warnings": [],
+    }
+    leg = _kb_golden_leg(tools, "赛沃替尼", aliases=aliases)
+    assert leg["ok"] is True
+    assert leg["query"] == "savolitinib"
+    assert leg["query_original"] == "赛沃替尼"
+    assert "赛沃替尼" in leg["query_tried"]
+    assert "savolitinib" in leg["query_tried"]
+    assert tools.search_documents.call_count >= 2
+
+
 def test_golden_path_live_backends() -> None:
     if not _backends_ready():
         pytest.skip(
@@ -306,6 +346,89 @@ def test_golden_path_rich_render_with_mock_context() -> None:
     assert "graphdb" in text
     assert "milvus" in text
     assert "openmetadata" in text
+
+
+def test_golden_path_rich_render_failed_does_not_dump_dict() -> None:
+    """失败路径应结构化展示 reason / diagnosis，而不是 escape(整个 result)。"""
+    from io import StringIO
+
+    from rich.console import Console
+
+    from biomed_ontology.foundation.render import render_golden_path
+
+    result = {
+        "ok": False,
+        "reason": "kb_search_empty",
+        "path": "DrugCandidate→Target→Disease→Evidence→Asset",
+        "canonical_entity": "HMD:ENT:DC:savolitinib",
+        "query": "赛沃替尼",
+        "resolve": {
+            "query": "赛沃替尼",
+            "resolved": [
+                {
+                    "mention": "赛沃替尼",
+                    "canonical_entity": "HMD:ENT:DC:savolitinib",
+                    "resolution_method": "dictionary",
+                    "confidence": 1.0,
+                    "entity_kind": "DrugCandidate",
+                }
+            ],
+        },
+        "context": {
+            "ontology_release_id": "0.3.0-foundation",
+            "enterprise_id": "HMD:ENT:DC:savolitinib",
+            "entity": {
+                "enterprise_id": "HMD:ENT:DC:savolitinib",
+                "entity_kind": "DrugCandidate",
+                "preferred_label_en": "savolitinib",
+                "preferred_label_zh": "赛沃替尼",
+                "aliases": ["HMPL-504"],
+            },
+            "targets": [{"id": "HMD:ENT:TGT:MET", "label": "MET"}],
+            "diseases": [{"id": "HMD:ENT:IND:nsclc", "label": "NSCLC"}],
+            "evidence": [{"id": "ev:1", "type": "PubMed", "span": "MET inhibitor"}],
+            "internal_assets": [{"id": "asliva.eln.exp_2025_012", "type": "eln_experiment"}],
+            "backends": {
+                "entity": "graphdb",
+                "relationships": "graphdb",
+                "evidence": "milvus",
+                "assets": "openmetadata",
+            },
+        },
+        "kb": {
+            "ok": False,
+            "hit_count": 0,
+            "chunk_id": None,
+            "restore_ok": False,
+            "query": "赛沃替尼",
+            "query_original": "赛沃替尼",
+            "query_tried": ["赛沃替尼", "savolitinib"],
+        },
+        "evaluation": {
+            "backends_ok": True,
+            "bios_graphdb": True,
+            "milvus_evidence": True,
+            "openmetadata_assets": True,
+            "kb_search_nonempty": False,
+            "kb_restore_ok": False,
+        },
+        "backends": {
+            "entity": "graphdb",
+            "relationships": "graphdb",
+            "evidence": "milvus",
+            "assets": "openmetadata",
+        },
+    }
+    buf = StringIO()
+    cons = Console(file=buf, force_terminal=True, width=100, color_system=None)
+    render_golden_path(result, console=cons, verbose=True)
+    text = buf.getvalue()
+    assert "Golden Path FAILED" in text
+    assert "kb_search_empty" in text
+    assert "Failure Diagnosis" in text
+    assert "HMD:ENT:DC:savolitinib" in text
+    assert "'ok': False" not in text
+    assert "preferred_label_en" not in text  # 不应 dump 原始 dict 字段串
 
 
 def test_enrich_resolve_reverse_aliases_from_world() -> None:

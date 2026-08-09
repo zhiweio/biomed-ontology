@@ -612,10 +612,9 @@ def foundation_golden(
         if not result.get("ok"):
             raise typer.Exit(1)
         return
-    if not result.get("ok"):
-        render_golden_path(result, console=console)
-        raise typer.Exit(1)
     render_golden_path(result, console=console, verbose=not compact)
+    if not result.get("ok"):
+        raise typer.Exit(1)
 
 
 @foundation_app.command("golden-eval")
