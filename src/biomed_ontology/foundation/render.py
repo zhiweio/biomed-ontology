@@ -1596,13 +1596,15 @@ def render_evolve_apply(
     written = list(payload.get("written") or [])
     skipped = list(payload.get("skipped") or [])
     out.print()
-    out.print(
-        Panel(
-            Text(f"evolve-apply ({mode})", style="bold"),
-            box=box.ROUNDED,
-            border_style="cyan",
-        )
+    meta = Text(f"evolve-apply ({mode})", style="bold")
+    meta.append("\n")
+    meta.append(
+        f"approved={payload.get('approved_count', 0)}  "
+        f"already_applied={payload.get('already_applied_count', 0)}  "
+        f"pending={payload.get('pending_count', 0)}",
+        style="dim",
     )
+    out.print(Panel(meta, box=box.ROUNDED, border_style="cyan"))
     if not written and not skipped:
         out.print(
             "[yellow]无 approved 提案可写回。[/yellow] "
@@ -1612,6 +1614,16 @@ def render_evolve_apply(
         )
         out.print()
         return
+    if not written and skipped:
+        out.print(
+            "[yellow]没有可写 Git 策展面的补丁。[/yellow]\n"
+            f"- already_applied={payload.get('already_applied_count', 0)} "
+            "（L1 等已写入 dictionary/zingg，不会重复打补丁）\n"
+            f"- skipped L3={len(skipped)} "
+            "（[dim]create_node[/dim] 无 target，需人工补 [cyan]ontology/entities[/cyan]，"
+            "不要对 L3 批量 approve）\n"
+            "建议只批 L1：[cyan]evolve-approve --tier L1 --min-confidence 0.8[/cyan]"
+        )
     table = Table(title="Patches", box=box.SIMPLE)
     table.add_column("action")
     table.add_column("mention")
@@ -1624,13 +1636,17 @@ def render_evolve_apply(
             str(row.get("enterprise_id") or ""),
             str(row.get("path") or ""),
         )
-    out.print(table)
+    if written:
+        out.print(table)
     if skipped:
-        st = Table(title="Skipped", box=box.SIMPLE)
+        st = Table(title="Skipped (L3 / no target)", box=box.SIMPLE)
         st.add_column("mention")
         st.add_column("reason")
         for row in skipped:
-            st.add_row(escape(str(row.get("mention") or "")), str(row.get("reason") or ""))
+            st.add_row(
+                escape(str(row.get("mention") or "")),
+                str(row.get("reason") or ""),
+            )
         out.print(st)
     out.print()
 

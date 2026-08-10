@@ -33,6 +33,9 @@ class EvolveApplyResult:
     written: list[dict[str, Any]] = field(default_factory=list)
     skipped: list[dict[str, Any]] = field(default_factory=list)
     proposals_path: str = ""
+    approved_count: int = 0
+    already_applied_count: int = 0
+    pending_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -295,6 +298,8 @@ def apply_approved(
 ) -> EvolveApplyResult:
     p, rows = load_proposals(path)
     approved = [r for r in rows if r.get("status") == "approved"]
+    already_applied = sum(1 for r in rows if r.get("status") == "applied")
+    pending = sum(1 for r in rows if r.get("status") == "pending_approval")
     written: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     if progress is not None:
@@ -308,8 +313,9 @@ def apply_approved(
             skipped.append(
                 {
                     "proposal_id": prop.get("proposal_id"),
-                    "reason": "l3_or_missing_target",
+                    "reason": "l3_create_node_needs_manual_curation",
                     "mention": mention,
+                    "hint": "L3 仅草稿：需人工补全 entities 后才能 apply；批量请用 --tier L1",
                 }
             )
             if progress is not None:
@@ -366,6 +372,9 @@ def apply_approved(
         written=written,
         skipped=skipped,
         proposals_path=str(p),
+        approved_count=len(approved),
+        already_applied_count=already_applied,
+        pending_count=pending,
     )
 
 
