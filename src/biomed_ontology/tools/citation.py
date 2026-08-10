@@ -103,9 +103,7 @@ def _tier_of(record: Any) -> LicenseTierEnum:
 
 
 def _section_of(chunk: Any) -> str:
-    return str(
-        getattr(chunk, "section_path", None) or getattr(chunk, "section", "") or ""
-    )
+    return str(getattr(chunk, "section_path", None) or getattr(chunk, "section", "") or "")
 
 
 def _rank(tier: LicenseTierEnum) -> int:
@@ -120,11 +118,7 @@ def _members(store: ChunkStore, anchor: Any, scope: RestoreScopeEnum) -> list[An
         return list(store.get_document_chunks(doc_id))
     if scope is RestoreScopeEnum.SIBLINGS:
         parent = _parent(_section_of(anchor))
-        return [
-            c
-            for c in store.get_document_chunks(doc_id)
-            if _parent(_section_of(c)) == parent
-        ]
+        return [c for c in store.get_document_chunks(doc_id) if _parent(_section_of(c)) == parent]
     return list(store.get_section_chunks(doc_id, _section_of(anchor)))
 
 

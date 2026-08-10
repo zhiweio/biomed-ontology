@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from biomed_ontology._generated.hmd_concept import MappingJustificationEnum
 from biomed_ontology.config import Settings
@@ -77,9 +77,7 @@ def select_backend(
     name = forced or cfg.layout_backend
     if name and name != "auto":
         if name == "pymupdf":
-            raise ValueError(
-                "版面后端 'pymupdf' 已废弃，请改用 'pymupdf4llm'（或 'auto'）"
-            )
+            raise ValueError("版面后端 'pymupdf' 已废弃，请改用 'pymupdf4llm'（或 'auto'）")
         if name not in {"pymupdf4llm", "docling", "mineru"}:
             raise ValueError(f"未知版面后端：{name!r}")
         return RouteDecision(backend=name, reason="forced", confidence=1.0)  # type: ignore[arg-type]
@@ -94,9 +92,7 @@ def select_backend(
 
     from biomed_ontology.parse.layout._pdf_io import probe_pdf
 
-    probe = probe_pdf(
-        path, max_pages=cfg.parse_max_pages, max_bytes=cfg.parse_max_bytes
-    )
+    probe = probe_pdf(path, max_pages=cfg.parse_max_pages, max_bytes=cfg.parse_max_bytes)
     pdata = probe.as_dict()
     if not probe.text_extractable:
         return RouteDecision(
@@ -137,9 +133,7 @@ def route_and_extract(
     for backend_name in chain:
         backend = get_layout_backend(backend_name, config=cfg)
         if not backend.supports(path):
-            trace.attempts.append(
-                {"backend": backend_name, "status": "unsupported", "error": None}
-            )
+            trace.attempts.append({"backend": backend_name, "status": "unsupported", "error": None})
             continue
         try:
             result = backend.extract(path, out_dir, ctx=ctx)
@@ -173,7 +167,7 @@ def route_and_extract(
                 assets_dir=result.assets_dir,
                 page_count=result.page_count,
                 backend=result.backend,
-                degraded=tuple(sorted(merged_degraded)),  # type: ignore[arg-type]
+                degraded=cast(tuple[Capability, ...], tuple(sorted(merged_degraded))),
             )
         ctx.record_decision(
             stage="parse.route",

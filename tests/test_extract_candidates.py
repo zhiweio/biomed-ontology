@@ -31,7 +31,7 @@ def test_build_mention_pairs_type_matrix():
     ]
     pairs = build_mention_pairs(text, mentions)
     assert pairs
-    assert any(p.subject.entity_id.endswith("savolitinib") for p in pairs)
+    assert any((p.subject.entity_id or "").endswith("savolitinib") for p in pairs)
 
 
 def test_rule_extractor_inhibits(kb, ctx):

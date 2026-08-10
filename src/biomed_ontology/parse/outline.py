@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from typing import Any
 
 from biomed_ontology._generated.hmd_concept import MappingJustificationEnum
 from biomed_ontology._generated.hmd_fact import HeadingSourceEnum
@@ -49,13 +50,13 @@ class HeadingCandidate:
         return re.sub(r"\s+", " ", self.title).strip().casefold()
 
 
-def extract_toc_nodes(toc: list[list[object]]) -> list[HeadingCandidate]:
+def extract_toc_nodes(toc: list[list[Any]]) -> list[HeadingCandidate]:
     """PDF 内嵌书签。作者显式声明的结构，可信度最高。"""
     out: list[HeadingCandidate] = []
     for entry in toc:
         if len(entry) < 3:
             continue
-        level, title, page = int(entry[0]), str(entry[1]).strip(), int(entry[2])  # type: ignore[arg-type]
+        level, title, page = int(entry[0]), str(entry[1]).strip(), int(entry[2])
         if not title or page < 1:
             continue
         out.append(
@@ -82,7 +83,7 @@ def grep_headings(layout: LayoutResult) -> list[HeadingCandidate]:
         evidence = [f"{layout.backend} 版面信号 level={level} page={block.page}"]
         conf = 0.72
         if (size := block.backend_meta.get("font_size")) is not None:
-            evidence.append(f"字号 {float(size):.1f}")
+            evidence.append(f"字号 {float(size):.1f}")  # ty: ignore[invalid-argument-type]
         if block.backend_meta.get("bold"):
             evidence.append("粗体")
         if _CANONICAL.match(title):

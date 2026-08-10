@@ -86,4 +86,3 @@ def test_sync_clears_seed_provenance_not_extracted_graph() -> None:
     assert GRAPH_KNOWLEDGE in cleared
     assert GRAPH_PROVENANCE in cleared
     assert GRAPH_PROVENANCE_EXTRACTED not in cleared
-

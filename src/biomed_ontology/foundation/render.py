@@ -164,7 +164,7 @@ def enrich_resolve(
         if eid and fetch_graph_entity is not None:
             try:
                 remote = fetch_graph_entity(eid)
-            except Exception:  # noqa: BLE001 — CLI 展示路径，后端失败不阻断 resolve
+            except Exception:
                 remote = None
             if remote:
                 entity = _merge_entity_surfaces(entity, remote)
@@ -254,9 +254,7 @@ def render_golden_eval(
     out.print()
 
 
-def render_golden_eval_compact(
-    summary: dict[str, Any], *, console: Console | None = None
-) -> None:
+def render_golden_eval_compact(summary: dict[str, Any], *, console: Console | None = None) -> None:
     """仅汇总表 + 页脚。"""
     render_golden_eval(summary, console=console, verbose=False)
 
@@ -810,9 +808,7 @@ def _short_claim(claim: str) -> str:
     return f"[white]{escape(subj)}[/] [cyan]{escape(pred)}[/] [white]{escape(obj)}[/]"
 
 
-def _eval_header_panel(
-    *, total: int, passed: int, failed: list[str], ok: bool
-) -> Panel:
+def _eval_header_panel(*, total: int, passed: int, failed: list[str], ok: bool) -> Panel:
     title = Text()
     title.append("Golden Eval", style="bold bright_white")
     title.append("  ·  ", style="dim")
@@ -917,9 +913,7 @@ def _eval_path_panel(row: dict[str, Any]) -> Panel:
     if bios:
         bios_line = Text()
         bios_line.append("bios  ", style="dim")
-        shown = ", ".join(
-            escape(str(b.get("bios_curie") or b.get("curie") or b)) for b in bios[:4]
-        )
+        shown = ", ".join(escape(str(b.get("bios_curie") or b.get("curie") or b)) for b in bios[:4])
         more = f" +{len(bios) - 4}" if len(bios) > 4 else ""
         bios_line.append(shown + more, style="magenta")
         body_parts.extend([Text(), bios_line])
@@ -958,9 +952,7 @@ def _eval_footer(*, total: int, passed: int, ok: bool) -> Panel:
 # ---------------------------------------------------------------- resolve
 
 
-def _merge_entity_surfaces(
-    local: dict[str, Any] | None, remote: dict[str, Any]
-) -> dict[str, Any]:
+def _merge_entity_surfaces(local: dict[str, Any] | None, remote: dict[str, Any]) -> dict[str, Any]:
     base = dict(local or {})
     if not base:
         return dict(remote)
@@ -1028,9 +1020,7 @@ def _norm_surface(text: str) -> str:
     return "".join(text.casefold().split())
 
 
-def _resolve_header_panel(
-    *, query: str, primary: dict[str, Any] | None, hit_count: int
-) -> Panel:
+def _resolve_header_panel(*, query: str, primary: dict[str, Any] | None, hit_count: int) -> Panel:
     title = Text()
     title.append("Entity Resolve", style="bold bright_white")
     title.append("  ·  ", style="dim")
@@ -1247,9 +1237,7 @@ def _evolve_candidates_panel(candidates: list[dict[str, Any]]) -> Panel:
     )
 
 
-def _evolve_skipped_panel(
-    skipped: list[dict[str, Any]], *, policy: dict[str, Any]
-) -> Panel:
+def _evolve_skipped_panel(skipped: list[dict[str, Any]], *, policy: dict[str, Any]) -> Panel:
     thr = policy.get("min_confidence_skip")
     thr_s = f"{float(thr):.2f}" if thr is not None else "0.95"
 

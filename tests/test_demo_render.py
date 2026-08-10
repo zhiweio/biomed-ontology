@@ -104,13 +104,12 @@ def test_parsers_are_generic_not_demo_id_bound():
     assert "United States" in (hit["snip"] or "")
 
     assert _parse_concepts("      接地概念 ['HMD:ENT:IND:nsclc']") == ["HMD:ENT:IND:nsclc"]
-    assert _parse_fact(
-        "  fruquintinib -has_target-> MET [TEXT] ← DOC:PMID.1 p1 Abstract"
-    )["predicate"] == "has_target"
-    assert _parse_tree("  DOC:CTGOV.NCT1 碎片 1 个 → 章节 1 处：BriefSummary")["chunks"] == "1"
-    assert _parse_signal(
-        "  [P0] cooccurrence_anomaly 'HMD:ENT:IND:nsclc~HMD:ENT:TGT:MET' x6"
-    )["priority"] == "P0"
+    fact = _parse_fact("  fruquintinib -has_target-> MET [TEXT] ← DOC:PMID.1 p1 Abstract")
+    assert fact is not None and fact["predicate"] == "has_target"
+    tree = _parse_tree("  DOC:CTGOV.NCT1 碎片 1 个 → 章节 1 处：BriefSummary")
+    assert tree is not None and tree["chunks"] == "1"
+    signal = _parse_signal("  [P0] cooccurrence_anomaly 'HMD:ENT:IND:nsclc~HMD:ENT:TGT:MET' x6")
+    assert signal is not None and signal["priority"] == "P0"
 
     metrics = _parse_metrics(
         "targets=1 evidence=6 backends={'entity': 'graphdb', 'evidence': 'milvus'}"
@@ -121,7 +120,8 @@ def test_parsers_are_generic_not_demo_id_bound():
 
     restore_line = "还原 CHK:txt.abc：BriefSummary p1-1，10 字碎片 → 20 字全节（截断=False）"
     assert _classify_line(restore_line)[0] == "restore"
-    assert _parse_restore(restore_line)["chunk"] == "CHK:txt.abc"
+    restore = _parse_restore(restore_line)
+    assert restore is not None and restore["chunk"] == "CHK:txt.abc"
     assert _classify_line("HMPL-504 → HMD:ENT:DC:savolitinib")[0] == "arrow"
     assert _classify_line("KB concept_id=HMD:ENT:DC:savolitinib")[0] == "metrics"
 

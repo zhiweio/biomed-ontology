@@ -46,7 +46,7 @@ uv run hmd index --recreate                    # 默认 multimodal-bio
 uv run hmd eval --entitlements MOCK_LICENSED   # Rich：归一化+检索+targets
 uv run hmd eval --entitlements MOCK_LICENSED --compact
 uv run hmd serve --port 8000
-task check           # ruff + 全量测试
+task check           # ruff + ty + 全量测试
 ```
 
 **调用链（文献面）：**

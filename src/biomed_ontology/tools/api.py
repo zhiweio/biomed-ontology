@@ -119,7 +119,9 @@ class ToolApi:
     chunk_store: Any | None = None  # ChunkStore：Citationware / hydrate 权威正文
 
     @classmethod
-    def from_kb(cls, kb: KnowledgeBase, *, backend: SearchBackend, searcher: HybridSearcher | None = None) -> ToolApi:
+    def from_kb(
+        cls, kb: KnowledgeBase, *, backend: SearchBackend, searcher: HybridSearcher | None = None
+    ) -> ToolApi:
         """无 Foundation 时的装配入口；完整双面请用 ``runtime.open_dual_surface``。"""
         return cls.from_backends(kb=kb, backend=backend, searcher=searcher)
 
@@ -276,7 +278,7 @@ class ToolApi:
             res = self.kb.normalizer.normalize(
                 text,
                 ctx=ctx,
-                entity_types=entity_types,
+                entity_types=set(entity_types) if entity_types else None,  # ty: ignore[invalid-argument-type]
                 context=context,
                 top_k=top_k,
                 min_confidence=min_confidence,
@@ -333,9 +335,7 @@ class ToolApi:
         }
 
         def handler(ctx: TraceContext):
-            graphdb_terms = _expand_via_foundation(
-                self.foundation, concept_id, languages=languages
-            )
+            graphdb_terms = _expand_via_foundation(self.foundation, concept_id, languages=languages)
             if graphdb_terms is not None:
                 return (
                     {
@@ -354,7 +354,7 @@ class ToolApi:
                 max_depth=max_depth,
                 include_descendants=include_descendants,
                 min_weight=min_weight,
-                languages=languages,
+                languages=set(languages) if languages else None,
             )
             return (
                 {

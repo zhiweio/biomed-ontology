@@ -12,11 +12,11 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from biomed_ontology._generated.hmd_concept import MappingJustificationEnum
 from biomed_ontology.observability import TraceContext
-from biomed_ontology.parse.layout.base import Capability, LayoutBlock, LayoutResult
+from biomed_ontology.parse.layout.base import BlockKind, Capability, LayoutBlock, LayoutResult
 
 __all__ = ["DoclingBackend"]
 
@@ -84,9 +84,7 @@ class DoclingBackend:
         tf_log.addFilter(drop)
         try:
             with ctx.span("layout.docling", doc=path.name) as span:
-                result = _document_converter(
-                    render_chart_images=self.render_chart_images
-                ).convert(
+                result = _document_converter(render_chart_images=self.render_chart_images).convert(
                     str(path),
                     max_num_pages=self.max_pages,
                     max_file_size=self.max_bytes,
@@ -150,19 +148,18 @@ def _document_converter(*, render_chart_images: bool = True) -> Any:
         compile_model=False,
     )
     pipeline_options = PdfPipelineOptions(layout_options=layout_options)
-    office_kw = {"render_chart_images": render_chart_images}
     return DocumentConverter(
         format_options={
             InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options),
             InputFormat.IMAGE: ImageFormatOption(pipeline_options=pipeline_options),
             InputFormat.DOCX: WordFormatOption(
-                backend_options=MsWordBackendOptions(**office_kw)
+                backend_options=MsWordBackendOptions(render_chart_images=render_chart_images)
             ),
             InputFormat.PPTX: PowerpointFormatOption(
-                backend_options=MsPowerpointBackendOptions(**office_kw)
+                backend_options=MsPowerpointBackendOptions(render_chart_images=render_chart_images)
             ),
             InputFormat.XLSX: ExcelFormatOption(
-                backend_options=MsExcelBackendOptions(**office_kw)
+                backend_options=MsExcelBackendOptions(render_chart_images=render_chart_images)
             ),
         }
     )
@@ -233,7 +230,7 @@ def _from_docling(
             continue
         blocks.append(
             LayoutBlock(
-                kind=kind,  # type: ignore[arg-type]
+                kind=cast(BlockKind, kind),
                 text=text or "",
                 page=page or 1,
                 bbox=bbox,
@@ -245,9 +242,7 @@ def _from_docling(
     return blocks, degraded, max(max_page, 1)
 
 
-def _attach_caption_to_prior_image(
-    blocks: list[LayoutBlock], *, page: int, caption: str
-) -> None:
+def _attach_caption_to_prior_image(blocks: list[LayoutBlock], *, page: int, caption: str) -> None:
     for i in range(len(blocks) - 1, -1, -1):
         b = blocks[i]
         if b.page != page:
@@ -268,7 +263,6 @@ def _attach_caption_to_prior_image(
         return
 
 
-
 def _picture_caption(item: Any, document: Any) -> str:
     """image 块只保留真实 caption，剥离 Docling 的 Image-not-available 占位注释。"""
     for attr in ("text", "orig"):
@@ -283,9 +277,7 @@ def _strip_docling_image_placeholder(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
 
-def _export_picture(
-    item: Any, document: Any, out_dir: Path, idx: int
-) -> str | None:
+def _export_picture(item: Any, document: Any, out_dir: Path, idx: int) -> str | None:
     """Office 嵌入图 / 已挂 ImageRef 的 picture → PNG；失败返回 None。"""
     getter = getattr(item, "get_image", None)
     pil = None

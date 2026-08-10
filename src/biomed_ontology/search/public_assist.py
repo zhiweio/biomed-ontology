@@ -10,10 +10,10 @@ from biomed_ontology.foundation.graphdb import GraphDbClient
 from biomed_ontology.foundation.resolve import ResolutionIndex
 
 __all__ = [
+    "HasBern2Annotate",
     "PublicAssistResult",
     "PublicLexicalExpand",
     "PublicNenAssist",
-    "HasBern2Annotate",
 ]
 
 
@@ -25,7 +25,9 @@ class HasBern2Annotate(Protocol):
 class PublicAssistResult:
     ent_seeds: list[str] = field(default_factory=list)
     expansion_terms: list[str] = field(default_factory=list)
-    expansion_source: str = "none"  # enterprise | public_lexical | client_terms | assist_xref | none
+    expansion_source: str = (
+        "none"  # enterprise | public_lexical | client_terms | assist_xref | none
+    )
     seed_sources: dict[str, str] = field(default_factory=dict)
 
 
@@ -57,10 +59,9 @@ class PublicNenAssist:
         # 查询本身是公开 CURIE
         for token in _curie_tokens(query):
             ents = self.index.lookup_exact_external(token)
-            if len(ents) == 1 and ents[0] not in exclude:
-                if ents[0] not in seen:
-                    seen.add(ents[0])
-                    out.append(ents[0])
+            if len(ents) == 1 and ents[0] not in exclude and ents[0] not in seen:
+                seen.add(ents[0])
+                out.append(ents[0])
 
         mentions: list[Any] = []
         if self.bern2 is not None:
@@ -71,7 +72,10 @@ class PublicNenAssist:
 
         mentions = sorted(
             mentions,
-            key=lambda m: (-(getattr(m, "end", 0) - getattr(m, "begin", 0)), -float(getattr(m, "prob", 0) or 0)),
+            key=lambda m: (
+                -(getattr(m, "end", 0) - getattr(m, "begin", 0)),
+                -float(getattr(m, "prob", 0) or 0),
+            ),
         )[:top_mentions]
 
         for m in mentions:

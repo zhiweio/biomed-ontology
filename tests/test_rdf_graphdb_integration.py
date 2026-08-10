@@ -26,7 +26,7 @@ def gdb() -> GraphDbClient:
 
 
 @pytest.fixture
-def store(gdb: GraphDbClient) -> GraphStore:
+def store(gdb: GraphDbClient):
     gs = GraphStore(client=gdb)
     yield gs
     # 清理本测专用命名图与 meta 条目

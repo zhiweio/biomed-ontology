@@ -14,13 +14,13 @@ from pathlib import Path
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology.corpus import Chunk, Document, load_corpus
-from biomed_ontology.corpus.tree import build_document_tree, tree_to_chunks
 from biomed_ontology.corpus.classify import (
     DocumentLabel,
     TaxonomyClassifier,
     load_taxonomy,
 )
 from biomed_ontology.corpus.extract import ExtractedFact, TriModalPipeline
+from biomed_ontology.corpus.tree import build_document_tree, tree_to_chunks
 from biomed_ontology.foundation.graphdb import GraphDbClient
 from biomed_ontology.ingest import build_from_seed, load_ambiguity_registry
 from biomed_ontology.ingest.seed import BuiltConcept, BuiltSynonym
@@ -60,12 +60,8 @@ def ensure_catalog_graphs(
     """把企业目录与类型化链接写入 GraphDB（search-around 边权威）。"""
     if not graph.client.health():
         raise RuntimeError("GraphDB 不可达；GRAPH 通道需要 task foundation:up")
-    graph.load_concepts(
-        concepts, synonyms, source_id=_CATALOG_SOURCE, tier=LicenseTierEnum.TIER_0
-    )
-    graph.load_concept_links(
-        concepts, source_id=_CATALOG_LINKS_SOURCE, tier=LicenseTierEnum.TIER_0
-    )
+    graph.load_concepts(concepts, synonyms, source_id=_CATALOG_SOURCE, tier=LicenseTierEnum.TIER_0)
+    graph.load_concept_links(concepts, source_id=_CATALOG_LINKS_SOURCE, tier=LicenseTierEnum.TIER_0)
 
 
 @dataclass

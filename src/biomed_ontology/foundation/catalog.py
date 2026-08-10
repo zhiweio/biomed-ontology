@@ -79,6 +79,7 @@ class OpenMetadataClient:
     def ping(self) -> dict[str, Any]:
         if not self.enabled:
             return {}
+        assert self.base_url is not None
         url = f"{self.base_url.rstrip('/')}/api/v1/system/version"
         with httpx.Client(timeout=self.timeout) as client:
             resp = client.get(url)
@@ -276,6 +277,7 @@ class OpenMetadataClient:
         self.ensure_auth(force=not bool(self.token))
         if not self.enabled:
             return []
+        assert self.base_url is not None
         # ES 对含冒号的 CURIE 查询易 500；按 entity 过滤时用 glossary 名检索再本地筛
         if query and ":" in query and (entity_ids or query.startswith("HMD:")):
             q = HMD_ASSET_GLOSSARY

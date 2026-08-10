@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from biomed_ontology.corpus import Chunk, Document, load_corpus
 from biomed_ontology.corpus.tree import build_document_tree, tree_to_chunks
@@ -159,12 +160,13 @@ def _meta_for_chunk(chunk: Chunk, *, source_id: str, license_tier: str) -> Chunk
 
 def _load_iceberg_doc_meta(release_id: str) -> dict[str, tuple[str, str]]:
     """doc_id → (source_id, license_tier)。"""
-    from biomed_ontology.lake.catalog import EVIDENCE_CHUNKS_TABLE, open_catalog
     from pyiceberg.expressions import EqualTo
+
+    from biomed_ontology.lake.catalog import EVIDENCE_CHUNKS_TABLE, open_catalog
 
     out: dict[str, tuple[str, str]] = {}
     table = open_catalog().load_table(EVIDENCE_CHUNKS_TABLE)
-    arrow = table.scan(row_filter=EqualTo("release_id", release_id)).to_arrow()
+    arrow = table.scan(row_filter=EqualTo(term="release_id", value=release_id)).to_arrow()
     if arrow is None or arrow.num_rows == 0:
         return out
     for r in arrow.to_pylist():
@@ -513,9 +515,7 @@ def refresh_document(
         backend.ensure_collection(drop_existing=False)
     backend.delete_by_doc(doc_id)
     milvus_rows = []
-    tier_s = (
-        doc.license_tier.value if hasattr(doc.license_tier, "value") else str(doc.license_tier)
-    )
+    tier_s = doc.license_tier.value if hasattr(doc.license_tier, "value") else str(doc.license_tier)
     for ch in chunks:
         meta = _meta_for_chunk(ch, source_id=doc.source_id, license_tier=tier_s)
         row = chunk_to_row(ch, meta, label_terms=concept_label_terms(kb, ch))

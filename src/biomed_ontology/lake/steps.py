@@ -149,11 +149,12 @@ def annotate_bern2(ctx: IngestContext, *, bern2_url: str | None = None) -> Inges
     dict_path = Path("ontology/dictionary/enterprise_dictionary.yaml")
     dictionary = load_enterprise_dictionary(dict_path) if dict_path.exists() else None
     world = load_world_model(bern2_url=url)
-    assert world.resolver is not None
-    ctx.resolver = world.resolver
+    resolver = world.resolver
+    assert resolver is not None
+    ctx.resolver = resolver
 
     def _resolve(text: str) -> Any:
-        return world.resolver.resolve_text(text)
+        return resolver.resolve_text(text)
 
     texts = [str(getattr(ch, "text", "") or "") for ch in ctx.chunks]
     with Bern2Client(
@@ -212,9 +213,7 @@ def write_claims(ctx: IngestContext, *, bern2_url: str | None = None) -> IngestC
         normalizer = Normalizer(concepts=[], synonyms=[], ambiguity_index={}, release_id="0.0.0")
 
     # annotate_bern2 已写入 chunk.entity_ids；LLM/候选层直接复用，避免二次 NER
-    facts = TriModalPipeline().run(
-        [ctx.document], ctx.chunks, normalizer=normalizer, ctx=ctx_trace
-    )
+    facts = TriModalPipeline().run([ctx.document], ctx.chunks, normalizer=normalizer, ctx=ctx_trace)
     resolver = ctx.resolver
     if resolver is None:
         world = load_world_model(bern2_url=bern2_url or settings.bern2_url or None)

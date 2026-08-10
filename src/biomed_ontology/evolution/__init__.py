@@ -183,7 +183,8 @@ def _mine_ambiguous_unstable(mi: MiningInput) -> list[Signal]:
     for dec in mi.hub.decisions:
         if dec.stage not in {"LLM_DISAMBIGUATION", "llm_disambiguation"}:
             continue
-        text = (dec.state_before or {}).get("text") or dec.chosen or ""
+        before = dec.state_before
+        text = (before.get("text") if isinstance(before, dict) else None) or dec.chosen or ""
         if not text:
             continue
         traces[text].append(dec.trace_id)

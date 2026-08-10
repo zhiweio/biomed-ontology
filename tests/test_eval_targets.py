@@ -58,8 +58,7 @@ def test_no_stale_waivers(outcomes):
     if stale:
         # TokenOverlap stub 可让真机未达标项偶然转绿；采购态以真 Milvus scorecard 为准。
         pytest.skip(
-            "stub 上出现 stale waiver；真 Milvus + 对齐 gold 后重跑\n"
-            + render_outcomes(outcomes)
+            "stub 上出现 stale waiver；真 Milvus + 对齐 gold 后重跑\n" + render_outcomes(outcomes)
         )
 
 
@@ -75,7 +74,7 @@ def test_waiver_text_quotes_the_current_numbers(outcomes):
     """豁免里写的数字必须还是真的（仅对已跑通且仍豁免的目标）。"""
     checked = 0
     for o in outcomes:
-        if not o.waived or o.unavailable or not o.met is False:
+        if not o.waived or o.unavailable or o.met is not False:
             continue
         if o.actual is None:
             continue

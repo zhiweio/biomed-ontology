@@ -6,15 +6,15 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology._generated.hmd_fact import RetrievalChannelEnum
+from biomed_ontology.embed import EmbeddingBundle
 from biomed_ontology.licensing import tier_rank
-from biomed_ontology.search.backends import ChunkMeta, LicenseScope, RetrievalRequest
+from biomed_ontology.search.backends import LicenseScope, RetrievalRequest
 from biomed_ontology.search.backends.milvus import MilvusBackend
 
 OPEN = tier_rank(LicenseTierEnum.TIER_1)
@@ -57,20 +57,23 @@ def test_caller_tier_cap_overrides_entitlement():
 class _FakeEmbedder:
     name = "fake"
 
-    def encode(self, texts: list[str]) -> list[dict[str, Any]]:
-        out = []
+    def __init__(self) -> None:
+        self.dims = {"dense_general": 8}
+
+    def encode(
+        self, texts: list[str], *, images: list[str | None] | None = None
+    ) -> list[EmbeddingBundle]:
+        out: list[EmbeddingBundle] = []
         for _ in texts:
             out.append(
-                {
-                    "sparse_lexical": {1: 1.0},
-                    "dense_general": [0.1] * 8,
-                }
+                EmbeddingBundle(
+                    {
+                        "sparse_lexical": {1: 1.0},
+                        "dense_general": [0.1] * 8,
+                    }
+                )
             )
         return out
-
-    @property
-    def dims(self) -> dict[str, int]:
-        return {"dense_general": 8}
 
 
 def _backend_with_mock_client(*, fields: tuple[str, ...] = ("sparse_lexical", "dense_general")):

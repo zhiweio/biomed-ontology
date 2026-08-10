@@ -72,7 +72,9 @@ HTTP / MCP **不走** `foundation serve`：统一用 `hmd serve --mcp`（含 `ge
 
 | 目标 | 作用 |
 |---|---|
-| `task check` | ruff + 全量测试 |
+| `task check` | lint（ruff + ty）+ 全量测试 |
+| `task lint` | ruff check + ruff format --check + ty check |
+| `task fmt` | ruff format + autofix |
 | `task gen` | LinkML → `_generated/`（含 `hmd_enterprise`） |
 | `task docs` / `docs:serve` | 手册严格构建 / 预览 |
 | `task milvus:up` / `milvus:down` | Milvus 子集 compose |

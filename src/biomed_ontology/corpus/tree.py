@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 from biomed_ontology._generated.hmd_fact import ModalityChannelEnum
 from biomed_ontology.parse.skeleton import SectionSkeleton
@@ -170,9 +171,7 @@ def build_document_tree(
     return root
 
 
-def _closest_section(
-    path_to_node: dict[str, TreeNode], name: str, root: TreeNode
-) -> TreeNode:
+def _closest_section(path_to_node: dict[str, TreeNode], name: str, root: TreeNode) -> TreeNode:
     if name in path_to_node:
         return path_to_node[name]
     for path, node in path_to_node.items():
@@ -194,9 +193,7 @@ def _pick_section_for_page(
     return max(candidates, key=lambda n: n.page)
 
 
-def _attach_text(
-    parent: TreeNode, doc_id: str, section_path: str, text: str, page: int
-) -> None:
+def _attach_text(parent: TreeNode, doc_id: str, section_path: str, text: str, page: int) -> None:
     if not text or not text.strip():
         return
     paragraphs = [p.strip() for p in _PARA_SPLIT.split(text) if p.strip()]

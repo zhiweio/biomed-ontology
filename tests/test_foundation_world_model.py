@@ -176,7 +176,7 @@ def test_kb_golden_leg_retries_english_alias_after_cjk_miss() -> None:
 
     tools = MagicMock()
 
-    def _search(query: str, top_k: int = 5):  # noqa: ARG001
+    def _search(query: str, top_k: int = 5):
         if query == "赛沃替尼":
             return {"results": []}
         if query == "savolitinib":

@@ -6,8 +6,9 @@ Citationware / hydrate 的权威正文在此，不在进程内全量 ``kb.chunks
 from __future__ import annotations
 
 from collections import OrderedDict
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Protocol, Sequence
+from typing import Any, Protocol
 
 __all__ = [
     "BATCH_SIZE",
@@ -97,7 +98,10 @@ def chunk_record_from_kb_chunk(
         license_tier=str(tier or "TIER_0"),
         release_id=str(release_id or ""),
         entity_ids=tuple(
-            str(x) for x in (getattr(chunk, "entity_ids", None) or getattr(chunk, "concept_ids", None) or [])
+            str(x)
+            for x in (
+                getattr(chunk, "entity_ids", None) or getattr(chunk, "concept_ids", None) or []
+            )
         ),
         title=str(title or ""),
     )
@@ -125,7 +129,9 @@ def chunks_to_evidence_rows(
                 "chunk_id": ch.chunk_id,
                 "parent_id": getattr(ch, "parent_id", "") or "",
                 "document_id": ch.doc_id,
-                "section_path": getattr(ch, "section_path", None) or getattr(ch, "section", "") or "",
+                "section_path": getattr(ch, "section_path", None)
+                or getattr(ch, "section", "")
+                or "",
                 "node_kind": getattr(ch, "node_kind", "") or "",
                 "content": getattr(ch, "text", "") or "",
                 "modality": modality_s,
@@ -172,9 +178,7 @@ class MemoryChunkStore:
             self._by_id[rec.chunk_id] = rec
             self._by_doc.setdefault(rec.document_id, []).append(rec)
         for doc_id, rows in self._by_doc.items():
-            self._by_doc[doc_id] = sorted(
-                rows, key=lambda r: (r.page, r.sort_order, r.chunk_id)
-            )
+            self._by_doc[doc_id] = sorted(rows, key=lambda r: (r.page, r.sort_order, r.chunk_id))
 
     def get_chunk(self, chunk_id: str) -> ChunkRecord | None:
         return self.get_chunks([chunk_id]).get(chunk_id)
@@ -188,11 +192,7 @@ class MemoryChunkStore:
         return out
 
     def get_section_chunks(self, document_id: str, section_path: str) -> list[ChunkRecord]:
-        return [
-            r
-            for r in self._by_doc.get(document_id, ())
-            if r.section_path == section_path
-        ]
+        return [r for r in self._by_doc.get(document_id, ()) if r.section_path == section_path]
 
     def get_document_chunks(self, document_id: str) -> list[ChunkRecord]:
         return list(self._by_doc.get(document_id, ()))
@@ -282,24 +282,22 @@ class IcebergChunkStore:
 
         self._query_count += 1
         table = self._table()
-        filt: Any = In("chunk_id", chunk_ids)
+        filt: Any = In(term="chunk_id", literals=chunk_ids)
         if self.release_id:
-            filt = And(filt, EqualTo("release_id", self.release_id))
+            filt = And(filt, EqualTo(term="release_id", value=self.release_id))
         arrow = table.scan(row_filter=filt).to_arrow()
         return {rec.chunk_id: rec for rec in _records_from_arrow(arrow)}
 
-    def _scan_document(
-        self, document_id: str, *, section_path: str | None
-    ) -> list[ChunkRecord]:
+    def _scan_document(self, document_id: str, *, section_path: str | None) -> list[ChunkRecord]:
         from pyiceberg.expressions import And, EqualTo
 
         self._query_count += 1
         table = self._table()
-        filt: Any = EqualTo("document_id", document_id)
+        filt: Any = EqualTo(term="document_id", value=document_id)
         if self.release_id:
-            filt = And(filt, EqualTo("release_id", self.release_id))
+            filt = And(filt, EqualTo(term="release_id", value=self.release_id))
         if section_path is not None:
-            filt = And(filt, EqualTo("section_path", section_path))
+            filt = And(filt, EqualTo(term="section_path", value=section_path))
         arrow = table.scan(row_filter=filt).to_arrow()
         rows = _records_from_arrow(arrow)
         return sorted(rows, key=lambda r: (r.page, r.sort_order, r.chunk_id))
@@ -371,16 +369,17 @@ def load_chunks_for_index(
 
     ``document_ids`` 为 None 时装载该 ``release_id`` 下全部行。
     """
-    from biomed_ontology.lake.catalog import EVIDENCE_CHUNKS_TABLE, open_catalog
     from pyiceberg.expressions import And, EqualTo, In
+
+    from biomed_ontology.lake.catalog import EVIDENCE_CHUNKS_TABLE, open_catalog
 
     cat = catalog or open_catalog()
     table = cat.load_table(EVIDENCE_CHUNKS_TABLE)
     filt: Any = None
     if release_id:
-        filt = EqualTo("release_id", release_id)
+        filt = EqualTo(term="release_id", value=release_id)
     if document_ids:
-        doc_filt = In("document_id", list(document_ids))
+        doc_filt = In(term="document_id", literals=list(document_ids))
         filt = And(filt, doc_filt) if filt is not None else doc_filt
     scan = table.scan(row_filter=filt) if filt is not None else table.scan()
     arrow = scan.to_arrow()

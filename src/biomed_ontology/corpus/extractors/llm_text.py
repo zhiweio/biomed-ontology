@@ -102,9 +102,7 @@ class LlmTextRelationExtractor:
                             "id": m.entity_id,
                         }
                     )
-            allowed = sorted(
-                {pred.value for p in sent_pairs for pred in p.allowed_predicates}
-            )
+            allowed = sorted({pred.value for p in sent_pairs for pred in p.allowed_predicates})
             user = (
                 f"Sentence: {sentence}\n"
                 f"Entities: {json.dumps(entities, ensure_ascii=False)}\n"
@@ -175,12 +173,8 @@ class LlmTextRelationExtractor:
 
             s_raw = str(row.get("subject") or "").strip()
             o_raw = str(row.get("object") or "").strip()
-            s_id = id_by_surface.get(s_raw.casefold()) or _ground(
-                normalizer, s_raw, ctx, sentence
-            )
-            o_id = id_by_surface.get(o_raw.casefold()) or _ground(
-                normalizer, o_raw, ctx, sentence
-            )
+            s_id = id_by_surface.get(s_raw.casefold()) or _ground(normalizer, s_raw, ctx, sentence)
+            o_id = id_by_surface.get(o_raw.casefold()) or _ground(normalizer, o_raw, ctx, sentence)
             if not s_id or not o_id or s_id == o_id:
                 continue
             quote = str(row.get("quote") or sentence).strip()[:300]

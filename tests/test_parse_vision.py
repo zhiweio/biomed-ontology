@@ -274,9 +274,7 @@ def test_describe_assets_records_missing_pixels(tmp_path: Path):
     from biomed_ontology.parse.vision import NullVisionProvider
 
     block = LayoutBlock(kind="image", text="", page=1, bbox=(), asset_path=None)
-    layout = LayoutResult(
-        blocks=(block,), assets_dir=tmp_path, page_count=1, backend="docling"
-    )
+    layout = LayoutResult(blocks=(block,), assets_dir=tmp_path, page_count=1, backend="docling")
     ctx = TraceContext(trace_id=new_trace_id(), ontology_release_id="0.1.0")
     out = describe_assets(
         tmp_path / "deck.pptx", layout, tmp_path, vision=NullVisionProvider(), ctx=ctx

@@ -20,13 +20,13 @@ from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, Settings
 
 __all__ = [
     "LayoutBackendName",
+    "LlmProviderName",
     "MinerUEffortName",
     "MinerUParseMethodName",
     "MinerUTransportName",
     "ModelHubName",
     "SearchBackendName",
     "Settings",
-    "LlmProviderName",
     "VisionProviderName",
     "load_settings",
     "settings",
@@ -213,8 +213,10 @@ class Settings(BaseSettings):
                 f"HMD_LLM_PROVIDER={self.llm_provider} 但未设置 HMD_LLM_API_KEY："
                 "文本 LLM 抽取将回落 null，仅规则旁路可用。"
             )
-        if self.llm_provider != "null" and self.llm_base_url and not self.llm_base_url.startswith(
-            ("http://localhost", "http://127.0.0.1")
+        if (
+            self.llm_provider != "null"
+            and self.llm_base_url
+            and not self.llm_base_url.startswith(("http://localhost", "http://127.0.0.1"))
         ):
             out.append(
                 f"HMD_LLM_BASE_URL={self.llm_base_url}：Knowledge Extraction 将调用外部 LLM API。"
@@ -253,7 +255,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         for raw, value in env.items()
         if (key := raw.removeprefix("HMD_").casefold()) in fields
     }
-    return _ExplicitSettings(**kwargs)
+    return _ExplicitSettings.model_validate(kwargs)
 
 
 settings = load_settings()

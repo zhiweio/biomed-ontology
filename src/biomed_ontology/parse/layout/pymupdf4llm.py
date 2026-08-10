@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from biomed_ontology._generated.hmd_concept import MappingJustificationEnum
 from biomed_ontology.observability import TraceContext
 from biomed_ontology.parse.layout._pdf_io import open_pdf
-from biomed_ontology.parse.layout.base import Capability, LayoutBlock, LayoutResult
+from biomed_ontology.parse.layout.base import BlockKind, Capability, LayoutBlock, LayoutResult
 
 __all__ = ["PyMuPDF4LLMBackend"]
 
@@ -87,8 +87,7 @@ class PyMuPDF4LLMBackend:
                 confidence=1.0,
                 rule_id="layout.degraded",
                 state_after=(
-                    f"PyMuPDF4LLM 能力缺口：{'、'.join(sorted(degraded))}；"
-                    "可改走 Docling/MinerU"
+                    f"PyMuPDF4LLM 能力缺口：{'、'.join(sorted(degraded))}；可改走 Docling/MinerU"
                 ),
             )
 
@@ -97,7 +96,7 @@ class PyMuPDF4LLMBackend:
             assets_dir=out_dir,
             page_count=page_count,
             backend=self.name,
-            degraded=tuple(sorted(degraded)),
+            degraded=cast(tuple[Capability, ...], tuple(sorted(degraded))),
         )
 
 
@@ -158,7 +157,7 @@ def _from_page_chunks(
                 degraded.add("formula")
             blocks.append(
                 LayoutBlock(
-                    kind=kind,  # type: ignore[arg-type]
+                    kind=cast(BlockKind, kind),
                     text=slice_text,
                     page=page,
                     bbox=bbox,

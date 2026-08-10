@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from biomed_ontology.config import Settings, settings  # noqa: TC001 — runtime Settings
+from biomed_ontology.config import Settings, settings
 
 __all__ = [
     "DOCUMENTS_TABLE",
@@ -43,7 +43,7 @@ def open_catalog(cfg: Settings | None = None) -> Any:
 
 def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
     """创建 namespace 与三表（若不存在）。无 REST 时抛错。"""
-    from pyiceberg.schema import NestedField, Schema, StringType, FloatType, IntegerType, ListType
+    from pyiceberg.schema import FloatType, IntegerType, ListType, NestedField, Schema, StringType
 
     cat = open_catalog(cfg)
     created: list[str] = []
@@ -73,7 +73,9 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             NestedField(6, "content", StringType(), required=False),
             NestedField(7, "modality", StringType(), required=False),
             NestedField(8, "page", IntegerType(), required=False),
-            NestedField(9, "entity_ids", ListType(10, StringType(), element_required=False), required=False),
+            NestedField(
+                9, "entity_ids", ListType(10, StringType(), element_required=False), required=False
+            ),
             NestedField(11, "milvus_collection", StringType(), required=False),
             NestedField(12, "release_id", StringType(), required=False),
             NestedField(13, "source_id", StringType(), required=False),
@@ -88,7 +90,9 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             NestedField(5, "object_value", StringType(), required=False),
             NestedField(6, "claim_status", StringType(), required=True),
             NestedField(7, "confidence", FloatType(), required=False),
-            NestedField(8, "evidence_ids", ListType(9, StringType(), element_required=False), required=False),
+            NestedField(
+                8, "evidence_ids", ListType(9, StringType(), element_required=False), required=False
+            ),
             NestedField(10, "extracted_by", StringType(), required=False),
             NestedField(11, "span", StringType(), required=False),
             NestedField(12, "document_id", StringType(), required=False),

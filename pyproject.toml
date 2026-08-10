@@ -77,7 +77,7 @@ dev = [
     "pytest>=8.3.0",
     "pytest-cov>=5.0.0",
     "ruff>=0.7.0",
-    "mypy>=1.13.0",
+    "ty>=0.0.18",
     "respx>=0.21.1",
 ]
 docs = [
@@ -115,6 +115,11 @@ ignore = [
 # FastAPI 同理：Body()/Header() 必须写在默认值里才能被框架识别。
 "src/biomed_ontology/service/app.py" = ["B008"]
 
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
@@ -123,6 +128,19 @@ markers = [
     "integration: 需本机 GraphDB（task foundation:up）；默认跳过",
 ]
 
-[tool.mypy]
-python_version = "3.11"
-ignore_missing_imports = true
+# Astral ty（替代 mypy）。与 ruff 同属 uv 工具链。
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.src]
+# 与 ruff 对齐：跳过 LinkML 生成物与第三方 vendored 树。
+exclude = [
+    "**/_generated/**",
+    "docker/**",
+    "ontology/**",
+    "schema/generated/**",
+]
+
+[tool.ty.rules]
+# 对齐旧 mypy ignore_missing_imports：第三方缺 stub 时不报 unresolved-import。
+unresolved-import = "ignore"

@@ -87,13 +87,14 @@ tasks:
       - task: canon-check
 
   lint:
-    desc: ruff check + format check
+    desc: ruff check + ruff format check + ty check
     cmds:
       - uv run ruff check src tests scripts
       - uv run ruff format --check src tests scripts
+      - uv run ty check src tests scripts
 
   fmt:
-    desc: ruff format + autofix
+    desc: ruff format + ruff autofix
     cmds:
       - uv run ruff format src tests scripts
       - uv run ruff check --fix src tests scripts
@@ -109,7 +110,7 @@ tasks:
       - uv run pytest -m integration
 
   check:
-    desc: lint + test
+    desc: lint（ruff + ty）+ test
     cmds:
       - task: lint
       - task: test
@@ -465,4 +466,4 @@ tasks:
 
   clean:
     cmds:
-      - rm -rf {{.GEN_ART}} {{.GEN_PY}} .pytest_cache .ruff_cache
+      - rm -rf {{.GEN_ART}} {{.GEN_PY}} .pytest_cache .ruff_cache .ty_cache

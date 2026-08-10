@@ -271,6 +271,7 @@ def _delete_extracted_by_source(gdb: GraphDbClient, source_id: str) -> None:
         """
     )
 
+
 def _upsert_evidence_milvus(wm: WorldModel, uri: str) -> int:
     """Foundation seed → Milvus Evidence Object 字段。"""
     from biomed_ontology.lake.evidence_index import upsert_evidence_objects

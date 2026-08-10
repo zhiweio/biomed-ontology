@@ -75,8 +75,7 @@ class ResolutionIndex:
         """仅 exact_match_xrefs（轴 C / PublicNenAssist）。"""
         return list(
             dict.fromkeys(
-                self.by_exact_external.get(xid, [])
-                + self.by_exact_external.get(xid.lower(), [])
+                self.by_exact_external.get(xid, []) + self.by_exact_external.get(xid.lower(), [])
             )
         )
 

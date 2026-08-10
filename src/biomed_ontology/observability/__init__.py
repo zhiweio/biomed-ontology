@@ -124,8 +124,8 @@ class TraceContext:
         justification: MappingJustificationEnum,
         chosen: str | None,
         candidates: list[Candidate] | None = None,
-        state_before: str | None = None,
-        state_after: str | None = None,
+        state_before: Any | None = None,
+        state_after: Any | None = None,
         confidence: float | None = None,
         rule_id: str | None = None,
         model_id: str | None = None,
@@ -181,8 +181,8 @@ class DecisionRecord:
     chosen: str | None
     span_id: str | None = None
     candidates: list[Candidate] = field(default_factory=list)
-    state_before: str | None = None
-    state_after: str | None = None
+    state_before: Any | None = None
+    state_after: Any | None = None
     confidence: float | None = None
     rule_id: str | None = None
     model_id: str | None = None

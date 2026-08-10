@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJustificationEnum
 from biomed_ontology._generated.hmd_fact import DocTypeEnum, LanguageEnum
@@ -113,13 +113,9 @@ def parse_document(
     assets = out_dir or Path("data/assets") / asset_dir_name(doc_id)
 
     with ctx.span("parse.document", doc_id=doc_id):
-        result, route = route_and_extract(
-            path, assets, ctx=ctx, config=config, forced=layout
-        )
+        result, route = route_and_extract(path, assets, ctx=ctx, config=config, forced=layout)
         toc = read_toc(path) if path.suffix.casefold() in {".pdf", ".xps", ".epub"} else []
-        skeleton, leaves = build_tree(
-            result, toc=toc, ctx=ctx, root_title=title or doc_id
-        )
+        skeleton, leaves = build_tree(result, toc=toc, ctx=ctx, root_title=title or doc_id)
         described = describe_assets(
             path, result, assets, vision=vision or get_vision_provider(config), ctx=ctx
         )
@@ -156,7 +152,7 @@ def get_vision_provider(config: Settings | None = None) -> VisionProvider:
         api_key=cfg.vision_api_key.get_secret_value(),
         base_url=cfg.vision_base_url,
     )
-    return VisionCache(cfg.vision_cache_dir, provider)
+    return cast(VisionProvider, VisionCache(cfg.vision_cache_dir, provider))
 
 
 _ASSET_PROMPT = (
@@ -199,9 +195,7 @@ def describe_assets(
     regions = image_regions(targets)
     rendered_by_region: dict[tuple[int, tuple[float, ...]], Any] = {}
     if regions:
-        for region, asset in zip(
-            regions, render_regions(pdf_path, regions, out_dir), strict=False
-        ):
+        for region, asset in zip(regions, render_regions(pdf_path, regions, out_dir), strict=False):
             rendered_by_region[region] = asset
 
     out: dict[tuple[int, tuple[Any, ...]], AssetRecord] = {}
@@ -243,4 +237,3 @@ def describe_assets(
                     state_after=w,
                 )
     return out
-

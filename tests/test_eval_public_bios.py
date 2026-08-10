@@ -50,9 +50,7 @@ def test_golden_path_public_no_ent_expected_matches_runtime() -> None:
 
     expected = json.loads(GOLDEN.joinpath("expected.json").read_text(encoding="utf-8"))
     surface = _surface()
-    card = surface.foundation.lookup_bios_concept(
-        external_id=expected["lookup"]["external_id"]
-    )
+    card = surface.foundation.lookup_bios_concept(external_id=expected["lookup"]["external_id"])
     assert card["found"] is True
     assert card["bios_curie"] == expected["lookup"]["bios_curie"]
     assert card.get("enterprise_bridges") == expected["lookup"]["enterprise_bridges"]

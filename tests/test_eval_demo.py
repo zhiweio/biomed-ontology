@@ -18,7 +18,6 @@ LICENSED = frozenset({"MOCK_LICENSED"})
 def _aligned_gold(kb):
     """工作树语料若与 gold 漂移，只保留可寻址标注。"""
     from biomed_ontology.eval import _chunk_key_index, load_gold
-
     from biomed_ontology.eval.retrieval import _resolve_gold_key
 
     index = _chunk_key_index(kb)
@@ -274,9 +273,7 @@ def test_demo_passes(demo_surface, demo_id):
 
 def test_all_demos_pass_together(demo_surface):
     """写成"一条都不许失败"而不是"允许若干条失败"：坏一条必须立刻炸。"""
-    results = run_all(
-        demo_surface.kb, demo_surface.tools, foundation=demo_surface.foundation
-    )
+    results = run_all(demo_surface.kb, demo_surface.tools, foundation=demo_surface.foundation)
     failed = {r.demo_id for r in results if not r.passed}
     assert not failed, [r.render() for r in results if not r.passed]
     assert len(results) == len(DEMOS)
@@ -288,8 +285,6 @@ def test_every_demo_states_a_falsifiable_claim(demo_surface):
     只打印一段好看的输出、不校验任何东西的"演示"，
     在下游改坏之后依然会打印那段好看的输出。
     """
-    for result in run_all(
-        demo_surface.kb, demo_surface.tools, foundation=demo_surface.foundation
-    ):
+    for result in run_all(demo_surface.kb, demo_surface.tools, foundation=demo_surface.foundation):
         assert result.claim
         assert result.lines

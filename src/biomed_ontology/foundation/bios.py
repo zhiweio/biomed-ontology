@@ -159,7 +159,7 @@ def download_bios_full(cache_dir: Path | None = None) -> Path:
         raise RuntimeError(
             "需要 huggingface_hub：请 uv sync（默认依赖已含 huggingface_hub）"
         ) from exc
-    snapshot_download(
+    snapshot_download(  # ty: ignore[no-matching-overload]
         repo_id=BIOS_HF_REPO,
         repo_type="dataset",
         local_dir=str(dest),

@@ -8,7 +8,7 @@ import pytest
 
 from biomed_ontology.config import load_settings
 from biomed_ontology.observability import TraceContext, new_trace_id
-from biomed_ontology.parse.layout.base import LayoutBlock, LayoutResult
+from biomed_ontology.parse.layout.base import Capability, LayoutBlock, LayoutResult
 from biomed_ontology.parse.router import (
     UnsupportedFormat,
     route_and_extract,
@@ -22,7 +22,7 @@ class _FakeBackend:
         name: str,
         *,
         blocks: int = 20,
-        degraded: tuple[str, ...] = (),
+        degraded: tuple[Capability, ...] = (),
         fail: bool = False,
     ):
         self.name = name
@@ -123,9 +123,7 @@ def test_fallback_off_rethrows(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         }
     )
     fake = _FakeBackend("docling", fail=True)
-    monkeypatch.setattr(
-        "biomed_ontology.parse.router.get_layout_backend", lambda *a, **k: fake
-    )
+    monkeypatch.setattr("biomed_ontology.parse.router.get_layout_backend", lambda *a, **k: fake)
     monkeypatch.setattr(
         "biomed_ontology.parse.router.select_backend",
         lambda *a, **k: __import__(

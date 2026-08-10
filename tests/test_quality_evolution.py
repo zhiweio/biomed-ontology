@@ -46,7 +46,9 @@ def test_dangling_parent_is_caught(kb):
 def test_hierarchy_cycle_is_caught(kb):
     """环会让层级扩展无限递归 —— 而扩展是检索的默认行为。"""
     concepts = [
-        dc.replace(c, parents=["HMD:ENT:IND:nsclc"]) if c.concept_id == "HMD:ENT:IND:lung_cancer" else c
+        dc.replace(c, parents=["HMD:ENT:IND:nsclc"])
+        if c.concept_id == "HMD:ENT:IND:lung_cancer"
+        else c
         for c in kb.concepts
     ]
     broken = dc.replace(kb, concepts=concepts)

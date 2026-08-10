@@ -145,20 +145,20 @@ def fetch_claims(
     iri = entity_iri(enterprise_id)
     pred_filter = f'FILTER(?pred = "{predicate}")' if predicate else ""
     # seed provenance ∪ 湖侧 extracted（sync 只替换前者）
-    claim_pattern = f"""
+    claim_pattern = """
         ?claim a hmd:KnowledgeClaim ;
                hmd:subject ?subj ;
                hmd:predicate ?pred .
-        OPTIONAL {{ ?claim hmd:object ?obj }}
-        OPTIONAL {{ ?claim hmd:objectValue ?objval }}
-        OPTIONAL {{ ?claim hmd:confidence ?conf }}
-        OPTIONAL {{ ?claim hmd:sourceId ?source }}
-        OPTIONAL {{ ?claim prov:wasDerivedFrom ?source }}
-        OPTIONAL {{ ?claim hmd:sourceType ?stype }}
-        OPTIONAL {{ ?claim hmd:span ?span }}
-        OPTIONAL {{ ?claim hmd:extractedBy ?extracted }}
-        OPTIONAL {{ ?claim hmd:evidenceId ?evid }}
-        OPTIONAL {{ ?claim hmd:claimStatus ?status }}
+        OPTIONAL { ?claim hmd:object ?obj }
+        OPTIONAL { ?claim hmd:objectValue ?objval }
+        OPTIONAL { ?claim hmd:confidence ?conf }
+        OPTIONAL { ?claim hmd:sourceId ?source }
+        OPTIONAL { ?claim prov:wasDerivedFrom ?source }
+        OPTIONAL { ?claim hmd:sourceType ?stype }
+        OPTIONAL { ?claim hmd:span ?span }
+        OPTIONAL { ?claim hmd:extractedBy ?extracted }
+        OPTIONAL { ?claim hmd:evidenceId ?evid }
+        OPTIONAL { ?claim hmd:claimStatus ?status }
     """
     q = f"""
     PREFIX hmd: <{HMD_NS}>

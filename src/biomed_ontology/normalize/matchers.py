@@ -318,7 +318,7 @@ class ContextDisambiguator:
             return []
         return [
             (self._key_to_concept.get(s.concept_key), s.prior, list(s.context_cues))
-            for s in entry.senses  # type: ignore[attr-defined]
+            for s in entry.senses  # ty: ignore[unresolved-attribute]
         ]
 
     def disambiguate(

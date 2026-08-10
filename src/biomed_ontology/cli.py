@@ -189,10 +189,7 @@ def kb_stats() -> None:
     kb = build_literature_base(with_graph=False)
     metrics_table(
         f"知识库 release={kb.release_id}",
-        [
-            (k, f"{v:.4f}" if isinstance(v, float) else str(v))
-            for k, v in kb.stats().items()
-        ],
+        [(k, f"{v:.4f}" if isinstance(v, float) else str(v)) for k, v in kb.stats().items()],
     )
     for w in kb.warnings:
         console.print(f"[yellow]warn[/yellow] {w}")
@@ -264,9 +261,7 @@ def eval_cmd(
         suites = [s for s in suites if s != "literature"]
     unknown = sorted(set(suites) - set(ALL_SUITES))
     if unknown:
-        console.print(
-            f"[red]未知 suite {unknown}；可选：{list(ALL_SUITES) + sorted(_EXTRA)}[/red]"
-        )
+        console.print(f"[red]未知 suite {unknown}；可选：{list(ALL_SUITES) + sorted(_EXTRA)}[/red]")
         raise typer.Exit(2)
 
     surface = open_dual_surface()
@@ -455,6 +450,9 @@ def demo_cmd(
     from biomed_ontology.runtime import open_dual_surface
 
     surface = open_dual_surface()
+    if surface.kb is None:
+        console.print("[red]open_dual_surface 未返回 KnowledgeBase[/red]")
+        raise typer.Exit(2)
     if demo_id:
         if demo_id not in DEMOS:
             console.print(f"[red]未知场景 {demo_id}，可用：{sorted(DEMOS)}[/red]")
@@ -672,9 +670,7 @@ def index_cmd(
 
         try:
             if doc_id:
-                result = refresh_document(
-                    doc_id, embedder_name=embedder, collection=collection
-                )
+                result = refresh_document(doc_id, embedder_name=embedder, collection=collection)
             else:
                 result = refresh_catalog_incremental(
                     embedder_name=embedder,
@@ -743,14 +739,18 @@ def index_cmd(
     backend.ensure_collection(drop_existing=recreate)
 
     typed = _apply_figure_types(kb.chunks, get_figure_typer(figure_typer), asset_root)
-    rows = [
-        chunk_to_row(
-            ch,
-            searcher.chunk_meta(ch.chunk_id),
-            label_terms=searcher.index_text_terms(ch),
+    rows = []
+    for ch in kb.chunks:
+        meta = searcher.chunk_meta(ch.chunk_id)
+        if meta is None:
+            raise RuntimeError(f"缺少 chunk meta：{ch.chunk_id}")
+        rows.append(
+            chunk_to_row(
+                ch,
+                meta,
+                label_terms=searcher.index_text_terms(ch),
+            )
         )
-        for ch in kb.chunks
-    ]
     for row in rows:
         row["release_id"] = kb.release_id
     batch_size = 128

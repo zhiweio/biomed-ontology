@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from biomed_ontology.foundation.models import KnowledgeClaim
@@ -89,7 +89,7 @@ def facts_to_claims(
     """返回 (claims, skipped)。强制 claim_status=extracted。"""
     claims: list[KnowledgeClaim] = []
     skipped = 0
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     for fact in facts:
         pred_raw = fact.predicate.value if hasattr(fact.predicate, "value") else str(fact.predicate)
         pred = _PRED_ALIASES.get(pred_raw, pred_raw)
@@ -102,7 +102,8 @@ def facts_to_claims(
             skipped += 1
             continue
         evids = [evidence_id_for_chunk(e.chunk_id) for e in (fact.evidence or []) if e.chunk_id]
-        cid = f"claim:x:{hashlib.sha1(f'{subj}|{pred}|{obj}|{document_id}'.encode()).hexdigest()[:12]}"
+        digest = hashlib.sha1(f"{subj}|{pred}|{obj}|{document_id}".encode()).hexdigest()[:12]
+        cid = f"claim:x:{digest}"
         claims.append(
             KnowledgeClaim(
                 claim_id=cid,

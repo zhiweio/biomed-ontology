@@ -14,7 +14,7 @@ from biomed_ontology.corpus import Chunk, Document
 from biomed_ontology.corpus.extract import TriModalPipeline, default_extractors
 from biomed_ontology.observability import TraceContext
 
-__all__ = ["ExtractionEval", "ExtractionCaseResult", "eval_extraction", "load_extraction_gold"]
+__all__ = ["ExtractionCaseResult", "ExtractionEval", "eval_extraction", "load_extraction_gold"]
 
 DEFAULT_GOLD = Path(__file__).resolve().parents[3] / "data" / "gold" / "extraction.yaml"
 
@@ -117,9 +117,7 @@ def eval_extraction(
                 grounded += 1
 
         expect_rows = case.get("expect") or []
-        expect = {
-            (str(e["subject"]), str(e["predicate"]), str(e["object"])) for e in expect_rows
-        }
+        expect = {(str(e["subject"]), str(e["predicate"]), str(e["object"])) for e in expect_rows}
         c_tp = len(pred & expect)
         c_fp = len(pred - expect)
         c_fn = len(expect - pred)

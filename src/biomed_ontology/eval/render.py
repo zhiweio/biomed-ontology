@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import math
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from rich import box
 from rich.console import Console, Group, RenderableType
@@ -200,7 +200,8 @@ def summary_json(
         and not retrieval.unavailable,
     }
     if _has_probe_slice(retrieval):
-        payload["retrieval"]["ontology_probe_ndcg_gain"] = retrieval.absolute_gain(
+        retrieval_payload = cast(dict[str, Any], payload["retrieval"])
+        retrieval_payload["ontology_probe_ndcg_gain"] = retrieval.absolute_gain(
             probes=ONTOLOGY_PROBES
         )
     return json.dumps(payload, ensure_ascii=False, indent=2)

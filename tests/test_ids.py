@@ -64,8 +64,10 @@ def test_merge_keeps_oldest_id_and_obsoletes_rest(ledger: IdLedger):
     assert merged.action is MintAction.MERGED
     assert merged.concept_id == a, "存活者应是更早分配的 ID"
     assert merged.obsoleted == (b,)
-    assert ledger.get(b).is_obsolete
-    assert ledger.get(b).replaced_by == a
+    alloc_b = ledger.get(b)
+    assert alloc_b is not None
+    assert alloc_b.is_obsolete
+    assert alloc_b.replaced_by == a
 
 
 def test_obsoleted_id_resolves_to_successor(ledger: IdLedger):
@@ -87,10 +89,13 @@ def test_obsoleted_id_is_never_reissued(ledger: IdLedger):
 def test_replaced_by_cycle_is_detected(ledger: IdLedger):
     a = ledger.mint(EntityTypeEnum.SUBSTANCE, {"unii:A"}).concept_id
     b = ledger.mint(EntityTypeEnum.SUBSTANCE, {"unii:B"}).concept_id
-    ledger.get(a).is_obsolete = True
-    ledger.get(a).replaced_by = b
-    ledger.get(b).is_obsolete = True
-    ledger.get(b).replaced_by = a
+    alloc_a = ledger.get(a)
+    alloc_b = ledger.get(b)
+    assert alloc_a is not None and alloc_b is not None
+    alloc_a.is_obsolete = True
+    alloc_a.replaced_by = b
+    alloc_b.is_obsolete = True
+    alloc_b.replaced_by = a
     with pytest.raises(ValueError, match="成环"):
         ledger.resolve(a)
 

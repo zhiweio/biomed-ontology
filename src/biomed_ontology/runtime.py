@@ -117,9 +117,7 @@ def open_dual_surface(
             "文献 ToolApi 未就绪：请提供 literature_kb，或先完成语料索引后使用 from_backends"
         )
 
-    store = chunk_store or _default_chunk_store(
-        kb, allow_memory=allow_memory_chunk_store
-    )
+    store = chunk_store or _default_chunk_store(kb, allow_memory=allow_memory_chunk_store)
 
     if searcher is None:
         backend = milvus_backend or _require_milvus_literature_backend(kb)
@@ -173,9 +171,7 @@ def _default_chunk_store(kb: Any, *, allow_memory: bool) -> Any:
             RuntimeWarning,
             stacklevel=2,
         )
-        return MemoryChunkStore(
-            kb.chunks, documents=kb.documents, release_id=release_id
-        )
+        return MemoryChunkStore(kb.chunks, documents=kb.documents, release_id=release_id)
 
 
 def _require_milvus_literature_backend(kb: Any) -> Any:
@@ -203,6 +199,4 @@ def _require_milvus_literature_backend(kb: Any) -> Any:
     except RuntimeError:
         raise
     except Exception as exc:
-        raise RuntimeError(
-            f"Milvus 文献后端不可用：{exc}；请 task milvus:up 并 hmd index"
-        ) from exc
+        raise RuntimeError(f"Milvus 文献后端不可用：{exc}；请 task milvus:up 并 hmd index") from exc

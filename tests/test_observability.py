@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJustificationEnum
 from biomed_ontology.observability import (
     Candidate,
     ObservabilityHub,
@@ -61,7 +61,7 @@ def test_decision_captures_candidates_and_state():
     with ctx.span("s"):
         ctx.record_decision(
             stage="DICTIONARY",
-            justification="LexicalMatching",
+            justification=MappingJustificationEnum.LexicalMatching,
             chosen="HMD:ENT:DC:savolitinib",
             candidates=[
                 Candidate("HMD:ENT:DC:savolitinib", 0.98, "dictionary"),
@@ -74,7 +74,7 @@ def test_decision_captures_candidates_and_state():
     d = ctx.decisions[0]
     assert d.chosen == "HMD:ENT:DC:savolitinib"
     assert len(d.candidates) == 2
-    assert d.state_before["text"] == "沃利替尼"
+    assert d.state_before is not None and d.state_before["text"] == "沃利替尼"
     assert d.span_id is not None
 
 
@@ -82,7 +82,11 @@ def test_hub_commit_indexes_by_trace():
     hub = ObservabilityHub()
     ctx = hub.start_trace(release_id="0.1.0", agent_id="a")
     with ctx.span("s"):
-        ctx.record_decision(stage="RULE", justification="j", chosen="X")
+        ctx.record_decision(
+            stage="RULE",
+            justification=MappingJustificationEnum.UnspecifiedMatching,
+            chosen="X",
+        )
     io = ToolIoRecord(
         trace_id=ctx.trace_id,
         tool_name="normalize_entity",
@@ -114,7 +118,10 @@ def test_latency_percentile_is_monotonic():
                 status="OK",
             ),
         )
-    assert hub.latency_percentile("t", 50) <= hub.latency_percentile("t", 95)
+    p50 = hub.latency_percentile("t", 50)
+    p95 = hub.latency_percentile("t", 95)
+    assert p50 is not None and p95 is not None
+    assert p50 <= p95
 
 
 # ---------------------------------------------------------------- license gate

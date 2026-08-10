@@ -42,7 +42,7 @@ def test_initialize_bios_on_progress(monkeypatch, tmp_path: Path) -> None:
     result = bios_mod.initialize_bios(
         full=False,
         cache_dir=tmp_path,
-        graphdb=_Graph(),  # type: ignore[arg-type]
+        graphdb=_Graph(),  # ty: ignore[invalid-argument-type]
         force=True,
         on_progress=calls.append,
     )

@@ -119,9 +119,9 @@ def _fact():
 
 
 @pytest.fixture
-def store() -> tuple[GraphStore, _RecordingClient]:
+def store():
     client = _RecordingClient()
-    gs = GraphStore(client=client)  # type: ignore[arg-type]
+    gs = GraphStore(client=client)  # ty: ignore[invalid-argument-type]
     with patch("biomed_ontology.ontology.rdf.ensure_repository"):
         yield gs, client
 

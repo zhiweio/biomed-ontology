@@ -149,9 +149,7 @@ class GraphStore:
         self._graph_tier[uri] = tier
         self._graph_source[uri] = source_id
         self._ensure()
-        self.client.update(
-            f"DELETE WHERE {{ GRAPH <{_META_GRAPH}> {{ {_iri(uri)} ?p ?o }} }}"
-        )
+        self.client.update(f"DELETE WHERE {{ GRAPH <{_META_GRAPH}> {{ {_iri(uri)} ?p ?o }} }}")
         meta = (
             _PREFIXES
             + f"{_iri(uri)} hmd:licenseTier {_lit_ttl(tier.value)} ;\n"
@@ -234,11 +232,7 @@ class GraphStore:
         for f in facts:
             s = _iri(_curie_iri(f.subject_id))
             p = f"hmd:{f.predicate.value}"
-            o = (
-                _iri(_curie_iri(f.object_id))
-                if f.object_id
-                else _lit_ttl(f.object_value or "")
-            )
+            o = _iri(_curie_iri(f.object_id)) if f.object_id else _lit_ttl(f.object_value or "")
             lines.append(f"{s} {p} {o} .")
 
             reifier = _iri(f"{HMD}fact/{f.fact_id.replace(':', '_')}")
@@ -256,9 +250,7 @@ class GraphStore:
             for q in f.qualifiers:
                 lines.append(f"  hmd:qualifier {_lit_ttl(q)} ;")
             for ev in f.evidence:
-                lines.append(
-                    f"  prov:wasDerivedFrom {_iri(f'{HMD}chunk/{ev.chunk_id}')} ;"
-                )
+                lines.append(f"  prov:wasDerivedFrom {_iri(f'{HMD}chunk/{ev.chunk_id}')} ;")
                 if ev.quote:
                     lines.append(f"  hmd:quote {_lit_ttl(ev.quote)} ;")
             if lines[-1].endswith(" ;"):

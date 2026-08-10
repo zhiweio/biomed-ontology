@@ -25,9 +25,7 @@ def test_open_dual_surface_wires_both_apis(kb) -> None:
 
 def test_toolapi_from_backends_equiv_from_kb(kb) -> None:
     searcher = make_searcher(kb)
-    via_backends = ToolApi.from_backends(
-        kb=kb, backend=searcher.backend, searcher=searcher
-    )
+    via_backends = ToolApi.from_backends(kb=kb, backend=searcher.backend, searcher=searcher)
     via_kb = ToolApi.from_kb(kb, backend=searcher.backend, searcher=searcher)
     assert via_backends.kb is kb
     assert via_kb.kb is kb

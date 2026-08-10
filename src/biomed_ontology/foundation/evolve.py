@@ -11,7 +11,7 @@ from typing import Any
 from biomed_ontology.foundation.api import FoundationApi
 from biomed_ontology.foundation.world import WorldModel, load_world_model
 
-__all__ = ["EvolveMineResult", "HIGH_CONFIDENCE", "mine_unmapped_candidates"]
+__all__ = ["HIGH_CONFIDENCE", "EvolveMineResult", "mine_unmapped_candidates"]
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_OUT = REPO_ROOT / "data" / "releases" / "foundation_candidates"

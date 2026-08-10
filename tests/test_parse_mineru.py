@@ -93,9 +93,7 @@ def test_table_html_is_written_as_an_asset(tmp_path: Path):
         return_value=httpx.Response(200, json={"content_list": json.dumps(_CONTENT_LIST)})
     )
     out = tmp_path / "out"
-    result = MinerUBackend(transport="http", base_url=BASE).extract(
-        _pdf(tmp_path), out, ctx=_ctx()
-    )
+    result = MinerUBackend(transport="http", base_url=BASE).extract(_pdf(tmp_path), out, ctx=_ctx())
     table = next(b for b in result.blocks if b.kind == "table")
     assert table.asset_path is not None
     assert (out / table.asset_path).read_text(encoding="utf-8").startswith("<table>")
@@ -186,21 +184,17 @@ def test_local_transport_reads_do_parse_outputs(tmp_path: Path, monkeypatch: pyt
         method = kwargs.get("parse_method") or "auto"
         dest = out / stem / method
         dest.mkdir(parents=True, exist_ok=True)
-        (dest / f"{stem}_content_list.json").write_text(
-            json.dumps(_CONTENT_LIST), encoding="utf-8"
-        )
+        (dest / f"{stem}_content_list.json").write_text(json.dumps(_CONTENT_LIST), encoding="utf-8")
 
     pkg = types.ModuleType("mineru")
     cli = types.ModuleType("mineru.cli")
     common = types.ModuleType("mineru.cli.common")
-    common.do_parse = _fake_do_parse  # type: ignore[attr-defined]
+    common.do_parse = _fake_do_parse  # ty: ignore[unresolved-attribute]
     monkeypatch.setitem(sys.modules, "mineru", pkg)
     monkeypatch.setitem(sys.modules, "mineru.cli", cli)
     monkeypatch.setitem(sys.modules, "mineru.cli.common", common)
 
-    result = MinerUBackend(transport="local").extract(
-        _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
-    )
+    result = MinerUBackend(transport="local").extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
     assert result.backend == "mineru"
     assert result.blocks[0].kind == "heading"
     assert result.blocks[0].page == 1
@@ -216,9 +210,7 @@ def test_local_transport_missing_package_is_explicit(
     monkeypatch.setitem(sys.modules, "mineru.cli", None)
     monkeypatch.setitem(sys.modules, "mineru.cli.common", None)
     with pytest.raises(MinerUError, match="需要安装 mineru"):
-        MinerUBackend(transport="local").extract(
-            _pdf(tmp_path), tmp_path / "out", ctx=_ctx()
-        )
+        MinerUBackend(transport="local").extract(_pdf(tmp_path), tmp_path / "out", ctx=_ctx())
 
 
 def test_registry_defaults_to_local_transport():
@@ -226,9 +218,7 @@ def test_registry_defaults_to_local_transport():
     from biomed_ontology.parse.layout.mineru import MinerUBackend
     from biomed_ontology.parse.layout.registry import get_layout_backend
 
-    cfg = load_settings(
-        {"HMD_ACCEPT_UNCLEARED_COMPONENTS": "true", "HMD_LAYOUT_BACKEND": "mineru"}
-    )
+    cfg = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "true", "HMD_LAYOUT_BACKEND": "mineru"})
     backend = get_layout_backend(config=cfg)
     assert isinstance(backend, MinerUBackend)
     assert backend.transport == "local"

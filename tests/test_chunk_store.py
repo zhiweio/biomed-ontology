@@ -15,9 +15,7 @@ from biomed_ontology.tools.citation import restore_context
 
 def test_memory_get_chunks_is_batch_shaped() -> None:
     kb = build_literature_base(with_graph=False)
-    store = MemoryChunkStore(
-        kb.chunks, documents=kb.documents, release_id=kb.release_id
-    )
+    store = MemoryChunkStore(kb.chunks, documents=kb.documents, release_id=kb.release_id)
     ids = [c.chunk_id for c in kb.chunks[:5]]
     got = store.get_chunks(ids)
     assert set(got) == set(ids)
@@ -27,9 +25,7 @@ def test_memory_get_chunks_is_batch_shaped() -> None:
 
 def test_memory_restore_does_not_need_kb_chunks_in_loop() -> None:
     kb = build_literature_base(with_graph=False)
-    store = MemoryChunkStore(
-        kb.chunks, documents=kb.documents, release_id=kb.release_id
-    )
+    store = MemoryChunkStore(kb.chunks, documents=kb.documents, release_id=kb.release_id)
     anchor = kb.chunks[0]
     restored = restore_context(None, anchor.chunk_id, store=store, max_chars=100_000)
     assert restored.doc_id == anchor.doc_id
@@ -39,9 +35,7 @@ def test_memory_restore_does_not_need_kb_chunks_in_loop() -> None:
 
 def test_chunks_to_evidence_rows_carry_release() -> None:
     kb = build_literature_base(with_graph=False)
-    rows = chunks_to_evidence_rows(
-        kb.chunks[:3], documents=kb.documents, release_id="rel-test"
-    )
+    rows = chunks_to_evidence_rows(kb.chunks[:3], documents=kb.documents, release_id="rel-test")
     assert len(rows) == 3
     assert all(r["release_id"] == "rel-test" for r in rows)
     assert all(r["document_id"] for r in rows)
@@ -64,7 +58,7 @@ def test_iceberg_get_chunks_batches_queries() -> None:
 
     table = _FakeTable()
     store = IcebergChunkStore(release_id="r1", batch_size=BATCH_SIZE, cache_size=0)
-    store._table = lambda: table  # type: ignore[method-assign]
+    store._table = lambda: table  # ty: ignore[invalid-assignment]
     ids = [f"CHK:{i}" for i in range(BATCH_SIZE + 3)]
     assert store.get_chunks(ids) == {}
     assert store.query_count == 2

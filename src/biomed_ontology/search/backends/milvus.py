@@ -67,6 +67,7 @@ def parse_collection_stamp(description: str) -> dict[str, str]:
             out[key] = val
     return out
 
+
 # 列 → 检索通道。稀疏列对应 BM25 通道（两者都是词法匹配），
 # 四条稠密列共用 DENSE 通道但可分别启用，消融靠 vector_fields 控制。
 _CHANNEL = {
@@ -322,9 +323,7 @@ class MilvusBackend:
                         if not any(r.get(f) is not None for f in vector_fields)
                     ]
                     if missing:
-                        raise ValueError(
-                            f"encode=False 但缺少向量列：chunk_ids={missing[:5]!r}"
-                        )
+                        raise ValueError(f"encode=False 但缺少向量列：chunk_ids={missing[:5]!r}")
             self.client.upsert(collection_name=self.collection, data=payload)
             written += len(payload)
             if on_batch is not None:
@@ -576,9 +575,7 @@ def chunk_to_row(
     extra = " ".join(t for t in label_terms if t)
     if extra:
         text = f"{text} {extra}".strip()
-    section_path = (
-        getattr(chunk, "section_path", None) or getattr(chunk, "section", "") or ""
-    )
+    section_path = getattr(chunk, "section_path", None) or getattr(chunk, "section", "") or ""
     return {
         "chunk_id": meta.chunk_id,
         "doc_id": meta.doc_id,

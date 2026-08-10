@@ -17,8 +17,8 @@ from pathlib import Path
 
 import yaml
 
-from biomed_ontology._generated.hmd_concept import LanguageEnum, LicenseTierEnum
-from biomed_ontology._generated.hmd_fact import DocTypeEnum
+from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology._generated.hmd_fact import DocTypeEnum, LanguageEnum
 from biomed_ontology.parse import parse_document
 
 DEFAULT_RAW = Path("data/raw")

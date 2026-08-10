@@ -31,11 +31,11 @@ class _Item:
     image: object | None = None
     _pil: object | None = None
 
-    def export_to_markdown(self, doc=None):  # noqa: ANN001
+    def export_to_markdown(self, doc=None):
         self.export_calls.append(doc)
         return "| a | b |\n|---|---|\n| 1 | 2 |"
 
-    def get_image(self, doc=None):  # noqa: ANN001
+    def get_image(self, doc=None):
         return self._pil
 
 
@@ -139,7 +139,7 @@ def test_picture_placeholder_is_not_used_as_caption(tmp_path: Path):
     )
 
     class _Picture(_Item):
-        def export_to_markdown(self, doc=None):  # noqa: ANN001
+        def export_to_markdown(self, doc=None):
             self.export_calls.append(doc)
             return placeholder
 
@@ -154,8 +154,9 @@ def test_picture_placeholder_is_not_used_as_caption(tmp_path: Path):
 
 def test_following_caption_attaches_to_empty_picture(tmp_path: Path):
     pic = _Item(label=SimpleNamespace(name="PICTURE"), text="")
-    pic.export_to_markdown = lambda doc=None: (  # type: ignore[method-assign]
-        "<!-- Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)` -->"
+    pic.export_to_markdown = lambda doc=None: (  # ty: ignore[invalid-assignment]
+        "<!-- Image not available. Please use "
+        "`PdfPipelineOptions(generate_picture_images=True)` -->"
     )
     cap = _Item(
         label=SimpleNamespace(name="CAPTION"),
@@ -180,7 +181,7 @@ def test_picture_keeps_real_caption_and_exports_pil(tmp_path: Path):
     )
 
     class _Picture(_Item):
-        def export_to_markdown(self, doc=None):  # noqa: ANN001
+        def export_to_markdown(self, doc=None):
             return placeholder
 
     pil = Image.new("RGB", (8, 8), color=(20, 40, 60))

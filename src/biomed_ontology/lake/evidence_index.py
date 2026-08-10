@@ -77,9 +77,7 @@ def upsert_evidence_objects(
                 "chunk_id": str(chunk_id)[:128],
                 "parent_id": str(_field(ch, "parent_id", default="") or "")[:128],
                 "doc_id": str(_field(ch, "doc_id", "document_id", default="") or "")[:256],
-                "section_path": str(
-                    _field(ch, "section_path", "section", default="") or ""
-                )[:1024],
+                "section_path": str(_field(ch, "section_path", "section", default="") or "")[:1024],
                 "node_kind": str(_field(ch, "node_kind", default="") or "")[:64],
                 "text": text[:8000],
                 "quote": text[:8000],

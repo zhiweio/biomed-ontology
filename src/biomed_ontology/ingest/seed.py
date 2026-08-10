@@ -68,6 +68,7 @@ def enterprise_id_for(entity_type: EntityTypeEnum, seed_key: str) -> str:
         raise ValueError(f"无 ENT 段映射的实体类型：{entity_type}")
     return f"HMD:ENT:{seg}:{seed_key}"
 
+
 # 种子内部引用的伪源，不在 registry 中；构建时映射为 SEED_INTERNAL 的许可 tier。
 _SEED_SOURCE = "SEED_INTERNAL"
 

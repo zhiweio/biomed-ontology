@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 from biomed_ontology._generated.hmd_concept import PredicateEnum
 
@@ -42,9 +43,7 @@ _TYPE_ALIASES = {
 # (subject_type, object_type) → 允许的谓词
 COMPATIBLE_PREDICATES: dict[tuple[str, str], frozenset[PredicateEnum]] = {
     ("drug", "target"): frozenset({PredicateEnum.inhibits, PredicateEnum.has_target}),
-    ("drug", "disease"): frozenset(
-        {PredicateEnum.treats, PredicateEnum.in_clinical_trial_for}
-    ),
+    ("drug", "disease"): frozenset({PredicateEnum.treats, PredicateEnum.in_clinical_trial_for}),
     ("target", "drug"): frozenset({PredicateEnum.biomarker_for}),
     ("drug", "ae"): frozenset({PredicateEnum.has_adverse_event}),
 }
@@ -174,7 +173,9 @@ def build_mention_pairs(
     def sent_idx(m: Mention) -> int:
         for i, off in enumerate(offsets):
             end = off + len(sentences[i])
-            if off <= m.start < end or (m.start == 0 and m.surface.casefold() in sentences[i].casefold()):
+            if off <= m.start < end or (
+                m.start == 0 and m.surface.casefold() in sentences[i].casefold()
+            ):
                 return i
         # surface 回落
         for i, sent in enumerate(sentences):

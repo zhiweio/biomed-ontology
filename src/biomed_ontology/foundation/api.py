@@ -124,7 +124,10 @@ def _search_evidence_milvus(
 SEMANTIC_OPS: list[dict[str, str]] = [
     {
         "name": "resolve_entity",
-        "summary": "文本/别名 → Enterprise Entity ID（词典 / BERN2 候选 + Resolver）；无 ENT 时附 search_surfaces",
+        "summary": (
+            "文本/别名 → Enterprise Entity ID（词典 / BERN2 候选 + Resolver）；"
+            "无 ENT 时附 search_surfaces"
+        ),
     },
     {
         "name": "lookup_bios_concept",
@@ -195,19 +198,20 @@ class FoundationApi:
             input_summary={"text": text, "type_hint": type_hint},
         ) as obs:
             obs["backend"] = "resolver"
-            obs["why"] = {
+            why: dict[str, Any] = {
                 "reason": "entity_resolution_dictionary",
                 "yaml_wm_fallback": False,
                 "note": "词典仅用于 ER，World Model 查询仍走 GraphDB/Milvus/OM",
             }
+            obs["why"] = why
             assert self.world.resolver is not None
             hits = self.world.resolver.resolve_text(text)
             if type_hint and len(hits) == 1 and hits[0].canonical_entity is None:
                 hits = [self.world.resolver.resolve_mention(text, type_hint=type_hint)]
             self._hydrate_resolve_surfaces(hits)
             chosen = next((h.canonical_entity for h in hits if h.canonical_entity), None)
-            obs["why"]["chosen"] = chosen
-            obs["why"]["candidate_count"] = len(hits)
+            why["chosen"] = chosen
+            why["candidate_count"] = len(hits)
             obs["output"] = {"resolved_count": len(hits), "chosen": chosen}
             return {
                 "ontology_release_id": self.world.release_id,
@@ -244,9 +248,12 @@ class FoundationApi:
                 for x in (h.external_ids or [])
                 if x and str(x).upper() not in {"CUI-LESS", "CUILESS"}
             ]
-            if ":" in (h.mention or "") and not str(h.mention).startswith("HMD:ENT:"):
-                if h.mention not in ext_ids:
-                    ext_ids.insert(0, h.mention)
+            if (
+                ":" in (h.mention or "")
+                and not str(h.mention).startswith("HMD:ENT:")
+                and h.mention not in ext_ids
+            ):
+                ext_ids.insert(0, h.mention)
             surfaces, cards = hydrate_search_surfaces(
                 mention=h.mention if ":" not in (h.mention or "") else None,
                 external_ids=ext_ids,
@@ -312,9 +319,7 @@ class FoundationApi:
                                     if c:
                                         curies.append(c)
                                 else:
-                                    curies.extend(
-                                        lookup_bios_curies(external_id=s, limit=5)
-                                    )
+                                    curies.extend(lookup_bios_curies(external_id=s, limit=5))
                     except Exception:
                         pass
 
@@ -792,10 +797,14 @@ class FoundationApi:
                 "bios": len(ctx.get("bios_bridges") or []),
                 "kb_hits": (kb_leg or {}).get("hit_count"),
             }
-            reason = None if ok else _golden_fail_reason(
-                resolve_ok=True,
-                entity_ok=bool(ctx.get("entity") or ctx.get("found", True)),
-                kb_leg=kb_leg,
+            reason = (
+                None
+                if ok
+                else _golden_fail_reason(
+                    resolve_ok=True,
+                    entity_ok=bool(ctx.get("entity") or ctx.get("found", True)),
+                    kb_leg=kb_leg,
+                )
             )
             return {
                 "ok": ok,
@@ -929,7 +938,7 @@ def _kb_golden_leg(
                 "query_original": query,
                 "query_tried": list(tried[: tried.index(q) + 1]),
             }
-        except Exception as exc:  # noqa: BLE001 — 金路径必须显式失败
+        except Exception as exc:
             last_error = str(exc)
             empty_leg = {
                 "ok": False,

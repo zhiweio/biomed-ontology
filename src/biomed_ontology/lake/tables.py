@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
+from typing import Any
 
 from biomed_ontology.lake.catalog import (
     DOCUMENTS_TABLE,
@@ -61,7 +62,7 @@ def replace_rows(
 
     cat = catalog or open_catalog()
     tbl = table if table is not None else cat.load_table(table_name)
-    filt = EqualTo(filter_column, filter_value)
+    filt = EqualTo(term=filter_column, value=filter_value)
     exists = _filter_exists(tbl, filt, filter_column)
 
     if not rows:
@@ -129,7 +130,7 @@ def append_documents(
     *,
     doc_id: str | None = None,
 ) -> int:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     enriched = [{**r, "ingested_at": r.get("ingested_at") or now} for r in rows]
     return _replace_by_key(
         DOCUMENTS_TABLE,

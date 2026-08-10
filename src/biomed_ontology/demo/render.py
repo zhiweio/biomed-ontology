@@ -75,9 +75,7 @@ _RESTORE_RE = re.compile(r"^还原\s+(?P<chunk>\S+)：(?P<body>.+)$")
 
 #   事实：无凭据 7 条… / 有凭据 8 条…
 #   受限文档 DOC:x：无凭据还原 0 字… / 有凭据还原 354 字
-_COMPARE_RE = re.compile(
-    r"^(?P<label>.+?)\s*(?P<free>无凭据.+?)\s*/\s*(?P<paid>有凭据.+)$"
-)
+_COMPARE_RE = re.compile(r"^(?P<label>.+?)\s*(?P<free>无凭据.+?)\s*/\s*(?P<paid>有凭据.+)$")
 
 #   targets=1 evidence=6 backends={...}
 _METRICS_LEAD_RE = re.compile(r"^[A-Za-z_][\w]*=")
@@ -119,9 +117,7 @@ _SIMPLE_KV_RE = re.compile(r"^\s*(?P<key>[A-Za-z][\w ./-]{0,40}?)=(?P<val>\S+)\s
 
 #   decision[ABSTAIN] chosen=None conf=0.55 …
 _DECISION_RE = re.compile(r"^\s*decision\[(?P<stage>[^\]]+)\]\s+(?P<body>.+)$")
-_CAND_RE = re.compile(
-    r"^\s*候选\s+(?P<cid>\S+)\s+score=(?P<score>[\d.]+)\s+ch=(?P<ch>\S+)\s*$"
-)
+_CAND_RE = re.compile(r"^\s*候选\s+(?P<cid>\S+)\s+score=(?P<score>[\d.]+)\s+ch=(?P<ch>\S+)\s*$")
 _SPAN_RE = re.compile(r"^\s*span\s+(?P<name>\S+)\s+(?P<ms>[\d.]+)ms\s*(?P<attrs>.*)$")
 _QUOTE_RE = re.compile(r"^\s*[“\"](.+)[”\"]\s*$")
 
@@ -866,9 +862,7 @@ def _arrows_table(rows: list[dict[str, str]]) -> Panel:
     for i, r in enumerate(rows, 1):
         table.add_row(str(i), escape(r.get("left") or ""), "→", escape(r.get("right") or ""))
     # 右侧像 CURIE/ENT 时是 ER resolve；否则是通用映射（发版门禁等）
-    resolve_like = all(
-        bool(re.search(r"(?:HMD|DOC|CHK|ENT):", r.get("right") or "")) for r in rows
-    )
+    resolve_like = all(bool(re.search(r"(?:HMD|DOC|CHK|ENT):", r.get("right") or "")) for r in rows)
     title = "Resolve" if resolve_like else "Mapping"
     return Panel(
         table,

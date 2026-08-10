@@ -50,9 +50,11 @@ def test_code_variants_cover_common_writings():
 
 def test_broad_and_related_scopes_do_not_contribute_to_retrieval():
     """上位词参与检索会把"肺癌"的文档全算成"非小细胞肺癌"的命中。"""
-    assert SCOPE_WEIGHTS["EXACT"] == 1.0
-    assert SCOPE_WEIGHTS["BROAD"] == 0.0
-    assert SCOPE_WEIGHTS["RELATED"] == 0.0
+    from biomed_ontology._generated.hmd_concept import SynonymScopeEnum
+
+    assert SCOPE_WEIGHTS[SynonymScopeEnum.EXACT] == 1.0
+    assert SCOPE_WEIGHTS[SynonymScopeEnum.BROAD] == 0.0
+    assert SCOPE_WEIGHTS[SynonymScopeEnum.RELATED] == 0.0
 
 
 def test_contains_cjk():

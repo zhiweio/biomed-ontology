@@ -218,7 +218,7 @@ def resolve_model(model_id: str, *, marker: str = "config.json") -> str:
         return _from_gitee(model_id)
 
 
-class EmbeddingBundle(dict[str, object]):
+class EmbeddingBundle(dict[str, Any]):
     """一次前向产出的全部向量列。键是 Milvus 字段名，不另起别名。"""
 
 
@@ -365,7 +365,7 @@ class BiomedEmbedder:
         self.device = device or best_device()
         self._torch = torch
         self._batch_size = batch_size
-        self._tok = AutoTokenizer.from_pretrained(path)
+        self._tok: Any = AutoTokenizer.from_pretrained(path)
         self._model = AutoModel.from_pretrained(path).to(self.device).eval()
         self.dims = {"dense_biomed": int(self._model.config.hidden_size)}
 
@@ -649,7 +649,7 @@ class CompositeEmbedder:
 
 
 def _row_to_dict(matrix: object, row: int) -> dict[int, float]:
-    csr = matrix[[row]]  # type: ignore[index]
+    csr = matrix[[row]]  # ty: ignore[not-subscriptable]
     coo = csr.tocoo()
     return {int(c): float(v) for c, v in zip(coo.col, coo.data, strict=True)}
 

@@ -57,7 +57,7 @@ def milvus_ev():
             embedder=get_embedder("multimodal-bio"),
             known_sources=frozenset(s.id for s in kb.registry.active()),
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         pytest.skip(f"Milvus 不可达：{exc}")
     ev = eval_retrieval(kb, entitlements=LICENSED, milvus_backend=backend)
     if "bm25_only" not in ev.arms or "ontology_hybrid" not in ev.arms:

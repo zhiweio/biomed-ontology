@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from biomed_ontology.foundation.bios_lookup import (
+    enterprise_bridges_for_ids,
+    fetch_bios_card,
     hydrate_search_surfaces,
     lookup_bios_curies,
     surfaces_from_card,
-    fetch_bios_card,
-    enterprise_bridges_for_ids,
 )
 from biomed_ontology.foundation.resolve import ResolutionIndex
 from biomed_ontology.foundation.world import load_world_model
@@ -50,6 +50,7 @@ def test_enterprise_bridge_from_exact_xref():
 
 def test_public_nen_assist_unique_xref():
     world = load_world_model(bern2_url=None)
+    assert world.resolver is not None
     assist = PublicNenAssist(world.resolver.index, bern2=None)
     ents = assist.propose_ents("NCBIGene:4233")
     assert ents == ["HMD:ENT:TGT:MET"]
@@ -58,6 +59,7 @@ def test_public_nen_assist_unique_xref():
 def test_public_nen_assist_related_not_enough_without_exact():
     # related_xrefs 不应进入 by_exact_external
     world = load_world_model(bern2_url=None)
+    assert world.resolver is not None
     idx: ResolutionIndex = world.resolver.index
     assert idx.lookup_exact_external("NCBIGene:4233") == ["HMD:ENT:TGT:MET"]
 

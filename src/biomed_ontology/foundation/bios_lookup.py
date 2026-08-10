@@ -17,8 +17,8 @@ from biomed_ontology.foundation.models import EnterpriseEntity
 from biomed_ontology.foundation.paths import REPO_ROOT
 
 __all__ = [
-    "BiosCard",
     "DEFAULT_BIOS_INDEX",
+    "BiosCard",
     "bios_curie_from_iri",
     "enterprise_bridges_for_ids",
     "fetch_bios_card",
@@ -116,9 +116,9 @@ def lookup_bios_curies(
     # fall back: subset jsonl（CI / 未灌索引）
     if DEFAULT_SUBSET.is_file():
         for c in load_bios_subset_jsonl(DEFAULT_SUBSET):
-            if external_id and external_id in c.external_ids:
-                _add(c.uri_curie)
-            elif external_id and external_id.lower() in {x.lower() for x in c.external_ids}:
+            if (external_id and external_id in c.external_ids) or (
+                external_id and external_id.lower() in {x.lower() for x in c.external_ids}
+            ):
                 _add(c.uri_curie)
             elif term:
                 surfaces = {*(c.terms or []), c.preferred_term or ""}
@@ -189,9 +189,7 @@ def fetch_bios_card(
                     if not card.pref_label:
                         card.pref_label = sub.preferred_term
                     if include_alts and not card.alt_labels:
-                        card.alt_labels = [
-                            t for t in sub.terms if t and t != card.pref_label
-                        ][:8]
+                        card.alt_labels = [t for t in sub.terms if t and t != card.pref_label][:8]
                 return card
         except Exception:
             pass
@@ -266,9 +264,7 @@ def hydrate_search_surfaces(
             if c:
                 curies.append(c)
             continue
-        curies.extend(
-            lookup_bios_curies(external_id=str(xid), index_path=index_path, limit=5)
-        )
+        curies.extend(lookup_bios_curies(external_id=str(xid), index_path=index_path, limit=5))
     # 去重保序
     uniq: list[str] = []
     seen_c: set[str] = set()

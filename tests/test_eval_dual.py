@@ -6,7 +6,7 @@ from io import StringIO
 
 from rich.console import Console
 
-from biomed_ontology.eval import DualEvalReport, eval_bridge, eval_identity, run_dual_eval
+from biomed_ontology.eval import eval_bridge, eval_identity, run_dual_eval
 from biomed_ontology.eval.render import render_dual_eval
 from biomed_ontology.pipeline import build_literature_base
 from biomed_ontology.runtime import open_dual_surface

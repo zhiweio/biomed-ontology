@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from biomed_ontology._generated.hmd_fact import ModalityChannelEnum, PredicateEnum, ReviewStatusEnum
-from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology._generated.hmd_concept import LicenseTierEnum, PredicateEnum, ReviewStatusEnum
+from biomed_ontology._generated.hmd_fact import ModalityChannelEnum
 from biomed_ontology.corpus.extract import Evidence, ExtractedFact
 from biomed_ontology.lake.claim_bridge import facts_to_claims
 

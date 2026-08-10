@@ -156,7 +156,7 @@ class TokenOverlapBackend:
         wanted_ft = set(request.figure_types)
         bm25: list[tuple[str, float]] = []
         dense: list[tuple[str, float]] = []
-        for cid, (meta, text) in self.docs.items():
+        for cid, (meta, _text) in self.docs.items():
             if not request.scope.permits(meta.license_rank, meta.source_id):
                 filtered += 1
                 continue

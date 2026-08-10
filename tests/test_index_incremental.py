@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from biomed_ontology._generated.hmd_fact import ModalityChannelEnum
 from biomed_ontology.corpus import Chunk
 from biomed_ontology.index_refresh import (
@@ -84,15 +82,11 @@ def test_diff_retag_alias_hit_ids_only():
     def labels(ch: Chunk) -> list[str]:
         return list(ch.concept_ids)  # surrogate: IDs as labels for unit test
 
-    dirty = diff_retag(
-        before, after, before_label_fn=labels, after_label_fn=labels
-    )
+    dirty = diff_retag(before, after, before_label_fn=labels, after_label_fn=labels)
     assert len(dirty) == 1
     assert dirty[0].needs_reembed is True  # labels (IDs) changed
     # same labels → no reembed
-    before2 = [
-        _chunk("c1", "x", concepts=["HMD:ENT:DC:savolitinib"], expanded=[])
-    ]
+    before2 = [_chunk("c1", "x", concepts=["HMD:ENT:DC:savolitinib"], expanded=[])]
     after2 = [
         _chunk(
             "c1",

@@ -122,9 +122,7 @@ def eval_bridge(
         candidates.append(c)
     candidates.sort(
         key=lambda c: (
-            0
-            if (d := kb.document(c.doc_id)) is not None and d.source_id == licensed_id
-            else 1,
+            0 if (d := kb.document(c.doc_id)) is not None and d.source_id == licensed_id else 1,
             c.chunk_id,
         )
     )

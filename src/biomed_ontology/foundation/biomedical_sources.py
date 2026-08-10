@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Protocol
 
 __all__ = [
-    "BiomedicalSource",
     "SOURCE_REGISTRY",
+    "BiomedicalSource",
     "load_biomedical_source",
     "register_source",
 ]
@@ -60,7 +60,5 @@ def load_biomedical_source(
         return {"source_id": source_id, "result": "use hmd foundation bios-load", **kwargs}
     loader = _LOADERS.get(source_id)
     if loader is None:
-        raise NotImplementedError(
-            f"source {source_id} 已登记但 loader 未实现（预留扩展点）"
-        )
+        raise NotImplementedError(f"source {source_id} 已登记但 loader 未实现（预留扩展点）")
     return loader(license_ack=license_ack, **kwargs)

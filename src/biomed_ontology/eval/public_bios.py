@@ -34,7 +34,10 @@ def _surfaces_ok(got: list[str] | None, expect_any: list[str] | None) -> bool:
     if not expect_any:
         return True
     lowered = {str(s).casefold() for s in (got or [])}
-    return any(str(e).casefold() in lowered or any(str(e).casefold() in s for s in lowered) for e in expect_any)
+    return any(
+        str(e).casefold() in lowered or any(str(e).casefold() in s for s in lowered)
+        for e in expect_any
+    )
 
 
 def _record(ev: PublicBiosEval, row: dict[str, Any]) -> None:
@@ -69,9 +72,7 @@ def eval_public_bios(
             )
             bridges = card.get("enterprise_bridges") or []
             bridge_ok = (not expect_ent) or (expect_ent in bridges)
-            surfaces_ok = _surfaces_ok(
-                card.get("search_surfaces"), case.get("expect_surfaces_any")
-            )
+            surfaces_ok = _surfaces_ok(card.get("search_surfaces"), case.get("expect_surfaces_any"))
         else:
             bios_ok = bridge_ok = surfaces_ok = True
         out = foundation.resolve_entity(text)
@@ -112,9 +113,7 @@ def eval_public_bios(
         )
         bridges = list(card.get("enterprise_bridges") or [])
         if expect_bridges is not None:
-            bridge_ok = bridges == list(expect_bridges) or (
-                not expect_bridges and not bridges
-            )
+            bridge_ok = bridges == list(expect_bridges) or (not expect_bridges and not bridges)
         else:
             bridge_ok = True
         surfaces_ok = _surfaces_ok(card.get("search_surfaces"), case.get("expect_surfaces_any"))
@@ -159,10 +158,7 @@ def eval_public_bios(
         expect = case.get("expect")
         norm = tools.normalize_entity(text)
         got = (norm.get("matched_concepts") or [{}])[0].get("concept_id")
-        if expect is None:
-            ok = not got
-        else:
-            ok = got == expect
+        ok = not got if expect is None else got == expect
         _record(
             ev,
             {

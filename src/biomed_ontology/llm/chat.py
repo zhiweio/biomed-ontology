@@ -6,13 +6,13 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 __all__ = [
+    "DEFAULT_LLM_BASE_URLS",
     "ChatCache",
     "ChatProvider",
     "ChatResult",
-    "DEFAULT_LLM_BASE_URLS",
     "NullChatProvider",
     "OpenAIChatProvider",
     "get_chat_provider",
@@ -176,10 +176,11 @@ def get_chat_provider(config: Any | None = None) -> ChatProvider:
     if name == "null":
         return NullChatProvider()
 
+    raw_key = getattr(cfg, "llm_api_key", None)
     api_key = (
-        getattr(cfg, "llm_api_key", None).get_secret_value()
-        if hasattr(getattr(cfg, "llm_api_key", None), "get_secret_value")
-        else str(getattr(cfg, "llm_api_key", "") or "")
+        raw_key.get_secret_value()
+        if raw_key is not None and hasattr(raw_key, "get_secret_value")
+        else str(raw_key or "")
     )
     if not api_key.strip():
         return NullChatProvider()
@@ -198,5 +199,5 @@ def get_chat_provider(config: Any | None = None) -> ChatProvider:
     )
     cache_dir = Path(getattr(cfg, "llm_cache_dir", "data/cache/llm"))
     if cache_dir:
-        return ChatCache(cache_dir, provider)
+        return cast(ChatProvider, ChatCache(cache_dir, provider))
     return provider

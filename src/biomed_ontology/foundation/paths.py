@@ -10,15 +10,15 @@ from __future__ import annotations
 from pathlib import Path
 
 __all__ = [
-    "REPO_ROOT",
-    "ONTOLOGY_ROOT",
-    "FOUNDATION_DATA",
-    "ENTITIES_PATH",
-    "DICTIONARY_PATH",
-    "CLAIMS_PATH",
-    "ZINGG_MATCHES_PATH",
-    "EVIDENCE_INDEX_PATH",
     "ASSETS_PATH",
+    "CLAIMS_PATH",
+    "DICTIONARY_PATH",
+    "ENTITIES_PATH",
+    "EVIDENCE_INDEX_PATH",
+    "FOUNDATION_DATA",
+    "ONTOLOGY_ROOT",
+    "REPO_ROOT",
+    "ZINGG_MATCHES_PATH",
 ]
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

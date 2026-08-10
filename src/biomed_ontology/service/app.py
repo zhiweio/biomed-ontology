@@ -122,7 +122,7 @@ def create_app(
             "foundation_ops": SEMANTIC_OPS,
         }
 
-    app.openapi = lambda: _merged_openapi()  # type: ignore[method-assign]
+    app.openapi = lambda: _merged_openapi()  # ty: ignore[invalid-assignment]
     return app
 
 

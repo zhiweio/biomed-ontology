@@ -126,7 +126,14 @@ def render_regions(
             target = out_dir / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
-            assets.append(RenderedAsset(rel_path=rel, page=page_no, bbox=tuple(clip), data=data))
+            assets.append(
+                RenderedAsset(
+                    rel_path=rel,
+                    page=page_no,
+                    bbox=tuple(float(x) for x in clip),
+                    data=data,
+                )
+            )
     return assets
 
 

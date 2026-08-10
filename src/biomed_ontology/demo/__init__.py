@@ -83,7 +83,7 @@ def demo_alias_consistency(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r.lines.append(f"语料中接地到该概念的切片：{total} 片，检索窗口 10")
     r.lines.append(f"前十接地精度：{prec}")
     worst = min(prec.values())
-    r.lines.append(f"最差写法 {min(prec, key=prec.get)} = {worst:.3f}（门槛 0.800）")
+    r.lines.append(f"最差写法 {min(prec, key=lambda k: prec[k])} = {worst:.3f}（门槛 0.800）")
     r.passed = len(unique) == 1 and None not in unique and worst >= 0.8
     return r
 
@@ -105,11 +105,11 @@ def demo_hierarchy_expansion(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     hits = api.search_documents(query, top_k=10, expand=True)["results"]
     # 真正的证据是"正文里根本没出现过查询词却被召回"；
     # 比"开/关扩展的条数差"可靠，后者在小语料上会被 top_k 上限掩盖掉。
-    literal_free = [
-        h
-        for h in hits
-        if query not in (kb.chunk(h["chunk_id"]).text if kb.chunk(h["chunk_id"]) else "")
-    ]
+    literal_free = []
+    for h in hits:
+        ch = kb.chunk(h["chunk_id"])
+        if query not in (ch.text if ch else ""):
+            literal_free.append(h)
     r.lines.append(f"召回 {len(hits)} 条，其中 {len(literal_free)} 条正文未出现过「{query}」：")
     for h in literal_free[:5]:
         r.lines.append(f"  + {h['doc_id']}#{h.get('section')} :: {h['snippet'][:52]}")
@@ -124,7 +124,7 @@ def demo_hierarchy_expansion(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
 def demo_cross_lingual(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
     r = DemoResult("D3", "跨语言", "中文查询召回英文文献，中英证据合并到同一条事实上")
     hits = api.search_documents("沃利替尼 非小细胞肺癌", top_k=5)["results"]
-    langs = {kb.document(h["doc_id"]).language.value for h in hits}
+    langs = {doc.language.value for h in hits if (doc := kb.document(h["doc_id"])) is not None}
     r.lines.append(f"中文 query 命中语种：{sorted(langs)}")
     for h in hits[:4]:
         r.lines.append(f"  {h['doc_id']}#{h.get('section')} :: {h['snippet'][:52]}")
@@ -307,9 +307,18 @@ def demo_citation_restore(kb: KnowledgeBase, api: ToolApi) -> DemoResult:
 
     # 还原最容易变成的后门：拿碎片 id 换受限全文。
     restricted = next(
-        (c for c in kb.chunks if kb.document(c.doc_id).license_tier is not LicenseTierEnum.TIER_0),
+        (
+            c
+            for c in kb.chunks
+            if (doc := kb.document(c.doc_id)) is not None
+            and doc.license_tier is not LicenseTierEnum.TIER_0
+        ),
         None,
     )
+    if restricted is None:
+        r.lines.append("语料中无受限文档，跳过凭据对照")
+        r.passed = False
+        return r
     denied = api.restore_context(restricted.chunk_id)
     allowed = api.restore_context(restricted.chunk_id, entitlements=_LICENSED)
     r.lines.append(
@@ -402,7 +411,11 @@ def demo_wm_resolve(_kb: KnowledgeBase, _api: ToolApi, foundation: Any) -> DemoR
     try:
         out = foundation.resolve_entity("HMPL-504")
         canon = next(
-            (h.get("canonical_entity") for h in out.get("resolved") or [] if h.get("canonical_entity")),
+            (
+                h.get("canonical_entity")
+                for h in out.get("resolved") or []
+                if h.get("canonical_entity")
+            ),
             None,
         )
         r.passed = canon == "HMD:ENT:DC:savolitinib"
@@ -418,7 +431,7 @@ def demo_wm_resolve(_kb: KnowledgeBase, _api: ToolApi, foundation: Any) -> DemoR
         )
         r.lines.append(f"savolitinib → {canon2}")
         r.passed = r.passed and canon2 == canon
-    except Exception as exc:  # noqa: BLE001 — demo 必须把后端失败打成 FAIL
+    except Exception as exc:
         r.passed = False
         r.lines.append(f"resolve 失败：{exc}")
     return r
@@ -446,7 +459,7 @@ def demo_wm_context(_kb: KnowledgeBase, _api: ToolApi, foundation: Any) -> DemoR
         backends = ctx.get("backends") or {}
         r.lines.append(f"targets={n_t} evidence={n_e} backends={backends}")
         r.passed = n_t >= 1 and backends.get("entity") == "graphdb"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         # 无联调栈时仍允许本地 CI；联调验收走 hmd foundation golden
         msg = str(exc)
         if "GraphDB" in msg or "Milvus" in msg or "OpenMetadata" in msg:
@@ -552,7 +565,7 @@ def demo_public_no_ent(_kb: KnowledgeBase, api: ToolApi, foundation: Any) -> Dem
             and any("aspirin" in str(s).casefold() for s in surfaces + hit_surfaces)
             and source == "public_lexical"
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         r.passed = False
         r.lines.append(f"public no-ENT 失败：{exc}")
     return r
@@ -599,7 +612,9 @@ def run_all(
     foundation: Any | None = None,
 ) -> list[DemoResult]:
     if api is None:
-        raise ValueError("run_all 需要已装配的 ToolApi（Milvus + 邻域）；请经 open_dual_surface 注入")
+        raise ValueError(
+            "run_all 需要已装配的 ToolApi（Milvus + 邻域）；请经 open_dual_surface 注入"
+        )
     # 每个 KB 场景独立 ToolApi 实例但共用 hub（D4→D5 演进闭环）
     results = [_KB_DEMOS[d](kb, api) for d in _KB_DEMOS]
     results += [_WM_DEMOS[d](kb, api, foundation) for d in _WM_DEMOS]

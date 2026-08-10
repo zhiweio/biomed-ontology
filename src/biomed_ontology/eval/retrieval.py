@@ -532,9 +532,7 @@ class RetrievalEval:
             gain = self.absolute_gain(probes=ONTOLOGY_PROBES)
             lines.append(f"\n本体敏感探针 nDCG@10 绝对增益：{gain:+.3f}（主 KPI）")
         if self.baseline in self.arms and self.target in self.arms:
-            lines.append(
-                f"全量 Recall@10 相对提升：{self.lift():+.1%}（诊断，含图像/对照稀释）"
-            )
+            lines.append(f"全量 Recall@10 相对提升：{self.lift():+.1%}（诊断，含图像/对照稀释）")
         lines.extend(self._significance_block())
         lines.extend(self._pool_note())
 
@@ -995,11 +993,9 @@ def eval_retrieval(
                 ensure_catalog_graphs(kb.graph, kb.concepts, kb.synonyms)
                 nb = GraphDbNeighborhood(kb.graph)
                 graph_ready = True
-            except Exception as exc:  # noqa: BLE001 — 评测侧记不可用原因
+            except Exception as exc:
                 graph_error = str(exc)
-        searchers["milvus"] = HybridSearcher(
-            kb, backend=milvus_backend, neighborhood=nb
-        )
+        searchers["milvus"] = HybridSearcher(kb, backend=milvus_backend, neighborhood=nb)
     ctx = TraceContext(trace_id="eval", ontology_release_id=kb.release_id)
 
     cases = []

@@ -22,9 +22,7 @@ def test_append_evidence_chunks_calls_replace_by_document_id() -> None:
     with patch.object(lake_tables, "replace_rows", return_value=1) as replace:
         n = lake_tables.append_evidence_chunks(rows, document_id="DOC:A")
     assert n == 1
-    replace.assert_called_once_with(
-        lake_tables.EVIDENCE_CHUNKS_TABLE, "document_id", "DOC:A", rows
-    )
+    replace.assert_called_once_with(lake_tables.EVIDENCE_CHUNKS_TABLE, "document_id", "DOC:A", rows)
 
 
 def test_append_evidence_chunks_reuses_catalog_across_docs() -> None:
@@ -35,7 +33,11 @@ def test_append_evidence_chunks_reuses_catalog_across_docs() -> None:
     ]
     fake_table = MagicMock()
     schema = MagicMock()
-    schema.fields = [MagicMock(name="document_id"), MagicMock(name="chunk_id"), MagicMock(name="content")]
+    schema.fields = [
+        MagicMock(name="document_id"),
+        MagicMock(name="chunk_id"),
+        MagicMock(name="content"),
+    ]
     import pyarrow as pa
 
     schema.as_arrow.return_value = pa.schema(
@@ -63,9 +65,7 @@ def test_append_knowledge_claims_empty_still_replaces() -> None:
     with patch.object(lake_tables, "replace_rows", return_value=0) as replace:
         n = lake_tables.append_knowledge_claims([], document_id="DOC:A")
     assert n == 0
-    replace.assert_called_once_with(
-        lake_tables.KNOWLEDGE_CLAIMS_TABLE, "document_id", "DOC:A", []
-    )
+    replace.assert_called_once_with(lake_tables.KNOWLEDGE_CLAIMS_TABLE, "document_id", "DOC:A", [])
 
 
 def test_append_documents_replace_by_doc_id() -> None:
@@ -104,7 +104,7 @@ def test_replace_rows_overwrite_when_exists() -> None:
     assert n == 1
     fake_table.overwrite.assert_called_once()
     kwargs = fake_table.overwrite.call_args.kwargs
-    assert kwargs["overwrite_filter"] == EqualTo("document_id", "DOC:A")
+    assert kwargs["overwrite_filter"] == EqualTo(term="document_id", value="DOC:A")
     fake_table.append.assert_not_called()
     fake_table.delete.assert_not_called()
 
@@ -151,7 +151,7 @@ def test_replace_rows_empty_deletes_only_when_exists() -> None:
     with patch.object(lake_tables, "open_catalog", return_value=cat):
         n = lake_tables.replace_rows("hmd.evidence_chunks", "document_id", "DOC:A", [])
     assert n == 0
-    fake_table.delete.assert_called_once_with(EqualTo("document_id", "DOC:A"))
+    fake_table.delete.assert_called_once_with(EqualTo(term="document_id", value="DOC:A"))
     fake_table.append.assert_not_called()
     fake_table.overwrite.assert_not_called()
 

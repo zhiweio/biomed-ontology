@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from biomed_ontology.observability import TraceContext
 from biomed_ontology.parse.layout.base import BlockKind, Capability, LayoutBlock, LayoutResult
@@ -202,7 +202,7 @@ class MinerUBackend:
             assets_dir=out_dir,
             page_count=max((b.page for b in blocks), default=0),
             backend=self.name,
-            degraded=tuple(sorted(degraded)),
+            degraded=cast(tuple[Capability, ...], tuple(sorted(degraded))),
         )
 
 
