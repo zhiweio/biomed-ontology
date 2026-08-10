@@ -1165,9 +1165,19 @@ def foundation_zingg_run(
             if compose.exists():
                 import subprocess
 
-                console.print("running docker/zingg link (see docker/zingg/README.md)…")
+                console.print("running docker/zingg link (zingg/zingg --phase train-link)…")
                 proc = subprocess.run(
-                    ["docker", "compose", "-f", str(compose), "run", "--rm", "zingg-link"],
+                    [
+                        "docker",
+                        "compose",
+                        "-f",
+                        str(compose),
+                        "--profile",
+                        "zingg",
+                        "run",
+                        "--rm",
+                        "zingg-link",
+                    ],
                     check=False,
                 )
                 if proc.returncode != 0:

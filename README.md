@@ -69,7 +69,7 @@ uv run hmd foundation golden-eval                    # 多路径 WM 评估
 uv run hmd serve --mcp                               # 唯一 Semantic API + MCP
 task ontology:validate                               # Ontology-as-Code + Golden Path
 task foundation:golden-eval                          # GraphDB(+BIOS)/Milvus/OM，禁止 YAML
-# 可选观测总线（默认 HMD_KAFKA_BOOTSTRAP_SERVERS=localhost:19092）：task obs:up
+# 可选观测总线（默认 HMD_KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:19092）：task obs:up
 ```
 
 金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。策展 YAML 在 `ontology/{entities,dictionary,claims}/`；

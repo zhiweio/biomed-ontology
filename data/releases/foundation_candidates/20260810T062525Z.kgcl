@@ -1,0 +1,18 @@
+# Foundation evolve-mine 20260810T062525Z
+# 人工策展后才可 apply；本阶段禁止自动写入 World Model
+# policy: skip if mapped AND confidence>=0.95
+
+# review mapping "savolitinb" → HMD:ENT:DC:savolitinib (method=zingg, conf=0.91)
+# TODO curate: "savolitinb"
+
+# create synonym "e2e-unknown-xyz" for unresolved enterprise entity (method=unmapped)
+# TODO curate: "e2e-unknown-xyz"
+
+# create synonym "HGNC:DEMO_BTK" for unresolved enterprise entity (method=unmapped)
+# TODO curate: "HGNC:DEMO_BTK"
+
+# create synonym "aspirin" for unresolved enterprise entity (method=unmapped)
+# TODO curate: "aspirin"
+
+# create synonym "阿司匹林" for unresolved enterprise entity (method=unmapped)
+# TODO curate: "阿司匹林"

@@ -1,0 +1,67 @@
+{
+  "generated_at": "20260810T062525Z",
+  "queries": [
+    "savolitinb",
+    "e2e-unknown-xyz",
+    "HGNC:DEMO_BTK",
+    "aspirin",
+    "阿司匹林"
+  ],
+  "candidates": [
+    {
+      "mention": "savolitinb",
+      "query": "savolitinb",
+      "canonical_entity": "HMD:ENT:DC:savolitinib",
+      "external_ids": [
+        "CHEBI:DEMO_SAVO",
+        "DrugBank:DEMO_SAVO",
+        "BIOS:SAVO_DEMO"
+      ],
+      "confidence": 0.91,
+      "resolution_method": "zingg",
+      "suggested_op": "review mapping"
+    },
+    {
+      "mention": "e2e-unknown-xyz",
+      "query": "e2e-unknown-xyz",
+      "canonical_entity": null,
+      "external_ids": [],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "HGNC:DEMO_BTK",
+      "query": "HGNC:DEMO_BTK",
+      "canonical_entity": null,
+      "external_ids": [],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "aspirin",
+      "query": "aspirin",
+      "canonical_entity": null,
+      "external_ids": [],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "阿司匹林",
+      "query": "阿司匹林",
+      "canonical_entity": null,
+      "external_ids": [],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    }
+  ],
+  "skipped": [],
+  "policy": {
+    "min_confidence_skip": 0.95,
+    "auto_apply": false,
+    "include_lake": true
+  }
+}

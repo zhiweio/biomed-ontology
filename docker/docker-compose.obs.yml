@@ -1,9 +1,9 @@
 # Observability bus: Redpanda + Kafka Connect Iceberg Sink
 # Usage (from repo root, with lake already up):
-#   docker compose -f docker/docker-compose.foundation.yml \
-#     -f docker/docker-compose.obs.yml --profile obs up -d
+#   task obs:up          # redpanda + connect worker
+#   task obs:register    # PUT connector configs
 #
-# App 默认 Settings.kafka_bootstrap_servers=localhost:19092（与 external 端口一致）
+# App 默认 Settings.kafka_bootstrap_servers=127.0.0.1:19092（避免 ::1）
 name: hmd-foundation
 
 services:
@@ -25,7 +25,8 @@ services:
       - --kafka-addr
       - internal://0.0.0.0:9092,external://0.0.0.0:19092
       - --advertise-kafka-addr
-      - internal://redpanda:9092,external://localhost:19092
+      # 宿主机客户端用 127.0.0.1，避免 macOS localhost→::1 Connection refused
+      - internal://redpanda:9092,external://127.0.0.1:19092
       - --set
       - redpanda.auto_create_topics_enabled=true
     ports:
@@ -33,17 +34,19 @@ services:
     volumes:
       - redpanda-data:/var/lib/redpanda/data
 
-  # Iceberg Sink：消费 Redpanda → 写 MinIO + REST catalog
-  # 镜像需自备 connector 插件目录时，见 docker/obs/README.md
   kafka-connect-iceberg:
     profiles: ["obs"]
-    image: tabulario/iceberg-kafka-connect:0.6.19
+    build:
+      context: ./obs
+      dockerfile: Dockerfile.connect
+    image: hmd-iceberg-kafka-connect:1.9.2
     depends_on:
       - redpanda
       - iceberg-rest
       - minio
     environment:
       CONNECT_BOOTSTRAP_SERVERS: redpanda:9092
+      CONNECT_REST_PORT: "8083"
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect-iceberg
       CONNECT_GROUP_ID: hmd-iceberg-connect
       CONNECT_CONFIG_STORAGE_TOPIC: hmd_connect_configs
@@ -55,7 +58,10 @@ services:
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-      CONNECT_PLUGIN_PATH: /kafka/connect
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_REGION: us-east-1
     ports:
       - "127.0.0.1:8083:8083"
     volumes:

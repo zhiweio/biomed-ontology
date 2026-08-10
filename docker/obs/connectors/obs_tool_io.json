@@ -3,7 +3,9 @@
   "tasks.max": "1",
   "topics": "hmd.obs.tool_io",
   "iceberg.tables": "hmd.obs_tool_io",
-  "iceberg.catalog": "rest",
+  "iceberg.tables.evolve-schema-enabled": "true",
+  "iceberg.control.topic": "control-iceberg-tool-io",
+  "iceberg.control.commit.interval-ms": "15000",
   "iceberg.catalog.type": "rest",
   "iceberg.catalog.uri": "http://iceberg-rest:8181",
   "iceberg.catalog.warehouse": "s3://hmd-lake/",
@@ -13,7 +15,6 @@
   "iceberg.catalog.client.region": "us-east-1",
   "iceberg.catalog.s3.access-key-id": "minioadmin",
   "iceberg.catalog.s3.secret-access-key": "minioadmin",
-  "iceberg.control.commit.interval-ms": "300000",
   "key.converter": "org.apache.kafka.connect.storage.StringConverter",
   "value.converter": "org.apache.kafka.connect.json.JsonConverter",
   "value.converter.schemas.enable": "false"

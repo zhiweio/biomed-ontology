@@ -78,12 +78,12 @@
 | 环境变量 | Settings 字段 | 默认 | 含义 |
 |---|---|---|---|
 | `HMD_OBS_EVENTS_ENABLED` | `obs_events_enabled` | `true` | `false` 时不 produce、不写 WAL |
-| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `kafka_bootstrap_servers` | `localhost:19092` | 默认 Redpanda；设空=仅 WAL |
+| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `kafka_bootstrap_servers` | `127.0.0.1:19092` | 默认 Redpanda；设空=仅 WAL |
 | `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `kafka_obs_tool_io_topic` | `hmd.obs.tool_io` | 工具 I/O topic |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `kafka_er_observations_topic` | `hmd.er.observations` | ER 缺口事件 topic |
 | `HMD_OBS_WAL_DIR` | `obs_wal_dir` | `data/obs_wal` | broker 不可达时 Jsonl WAL |
 
-联调：`task obs:up`（默认已指向 `localhost:19092`）。详见 [`docker/obs/README.md`](../../docker/obs/README.md)。
+联调：`task obs:up` → `task obs:register`（默认 bootstrap `127.0.0.1:19092`，Connect `:8083`）。详见 [`docker/obs/README.md`](../../docker/obs/README.md)。
 
 ## 不变量与失败模式
 
@@ -107,8 +107,9 @@
 uv run pytest tests/test_observability.py tests/test_obs_events.py -q
 uv run hmd demo --compact    # 查看 span 树
 uv run hmd signals --help    # 挖掘依赖 hub / feedback
-# 观测入湖（默认连 Redpanda localhost:19092）
+# 观测入湖（Redpanda + Iceberg Connect Sink）
 task obs:up
+task obs:register
 uv run hmd lake init         # 含 obs_tool_io / er_observations
 ```
 

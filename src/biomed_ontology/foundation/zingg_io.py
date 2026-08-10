@@ -16,14 +16,17 @@ from biomed_ontology.foundation.paths import REPO_ROOT, ZINGG_MATCHES_PATH
 __all__ = [
     "ZinggMaterializeResult",
     "export_matches",
+    "link_stub_from_materialized",
     "materialize",
     "scan_er_observations",
+    "write_training_samples",
 ]
 
 ZINGG_DIR = REPO_ROOT / "data" / "zingg"
 INPUT_DIR = ZINGG_DIR / "input"
 REPORTS_DIR = ZINGG_DIR / "reports"
 BOOTSTRAP_PAIRS = ZINGG_DIR / "bootstrap_pairs.jsonl"
+TRAINING_CSV = ZINGG_DIR / "training.csv"
 
 
 @dataclass
@@ -69,11 +72,10 @@ def materialize_enterprise(world: Any | None = None) -> list[dict[str, Any]]:
             seen.add(key)
             rows.append(
                 {
-                    "record_id": eid,
-                    "side": "enterprise",
+                    # Zingg pipe schema（与 observation / trainingSamples 对齐）
+                    "id": eid,
                     "label": label,
-                    "kind": ent.entity_kind,
-                    "external_id": (ent.exact_match_xrefs or [None])[0],
+                    "kind": ent.entity_kind or "",
                 }
             )
     # resolver alias 倒排（含 dictionary / catalog 回填）
@@ -88,11 +90,9 @@ def materialize_enterprise(world: Any | None = None) -> list[dict[str, Any]]:
             ent = world.entities.get(str(eid))
             rows.append(
                 {
-                    "record_id": str(eid),
-                    "side": "enterprise",
+                    "id": str(eid),
                     "label": str(alias_key),
-                    "kind": ent.entity_kind if ent else None,
-                    "external_id": None,
+                    "kind": (ent.entity_kind if ent else "") or "",
                 }
             )
     return rows
@@ -113,12 +113,11 @@ def _bootstrap_observations(enterprise_rows: list[dict[str, Any]]) -> list[dict[
             rid = hashlib.sha1(f"bootstrap|{key}".encode()).hexdigest()[:16]
             rows.append(
                 {
-                    "record_id": rid,
-                    "side": "observation",
+                    "id": rid,
                     "label": mention,
+                    "kind": str(row.get("kind_hint") or ""),
                     "source": "bootstrap",
                     "occurrences": int(row.get("occurrences") or 1),
-                    "kind_hint": row.get("kind_hint"),
                 }
             )
         return rows
@@ -129,12 +128,11 @@ def _bootstrap_observations(enterprise_rows: list[dict[str, Any]]) -> list[dict[
             rid = hashlib.sha1(f"bootstrap|{key}".encode()).hexdigest()[:16]
             rows.append(
                 {
-                    "record_id": rid,
-                    "side": "observation",
+                    "id": rid,
                     "label": v,
+                    "kind": str(er.get("kind") or ""),
                     "source": "bootstrap",
                     "occurrences": 1,
-                    "kind_hint": er.get("kind"),
                 }
             )
     return rows
@@ -211,12 +209,11 @@ def scan_er_observations(
         rid = hashlib.sha1(f"lake|{key}".encode()).hexdigest()[:16]
         rows.append(
             {
-                "record_id": rid,
-                "side": "observation",
+                "id": rid,
                 "label": labels[key],
+                "kind": kind[0][0] if kind else "",
                 "source": primary[0][0] if primary else "mixed",
                 "occurrences": occ,
-                "kind_hint": kind[0][0] if kind else None,
             }
         )
     return rows, warnings
@@ -260,6 +257,10 @@ def materialize(
         if obs_mode == "all" and "lake" not in sources:
             warnings.append("fell back to bootstrap observations")
 
+    # Zingg train/blocking 需要足够样本量；在 bootstrap 路径扩充受控变体
+    if obs_mode in {"bootstrap", "all"}:
+        obs_rows.extend(_synthetic_observations_for_volume(enterprise_rows))
+
     # dedupe by mention_key
     dedup: dict[str, dict[str, Any]] = {}
     for r in obs_rows:
@@ -269,10 +270,17 @@ def materialize(
             dedup[k] = r
     obs_rows = list(dedup.values())
 
+    # Zingg 两侧 pipe 必须同 schema：id / label / kind
+    ent_zingg = [{"id": r["id"], "label": r["label"], "kind": r.get("kind") or ""} for r in enterprise_rows]
+    obs_zingg = [{"id": r["id"], "label": r["label"], "kind": r.get("kind") or ""} for r in obs_rows]
     ent_path = out / "enterprise.parquet"
     obs_path = out / "observation.parquet"
-    _write_parquet(ent_path, enterprise_rows)
-    _write_parquet(obs_path, obs_rows)
+    _write_parquet(ent_path, ent_zingg)
+    _write_parquet(obs_path, obs_zingg)
+    try:
+        write_training_samples(enterprise_rows=enterprise_rows, observation_rows=obs_rows)
+    except Exception as exc:  # noqa: BLE001 — materialize 仍可用，train 再报错
+        warnings.append(f"training.csv: {exc}")
     return ZinggMaterializeResult(
         enterprise_path=ent_path,
         observation_path=obs_path,
@@ -283,12 +291,172 @@ def materialize(
     )
 
 
+def _synthetic_observations_for_volume(enterprise_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """为 Zingg blocking 学习补充 observation 样本量（受控变体，非生产噪声）。"""
+    rows: list[dict[str, Any]] = []
+    for er in enterprise_rows:
+        label = str(er.get("label") or "")
+        for v in _variant_labels(label):
+            key = normalize_alias_key(v)
+            rid = hashlib.sha1(f"synth|{key}".encode()).hexdigest()[:16]
+            rows.append(
+                {
+                    "id": rid,
+                    "label": v,
+                    "kind": str(er.get("kind") or ""),
+                    "source": "synthetic",
+                    "occurrences": 1,
+                }
+            )
+        # 轻度字符扰动（末位重复 / 去元音近似）
+        if len(label) >= 5 and label.isascii():
+            for noise in (label + label[-1], label[:-1] + "x", label.replace("i", "e", 1)):
+                if noise == label:
+                    continue
+                key = normalize_alias_key(noise)
+                rid = hashlib.sha1(f"synth|{key}".encode()).hexdigest()[:16]
+                rows.append(
+                    {
+                        "id": rid,
+                        "label": noise,
+                        "kind": str(er.get("kind") or ""),
+                        "source": "synthetic",
+                        "occurrences": 1,
+                    }
+                )
+    return rows
+
+
+def write_training_samples(
+    *,
+    enterprise_rows: list[dict[str, Any]] | None = None,
+    observation_rows: list[dict[str, Any]] | None = None,
+    out_path: Path | None = None,
+) -> Path:
+    """生成 Zingg ``trainingSamples`` CSV（需足够正/负例，官方约 30+ matches）。
+
+    格式见 https://docs.zingg.ai/latest/stepbystep/createtrainingdata/addowntrainingdata.md
+    """
+    import csv
+    from collections import defaultdict
+
+    dest = Path(out_path or TRAINING_CSV)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    ent_rows = enterprise_rows or materialize_enterprise()
+    by_eid: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for r in ent_rows:
+        by_eid[str(r["id"])].append(r)
+
+    def _row(cluster: str, is_match: int, rid: str, label: str, kind: str) -> dict[str, Any]:
+        return {
+            "z_cluster": cluster,
+            "z_isMatch": is_match,
+            "id": rid,
+            "label": label,
+            "kind": kind or "",
+        }
+
+    pos: list[dict[str, Any]] = []
+    neg: list[dict[str, Any]] = []
+    cluster = 0
+
+    def _add_pos_pair(a: dict[str, Any], b_id: str, b_label: str, b_kind: str) -> None:
+        nonlocal cluster
+        cluster += 1
+        cid = str(cluster)
+        pos.append(_row(cid, 1, str(a["id"]), str(a["label"]), str(a.get("kind") or "")))
+        pos.append(_row(cid, 1, b_id, b_label, b_kind))
+
+    # 1) bootstrap 正例
+    if BOOTSTRAP_PAIRS.exists():
+        for line in BOOTSTRAP_PAIRS.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            mention = str(row.get("mention") or "").strip()
+            eid = str(row.get("enterprise_id") or "").strip()
+            if not mention or eid not in by_eid:
+                continue
+            er = by_eid[eid][0]
+            _add_pos_pair(
+                er,
+                hashlib.sha1(f"train|{mention}".encode()).hexdigest()[:16],
+                mention,
+                str(row.get("kind_hint") or er.get("kind") or ""),
+            )
+
+    # 2) 同一 ENT 多 surface 两两正例（覆盖 alias 变体）
+    for eid, rows in by_eid.items():
+        labels = []
+        seen: set[str] = set()
+        for r in rows:
+            lab = str(r["label"]).strip()
+            key = normalize_alias_key(lab)
+            if not lab or key in seen:
+                continue
+            seen.add(key)
+            labels.append(r)
+        for i in range(len(labels)):
+            for j in range(i + 1, min(i + 3, len(labels))):
+                a, b = labels[i], labels[j]
+                _add_pos_pair(a, f"{eid}#a{j}", str(b["label"]), str(b.get("kind") or ""))
+                if cluster >= 40:
+                    break
+            if cluster >= 40:
+                break
+        if cluster >= 40:
+            break
+
+    # 3) 受控 typo 正例（从规范标签派生）
+    for eid, rows in list(by_eid.items())[:12]:
+        base = rows[0]
+        for v in _variant_labels(str(base["label"]))[:2]:
+            _add_pos_pair(
+                base,
+                hashlib.sha1(f"train|var|{v}".encode()).hexdigest()[:16],
+                v,
+                str(base.get("kind") or ""),
+            )
+        if cluster >= 50:
+            break
+
+    # 4) 负例：不同 ENT 标签对（与正例数量大致平衡）
+    eids = list(by_eid)
+    for i, eid_a in enumerate(eids):
+        for eid_b in eids[i + 1 :]:
+            a, b = by_eid[eid_a][0], by_eid[eid_b][0]
+            if normalize_alias_key(str(a["label"])) == normalize_alias_key(str(b["label"])):
+                continue
+            cluster += 1
+            cid = f"n{cluster}"
+            neg.append(_row(cid, 0, str(a["id"]), str(a["label"]), str(a.get("kind") or "")))
+            neg.append(_row(cid, 0, str(b["id"]), str(b["label"]), str(b.get("kind") or "")))
+            if len(neg) // 2 >= max(40, cluster // 2):
+                break
+        if len(neg) // 2 >= 40:
+            break
+
+    _ = observation_rows  # reserved
+    fieldnames = ["z_cluster", "z_isMatch", "id", "label", "kind"]
+    with dest.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=fieldnames)
+        w.writeheader()
+        w.writerows(pos + neg)
+    return dest
+
+
 def _write_parquet(path: Path, rows: list[dict[str, Any]]) -> None:
     import pyarrow as pa
     import pyarrow.parquet as pq
 
     if not rows:
-        table = pa.table({"record_id": pa.array([], type=pa.string())})
+        table = pa.table(
+            {
+                "id": pa.array([], type=pa.string()),
+                "label": pa.array([], type=pa.string()),
+                "kind": pa.array([], type=pa.string()),
+            }
+        )
     else:
         table = pa.Table.from_pylist(rows)
     path.parent.mkdir(parents=True, exist_ok=True)

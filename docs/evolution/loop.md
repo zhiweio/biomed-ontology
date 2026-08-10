@@ -116,7 +116,7 @@ flowchart LR
 | 环境变量 | 默认 | 含义 |
 |---|---|---|
 | `HMD_OBS_EVENTS_ENABLED` | `true` | 关闭则不发观测事件 |
-| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `localhost:19092` | 默认 Redpanda；设空=WAL only |
+| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `127.0.0.1:19092` | 默认 Redpanda；设空=WAL only |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | ER 缺口 topic |
 | `HMD_OBS_WAL_DIR` | `data/obs_wal` | 本地 WAL |
 | `HMD_ZINGG_MIN_SCORE` | `0.8` | Resolver / export 生效阈值 |

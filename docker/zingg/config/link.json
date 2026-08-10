@@ -1,29 +1,66 @@
 {
-  "zinggDir": "/work/data/zingg/models",
-  "modelId": "hmd-er-fuzzy",
-  "link": {
-    "input": [
-      {
-        "name": "enterprise",
-        "format": "parquet",
-        "location": "/work/data/zingg/input/enterprise.parquet"
+  "fieldDefinition": [
+    {
+      "fieldName": "id",
+      "matchType": "dont_use",
+      "fields": "id",
+      "dataType": "string"
+    },
+    {
+      "fieldName": "label",
+      "matchType": "fuzzy",
+      "fields": "label",
+      "dataType": "string"
+    },
+    {
+      "fieldName": "kind",
+      "matchType": "dont_use",
+      "fields": "kind",
+      "dataType": "string"
+    }
+  ],
+  "data": [
+    {
+      "name": "enterprise",
+      "format": "parquet",
+      "props": {
+        "path": "/home/zingg/data/zingg/input/enterprise.parquet"
+      }
+    },
+    {
+      "name": "observation",
+      "format": "parquet",
+      "props": {
+        "path": "/home/zingg/data/zingg/input/observation.parquet"
+      }
+    }
+  ],
+  "output": [
+    {
+      "name": "matches",
+      "format": "csv",
+      "props": {
+        "path": "/home/zingg/data/zingg/raw_zingg",
+        "delimiter": ",",
+        "header": true
+      }
+    }
+  ],
+  "trainingSamples": [
+    {
+      "name": "hmdBootstrap",
+      "format": "csv",
+      "props": {
+        "path": "/home/zingg/data/zingg/training.csv",
+        "delimiter": ",",
+        "header": true
       },
-      {
-        "name": "observation",
-        "format": "parquet",
-        "location": "/work/data/zingg/input/observation.parquet"
-      }
-    ],
-    "output": [
-      {
-        "name": "matches",
-        "format": "json",
-        "location": "/work/data/zingg/raw_matches"
-      }
-    ],
-    "fieldDefinition": [
-      { "fieldName": "label", "matchType": "FUZZY", "dataType": "string" },
-      { "fieldName": "kind", "matchType": "EXACT", "dataType": "string" }
-    ]
-  }
+      "schema": "z_cluster string, z_isMatch integer, id string, label string, kind string"
+    }
+  ],
+  "labelDataSampleSize": 0.5,
+  "numPartitions": 4,
+  "collectMetrics": false,
+  "modelId": 1,
+  "zinggDir": "/home/zingg/data/zingg/models"
 }

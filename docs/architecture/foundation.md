@@ -219,7 +219,7 @@ uv run hmd serve --mcp
 | 环境变量 | 默认 | 用途 |
 |---|---|---|
 | `HMD_OBS_EVENTS_ENABLED` | `true` | 总开关 |
-| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `localhost:19092` | 默认 Redpanda；设空=Jsonl WAL |
+| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `127.0.0.1:19092` | 默认 Redpanda；设空=Jsonl WAL |
 | `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `hmd.obs.tool_io` | 工具遥测 topic |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | ER 缺口 topic |
 | `HMD_OBS_WAL_DIR` | `data/obs_wal` | WAL 目录 |

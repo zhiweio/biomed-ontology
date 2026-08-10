@@ -1,0 +1,15 @@
+# Iceberg Kafka Connect worker for Redpanda → MinIO/REST catalog.
+# Plugin: Apache Iceberg Sink from Confluent Hub (no public all-in-one image).
+FROM confluentinc/cp-kafka-connect:7.6.1
+
+USER root
+RUN mkdir -p /usr/share/confluent-hub-components \
+ && curl -fsSL \
+      "https://hub-downloads.confluent.io/api/plugins/iceberg/iceberg-kafka-connect/versions/1.9.2/iceberg-iceberg-kafka-connect-1.9.2.zip" \
+      -o /tmp/iceberg-connect.zip \
+ && python3 -c "import zipfile; zipfile.ZipFile('/tmp/iceberg-connect.zip').extractall('/usr/share/confluent-hub-components')" \
+ && rm -f /tmp/iceberg-connect.zip \
+ && chown -R appuser:appuser /usr/share/confluent-hub-components
+
+ENV CONNECT_PLUGIN_PATH="/usr/share/java,/usr/share/confluent-hub-components"
+USER appuser

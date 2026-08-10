@@ -139,8 +139,9 @@ class Settings(BaseSettings):
     # --- 观测入湖（Redpanda / Kafka API → Iceberg Connect Sink）-------------
     # false：不 produce、不写 WAL（纯本地/评测）
     obs_events_enabled: bool = True
-    # 默认对接 docker/obs Redpanda（task obs:up）；显式设空字符串 = 仅 Jsonl WAL
-    kafka_bootstrap_servers: str = "localhost:19092"
+    # 默认对接 docker/obs Redpanda（task obs:up）；用 127.0.0.1 避免 macOS ::1
+    # 显式设空字符串 = 仅 Jsonl WAL
+    kafka_bootstrap_servers: str = "127.0.0.1:19092"
     kafka_obs_tool_io_topic: str = "hmd.obs.tool_io"
     kafka_er_observations_topic: str = "hmd.er.observations"
     # broker 不可达时的本地 WAL 目录（相对仓库 CWD）

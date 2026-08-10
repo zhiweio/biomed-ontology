@@ -1,12 +1,23 @@
-# Zingg offline fuzzy ER link (Spark). PoC skeleton.
-# Local CI can use: uv run hmd foundation zingg-run --mode stub-link
+# Official Zingg image (Spark + zingg.sh). See https://github.com/zinggAI/zingg
+# Docs: https://docs.zingg.ai/latest/stepbystep/link.md
+#
+#   task zingg:materialize
+#   docker compose -f docker/zingg/docker-compose.yml --profile zingg run --rm zingg-link
+#   uv run hmd foundation zingg-run --mode export-only
 services:
   zingg-link:
-    image: apache/spark:3.5.1-java17-python3
-    working_dir: /work
+    image: zingg/zingg:0.6.0
+    # zingg.sh 使用相对路径 file:log4j2.properties，必须在 ZINGG_HOME 下启动
+    working_dir: /zingg-0.6.0
+    user: root
+    environment:
+      # train|link|train-link（默认：无 model 先 train，再 link）
+      ZINGG_PHASE: ${ZINGG_PHASE:-train-link}
+      SPARK_MASTER: local[*]
+      ZINGG_HOME: /zingg-0.6.0
     volumes:
-      - ../../data/zingg:/work/data/zingg
-      - ./config:/work/config:ro
-      - ./scripts:/work/scripts:ro
-    entrypoint: ["/bin/bash", "/work/scripts/link.sh"]
+      - ../../data/zingg:/home/zingg/data/zingg
+      - ./config:/home/zingg/config:ro
+      - ./scripts:/home/zingg/scripts-hmd:ro
+    entrypoint: ["/bin/bash", "/home/zingg/scripts-hmd/link.sh"]
     profiles: ["zingg"]

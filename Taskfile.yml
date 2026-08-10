@@ -398,9 +398,14 @@ tasks:
       - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 down
 
   obs:up:
-    desc: 启动 Redpanda（观测入湖总线；需 foundation/lake 已起）
+    desc: 启动 Redpanda + Iceberg Connect worker（需 foundation/lake 已起）
     cmds:
-      - docker compose -f {{.FOUNDATION_COMPOSE}} -f docker/docker-compose.obs.yml --profile obs up -d redpanda
+      - docker compose -f {{.FOUNDATION_COMPOSE}} -f docker/docker-compose.obs.yml --profile obs up -d --build redpanda kafka-connect-iceberg
+
+  obs:register:
+    desc: 注册 Iceberg Sink connectors（Connect REST :8083）
+    cmds:
+      - bash docker/obs/scripts/register_connectors.sh
 
   obs:down:
     cmds:
@@ -412,9 +417,14 @@ tasks:
       - uv run hmd foundation zingg-run --mode materialize-only
 
   zingg:run:
-    desc: stub-link + export（HMD_ZINGG_*；真 Spark 见 docker/zingg）
+    desc: stub-link + export（本地无镜像；真 Zingg 用 zingg:docker）
     cmds:
       - uv run hmd foundation zingg-run --mode stub-link --observations bootstrap --skip-docker
+
+  zingg:docker:
+    desc: 官方 zingg/zingg train→link（需先 materialize）
+    cmds:
+      - docker compose -f docker/zingg/docker-compose.yml --profile zingg run --rm zingg-link
 
   foundation:ps:
     cmds:

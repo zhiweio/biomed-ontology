@@ -68,7 +68,7 @@ hmd kb / demo / eval / serve
 
 ```bash
 export HMD_BIOS_LICENSE_ACK=poc   # 全量 BIOS；CI 用 export HMD_BIOS_INIT=subset
-# 可选：观测入湖 + Zingg（默认连 Redpanda localhost:19092；见 .env.example）
+# 可选：观测入湖 + Zingg（默认连 Redpanda 127.0.0.1:19092；见 .env.example）
 # task obs:up
 
 task foundation:up

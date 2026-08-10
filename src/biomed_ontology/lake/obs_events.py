@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import atexit
 import contextlib
 import hashlib
 import json
@@ -21,6 +22,7 @@ __all__ = [
     "ObsEventProducer",
     "emit_er_observation",
     "emit_tool_io",
+    "flush_obs_events",
     "get_obs_producer",
     "observation_id_for",
     "wal_dir",
@@ -29,6 +31,7 @@ __all__ = [
 _LOG = logging.getLogger(__name__)
 _lock = threading.Lock()
 _producer: ObsEventProducer | None = None
+_atexit_registered = False
 
 
 def wal_dir(cfg: Settings | None = None) -> Path:
@@ -69,10 +72,12 @@ class ObsEventProducer:
                 self._kafka = Producer(
                     {
                         "bootstrap.servers": servers,
+                        # 短 CLI 进程：尽快发出，避免 terminate 时仍在队列
                         "acks": "1",
-                        "linger.ms": 50,
-                        "batch.num.messages": 1000,
+                        "linger.ms": 5,
+                        "batch.num.messages": 100,
                         "message.timeout.ms": 5000,
+                        "socket.connection.setup.timeout.ms": 3000,
                     }
                 )
             except Exception as exc:
@@ -93,10 +98,12 @@ class ObsEventProducer:
                 _LOG.warning("obs kafka produce failed topic=%s: %s", topic, exc)
         self._wal_append(topic, record)
 
-    def flush(self, timeout: float = 2.0) -> None:
+    def flush(self, timeout: float = 5.0) -> None:
         if self._kafka is not None:
             with contextlib.suppress(Exception):
-                self._kafka.flush(timeout)
+                remaining = self._kafka.flush(timeout)
+                if remaining:
+                    _LOG.warning("obs kafka flush: %s message(s) still in queue", remaining)
 
     def _wal_append(self, topic: str, record: dict[str, Any]) -> None:
         path = wal_dir(self.cfg) / f"{topic.replace('.', '_')}.jsonl"
@@ -107,12 +114,22 @@ class ObsEventProducer:
 
 
 def get_obs_producer(cfg: Settings | None = None) -> ObsEventProducer:
-    global _producer
+    global _producer, _atexit_registered
     if _producer is None:
         with _lock:
             if _producer is None:
                 _producer = ObsEventProducer(cfg)
+                if not _atexit_registered:
+                    atexit.register(flush_obs_events)
+                    _atexit_registered = True
     return _producer
+
+
+def flush_obs_events(timeout: float = 5.0) -> None:
+    """进程退出 / CLI 结束前刷出 Kafka 队列（避免 Producer terminating 丢消息）。"""
+    prod = _producer
+    if prod is not None:
+        prod.flush(timeout)
 
 
 def emit_tool_io(record: dict[str, Any], *, cfg: Settings | None = None) -> None:
@@ -143,12 +160,14 @@ def emit_tool_io(record: dict[str, Any], *, cfg: Settings | None = None) -> None
         "ingested_at": event_ts,
         "event_date": event_date,
     }
-    get_obs_producer(cfg).produce(cfg.kafka_obs_tool_io_topic, row)
+    producer = get_obs_producer(cfg)
+    producer.produce(cfg.kafka_obs_tool_io_topic, row)
 
     # 从 normalize 等输出抽 unmapped_spans → er_observations
     try:
         out = json.loads(str(record.get("output_json") or "{}"))
     except json.JSONDecodeError:
+        producer.flush()
         return
     for span in out.get("unmapped_spans") or []:
         text = str(span).strip()
@@ -162,7 +181,9 @@ def emit_tool_io(record: dict[str, Any], *, cfg: Settings | None = None) -> None
             trace_id=str(record.get("trace_id") or ""),
             ontology_release_id=str(record.get("ontology_release_id") or ""),
             cfg=cfg,
+            flush=False,
         )
+    producer.flush()
 
 
 def emit_er_observation(
@@ -179,6 +200,7 @@ def emit_er_observation(
     bern2_ids: list[str] | None = None,
     ontology_release_id: str | None = None,
     cfg: Settings | None = None,
+    flush: bool = True,
 ) -> None:
     cfg = cfg or settings
     if not cfg.obs_events_enabled:
@@ -208,4 +230,7 @@ def emit_er_observation(
         "ingested_at": event_ts,
         "event_date": event_date,
     }
-    get_obs_producer(cfg).produce(cfg.kafka_er_observations_topic, row)
+    producer = get_obs_producer(cfg)
+    producer.produce(cfg.kafka_er_observations_topic, row)
+    if flush:
+        producer.flush()

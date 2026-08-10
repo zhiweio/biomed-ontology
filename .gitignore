@@ -232,6 +232,8 @@ data/obs_wal/
 data/zingg/input/
 data/zingg/reports/
 data/zingg/raw_matches.jsonl
+data/zingg/raw_zingg/
+data/zingg/training.csv
 data/zingg/models/
 docker/volumes/
 # BERN2 源码克隆与 ~70GB resources（task foundation:bern2:fetch）
