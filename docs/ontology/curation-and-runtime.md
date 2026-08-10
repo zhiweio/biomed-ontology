@@ -121,7 +121,7 @@ ontology/
 | `bios.yaml` | `enterprise_id` ↔ BIOS/HGNC/… | 审阅投影；权威 xref 仍以 entities 的 `exact_match_xrefs` 为准 |
 | `chebi.yaml` | ENT ↔ ChEBI（PoC 可含 DEMO ID） | 化学实体挂靠 |
 | `bern2.yaml` | BERN2 mention type → 企业 kind | 如 `drug→DrugCandidate`、`gene→Target` |
-| `zingg_matches.jsonl` | mention → enterprise_id + score | 跨源模糊匹配预计算表；`score>0` 才被 Resolver 采用 |
+| `zingg_matches.jsonl` | mention → enterprise_id + score | 跨源模糊匹配预计算表；`score ≥ HMD_ZINGG_MIN_SCORE`（默认 0.8）才被 Resolver 采用；由 `hmd foundation zingg-run` 从 SSOT + Iceberg `er_observations` 物化导出（窗口/频次见 `HMD_ZINGG_WINDOW_DAYS` / `HMD_ZINGG_MIN_OCCURRENCES`） |
 
 #### `catalog/` — 文献/检索用 ENT 目录
 
@@ -443,7 +443,7 @@ Text
        1. enterprise_id     输入已是 HMD:ENT:*
        2. xref              ResolutionIndex.by_external
        3. dictionary        实体 aliases + 倒排
-       4. zingg             zingg_matches.jsonl（score>0）
+       4. zingg             zingg_matches.jsonl（score≥min_score）
        5. bern2_dictionary  Bern2Client.dictionary.lookup
        6. bern2_candidate / unmapped
   → HMD:ENT:* + external_ids[] + bios_concepts[] + method + confidence
@@ -554,10 +554,13 @@ task foundation:up
 uv run hmd foundation bios-load
 uv run hmd foundation sync
 
-# ER / 金路径
+# ER / 金路径 / Zingg（观测默认 Redpanda :19092；task obs:up）
+# export HMD_ZINGG_MIN_SCORE=0.8
 uv run hmd foundation resolve "HMPL-504"
+uv run hmd foundation resolve "savolitinb"   # 需 zingg_matches 已 export
 uv run hmd foundation golden --candidate HMPL-504 --compact
 uv run hmd foundation evolve-mine "test-alias" --json
+task zingg:run                               # stub-link + export matches
 
 # 服务面
 uv run hmd serve --mcp

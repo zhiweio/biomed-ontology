@@ -207,8 +207,34 @@ uv run hmd serve --mcp
 |---|---|
 | unmapped / 低置信 → `evolve-mine` → `.kgcl` + candidates JSON | 自动改 GraphDB ontology |
 | 候选含建议别名 / suggested exactMatch | 自动策展 / `evolve-apply` |
+| 观测事件 → Redpanda → Iceberg `obs_tool_io` / `er_observations` | 自研 ObsShipper；OTel（P2 运维） |
+| `zingg-run` 物化/导出模糊 matches | 查询路径 Spark；BIOS 全量当 master |
 
-复用 `src/biomed_ontology/evolution/` 与 `foundation/evolve.py`。
+复用 `src/biomed_ontology/evolution/`、`foundation/evolve.py`、`foundation/zingg_io.py`、`lake/obs_events.py`。
+
+### 3.9 观测入湖与 Zingg 配置
+
+均经 `biomed_ontology.config.Settings`（环境变量前缀 `HMD_`，见仓库根 `.env.example`）。
+
+| 环境变量 | 默认 | 用途 |
+|---|---|---|
+| `HMD_OBS_EVENTS_ENABLED` | `true` | 总开关 |
+| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `localhost:19092` | 默认 Redpanda；设空=Jsonl WAL |
+| `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `hmd.obs.tool_io` | 工具遥测 topic |
+| `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | ER 缺口 topic |
+| `HMD_OBS_WAL_DIR` | `data/obs_wal` | WAL 目录 |
+| `HMD_ZINGG_MIN_SCORE` | `0.8` | matches 生效 / export 阈值 |
+| `HMD_ZINGG_WINDOW_DAYS` | `30` | 扫 `er_observations` 窗口 |
+| `HMD_ZINGG_MIN_OCCURRENCES` | `1` | 物化最低出现次数 |
+| `HMD_ZINGG_OBSERVATIONS` | `all` | 物化 observation 源 |
+| `HMD_ZINGG_SKIP_DOCKER` | `false` | 跳过 `docker/zingg` |
+| `HMD_EVOLVE_INCLUDE_LAKE` | `false` | evolve-mine 合并湖信号 |
+
+```bash
+task obs:up       # Redpanda :19092（Settings 默认已指向）
+uv run hmd lake init
+task zingg:run    # 或 uv run hmd foundation zingg-run --mode stub-link
+```
 
 ---
 

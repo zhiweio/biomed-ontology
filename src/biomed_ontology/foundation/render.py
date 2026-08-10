@@ -278,7 +278,8 @@ def render_lookup_bios(
         out.print(
             Panel(
                 Text.from_markup(
-                    "○ [bold]Ambiguous[/]  ·  pass [cyan]--bios-curie[/] / [cyan]--external-id[/] to disambiguate"
+                    "○ [bold]Ambiguous[/]  ·  pass [cyan]--bios-curie[/] / "
+                    "[cyan]--external-id[/] to disambiguate"
                 ),
                 border_style="yellow",
                 box=box.ROUNDED,
@@ -330,7 +331,12 @@ def render_lookup_bios(
         lines = []
         for n in neighbors[:10]:
             kind = escape(str(n.get("kind") or "neighbor"))
-            surface = n.get("surface") or n.get("pref_label") or n.get("bios_curie") or n.get("enterprise_id")
+            surface = (
+                n.get("surface")
+                or n.get("pref_label")
+                or n.get("bios_curie")
+                or n.get("enterprise_id")
+            )
             via = n.get("via")
             line = f"[dim]{kind}[/]  {escape(str(surface or '—'))}"
             if via:

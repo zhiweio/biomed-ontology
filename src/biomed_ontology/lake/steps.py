@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,7 @@ import yaml
 from biomed_ontology.config import settings
 from biomed_ontology.corpus import Document, load_corpus
 from biomed_ontology.corpus.tree import build_document_tree, tree_to_chunks
-from biomed_ontology.lake.claim_bridge import facts_to_claims, mentions_to_entity_ids
+from biomed_ontology.lake.claim_bridge import facts_to_claims
 from biomed_ontology.lake.evidence_index import upsert_evidence_objects
 from biomed_ontology.lake.minio_store import DocumentObjectStore
 from biomed_ontology.lake.tables import (
@@ -166,8 +167,46 @@ def annotate_bern2(ctx: IngestContext, *, bern2_url: str | None = None) -> Inges
     ) as client:
         mentions_list = client.annotate_many(texts)
 
+    from biomed_ontology.lake.obs_events import emit_er_observation
+
+    def _as_ent(hit: Any) -> str | None:
+        if hit is None:
+            return None
+        if isinstance(hit, dict):
+            return hit.get("canonical_entity")
+        if isinstance(hit, list):
+            for item in hit:
+                c = _as_ent(item)
+                if c:
+                    return c
+            return None
+        return getattr(hit, "canonical_entity", None)
+
     for ch, mentions in zip(ctx.chunks, mentions_list, strict=True):
-        ents = mentions_to_entity_ids(mentions, resolve_fn=_resolve)
+        ents: list[str] = []
+        seen: set[str] = set()
+        for m in mentions:
+            text = str(getattr(m, "mention", None) or m).strip()
+            ids = list(getattr(m, "ids", None) or [])
+            ent = next((i for i in ids if str(i).startswith("HMD:ENT:")), None)
+            if ent is None and text:
+                ent = _as_ent(_resolve(text))
+            if ent and ent not in seen:
+                seen.add(ent)
+                ents.append(ent)
+            elif not ent and text:
+                with contextlib.suppress(Exception):
+                    emit_er_observation(
+                        mention=text,
+                        source="lake_annotate",
+                        resolve_status="unmapped",
+                        kind_hint=getattr(m, "obj_type", None),
+                        tool_name="annotate_bern2",
+                        document_id=ctx.doc_id,
+                        chunk_id=str(getattr(ch, "chunk_id", "") or ""),
+                        bern2_ids=ids,
+                        ontology_release_id=getattr(world, "release_id", None),
+                    )
         ch.entity_ids = ents
         ch.concept_ids = list(dict.fromkeys([*ch.concept_ids, *ents]))
     return ctx

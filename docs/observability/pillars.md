@@ -68,8 +68,22 @@
 
 ### 存储与扩展
 
-- PoC：`ObservabilityHub` + `JsonlStore` 本地落盘。
-- 部署：替换 `TraceRecorder` / store 实现（如 OTel exporter、`biomed_ontology.lake`），**被埋点业务代码不改**。
+- 热路径：`ObservabilityHub.commit` → 本地 Jsonl（`JsonlStore`）+ **Kafka-API produce**（`lake/obs_events.py`）。
+- 入湖：Redpanda → Iceberg Kafka Connect Sink → `hmd.obs_tool_io` / `hmd.er_observations`（**禁止**请求路径同步 `table.append`）。
+- broker 未配或不可达：写 `HMD_OBS_WAL_DIR`（默认 `data/obs_wal/`）。
+- OTel SDK + Collector：**不在本迭代**（P2 运维可观测）；ER 领域事件保持结构化 topic。
+
+### 配置（`Settings` / `.env`，前缀 `HMD_`）
+
+| 环境变量 | Settings 字段 | 默认 | 含义 |
+|---|---|---|---|
+| `HMD_OBS_EVENTS_ENABLED` | `obs_events_enabled` | `true` | `false` 时不 produce、不写 WAL |
+| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `kafka_bootstrap_servers` | `localhost:19092` | 默认 Redpanda；设空=仅 WAL |
+| `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `kafka_obs_tool_io_topic` | `hmd.obs.tool_io` | 工具 I/O topic |
+| `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `kafka_er_observations_topic` | `hmd.er.observations` | ER 缺口事件 topic |
+| `HMD_OBS_WAL_DIR` | `obs_wal_dir` | `data/obs_wal` | broker 不可达时 Jsonl WAL |
+
+联调：`task obs:up`（默认已指向 `localhost:19092`）。详见 [`docker/obs/README.md`](../../docker/obs/README.md)。
 
 ## 不变量与失败模式
 
@@ -90,9 +104,12 @@
 ## 如何验证
 
 ```bash
-uv run pytest tests/test_observability.py -q
+uv run pytest tests/test_observability.py tests/test_obs_events.py -q
 uv run hmd demo --compact    # 查看 span 树
 uv run hmd signals --help    # 挖掘依赖 hub / feedback
+# 观测入湖（默认连 Redpanda localhost:19092）
+task obs:up
+uv run hmd lake init         # 含 obs_tool_io / er_observations
 ```
 
-演进闭环见 [loop](../evolution/loop.md)。
+演进闭环见 [loop](../evolution/loop.md)；Zingg 模糊回收见 [Foundation](../architecture/foundation.md)。

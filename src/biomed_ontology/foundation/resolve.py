@@ -23,13 +23,26 @@ def _bios_ids(xrefs: list[str]) -> list[str]:
     return [x for x in xrefs if x.upper().startswith("BIOS:")]
 
 
-def load_zingg_matches(path: Path | None = None) -> dict[str, str]:
+def load_zingg_matches(
+    path: Path | None = None,
+    *,
+    min_score: float | None = None,
+) -> dict[str, tuple[str, float]]:
+    """加载 mention → (enterprise_id, score)。
+
+    - 默认 ``min_score`` 来自 ``settings.zingg_min_score``（0.8）
+    - 同 mention 多行取最高分；并列且 ENT 不同则丢弃（歧义）
+    """
     import json
 
+    from biomed_ontology.config import settings
+
+    threshold = settings.zingg_min_score if min_score is None else float(min_score)
     p = path or _DEFAULT_ZINGG
-    out: dict[str, str] = {}
+    best: dict[str, tuple[str, float]] = {}
+    ambiguous: set[str] = set()
     if not p.exists():
-        return out
+        return {}
     for line in p.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line:
@@ -37,9 +50,23 @@ def load_zingg_matches(path: Path | None = None) -> dict[str, str]:
         row = json.loads(line)
         mention = normalize_alias_key(str(row.get("mention", "")))
         eid = row.get("enterprise_id")
-        if mention and eid and float(row.get("score") or 0) > 0:
-            out[mention] = str(eid)
-    return out
+        score = float(row.get("score") or 0)
+        if not mention or not eid or score < threshold:
+            continue
+        eid_s = str(eid)
+        prev = best.get(mention)
+        if prev is None:
+            best[mention] = (eid_s, score)
+            continue
+        prev_eid, prev_score = prev
+        if score > prev_score:
+            best[mention] = (eid_s, score)
+            ambiguous.discard(mention)
+        elif score == prev_score and prev_eid != eid_s:
+            ambiguous.add(mention)
+    for m in ambiguous:
+        best.pop(m, None)
+    return best
 
 
 @dataclass
@@ -85,11 +112,15 @@ class EntityResolver:
         self,
         index: ResolutionIndex,
         bern2: Bern2Client | None = None,
-        zingg_matches: dict[str, str] | None = None,
+        zingg_matches: dict[str, tuple[str, float]] | dict[str, str] | None = None,
     ) -> None:
         self.index = index
         self.bern2 = bern2 or Bern2Client()
-        self.zingg_matches = zingg_matches if zingg_matches is not None else load_zingg_matches()
+        raw = zingg_matches if zingg_matches is not None else load_zingg_matches()
+        # 兼容旧测试注入的 mention→eid 扁平表
+        self.zingg_matches: dict[str, tuple[str, float]] = {
+            k: (v if isinstance(v, tuple) else (str(v), 0.9)) for k, v in raw.items()
+        }
 
     def resolve_mention(
         self,
@@ -143,18 +174,20 @@ class EntityResolver:
             )
 
         # 4) Zingg 预计算表
-        zid = self.zingg_matches.get(normalize_alias_key(mention))
-        if zid and zid in self.index.by_id:
-            ent = self.index.by_id[zid]
-            return ResolveHit(
-                canonical_entity=zid,
-                mention=mention,
-                external_ids=list(ent.exact_match_xrefs),
-                bios_concepts=_bios_ids(ent.exact_match_xrefs),
-                confidence=0.9,
-                resolution_method="zingg",
-                entity_kind=ent.entity_kind,
-            )
+        zentry = self.zingg_matches.get(normalize_alias_key(mention))
+        if zentry:
+            zid, zscore = zentry
+            if zid in self.index.by_id:
+                ent = self.index.by_id[zid]
+                return ResolveHit(
+                    canonical_entity=zid,
+                    mention=mention,
+                    external_ids=list(ent.exact_match_xrefs),
+                    bios_concepts=_bios_ids(ent.exact_match_xrefs),
+                    confidence=max(0.5, min(0.95, float(zscore))),
+                    resolution_method="zingg",
+                    entity_kind=ent.entity_kind,
+                )
 
         # 5) 词典条目里的 external_ids（经 BERN2.scan 注入）
         dict_entry = self.bern2.dictionary.lookup(mention)

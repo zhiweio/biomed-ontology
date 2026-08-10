@@ -75,6 +75,8 @@
 | BIOS 常挂 GraphDB | `graph/biomedical` |
 | OM ≠ 第二图谱 | Glossary 约束 |
 | BIOS 许可闸门 | `HMD_BIOS_LICENSE_ACK` |
+| 观测不挡请求路径 | `HMD_OBS_*` / Kafka produce 失败 → WAL 或静默；禁止热路径 sync Iceberg append |
+| Zingg 不 mint / 不 auto-apply | matches 仅预计算；阈值 `HMD_ZINGG_MIN_SCORE` |
 | GraphDB Free ≠ 生产 | 运维文档纪律 |
 
 ### 3.4 解析与资产

@@ -397,6 +397,25 @@ tasks:
       - task: foundation:down:bern2
       - docker compose -f {{.FOUNDATION_COMPOSE}} --profile bern2 down
 
+  obs:up:
+    desc: 启动 Redpanda（观测入湖总线；需 foundation/lake 已起）
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} -f docker/docker-compose.obs.yml --profile obs up -d redpanda
+
+  obs:down:
+    cmds:
+      - docker compose -f {{.FOUNDATION_COMPOSE}} -f docker/docker-compose.obs.yml --profile obs down
+
+  zingg:materialize:
+    desc: 物化 Zingg parquet（源/窗口默认 HMD_ZINGG_OBSERVATIONS 等）
+    cmds:
+      - uv run hmd foundation zingg-run --mode materialize-only
+
+  zingg:run:
+    desc: stub-link + export（HMD_ZINGG_*；真 Spark 见 docker/zingg）
+    cmds:
+      - uv run hmd foundation zingg-run --mode stub-link --observations bootstrap --skip-docker
+
   foundation:ps:
     cmds:
       - docker compose -f {{.FOUNDATION_COMPOSE}} ps

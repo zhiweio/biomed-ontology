@@ -8,8 +8,10 @@ from biomed_ontology.config import Settings, settings
 
 __all__ = [
     "DOCUMENTS_TABLE",
+    "ER_OBSERVATIONS_TABLE",
     "EVIDENCE_CHUNKS_TABLE",
     "KNOWLEDGE_CLAIMS_TABLE",
+    "OBS_TOOL_IO_TABLE",
     "ensure_lake_tables",
     "open_catalog",
 ]
@@ -18,6 +20,8 @@ NAMESPACE = "hmd"
 DOCUMENTS_TABLE = f"{NAMESPACE}.documents"
 EVIDENCE_CHUNKS_TABLE = f"{NAMESPACE}.evidence_chunks"
 KNOWLEDGE_CLAIMS_TABLE = f"{NAMESPACE}.knowledge_claims"
+OBS_TOOL_IO_TABLE = f"{NAMESPACE}.obs_tool_io"
+ER_OBSERVATIONS_TABLE = f"{NAMESPACE}.er_observations"
 
 
 def open_catalog(cfg: Settings | None = None) -> Any:
@@ -42,7 +46,7 @@ def open_catalog(cfg: Settings | None = None) -> Any:
 
 
 def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
-    """创建 namespace 与三表（若不存在）。无 REST 时抛错。"""
+    """创建 namespace 与湖表（若不存在）。无 REST 时抛错。"""
     from pyiceberg.schema import FloatType, IntegerType, ListType, NestedField, Schema, StringType
 
     cat = open_catalog(cfg)
@@ -96,6 +100,42 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             NestedField(10, "extracted_by", StringType(), required=False),
             NestedField(11, "span", StringType(), required=False),
             NestedField(12, "document_id", StringType(), required=False),
+        ),
+        "obs_tool_io": Schema(
+            NestedField(1, "trace_id", StringType(), required=True),
+            NestedField(2, "tool_name", StringType(), required=True),
+            NestedField(3, "ontology_release_id", StringType(), required=False),
+            NestedField(4, "status", StringType(), required=False),
+            NestedField(5, "latency_ms", FloatType(), required=False),
+            NestedField(6, "agent_id", StringType(), required=False),
+            NestedField(7, "session_id", StringType(), required=False),
+            NestedField(8, "input_json", StringType(), required=False),
+            NestedField(9, "output_json", StringType(), required=False),
+            NestedField(10, "error_message", StringType(), required=False),
+            NestedField(11, "contract_valid", StringType(), required=False),
+            NestedField(12, "event_ts", StringType(), required=False),
+            NestedField(13, "ingested_at", StringType(), required=False),
+            NestedField(14, "event_date", StringType(), required=False),
+        ),
+        "er_observations": Schema(
+            NestedField(1, "observation_id", StringType(), required=True),
+            NestedField(2, "mention", StringType(), required=True),
+            NestedField(3, "mention_key", StringType(), required=False),
+            NestedField(4, "source", StringType(), required=False),
+            NestedField(5, "resolve_status", StringType(), required=False),
+            NestedField(6, "kind_hint", StringType(), required=False),
+            NestedField(7, "confidence", FloatType(), required=False),
+            NestedField(8, "tool_name", StringType(), required=False),
+            NestedField(9, "trace_id", StringType(), required=False),
+            NestedField(10, "document_id", StringType(), required=False),
+            NestedField(11, "chunk_id", StringType(), required=False),
+            NestedField(
+                12, "bern2_ids", ListType(13, StringType(), element_required=False), required=False
+            ),
+            NestedField(14, "ontology_release_id", StringType(), required=False),
+            NestedField(15, "event_ts", StringType(), required=False),
+            NestedField(16, "ingested_at", StringType(), required=False),
+            NestedField(17, "event_date", StringType(), required=False),
         ),
     }
     for name, schema in schemas.items():

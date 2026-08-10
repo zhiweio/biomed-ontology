@@ -136,6 +136,29 @@ class Settings(BaseSettings):
     trino_catalog: str = "iceberg"
     trino_schema: str = "hmd"
 
+    # --- 观测入湖（Redpanda / Kafka API → Iceberg Connect Sink）-------------
+    # false：不 produce、不写 WAL（纯本地/评测）
+    obs_events_enabled: bool = True
+    # 默认对接 docker/obs Redpanda（task obs:up）；显式设空字符串 = 仅 Jsonl WAL
+    kafka_bootstrap_servers: str = "localhost:19092"
+    kafka_obs_tool_io_topic: str = "hmd.obs.tool_io"
+    kafka_er_observations_topic: str = "hmd.er.observations"
+    # broker 不可达时的本地 WAL 目录（相对仓库 CWD）
+    obs_wal_dir: Path = Path("data/obs_wal")
+
+    # --- Zingg 预计算模糊 ER -------------------------------------------------
+    zingg_min_score: float = Field(default=0.8, ge=0.0, le=1.0)
+    zingg_window_days: int = Field(default=30, ge=0)
+    zingg_min_occurrences: int = Field(default=1, ge=1)
+    # lake | bootstrap | all（lake 空时 all 回退 bootstrap）
+    zingg_observations: Literal["lake", "bootstrap", "all"] = "all"
+    # full 模式是否跳过 docker/zingg（本地 stub-link）
+    zingg_skip_docker: bool = False
+
+    # --- Data Loop / evolve-mine --------------------------------------------
+    # true：evolve-mine 默认合并 Iceberg/WAL er_observations
+    evolve_include_lake: bool = False
+
     bios_license_ack: str = ""
     bios_init: Literal["full", "subset"] = "full"
     bios_max_concepts: int = Field(default=0, ge=0)  # 0 = 全量不截断

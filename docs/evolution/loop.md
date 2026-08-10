@@ -80,12 +80,53 @@ flowchart LR
 
 ```bash
 uv run hmd foundation evolve-mine "unknownzyme-xyz-999"
+uv run hmd foundation zingg-run --mode stub-link --observations bootstrap
 ```
 
 | 做 | 不做 |
 |---|---|
 | `resolve_entity` unmapped / 低置信 → `.kgcl` + candidates JSON | 自动改 GraphDB ontology |
 | 候选含建议别名 / suggested exactMatch | 自动策展 / `evolve-apply` |
+| runtime/lake 缺口 → Redpanda → Iceberg `hmd.er_observations` | 热路径同步 PyIceberg append |
+| Zingg 离线 link → `zingg_matches.jsonl`（模糊回收已有 ENT） | Zingg mint ENT / auto-apply KGCL / 查询时跑 Spark |
+
+```mermaid
+flowchart LR
+  usage[Runtime lake annotate]
+  rp[Redpanda]
+  ice[Iceberg er_observations]
+  zingg[Zingg batch]
+  matches[zingg_matches.jsonl]
+  evolve[evolve-mine signals]
+  curator[Human curate ontology]
+
+  usage -->|Kafka API produce| rp
+  rp -->|Connect Sink| ice
+  ice --> zingg
+  ice --> evolve
+  zingg --> matches
+  matches -->|fuzzy hit| usage
+  evolve -->|true gaps| curator
+```
+
+观测入湖见 [`docker/obs/README.md`](../../docker/obs/README.md)；Zingg 见 [`docker/zingg/README.md`](../../docker/zingg/README.md)。
+
+### 配置（`Settings` / `.env`）
+
+| 环境变量 | 默认 | 含义 |
+|---|---|---|
+| `HMD_OBS_EVENTS_ENABLED` | `true` | 关闭则不发观测事件 |
+| `HMD_KAFKA_BOOTSTRAP_SERVERS` | `localhost:19092` | 默认 Redpanda；设空=WAL only |
+| `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | ER 缺口 topic |
+| `HMD_OBS_WAL_DIR` | `data/obs_wal` | 本地 WAL |
+| `HMD_ZINGG_MIN_SCORE` | `0.8` | Resolver / export 生效阈值 |
+| `HMD_ZINGG_WINDOW_DAYS` | `30` | 物化扫描湖表窗口 |
+| `HMD_ZINGG_MIN_OCCURRENCES` | `1` | 物化最低频次 |
+| `HMD_ZINGG_OBSERVATIONS` | `all` | `lake` / `bootstrap` / `all` |
+| `HMD_ZINGG_SKIP_DOCKER` | `false` | `zingg-run --mode full` 跳过 Spark 容器 |
+| `HMD_EVOLVE_INCLUDE_LAKE` | `false` | `evolve-mine` 默认合并湖/WAL mention |
+
+CLI 覆盖：`hmd foundation zingg-run --observations …`、`--min-score …`；`hmd foundation evolve-mine --include-lake`。
 
 ### 候选落地：回到策展 YAML 再 sync
 

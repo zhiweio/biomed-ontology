@@ -70,6 +70,8 @@ dependencies = [
     "pyarrow>=17.0.0",
     "prefect>=3.0.0",
     "trino>=0.330.0",
+    # obs → Redpanda (Kafka API); missing/offline → Jsonl WAL fallback
+    "confluent-kafka>=2.3.0",
 ]
 
 [project.optional-dependencies]

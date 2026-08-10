@@ -213,6 +213,7 @@ class FoundationApi:
             why["chosen"] = chosen
             why["candidate_count"] = len(hits)
             obs["output"] = {"resolved_count": len(hits), "chosen": chosen}
+            self._emit_resolve_observations(text, hits)
             return {
                 "ontology_release_id": self.world.release_id,
                 "query": text,
@@ -267,6 +268,42 @@ class FoundationApi:
             for c in cards:
                 if c.bios_curie and c.bios_curie not in h.bios_concepts:
                     h.bios_concepts.append(c.bios_curie)
+
+    def _emit_resolve_observations(self, text: str, hits: list[Any]) -> None:
+        """unmapped / 低置信 → Redpanda er_observations（失败静默）。"""
+        try:
+            from biomed_ontology.lake.obs_events import emit_er_observation
+        except Exception:
+            return
+        release = getattr(self.world, "release_id", None)
+        if not hits:
+            emit_er_observation(
+                mention=text,
+                source="runtime_resolve",
+                resolve_status="unmapped",
+                tool_name="resolve_entity",
+                ontology_release_id=release,
+            )
+            return
+        for h in hits:
+            if getattr(h, "canonical_entity", None):
+                conf = float(getattr(h, "confidence", 1.0) or 1.0)
+                if conf >= 0.5:
+                    continue
+                status = "low_confidence"
+            else:
+                status = "unmapped"
+            mention = str(getattr(h, "mention", None) or text)
+            emit_er_observation(
+                mention=mention,
+                source="runtime_resolve",
+                resolve_status=status,
+                kind_hint=getattr(h, "entity_kind", None),
+                confidence=float(getattr(h, "confidence", 0.0) or 0.0),
+                tool_name="resolve_entity",
+                bern2_ids=list(getattr(h, "external_ids", None) or []),
+                ontology_release_id=release,
+            )
 
     def lookup_bios_concept(
         self,

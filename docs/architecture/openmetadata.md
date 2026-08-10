@@ -95,6 +95,8 @@ Settings（`.env` / `config.py`）：
 - `openmetadata_url`（默认 `http://localhost:8585`）
 - `openmetadata_email` / `openmetadata_password`（sync 必填）
 
+Iceberg 观测表（`obs_tool_io` / `er_observations`）经 Trino 暴露后，同样走 OM Trino connector 摄入；观测总线本身配置见 [pillars](../observability/pillars.md)（`HMD_KAFKA_*` / `HMD_OBS_*`）。
+
 ---
 
 ## 4. 不变量与失败模式

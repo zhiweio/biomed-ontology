@@ -1072,6 +1072,11 @@ def foundation_evolve_mine(
     text: list[str] | None = typer.Argument(None, help="待挖掘查询；默认用内置未知词"),
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Suite 摘要，不展开候选表"),
+    include_lake: bool | None = typer.Option(
+        None,
+        "--include-lake/--no-include-lake",
+        help="合并 Iceberg/WAL er_observations（默认 HMD_EVOLVE_INCLUDE_LAKE）",
+    ),
 ) -> None:
     """P2：unmapped / 低置信 → KGCL 候选落库（不自动改本体）。
 
@@ -1079,13 +1084,15 @@ def foundation_evolve_mine(
     """
     import json
 
+    from biomed_ontology.config import settings
     from biomed_ontology.foundation.evolve import mine_unmapped_candidates
     from biomed_ontology.foundation.obs_log import configure_foundation_logging
     from biomed_ontology.foundation.render import render_evolve_mine
 
     configure_foundation_logging(json_logs=True)
     queries = list(text or []) or ["unknownzyme-xyz-999", "HMPL-504"]
-    result = mine_unmapped_candidates(queries)
+    use_lake = settings.evolve_include_lake if include_lake is None else include_lake
+    result = mine_unmapped_candidates(queries, include_lake=use_lake)
     if json_out:
         console.print_json(json.dumps(result.to_dict(), ensure_ascii=False))
         return
@@ -1093,18 +1100,98 @@ def foundation_evolve_mine(
 
 
 @foundation_app.command("zingg-run")
-def foundation_zingg_run() -> None:
-    """Zingg 批处理桩：当前校验 matches 文件存在；完整 Spark 作业后续接入。"""
+def foundation_zingg_run(
+    mode: str = typer.Option(
+        "full",
+        "--mode",
+        help="full | materialize-only | export-only | stub-link",
+    ),
+    observations: str | None = typer.Option(
+        None,
+        "--observations",
+        help="lake | bootstrap | all（默认 HMD_ZINGG_OBSERVATIONS）",
+    ),
+    window_days: int | None = typer.Option(
+        None, "--window-days", help="默认 HMD_ZINGG_WINDOW_DAYS"
+    ),
+    min_occurrences: int | None = typer.Option(
+        None, "--min-occurrences", help="默认 HMD_ZINGG_MIN_OCCURRENCES"
+    ),
+    min_score: float | None = typer.Option(None, "--min-score", help="默认 HMD_ZINGG_MIN_SCORE"),
+    raw: Path | None = typer.Option(None, "--raw", help="Zingg 原始 matches JSONL"),
+    skip_docker: bool | None = typer.Option(
+        None,
+        "--skip-docker/--no-skip-docker",
+        help="跳过 docker/zingg（默认 HMD_ZINGG_SKIP_DOCKER）",
+    ),
+) -> None:
+    """Zingg 批作业：materialize →（Spark link）→ export → zingg_matches.jsonl。"""
 
-    from biomed_ontology.foundation.paths import ZINGG_MATCHES_PATH
+    from biomed_ontology.config import settings
+    from biomed_ontology.foundation.zingg_io import (
+        ZINGG_DIR,
+        export_matches,
+        link_stub_from_materialized,
+        materialize,
+    )
 
-    matches = ZINGG_MATCHES_PATH
-    if not matches.exists():
-        console.print(f"[red]缺少 {matches}[/red]")
-        raise typer.Exit(1)
-    n = sum(1 for line in matches.read_text(encoding="utf-8").splitlines() if line.strip())
-    console.print(f"zingg matches file OK lines={n} path={matches}")
-    console.print("完整 Zingg Spark 作业：见计划 docker/zingg（预计算表已接入 Resolver）")
+    mode_l = mode.strip().lower().replace("_", "-")
+    obs_l = (observations or settings.zingg_observations).strip().lower()
+    if obs_l not in {"lake", "bootstrap", "all"}:
+        console.print("[red]--observations 须为 lake|bootstrap|all[/red]")
+        raise typer.Exit(2)
+    win = settings.zingg_window_days if window_days is None else window_days
+    min_occ = settings.zingg_min_occurrences if min_occurrences is None else min_occurrences
+    no_docker = settings.zingg_skip_docker if skip_docker is None else skip_docker
+
+    if mode_l in {"full", "materialize-only", "stub-link"}:
+        result = materialize(
+            observations=obs_l,  # type: ignore[arg-type]
+            window_days=win,
+            min_occurrences=min_occ,
+        )
+        console.print(
+            f"materialize enterprise={result.enterprise_rows} "
+            f"observation={result.observation_rows} sources={result.sources}"
+        )
+        for w in result.warnings:
+            console.print(f"[yellow]warn[/yellow] {w}")
+        if mode_l == "materialize-only":
+            return
+
+    if mode_l in {"full", "stub-link"}:
+        if mode_l == "full" and not no_docker:
+            compose = Path("docker/zingg/docker-compose.yml")
+            if compose.exists():
+                import subprocess
+
+                console.print("running docker/zingg link (see docker/zingg/README.md)…")
+                proc = subprocess.run(
+                    ["docker", "compose", "-f", str(compose), "run", "--rm", "zingg-link"],
+                    check=False,
+                )
+                if proc.returncode != 0:
+                    console.print(
+                        "[yellow]docker zingg-link failed; falling back to stub-link[/yellow]"
+                    )
+                    link_stub_from_materialized()
+            else:
+                console.print("[yellow]no docker/zingg compose; stub-link[/yellow]")
+                link_stub_from_materialized()
+        else:
+            link_stub_from_materialized()
+
+    raw_path = raw or (ZINGG_DIR / "raw_matches.jsonl")
+    if mode_l in {"full", "export-only", "stub-link"}:
+        try:
+            summary = export_matches(source=raw_path, min_score=min_score)
+        except FileNotFoundError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(1) from exc
+        console.print(
+            f"export written={summary['written']} ambiguous={summary['ambiguous']} "
+            f"path={summary['path']} min_score={summary['min_score']}"
+        )
 
 
 lake_app = typer.Typer(
@@ -1125,7 +1212,7 @@ def lake_ensure() -> None:
 
 @lake_app.command("init")
 def lake_init() -> None:
-    """创建 Iceberg 三表（需 Iceberg REST + MinIO）。"""
+    """创建 Iceberg 湖表（含 obs_tool_io / er_observations；需 REST + MinIO）。"""
     from biomed_ontology.lake.catalog import ensure_lake_tables
     from biomed_ontology.lake.minio_store import ensure_buckets
 

@@ -45,7 +45,7 @@ uv run hmd serve --mcp          # 默认 :8000
 | `api` | `ToolApi` 单例（含 `feedback_log`、`searcher`） |
 | `foundation` | `FoundationApi`（可 `load_foundation=False` 关闭） |
 | `kb` | 文献 `KnowledgeBase`（含 `hub`） |
-| `config` | `Settings`（凭据信任开关等） |
+| `config` | `Settings`（凭据信任、`HMD_OBS_*` / `HMD_ZINGG_*` 等；见 `.env.example`） |
 
 `feedback_log` 与 `hub` **必须跨请求共享**，否则演进信号无法挖掘。
 

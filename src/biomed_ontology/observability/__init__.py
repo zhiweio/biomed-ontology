@@ -241,7 +241,7 @@ class MetricPoint:
 
 
 class JsonlStore:
-    """JSONL 落盘。生产替换为 Iceberg 表，接口保持 `append` / `read_all` 不变。"""
+    """JSONL 本地 WAL。生产入湖：Kafka produce → Redpanda → Iceberg Connect Sink。"""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -295,11 +295,18 @@ class ObservabilityHub:
         self.spans.extend(ctx.spans)
         self.decisions.extend(ctx.decisions)
         self.io_records.append(io)
+        payload = io.to_json()
         if self._io_store:
-            self._io_store.append(io.to_json())
+            self._io_store.append(payload)
         if self._dec_store:
             for d in ctx.decisions:
                 self._dec_store.append(d.to_json())
+        try:
+            from biomed_ontology.lake.obs_events import emit_tool_io
+
+            emit_tool_io(payload)
+        except Exception:
+            pass
 
     def record_metric(self, point: MetricPoint) -> None:
         self.metrics.append(point)

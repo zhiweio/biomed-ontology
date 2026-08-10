@@ -144,10 +144,7 @@ def eval_public_bios(
         expect_ent = case.get("expect_ent")
         surfaces_ok = _surfaces_ok(surfaces, case.get("expect_surfaces_any"))
         expect_bios = case.get("expect_bios_any")
-        if expect_bios:
-            bios_ok = any(b in bios for b in expect_bios)
-        else:
-            bios_ok = True
+        bios_ok = any(b in bios for b in expect_bios) if expect_bios else True
         ok = got == expect_ent and surfaces_ok and bios_ok
         _record(
             ev,

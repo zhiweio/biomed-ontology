@@ -294,11 +294,10 @@ def hydrate_search_surfaces(
     cards = fetch_bios_cards(client, uniq, include_alts=True)
     surfaces: list[str] = []
     seen_s: set[str] = set()
-    if m:
-        # 跳过纯 CURIE 作为表面词
-        if ":" not in m or " " in m:
-            seen_s.add(m.casefold())
-            surfaces.append(m)
+    # 跳过纯 CURIE 作为表面词
+    if m and (":" not in m or " " in m):
+        seen_s.add(m.casefold())
+        surfaces.append(m)
     for card in cards:
         for s in surfaces_from_card(card, max_surfaces=max_surfaces):
             k = s.casefold()

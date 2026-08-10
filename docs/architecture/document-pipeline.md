@@ -125,6 +125,8 @@ annotate_bern2 → chunk.entity_ids（HMD:ENT:*）
 
 硬依赖：`HMD_BERN2_URL`；不可达则失败。ingest **禁止**自动把 claim 标为 `validated`。
 
+观测事件（可选）：`HMD_OBS_EVENTS_ENABLED` / `HMD_KAFKA_BOOTSTRAP_SERVERS`（见 [pillars](../observability/pillars.md)、`.env.example`）。annotate 未映射 mention 经同一管道入 `hmd.er_observations`。
+
 ### 3.6 GraphDB 写入与 sync 边界
 
 | 图 URI | 写入方 | `foundation sync` 行为 |
@@ -141,6 +143,7 @@ annotate_bern2 → chunk.entity_ids（HMD:ENT:*）
 |---|---|
 | MinIO | 同 object key overwrite |
 | Iceberg `documents` / `evidence_chunks` / `knowledge_claims` | 按 `doc_id` / `document_id` **先删后写** |
+| Iceberg `obs_tool_io` / `er_observations` | **append-only**（Kafka Connect）；annotate 未映射 mention → `er_observations` |
 | Milvus `foundation_evidence` | 按 `doc_id` 删孤儿后 upsert（`evidence_id` 主键） |
 | GraphDB extracted | 按 `hmd:sourceId` 先删后写 |
 | OpenMetadata document asset | glossary term upsert by FQN |

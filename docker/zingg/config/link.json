@@ -1,0 +1,29 @@
+{
+  "zinggDir": "/work/data/zingg/models",
+  "modelId": "hmd-er-fuzzy",
+  "link": {
+    "input": [
+      {
+        "name": "enterprise",
+        "format": "parquet",
+        "location": "/work/data/zingg/input/enterprise.parquet"
+      },
+      {
+        "name": "observation",
+        "format": "parquet",
+        "location": "/work/data/zingg/input/observation.parquet"
+      }
+    ],
+    "output": [
+      {
+        "name": "matches",
+        "format": "json",
+        "location": "/work/data/zingg/raw_matches"
+      }
+    ],
+    "fieldDefinition": [
+      { "fieldName": "label", "matchType": "FUZZY", "dataType": "string" },
+      { "fieldName": "kind", "matchType": "EXACT", "dataType": "string" }
+    ]
+  }
+}

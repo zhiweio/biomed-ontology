@@ -8,15 +8,19 @@ from typing import Any
 
 from biomed_ontology.lake.catalog import (
     DOCUMENTS_TABLE,
+    ER_OBSERVATIONS_TABLE,
     EVIDENCE_CHUNKS_TABLE,
     KNOWLEDGE_CLAIMS_TABLE,
+    OBS_TOOL_IO_TABLE,
     open_catalog,
 )
 
 __all__ = [
     "append_documents",
+    "append_er_observations",
     "append_evidence_chunks",
     "append_knowledge_claims",
+    "append_obs_tool_io",
     "replace_rows",
 ]
 
@@ -167,3 +171,13 @@ def append_knowledge_claims(
         rows,
         single_key=document_id,
     )
+
+
+def append_obs_tool_io(rows: Sequence[dict[str, Any]]) -> int:
+    """观测遥测真 append（仅 Connect/批路径/测试；热路径走 Kafka）。"""
+    return _append(OBS_TOOL_IO_TABLE, rows)
+
+
+def append_er_observations(rows: Sequence[dict[str, Any]]) -> int:
+    """ER 缺口事件真 append（仅 Connect/批路径/测试；热路径走 Kafka）。"""
+    return _append(ER_OBSERVATIONS_TABLE, rows)

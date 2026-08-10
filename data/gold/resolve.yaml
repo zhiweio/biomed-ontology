@@ -23,6 +23,8 @@ cases:
   - { text: "HGNC:7029", expect: "HMD:ENT:TGT:MET" }
   # ---- abstain（不应映射到企业实体）
   - { text: "unknownzyme-xyz-999", expect: null, gate: true }
+  # ---- Zingg 模糊腿（诊断：dictionary 无此错拼；需 matches 表 score≥min_score）
+  - { text: "savolitinb", expect: "HMD:ENT:DC:savolitinib", gate: false, via: zingg }
   # ---- 无 ENT：公开 CURIE 在 BIOS subset，企业未挂靠（诊断）
   - { text: "CHEBI:DEMO_ASPIRIN", expect: null }
   - { text: "HGNC:DEMO_BTK", expect: null }

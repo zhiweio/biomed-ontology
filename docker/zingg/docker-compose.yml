@@ -1,0 +1,12 @@
+# Zingg offline fuzzy ER link (Spark). PoC skeleton.
+# Local CI can use: uv run hmd foundation zingg-run --mode stub-link
+services:
+  zingg-link:
+    image: apache/spark:3.5.1-java17-python3
+    working_dir: /work
+    volumes:
+      - ../../data/zingg:/work/data/zingg
+      - ./config:/work/config:ro
+      - ./scripts:/work/scripts:ro
+    entrypoint: ["/bin/bash", "/work/scripts/link.sh"]
+    profiles: ["zingg"]

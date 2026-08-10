@@ -64,14 +64,16 @@ uv run hmd foundation resolve "HMPL-504" --json      # 机器可读（含 aliase
 uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
 uv run hmd foundation sync                           # YAML → GraphDB + Milvus + OM（幂等，三后端必达）
 uv run hmd foundation evolve-mine                    # 候选/跳过；不自动改本体
+uv run hmd foundation zingg-run --mode stub-link     # 模糊 matches 本地联调（HMD_ZINGG_*）
 uv run hmd foundation golden-eval                    # 多路径 WM 评估
 uv run hmd serve --mcp                               # 唯一 Semantic API + MCP
 task ontology:validate                               # Ontology-as-Code + Golden Path
 task foundation:golden-eval                          # GraphDB(+BIOS)/Milvus/OM，禁止 YAML
+# 可选观测总线（默认 HMD_KAFKA_BOOTSTRAP_SERVERS=localhost:19092）：task obs:up
 ```
 
 金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。策展 YAML 在 `ontology/{entities,dictionary,claims}/`；
-入库后查询只走 GraphDB / Milvus / OpenMetadata，**禁止 fallback 到 YAML**。配置见 `Settings`（`.env` 前缀 `HMD_`）。**不引入 Jena**。
+入库后查询只走 GraphDB / Milvus / OpenMetadata，**禁止 fallback 到 YAML**。配置见 `Settings`（`.env` 前缀 `HMD_`；观测/Zingg 见 `HMD_OBS_*` / `HMD_ZINGG_*` / `HMD_EVOLVE_*`）。**不引入 Jena**。
 
 ---
 
