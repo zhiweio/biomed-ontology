@@ -53,7 +53,8 @@ if [[ ! -f "${DATA_ROOT}/training.csv" ]]; then
 fi
 
 mkdir -p "${DATA_ROOT}/models" "${OUT_DIR}"
-rm -rf "${OUT_DIR:?}/"*
+# 清目录（含 .crc 等点文件；勿用 rm dir/*，会漏掉点文件且易踩 pipefail）
+find "${OUT_DIR}" -mindepth 1 -delete 2>/dev/null || true
 
 MODEL_DIR="${DATA_ROOT}/models/1"
 run_phase() {
@@ -95,8 +96,8 @@ if [[ ! -d "${MODEL_DIR}" ]]; then
   echo "ERROR: train did not produce model at ${MODEL_DIR}" >&2
   exit 1
 fi
-# 避免 pipefail+grep -q 在命中时因 SIGPIPE 误判失败
-part_count="$(find "${OUT_DIR}" -type f \( -name 'part-*' -o -name '*.csv' \) ! -name '.*' | wc -l | tr -d ' ')"
+# 用 find -print 计数，避免 pipefail + head/grep -q 的 SIGPIPE(141)
+part_count="$(find "${OUT_DIR}" -type f \( -name 'part-*' -o -name '*.csv' \) ! -name '.*' -print | wc -l | tr -d ' ')"
 if [[ "${part_count}" -lt 1 ]]; then
   echo "ERROR: link produced no files under ${OUT_DIR}" >&2
   ls -la "${OUT_DIR}" || true
@@ -108,6 +109,9 @@ python3 /home/zingg/scripts-hmd/convert_output.py \
   --raw-out "${DATA_ROOT}/raw_matches.jsonl" \
   --model-id "1"
 
-echo "DONE raw_matches=${DATA_ROOT}/raw_matches.jsonl"
+echo "DONE raw_matches=${DATA_ROOT}/raw_matches.jsonl parts=${part_count}"
+# head 会提前关管道 → ls 收到 SIGPIPE → exit 141；在 pipefail 下必须吞掉
+set +o pipefail
 ls -la "${OUT_DIR}" | head -20
+set -o pipefail
 wc -l "${DATA_ROOT}/raw_matches.jsonl" || true
