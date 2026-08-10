@@ -137,10 +137,18 @@ def eval_public_bios(
         hits = out.get("resolved") or []
         got = next((h.get("canonical_entity") for h in hits if h.get("canonical_entity")), None)
         surfaces: list[str] = []
+        bios: list[str] = []
         for h in hits:
             surfaces.extend(h.get("search_surfaces") or [])
+            bios.extend(h.get("bios_concepts") or [])
         expect_ent = case.get("expect_ent")
-        ok = got == expect_ent and _surfaces_ok(surfaces, case.get("expect_surfaces_any"))
+        surfaces_ok = _surfaces_ok(surfaces, case.get("expect_surfaces_any"))
+        expect_bios = case.get("expect_bios_any")
+        if expect_bios:
+            bios_ok = any(b in bios for b in expect_bios)
+        else:
+            bios_ok = True
+        ok = got == expect_ent and surfaces_ok and bios_ok
         _record(
             ev,
             {
@@ -149,6 +157,7 @@ def eval_public_bios(
                 "expect_ent": expect_ent,
                 "got": got,
                 "surfaces": surfaces,
+                "bios": bios,
                 "ok": ok,
             },
         )

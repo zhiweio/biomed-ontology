@@ -18,12 +18,8 @@
 uv run hmd foundation resolve "CHEBI:DEMO_ASPIRIN"
 # 期望：canonical_entity=null，search_surfaces 含 aspirin
 
-uv run python - <<'PY'
-from biomed_ontology.foundation.world import load_world_model
-from biomed_ontology.foundation.api import FoundationApi
-api = FoundationApi(load_world_model(bern2_url=None))
-print(api.lookup_bios_concept(external_id="CHEBI:DEMO_ASPIRIN"))
-PY
+uv run hmd foundation lookup-bios --query "阿司匹林"
+uv run hmd foundation lookup-bios --external-id CHEBI:DEMO_ASPIRIN
 ```
 
 Demo / Eval：

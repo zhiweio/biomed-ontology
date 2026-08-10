@@ -20,6 +20,7 @@ __all__ = [
     "render_golden_eval_compact",
     "render_golden_path",
     "render_golden_path_compact",
+    "render_lookup_bios",
     "render_resolve",
 ]
 
@@ -222,6 +223,137 @@ def render_resolve(
             out.print()
 
     out.print(_resolve_footer(result, primary=primary))
+    out.print()
+
+
+def render_lookup_bios(
+    result: dict[str, Any],
+    *,
+    console: Console | None = None,
+    query_label: str = "",
+) -> None:
+    """Rich 展示 lookup_bios_concept（无需 ENT）。"""
+    out = console or Console()
+    found = bool(result.get("found"))
+    bios = str(result.get("bios_curie") or "")
+    label = query_label or bios or "—"
+
+    title = Text()
+    title.append("BIOS Lookup", style="bold bright_white")
+    title.append("  ·  ", style="dim")
+    title.append("public concept · no ENT mint", style="dim magenta")
+
+    body = Text()
+    body.append(escape(label), style="bold yellow")
+    body.append("  →  ", style="dim")
+    if found and bios:
+        body.append(escape(bios), style="bold magenta")
+    elif result.get("reason") == "ambiguous_bios_match":
+        cands = result.get("candidates") or []
+        body.append("AMBIGUOUS", style="bold yellow")
+        body.append(f"  ({len(cands)} candidates)", style="dim")
+    else:
+        body.append("NOT FOUND", style="bold red")
+        if result.get("reason"):
+            body.append(f"  ·  {escape(str(result['reason']))}", style="dim")
+    body.append("\n")
+    body.append(f"backend={escape(str(result.get('backend') or '—'))}", style="dim")
+
+    border = "magenta" if found else ("yellow" if result.get("candidates") else "red")
+    out.print()
+    out.print(Panel(body, title=title, border_style=border, box=box.ROUNDED, padding=(1, 2)))
+    out.print()
+
+    if result.get("reason") == "ambiguous_bios_match":
+        cands = [str(c) for c in (result.get("candidates") or [])[:12]]
+        out.print(
+            Panel(
+                "\n".join(f"[magenta]{escape(c)}[/]" for c in cands) or "[dim]—[/]",
+                title="[bold]Candidates[/]",
+                border_style="yellow",
+                box=box.ROUNDED,
+            )
+        )
+        out.print()
+        out.print(
+            Panel(
+                Text.from_markup(
+                    "○ [bold]Ambiguous[/]  ·  pass [cyan]--bios-curie[/] / [cyan]--external-id[/] to disambiguate"
+                ),
+                border_style="yellow",
+                box=box.ROUNDED,
+            )
+        )
+        out.print()
+        return
+
+    if not found:
+        out.print(
+            Panel(
+                "[dim]no BIOS card[/]",
+                title="[bold red]NOT FOUND[/]",
+                border_style="red",
+                box=box.ROUNDED,
+            )
+        )
+        out.print()
+        return
+
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(style="dim", justify="right", min_width=12)
+    grid.add_column()
+    grid.add_row("bios", f"[bold magenta]{escape(bios)}[/]")
+    if result.get("pref_label"):
+        grid.add_row("pref", escape(str(result["pref_label"])))
+    alts = result.get("alt_labels") or []
+    if alts:
+        grid.add_row("alts", escape(", ".join(str(a) for a in alts[:8])))
+    surfaces = result.get("search_surfaces") or []
+    if surfaces:
+        grid.add_row("surfaces", escape(", ".join(str(s) for s in surfaces[:8])))
+    ext = result.get("external_ids") or []
+    if ext:
+        grid.add_row("external", "  ".join(f"[magenta]{escape(str(x))}[/]" for x in ext[:8]))
+    bridges = result.get("enterprise_bridges") or []
+    if bridges:
+        grid.add_row(
+            "ent bridges",
+            "  ".join(f"[cyan]{escape(str(b))}[/]" for b in bridges[:6]),
+        )
+    else:
+        grid.add_row("ent bridges", "[dim]none (no ENT mint)[/]")
+    out.print(Panel(grid, title="[bold]Card[/]", border_style="magenta", box=box.ROUNDED))
+    out.print()
+
+    neighbors = result.get("neighbors") or []
+    if neighbors:
+        lines = []
+        for n in neighbors[:10]:
+            kind = escape(str(n.get("kind") or "neighbor"))
+            surface = n.get("surface") or n.get("pref_label") or n.get("bios_curie") or n.get("enterprise_id")
+            via = n.get("via")
+            line = f"[dim]{kind}[/]  {escape(str(surface or '—'))}"
+            if via:
+                line += f"  [dim]via {escape(str(via))}[/]"
+            lines.append(line)
+        out.print(
+            Panel(
+                "\n".join(lines),
+                title="[bold]Neighbors[/]",
+                border_style="dim",
+                box=box.ROUNDED,
+            )
+        )
+        out.print()
+
+    next_line = Text()
+    next_line.append("○ ", style="bold magenta")
+    next_line.append("Public BIOS card", style="bold")
+    next_line.append("  ·  feed surfaces to search_documents (no ENT)", style="dim")
+    next_line.append("\n")
+    next_line.append("next  ", style="dim")
+    next_line.append(f'resolve / search_documents("{escape(str(label))}")', style="cyan")
+    out.print(Panel(next_line, border_style="magenta", box=box.ROUNDED))
     out.print()
 
 
@@ -1020,6 +1152,17 @@ def _norm_surface(text: str) -> str:
     return "".join(text.casefold().split())
 
 
+def _public_bios_hit(hit: dict[str, Any] | None) -> bool:
+    """无 ENT 但已 hydrate 到 BIOS / 可用 surfaces（非纯回显 mention）。"""
+    if not hit or hit.get("canonical_entity"):
+        return False
+    if hit.get("bios_concepts") or hit.get("bios_bridges"):
+        return True
+    mention = str(hit.get("mention") or "").strip().casefold()
+    surfaces = [str(s).strip() for s in (hit.get("search_surfaces") or []) if s]
+    return any(s.casefold() != mention for s in surfaces)
+
+
 def _resolve_header_panel(*, query: str, primary: dict[str, Any] | None, hit_count: int) -> Panel:
     title = Text()
     title.append("Entity Resolve", style="bold bright_white")
@@ -1029,16 +1172,29 @@ def _resolve_header_panel(*, query: str, primary: dict[str, Any] | None, hit_cou
     body = Text()
     body.append(escape(query) if query else "—", style="bold yellow")
     body.append("  →  ", style="dim")
+    public = _public_bios_hit(primary)
     if primary and primary.get("canonical_entity"):
         body.append(escape(str(primary["canonical_entity"])), style="bold bright_cyan")
+    elif public:
+        bios = (primary or {}).get("bios_concepts") or []
+        label = str(bios[0]) if bios else "PUBLIC BIOS"
+        body.append(escape(label), style="bold magenta")
+        if len(bios) > 1:
+            body.append(f" +{len(bios) - 1}", style="dim magenta")
+        body.append("  (no ENT)", style="dim")
     else:
         body.append("UNMAPPED", style="bold red")
     body.append("\n")
 
     entity = (primary or {}).get("entity") or {}
     kind = primary.get("entity_kind") if primary else None
-    kind = kind or entity.get("entity_kind") or "—"
-    body.append(str(kind), style="green")
+    kind = kind or entity.get("entity_kind")
+    if kind:
+        body.append(str(kind), style="green")
+    elif public:
+        body.append("public BIOS surfaces", style="magenta")
+    else:
+        body.append("—", style="dim")
     label_en = entity.get("preferred_label_en")
     label_zh = entity.get("preferred_label_zh")
     if label_en:
@@ -1051,12 +1207,20 @@ def _resolve_header_panel(*, query: str, primary: dict[str, Any] | None, hit_cou
     body.append(f"hits={hit_count}", style="dim")
     if primary and primary.get("alias_source"):
         body.append(f"  ·  aliases via {primary['alias_source']}", style="dim")
+    if public:
+        n_surf = len((primary or {}).get("search_surfaces") or [])
+        body.append(f"  ·  surfaces={n_surf}", style="dim")
 
-    ok = bool(primary and primary.get("canonical_entity"))
+    if primary and primary.get("canonical_entity"):
+        border = "bright_green"
+    elif public:
+        border = "magenta"
+    else:
+        border = "red"
     return Panel(
         body,
         title=title,
-        border_style="bright_green" if ok else "red",
+        border_style=border,
         box=box.ROUNDED,
         padding=(1, 2),
     )
@@ -1069,9 +1233,12 @@ def _resolve_hit_panel(hit: dict[str, Any], *, index: int, total: int) -> Panel:
 
     mention = hit.get("mention") or ""
     canon = hit.get("canonical_entity")
+    public = _public_bios_hit(hit)
     grid.add_row("mention", escape(str(mention)))
     if canon:
         grid.add_row("canonical", f"[bold cyan]{escape(str(canon))}[/]")
+    elif public:
+        grid.add_row("canonical", "[magenta]— (no ENT · public BIOS)[/]")
     else:
         grid.add_row("canonical", "[bold red]UNMAPPED[/]")
     grid.add_row("method", escape(str(hit.get("resolution_method") or "—")))
@@ -1087,11 +1254,21 @@ def _resolve_hit_panel(hit: dict[str, Any], *, index: int, total: int) -> Panel:
     bios = hit.get("bios_concepts") or []
     if bios:
         grid.add_row("bios", "  ".join(f"[magenta]{escape(str(x))}[/]" for x in bios[:6]))
+    surfaces = hit.get("search_surfaces") or []
+    if surfaces:
+        shown = ", ".join(escape(str(s)) for s in surfaces[:6])
+        more = f" +{len(surfaces) - 6}" if len(surfaces) > 6 else ""
+        grid.add_row("surfaces", f"[white]{shown}{more}[/]")
     entity = hit.get("entity") or {}
     if entity.get("definition"):
         grid.add_row("definition", escape(str(entity["definition"])))
 
-    border = "cyan" if canon else "red"
+    if canon:
+        border = "cyan"
+    elif public:
+        border = "magenta"
+    else:
+        border = "red"
     title = f"Hit {index}/{total}"
     return Panel(grid, title=f"[bold]{title}[/]", border_style=border, box=box.ROUNDED)
 
@@ -1150,6 +1327,15 @@ def _resolve_footer(result: dict[str, Any], *, primary: dict[str, Any] | None) -
         text.append("  ·  ", style="dim")
         text.append("hmd serve --mcp", style="cyan")
         border = "bright_green"
+    elif _public_bios_hit(primary):
+        text.append("○ ", style="bold magenta")
+        text.append("No enterprise entity", style="bold")
+        text.append("  ·  public BIOS surfaces ready for search_documents", style="dim")
+        text.append("\n")
+        text.append("next  ", style="dim")
+        q = escape(str(result.get("query") or ""))
+        text.append(f'lookup_bios_concept / search_documents("{q}")', style="cyan")
+        border = "magenta"
     else:
         text.append("✗ ", style="bold red")
         text.append("Unresolved mention", style="bold")

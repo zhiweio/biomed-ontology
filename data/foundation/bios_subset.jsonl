@@ -1,5 +1,5 @@
 {"bios_id": "SAVO_DEMO", "preferred_term": "savolitinib", "terms": ["savolitinib", "volitinib", "HMPL-504"], "external_ids": ["CHEBI:DEMO_SAVO", "DrugBank:DEMO_SAVO"], "semtypes": ["Chemical"]}
 {"bios_id": "MET_DEMO", "preferred_term": "MET", "terms": ["MET", "c-MET", "HGFR"], "external_ids": ["HGNC:7029", "NCBIGene:4233"], "semtypes": ["Gene"]}
 {"bios_id": "NSCLC_DEMO", "preferred_term": "non-small cell lung cancer", "terms": ["NSCLC", "non-small cell lung cancer"], "external_ids": ["MONDO:0005233", "DOID:3908"], "semtypes": ["Disease"]}
-{"bios_id": "ASPIRIN_DEMO", "preferred_term": "aspirin", "terms": ["aspirin", "acetylsalicylic acid", "ASA"], "external_ids": ["CHEBI:DEMO_ASPIRIN"], "semtypes": ["Chemical"]}
+{"bios_id": "ASPIRIN_DEMO", "preferred_term": "aspirin", "terms": ["aspirin", "acetylsalicylic acid", "ASA", "阿司匹林"], "external_ids": ["CHEBI:DEMO_ASPIRIN"], "semtypes": ["Chemical"]}
 {"bios_id": "BTK_DEMO", "preferred_term": "BTK", "terms": ["BTK", "Bruton tyrosine kinase"], "external_ids": ["HGNC:DEMO_BTK"], "semtypes": ["Gene"]}

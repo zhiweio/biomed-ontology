@@ -137,9 +137,8 @@ class PublicLexicalExpand:
                 pass
 
         surfaces, _cards = hydrate_search_surfaces(
-            mention=None
-            if pure_curie or ":" in mention
-            else (mention if mention != query.strip() else None),
+            # 自由文本须传入 mention，才能走 term→BIOS；纯 CURIE 只靠 external_ids
+            mention=None if pure_curie else mention,
             external_ids=list(dict.fromkeys(external_ids)),
             bios_concepts=list(dict.fromkeys(bios_concepts)),
             client=self.graphdb,

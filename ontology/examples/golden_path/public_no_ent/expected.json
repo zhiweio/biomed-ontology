@@ -11,7 +11,13 @@
     "canonical_entity": null,
     "search_surfaces_any_of": ["aspirin"]
   },
-  "normalize_abstain": ["aspirin", "CHEBI:DEMO_ASPIRIN", "BTK"],
+  "resolve_free_text": {
+    "texts": ["aspirin", "阿司匹林"],
+    "canonical_entity": null,
+    "bios_any_of": ["BIOS:ASPIRIN_DEMO"],
+    "search_surfaces_any_of": ["aspirin", "阿司匹林"]
+  },
+  "normalize_abstain": ["aspirin", "CHEBI:DEMO_ASPIRIN", "BTK", "阿司匹林"],
   "lexical_rewrite": {
     "query": "CHEBI:DEMO_ASPIRIN",
     "expansion_source": "public_lexical",

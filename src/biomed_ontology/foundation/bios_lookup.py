@@ -252,7 +252,12 @@ def hydrate_search_surfaces(
     max_surfaces: int = 8,
     index_path: Path | None = None,
 ) -> tuple[list[str], list[BiosCard]]:
-    """公开 ID / BIOS CURIE → 检索用表面词 + 卡片。"""
+    """公开 ID / BIOS CURIE / 自由文本 mention → 检索用表面词 + 卡片。
+
+    无 ENT 路径：mention 可走 term→BIOS（不 mint ``HMD:ENT:*``）。
+    """
+    from biomed_ontology.foundation.ids import is_external_id
+
     curies: list[str] = []
     for b in bios_concepts or []:
         c = bios_curie_from_iri(b)
@@ -265,6 +270,19 @@ def hydrate_search_surfaces(
                 curies.append(c)
             continue
         curies.extend(lookup_bios_curies(external_id=str(xid), index_path=index_path, limit=5))
+
+    m = (mention or "").strip()
+    # 自由文本：term → BIOS（CURIE 已由 external_ids / 短路路径覆盖）
+    if m and not is_external_id(m) and ":" not in m:
+        curies.extend(lookup_bios_curies(term=m, index_path=index_path, limit=5))
+        # sqlite 索引未覆盖 / 空结果时，再扫 PoC subset（含中文别名）
+        if DEFAULT_SUBSET.is_file():
+            key = m.casefold()
+            for c in load_bios_subset_jsonl(DEFAULT_SUBSET):
+                surfaces_c = {*(c.terms or []), c.preferred_term or ""}
+                if key in {s.strip().casefold() for s in surfaces_c if s}:
+                    curies.append(c.uri_curie)
+
     # 去重保序
     uniq: list[str] = []
     seen_c: set[str] = set()
@@ -276,8 +294,7 @@ def hydrate_search_surfaces(
     cards = fetch_bios_cards(client, uniq, include_alts=True)
     surfaces: list[str] = []
     seen_s: set[str] = set()
-    if mention and mention.strip():
-        m = mention.strip()
+    if m:
         # 跳过纯 CURIE 作为表面词
         if ":" not in m or " " in m:
             seen_s.add(m.casefold())

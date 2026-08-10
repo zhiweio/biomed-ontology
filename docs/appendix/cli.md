@@ -41,7 +41,8 @@
 
 | 命令 | 作用 | 相关手册 |
 |---|---|---|
-| `hmd foundation resolve [--json]` | 文本 → `HMD:ENT:*` + 反查别名（Rich） | [foundation](../architecture/foundation.md) |
+| `hmd foundation resolve [--json]` | 文本 → `HMD:ENT:*` + 反查别名（Rich）；无 ENT 时可附 BIOS surfaces | [foundation](../architecture/foundation.md) |
+| `hmd foundation lookup-bios [--query|--external-id|--bios-curie] [--json]` | 公开 BIOS 概念卡（不 mint ENT） | 同上 |
 | `hmd foundation golden [--compact] [--json]` | 金路径验收（Rich） | 同上 |
 | `hmd foundation golden-eval [--compact] [--json]` | 多路径金标评测（Rich） | [golden-path](../ontology/golden-path.md) |
 | `hmd foundation sync` | YAML → GraphDB Named Graphs + Milvus Evidence | 同上 |

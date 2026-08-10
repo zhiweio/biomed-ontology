@@ -907,6 +907,45 @@ def foundation_resolve(
     render_resolve(out, console=console)
 
 
+@foundation_app.command("lookup-bios")
+def foundation_lookup_bios(
+    query: str | None = typer.Option(None, "--query", "-q", help="自由文本 / 别名（如 阿司匹林）"),
+    external_id: str | None = typer.Option(
+        None, "--external-id", "-e", help="公开 CURIE（如 CHEBI:DEMO_ASPIRIN）"
+    ),
+    bios_curie: str | None = typer.Option(None, "--bios-curie", "-b", help="BIOS:… CURIE"),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON"),
+) -> None:
+    """lookup_bios_concept：公开 BIOS 概念卡（无需 / 不 mint HMD:ENT:*）。"""
+    import json
+
+    from biomed_ontology.foundation import FoundationApi, load_world_model
+    from biomed_ontology.foundation.obs_log import configure_foundation_logging
+    from biomed_ontology.foundation.render import render_lookup_bios
+
+    if not any((query, external_id, bios_curie)):
+        console.print("[red]需要 --query / --external-id / --bios-curie 之一[/red]")
+        raise typer.Exit(2)
+
+    configure_foundation_logging(json_logs=True)
+    world = load_world_model()
+    api = FoundationApi(world)
+    out = api.lookup_bios_concept(
+        query=query,
+        external_id=external_id,
+        bios_curie=bios_curie,
+    )
+    if json_out:
+        console.print_json(json.dumps(out, ensure_ascii=False))
+        if not out.get("found"):
+            raise typer.Exit(1)
+        return
+    label = query or external_id or bios_curie or ""
+    render_lookup_bios(out, console=console, query_label=str(label))
+    if not out.get("found"):
+        raise typer.Exit(1)
+
+
 @foundation_app.command("bios-load")
 def foundation_bios_load(
     full: bool = typer.Option(True, "--full/--subset", help="默认全量下载初始化"),

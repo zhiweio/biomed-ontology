@@ -125,6 +125,22 @@ def test_resolve_no_ent_still_has_surfaces():
     assert any("btk" in s.casefold() for s in surfaces)
 
 
+def test_resolve_free_text_no_ent_hydrates_bios():
+    from biomed_ontology.foundation.api import FoundationApi
+
+    world = load_world_model(bern2_url=None)
+    api = FoundationApi(world)
+    for text in ("aspirin", "阿司匹林"):
+        out = api.resolve_entity(text)
+        hits = out["resolved"]
+        assert hits
+        assert not any(h.get("canonical_entity") for h in hits)
+        bios = [b for h in hits for b in (h.get("bios_concepts") or [])]
+        surfaces = [s for h in hits for s in (h.get("search_surfaces") or [])]
+        assert "BIOS:ASPIRIN_DEMO" in bios, text
+        assert any("aspirin" in s.casefold() for s in surfaces), text
+
+
 def test_public_lexical_expand_no_ent_curie():
     lex = PublicLexicalExpand(bern2=None, graphdb=None)
     terms = lex.propose_terms("CHEBI:DEMO_ASPIRIN")
