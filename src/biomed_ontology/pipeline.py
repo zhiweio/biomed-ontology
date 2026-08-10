@@ -32,12 +32,15 @@ from biomed_ontology.registry import SourceRegistry, load_registry
 
 __all__ = [
     "DATA_ROOT",
+    "DEFAULT_RELEASE",
     "ONTOLOGY_CATALOG",
     "KnowledgeBase",
     "build_knowledge_base",
     "build_literature_base",
+    "build_normalizer_from_catalog",
     "catalog_files",
     "ensure_catalog_graphs",
+    "retag_chunks",
 ]
 
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
@@ -117,6 +120,49 @@ def catalog_files(catalog_dir: Path | None = None) -> list[Path]:
     if not files:
         raise FileNotFoundError(f"ontology catalog 无概念 YAML：{catalog}")
     return files
+
+
+def build_normalizer_from_catalog(
+    *,
+    data_root: Path | None = None,
+    release_id: str = DEFAULT_RELEASE,
+    ledger_dir: Path | None = None,
+    hub: ObservabilityHub | None = None,
+    id_mode: str = "enterprise",
+    graph_client: GraphDbClient | None = None,
+    with_graph: bool = False,
+) -> KnowledgeBase:
+    """仅从 ``ontology/catalog/`` 装配 Normalizer + 空 corpus（增量 retag 入口）。"""
+    return build_literature_base(
+        data_root=data_root,
+        release_id=release_id,
+        ledger_dir=ledger_dir,
+        hub=hub,
+        with_corpus=False,
+        with_graph=with_graph,
+        id_mode=id_mode,
+        graph_client=graph_client,
+    )
+
+
+def retag_chunks(
+    chunks: list[Chunk],
+    normalizer: Normalizer,
+    *,
+    ctx: TraceContext | None = None,
+    hub: ObservabilityHub | None = None,
+    release_id: str = DEFAULT_RELEASE,
+) -> list[Chunk]:
+    """对已有 Chunk 重跑 normalize + expand；不切树、不跑 TriModal。"""
+    hub = hub or ObservabilityHub()
+    trace = ctx or hub.start_trace(release_id=release_id, agent_id="retag")
+    for ch in chunks:
+        res = normalizer.normalize(ch.text, ctx=trace, detect=True, min_confidence=0.6)
+        ch.concept_ids = sorted(set(res.concept_ids))
+        ch.concept_ids_expanded = _expand_all(normalizer, ch.concept_ids, trace)
+        # Iceberg entity_ids 与 concept_ids 对齐（文献面主键）
+        ch.entity_ids = list(ch.concept_ids)
+    return chunks
 
 
 def build_literature_base(

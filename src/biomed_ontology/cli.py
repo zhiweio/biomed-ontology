@@ -560,6 +560,21 @@ def index_cmd(
     allow_fake: bool = typer.Option(
         False, "--allow-fake", help="允许 fake embedder（仅用于验证接线，产出不可入报告）"
     ),
+    incremental: bool = typer.Option(
+        False,
+        "--incremental",
+        help="catalog 增量：Iceberg 装载 → retag → 仅脏 chunk 写回（validate 后推荐）",
+    ),
+    doc_id: str | None = typer.Option(
+        None,
+        "--doc-id",
+        help="仅重建并写入指定文档（新文档入索引；与 --incremental 互斥）",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="与 --incremental 联用：忽略 catalog fingerprint no-op",
+    ),
 ) -> None:
     """把知识库切片写入 Milvus + Iceberg（Tree Chunk SSOT，同 release_id）。"""
     import sys
@@ -575,7 +590,50 @@ def index_cmd(
     from biomed_ontology.search import HybridSearcher
     from biomed_ontology.search.backends.milvus import MilvusBackend, chunk_to_row
 
+    if incremental and doc_id:
+        console.print("[red]--incremental 与 --doc-id 互斥[/red]")
+        raise typer.Exit(2)
+    if recreate and (incremental or doc_id):
+        console.print("[red]--recreate 仅用于全量路径；勿与 --incremental / --doc-id 联用[/red]")
+        raise typer.Exit(2)
+
     _require_real_embedder(embedder, allow_fake=allow_fake)
+
+    if incremental or doc_id:
+        from biomed_ontology.index_refresh import refresh_catalog_incremental, refresh_document
+
+        try:
+            if doc_id:
+                result = refresh_document(
+                    doc_id, embedder_name=embedder, collection=collection
+                )
+            else:
+                result = refresh_catalog_incremental(
+                    embedder_name=embedder,
+                    collection=collection,
+                    force=force,
+                )
+        except Exception as exc:
+            print(f"增量 index 失败：{exc}", file=sys.stderr)
+            raise typer.Exit(1) from exc
+
+        table = Table(title=f"索引增量 · {result.mode}")
+        table.add_column("指标")
+        table.add_column("值", justify="right")
+        table.add_row("skipped", str(result.skipped))
+        if result.reason:
+            table.add_row("reason", result.reason)
+        table.add_row("catalog_sha256", (result.catalog_sha256 or "")[:16] + "…")
+        table.add_row("chunks", str(result.chunk_total))
+        table.add_row("dirty", str(result.dirty_count))
+        table.add_row("reembed", str(result.reembed_count))
+        table.add_row("patch", str(result.patch_count))
+        table.add_row("Milvus", str(result.milvus_n))
+        table.add_row("Iceberg", str(result.iceberg_n))
+        console.print(table)
+        if result.dirty_document_ids:
+            console.print(f"dirty docs {result.dirty_document_ids[:20]}")
+        return
 
     kb = build_literature_base(with_graph=False)
     registry = load_registry()
@@ -625,6 +683,27 @@ def index_cmd(
     for row in rows:
         row["release_id"] = kb.release_id
     written = backend.upsert(rows, batch_size=128)
+
+    # 全量成功后刷新 fingerprint，便于后续 --incremental no-op
+    try:
+        from biomed_ontology.index_state import (
+            LiteratureIndexState,
+            compute_catalog_fingerprint,
+            save_state,
+        )
+
+        save_state(
+            LiteratureIndexState(
+                catalog_sha256=compute_catalog_fingerprint(),
+                release_id=kb.release_id,
+                embedder=model.name,
+                collection=backend.collection,
+                chunk_count=len(kb.chunks),
+                dirty_last_run=len(kb.chunks),
+            )
+        )
+    except Exception as exc:
+        console.print(f"[yellow]index state 未写入：{exc}[/yellow]")
 
     table = Table(title=f"索引 {backend.collection}")
     table.add_column("指标")

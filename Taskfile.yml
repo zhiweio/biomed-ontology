@@ -439,6 +439,12 @@ tasks:
     cmds:
       - uv run python scripts/ontology_validate.py
 
+  ontology:refresh-literature:
+    desc: validate 后文献面增量 index（catalog retag；不改 validate 语义）
+    cmds:
+      - task ontology:validate
+      - uv run hmd index --incremental
+
   foundation:golden-eval:
     desc: 多 Golden Path JSON 评估（GraphDB+BIOS / Milvus / OM，禁止 YAML）
     cmds:

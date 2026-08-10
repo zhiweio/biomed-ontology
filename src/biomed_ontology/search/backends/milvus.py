@@ -274,8 +274,11 @@ class MilvusBackend:
         *,
         flush: bool = True,
         batch_size: int = 128,
+        encode: bool = True,
     ) -> int:
-        """`rows` 需含元数据与 `text`；向量在此处算，调用方不必知道模型。
+        """`rows` 需含元数据与 `text`；默认在此处算向量。
+
+        ``encode=False``：假定 row 已带齐向量列（保向量 scalar patch），跳过 embedder。
 
         默认 flush：Milvus 的默认一致性是 Bounded，不 flush 时刚写的数据查不到，
         而失败形态是“检索返回空” —— 看起来像召回差，不像数据没进去。
@@ -296,18 +299,84 @@ class MilvusBackend:
             rows = [{**r, "release_id": r.get("release_id") or self.release_id} for r in rows]
         step = max(1, int(batch_size))
         written = 0
+        vector_fields = set(self.vector_fields()) if not encode else set()
         for i in range(0, len(rows), step):
             batch = rows[i : i + step]
-            bundles = self.embedder.encode(
-                [str(r["text"]) for r in batch],
-                images=[self._asset(r.get("asset_path"), r.get("doc_id")) for r in batch],
-            )
-            payload = [{**row, **bundle} for row, bundle in zip(batch, bundles, strict=True)]
+            if encode:
+                bundles = self.embedder.encode(
+                    [str(r["text"]) for r in batch],
+                    images=[self._asset(r.get("asset_path"), r.get("doc_id")) for r in batch],
+                )
+                payload = [{**row, **bundle} for row, bundle in zip(batch, bundles, strict=True)]
+            else:
+                payload = list(batch)
+                if vector_fields:
+                    missing = [
+                        r.get("chunk_id")
+                        for r in payload
+                        if not any(r.get(f) is not None for f in vector_fields)
+                    ]
+                    if missing:
+                        raise ValueError(
+                            f"encode=False 但缺少向量列：chunk_ids={missing[:5]!r}"
+                        )
             self.client.upsert(collection_name=self.collection, data=payload)
             written += len(payload)
         if flush:
             self.client.flush(self.collection)
         return written
+
+    @staticmethod
+    def _escape_str(value: str) -> str:
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+
+    def delete_by_doc(self, doc_id: str, *, flush: bool = True) -> None:
+        """删除某文档在文献集合中的全部行（按 doc 幂等重写前清理）。"""
+        if not doc_id or not self.client.has_collection(self.collection):
+            return
+        expr = f'doc_id == "{self._escape_str(doc_id)}"'
+        try:
+            self.client.delete(collection_name=self.collection, filter=expr)
+        except TypeError:
+            self.client.delete(collection_name=self.collection, expr=expr)
+        if flush:
+            self.client.flush(self.collection)
+
+    def query_by_ids(
+        self,
+        chunk_ids: list[str],
+        *,
+        output_fields: list[str] | None = None,
+    ) -> dict[str, dict[str, Any]]:
+        """按 chunk_id 取回现有行（含向量），供保向量 patch。"""
+        ids = [str(x) for x in dict.fromkeys(chunk_ids) if x]
+        if not ids or not self.client.has_collection(self.collection):
+            return {}
+        fields = output_fields or ["*"]
+        out: dict[str, dict[str, Any]] = {}
+        # 分批 IN 查询，避免过长 filter
+        step = 64
+        for i in range(0, len(ids), step):
+            batch = ids[i : i + step]
+            quoted = ", ".join(f'"{self._escape_str(cid)}"' for cid in batch)
+            expr = f"chunk_id in [{quoted}]"
+            try:
+                rows = self.client.query(
+                    collection_name=self.collection,
+                    filter=expr,
+                    output_fields=fields,
+                )
+            except TypeError:
+                rows = self.client.query(
+                    collection_name=self.collection,
+                    expr=expr,
+                    output_fields=fields,
+                )
+            for row in rows or []:
+                cid = str(row.get("chunk_id") or "")
+                if cid:
+                    out[cid] = dict(row)
+        return out
 
     # ----------------------------------------------------------------- 检索
 

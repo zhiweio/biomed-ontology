@@ -311,11 +311,12 @@ uv run hmd foundation bios-load   # → graph/biomedical
   → hmd foundation evolve-mine → .kgcl + candidates JSON
   → 人工审校，写回 ontology/entities|dictionary|claims|mappings|catalog
   → task ontology:validate
-  → catalog → 文献 KB 重建 / index；entities/claims → hmd foundation sync
+  → catalog → `hmd index --incremental`（或 `task ontology:refresh-literature`）
+  → entities/claims → hmd foundation sync
   → 新 ontology_release_id → hmd eval 回归
 ```
 
-湖侧 TriModal 产出的是 `extracted` Claim（进 `provenance_extracted`），**不是** catalog 新概念；概念缺口与别名写回 `catalog/` / `entities/`，关系晋升写回 `claims/`（validated）。详见 [事实抽取](extract.md)。
+湖侧 TriModal 产出的是 `extracted` Claim（进 `provenance_extracted`），**不是** catalog 新概念；概念缺口与别名写回 `catalog/` / `entities/`，关系晋升写回 `claims/`（validated）。详见 [事实抽取](extract.md)。catalog 变更后勿默认全量 `hmd index`——优先 `--incremental`（Iceberg 装载 + retag 脏写）。
 
 PoC **硬边界**：产出候选，**不**自动改 GraphDB ontology，**无**无人审校的 `evolve-apply`。详见 [信号 → KGCL → 发版](../evolution/loop.md)。
 

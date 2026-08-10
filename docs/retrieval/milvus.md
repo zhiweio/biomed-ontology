@@ -120,6 +120,13 @@ MilvusBackend.upsert(rows):
 - `stamped_embedder()` / `stamped_release()` 读集合描述；`require_release(kb.release_id)` 硬失败防孤儿索引  
 - `fake` embedder 需 CLI `--allow-fake` 留痕  
 - `hmd index` dual-write：Milvus + Iceberg `evidence_chunks`（同 Tree Chunk、同 `release_id`）  
+- **增量**（catalog 变更后）：`hmd index --incremental`  
+  - 状态：`data/cache/literature_index_state.json`（catalog fingerprint）  
+  - 正文 SSOT：Iceberg `evidence_chunks`（不重切 corpus）  
+  - Normalizer retag → 脏 `concept_ids` / `concept_ids_expanded`  
+  - 脏行写回；preferred label 未变则 `upsert(encode=False)` 保向量  
+  - 新文档：`hmd index --doc-id DOC_…`；换模型/schema：`--recreate`  
+  - 便捷：`task ontology:refresh-literature`（validate + incremental）  
  
 
 ```mermaid

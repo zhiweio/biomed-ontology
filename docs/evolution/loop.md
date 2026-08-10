@@ -95,7 +95,7 @@ KGCL / candidates **不是**生产图。人工审校后按变更类型写回 Git
 .kgcl / candidates JSON
   → 人工编辑 ontology/entities|dictionary|claims|mappings|catalog（按需）
   → task ontology:validate
-  → catalog：重建文献 KB / 必要时 hmd index
+  → catalog：uv run hmd index --incremental（或 task ontology:refresh-literature）
   → entities/claims：uv run hmd foundation sync
   → 新 ontology_release_id 出现在 tool 响应
   → hmd eval / golden-eval 回归

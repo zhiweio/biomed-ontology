@@ -168,9 +168,22 @@ unmapped / 低置信 / feedback / evolve-mine
        · 金路径企业实体/别名     → ontology/entities/ + dictionary/
        · 正式关系                 → ontology/claims/（validated）
   → task ontology:validate
-  → catalog 变更：重建文献 KB（build_literature_base）+ 必要时 hmd index
+  → catalog 变更：`uv run hmd index --incremental`（或 `task ontology:refresh-literature`）
   → entities/claims：hmd foundation sync
   → 新 ontology_release_id → hmd eval 回归
+```
+
+文献 index **增量路径**（catalog 变更后推荐）：
+
+```text
+task ontology:validate
+  → hmd index --incremental
+       catalog fingerprint 未变 → no-op
+       已变 → Iceberg 装载 Tree Chunk（不重切）
+            → Normalizer retag → 仅脏 chunk 写 Iceberg/Milvus
+            → 标签未变则保向量（encode=False）；标签变则重嵌脏行
+  → 新文档：hmd index --doc-id DOC_…
+  → 换 embedder / schema / release：hmd index --recreate（全量）
 ```
 
 硬边界：`evolve-mine` 只出候选，**无**无人审校的 `evolve-apply` 自动改本体。

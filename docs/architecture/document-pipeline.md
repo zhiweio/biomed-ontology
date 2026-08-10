@@ -115,7 +115,10 @@ annotate_bern2 → chunk.entity_ids（HMD:ENT:*）
 
 | 入口 | 模块 | 用途 |
 |---|---|---|
-| `hmd index` | `cli.py` | Tree Chunk → Milvus + Iceberg |
+| `hmd index` | `cli.py` | Tree Chunk → Milvus + Iceberg（全量） |
+| `hmd index --incremental` | `cli.py` / `index_refresh.py` | catalog retag 脏写（validate 后） |
+| `hmd index --doc-id` | `cli.py` / `index_refresh.py` | 单文档增量 |
+| `task ontology:refresh-literature` | `Taskfile.yml` | validate + `--incremental` |
 | `hmd lake ingest-doc` | `lake/steps.py` | 纯函数单文档 |
 | `hmd lake ingest-flow` | `lake/flows.py` | Prefect 编排 |
 | `hmd lake ingest-batch` | `lake/flows.py` | 批量 |

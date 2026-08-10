@@ -15,8 +15,10 @@ __all__ = [
     "ChunkStore",
     "IcebergChunkStore",
     "MemoryChunkStore",
+    "chunk_from_record",
     "chunk_record_from_kb_chunk",
     "chunks_to_evidence_rows",
+    "load_chunks_for_index",
 ]
 
 BATCH_SIZE = 64
@@ -330,3 +332,58 @@ def _records_from_arrow(arrow: Any) -> list[ChunkRecord]:
             )
         )
     return out
+
+
+def chunk_from_record(rec: ChunkRecord) -> Any:
+    """``ChunkRecord`` → 文献 ``Chunk``（供 retag / index）。"""
+    from biomed_ontology._generated.hmd_fact import ModalityChannelEnum
+    from biomed_ontology.corpus import Chunk
+
+    try:
+        modality = ModalityChannelEnum(rec.modality or "TEXT")
+    except ValueError:
+        modality = ModalityChannelEnum.TEXT
+    concepts = list(rec.entity_ids)
+    return Chunk(
+        chunk_id=rec.chunk_id,
+        doc_id=rec.document_id,
+        text=rec.content,
+        section=rec.section_path,
+        char_start=rec.sort_order,
+        char_end=rec.sort_order + max(len(rec.content), 0),
+        modality=modality,
+        page=rec.page or 1,
+        parent_id=rec.parent_id,
+        section_path=rec.section_path,
+        node_kind=rec.node_kind,
+        concept_ids=list(concepts),
+        entity_ids=list(concepts),
+    )
+
+
+def load_chunks_for_index(
+    *,
+    release_id: str,
+    document_ids: list[str] | None = None,
+    catalog: Any | None = None,
+) -> list[Any]:
+    """从 Iceberg ``evidence_chunks`` 装载 Chunk，跳过 corpus rechunk。
+
+    ``document_ids`` 为 None 时装载该 ``release_id`` 下全部行。
+    """
+    from biomed_ontology.lake.catalog import EVIDENCE_CHUNKS_TABLE, open_catalog
+    from pyiceberg.expressions import And, EqualTo, In
+
+    cat = catalog or open_catalog()
+    table = cat.load_table(EVIDENCE_CHUNKS_TABLE)
+    filt: Any = None
+    if release_id:
+        filt = EqualTo("release_id", release_id)
+    if document_ids:
+        doc_filt = In("document_id", list(document_ids))
+        filt = And(filt, doc_filt) if filt is not None else doc_filt
+    scan = table.scan(row_filter=filt) if filt is not None else table.scan()
+    arrow = scan.to_arrow()
+    records = _records_from_arrow(arrow)
+    records.sort(key=lambda r: (r.document_id, r.page, r.sort_order, r.chunk_id))
+    return [chunk_from_record(r) for r in records]
