@@ -74,8 +74,8 @@ biomed-ontology/
 |---|---|---|
 | L0 契约 | `schema/`、`_generated/`、`schema/generated/` | LinkML、OpenAPI/MCP、OWL/SHACL |
 | L1 数据 | `ontology/catalog`、`data/corpus`、`data/registry` | ENT 目录、语料、源 tier |
-| L2 解析 | `parse/`、`corpus/` | PDF → 带 provenance 的 YAML |
-| L3 本体策展 | `ontology/{entities,dictionary,claims,mappings}` | 企业身份、词典、断言、挂靠 |
+| L2 解析 / 抽取 | `parse/`、`corpus/`（含 tree + TriModal extract） | PDF → Evidence；候选 Fact → lake |
+| L3 本体策展 | `ontology/{entities,dictionary,claims,mappings,catalog}` | 企业身份、词典、断言、挂靠、文献目录 |
 | L4 检索 | `search/`、`embed/`、`rerank/` | HybridSearcher、Milvus |
 | L5 工具 | `tools/`、`service/` | Semantic Access、REST/MCP |
 | L6 Foundation | `foundation/` | ER、GraphDB、Evidence、OM、sync |

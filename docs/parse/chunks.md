@@ -3,7 +3,7 @@
 源码：`src/biomed_ontology/corpus/tree.py`（Tree Chunk）· `src/biomed_ontology/corpus/__init__.py`（`chunk_document`）  
 模型：`Chunk` dataclass · LinkML `hmd_fact.Chunk`
 
-相关文档：[layout.md](layout.md) · [../retrieval/milvus.md](../retrieval/milvus.md) · [../architecture/document-pipeline.md](../architecture/document-pipeline.md)
+相关文档：[layout.md](layout.md) · [../retrieval/milvus.md](../retrieval/milvus.md) · [../architecture/document-pipeline.md](../architecture/document-pipeline.md) · [事实抽取](../ontology/extract.md)
 
 ---
 

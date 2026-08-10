@@ -193,4 +193,4 @@ uv run hmd eval --entitlements MOCK_LICENSED --compact
 
 改目录后：先看 `hmd kb` warnings，再跑含跨类型意图的 eval gold（如 VEGFR2 → 药）。
 
-相关：[Pipeline](../architecture/pipeline.md)、[归一化](normalize.md)、[链接与 search-around](links.md)、[RDF 命名图](rdf.md)。
+相关：[Pipeline](../architecture/pipeline.md)、[归一化](normalize.md)、[事实抽取](extract.md)、[链接与 search-around](links.md)、[RDF 命名图](rdf.md)。

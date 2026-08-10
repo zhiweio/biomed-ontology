@@ -108,6 +108,7 @@ nav:
       - Golden Path: ontology/golden-path.md
       - 企业身份与目录 SSOT: ontology/seed.md
       - 归一化级联: ontology/normalize.md
+      - 事实抽取 TriModal: ontology/extract.md
       - 类型化链接与 search-around: ontology/links.md
       - GraphStore 与许可命名图: ontology/rdf.md
   - Document Lake:

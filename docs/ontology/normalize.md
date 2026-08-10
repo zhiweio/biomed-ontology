@@ -81,9 +81,25 @@ build_from_seed() → concepts + synonyms
        )
 ```
 
-`ambiguity_index` 来自 `ontology/catalog/ambiguity.yaml`（人工歧义登记表）。未登记碰撞由 `build_from_seed` 写入 `kb.warnings`。
+词典**仅**来自 `ontology/catalog/`（经 `catalog_files()` → `build_from_seed`）。`ambiguity_index` 来自 `ontology/catalog/ambiguity.yaml`。未登记碰撞由 `build_from_seed` 写入 `kb.warnings`。
 
-### 3.4 Scope 如何约束行为（D2）
+### 3.4 为什么词典只用 catalog，不用 BERN2 / BIOS_v3
+
+Normalizer 的职责是「文本 → **唯一企业概念 ID**」。身份 SSOT 必须是本仓可 PR、可 release 的策展面，而不是公共服务或公共大图。
+
+| | BERN2 | BIOS_v3 | `ontology/catalog/` |
+|---|---|---|---|
+| 角色 | NER + 公共 NEN **候选** | 公共生物医学世界（`graph/biomedical`） | 企业关心的概念子集 + 内部别名 |
+| 典型输出 | MeSH/NCBI… / `CUI-less` | BIOS URI | `HMD:ENT:*` |
+| 稳定性 | 模型/服务可变 | 外部全量图 | Git 策展 |
+| 企业代号（如 HMPL-504） | 常碎片化 / CUI-less | 通常无内部代号 | 别名精确命中 |
+
+若 Normalizer 直接吃 BERN2：身份随公共服务漂移，企业主键失控。  
+若把 BIOS 当词典：召回爆炸、歧义失控，且违反「企业 ID 才是主键」。BIOS 经 `skos:exactMatch` **挂靠**，不替代 catalog。
+
+事实抽取侧的 `_ground` 也只调用 Normalizer（见 [事实抽取](extract.md)）。Foundation 面短查询 / 金路径 ER 另走 `EntityResolver`（词典 + BERN2 + Zingg）——**不要混用两套入口当同一词典**。
+
+### 3.5 Scope 如何约束行为（D2）
 
 别名带 `SynonymScopeEnum`：
 
@@ -95,7 +111,7 @@ build_from_seed() → concepts + synonyms
 
 `SCOPE_WEIGHTS` × 本体距离决定 `expand()` 权重。把 BROAD 灌进精确归一 → 精确率崩盘；完全扔掉 → 召回上不去。
 
-### 3.5 与检索的两个消费点
+### 3.6 与检索的两个消费点
 
 | 消费方 | 调用 | 用途 |
 |---|---|---|
@@ -105,7 +121,7 @@ build_from_seed() → concepts + synonyms
 
 `HybridSearcher._rewrite_queries` 对 expand 结果按 `normalize_alias` **去重**，避免 `AZD-6094` / `AZD6094` 给 BM25 投多票。
 
-### 3.6 与 `Normalizer._children` vs `GraphDbNeighborhood`
+### 3.7 与 `Normalizer._children` vs `GraphDbNeighborhood`
 
 | | `_children` / `expand` | `GraphDbNeighborhood` |
 |---|---|---|
@@ -116,21 +132,21 @@ build_from_seed() → concepts + synonyms
 
 `concept_ids_expanded`（装配期 `_expand_all`）只走层级 expand，**不**替代图通道。
 
-### 3.7 埋点
+### 3.8 埋点
 
 每次归一化在 `TraceContext` 上记录：命中阶段、`MappingJustificationEnum`、候选列表。`tools/api.py` 的 `normalize_entity` 把 `alternatives` 暴露给 Agent。
 
 决策记录示例 stage：`NORMALIZE`、`GRAPH_RETRIEVAL`（检索侧）。
 
-### 3.8 与 Foundation ER 的边界
+### 3.9 与 Foundation ER 的边界
 
 | 场景 | 组件 |
 |---|---|
-| 文献 chunk / 检索 query | `Normalizer` → `BuiltConcept` |
-| 企业实体 / 代号 HMPL-504 | `EntityResolver` → `EnterpriseEntity` |
+| 文献 chunk / 检索 query / `_ground` | `Normalizer` → `BuiltConcept`（catalog） |
+| 企业实体 / 代号 HMPL-504 | `EntityResolver` → `EnterpriseEntity`（dictionary + BERN2） |
 | `get_entity_context` | Foundation 读 GraphDB，不读 Normalizer 内存 |
 
-目录 `HMD:ENT:*` 与 Foundation 实体 ID 格式一致，但索引与 ER 倒排是两套结构。
+目录 `HMD:ENT:*` 与 Foundation 实体 ID 格式一致，但索引与 ER 倒排是两套结构。两端最终都锚到企业身份空间，但级联阶段与后端要求不同。
 
 ---
 
@@ -139,6 +155,7 @@ build_from_seed() → concepts + synonyms
 | 不变量 | 说明 |
 |---|---|
 | L3 唯一入口 | 禁止 Semantic Access 手写别名表 |
+| 词典仅 catalog | 禁止把 BERN2/BIOS 当 Normalizer 身份源 |
 | 阈值 0.6 全局一致 | pipeline 与 searcher 各写一份迟早漂移 |
 | BROAD 不进精确归一 | D2 |
 | 不确定不猜 | D3 |
@@ -164,4 +181,4 @@ uv run hmd eval --entitlements MOCK_LICENSED --compact
 
 改词典或 scope 权重后，重跑含歧义别名的用例，并扫 gold 里依赖「认到正确概念」的图像/跨类型 query。
 
-相关：[企业身份与目录 SSOT](seed.md)、[links / search-around](links.md)、[查询改写 vs 图通道](../retrieval/ontology-paths.md)、[Pipeline](../architecture/pipeline.md)。
+相关：[企业身份与目录 SSOT](seed.md)、[事实抽取 / `_ground`](extract.md)、[links / search-around](links.md)、[查询改写 vs 图通道](../retrieval/ontology-paths.md)、[Pipeline](../architecture/pipeline.md)。

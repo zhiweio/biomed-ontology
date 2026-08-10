@@ -93,19 +93,22 @@ KGCL / candidates **不是**生产图。人工审校后按变更类型写回 Git
 
 ```text
 .kgcl / candidates JSON
-  → 人工编辑 ontology/entities|dictionary|claims|mappings（按需）
+  → 人工编辑 ontology/entities|dictionary|claims|mappings|catalog（按需）
   → task ontology:validate
-  → uv run hmd foundation sync
+  → catalog：重建文献 KB / 必要时 hmd index
+  → entities/claims：uv run hmd foundation sync
   → 新 ontology_release_id 出现在 tool 响应
   → hmd eval / golden-eval 回归
 ```
 
 | 候选类型（常见） | 写回位置 |
 |---|---|
-| 建议别名 / mention | `ontology/dictionary/` 或实体 `aliases` |
+| 文献面概念 / 别名（检索·归一化） | `ontology/catalog/`（+ `ambiguity.yaml`） |
+| 建议别名 / mention（金路径 ER） | `ontology/dictionary/` 或实体 `aliases` |
 | suggested exactMatch | `ontology/entities/` 的 `exact_match_xrefs`（及 mappings 审阅表） |
-| 新企业实体 | `ontology/entities/`（必要时补 catalog） |
+| 新企业实体 | `ontology/entities/`（必要时同步补 catalog） |
 | 关系断言 | `ontology/claims/`（`validated` 才进 knowledge） |
+| 湖侧 extracted Claim 晋升 | 审校后写入 `ontology/claims/` 为 validated；见 [事实抽取](../ontology/extract.md) |
 
 完整 edit→后端矩阵见 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
 

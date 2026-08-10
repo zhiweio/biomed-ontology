@@ -171,4 +171,4 @@ uv run pytest tests/test_pipeline.py -q 2>/dev/null || true
 
 读代码路径：`open_dual_surface` → `build_literature_base` → `build_from_seed` → `catalog_files`。
 
-相关：[分层架构](layers.md)、[企业身份与目录 SSOT](../ontology/seed.md)、[GraphStore](../ontology/rdf.md)、[归一化](../ontology/normalize.md)。
+相关：[分层架构](layers.md)、[Document Pipeline](document-pipeline.md)、[企业身份与目录 SSOT](../ontology/seed.md)、[GraphStore](../ontology/rdf.md)、[归一化](../ontology/normalize.md)、[事实抽取](../ontology/extract.md)。
