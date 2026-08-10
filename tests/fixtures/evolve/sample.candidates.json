@@ -1,0 +1,73 @@
+{
+  "generated_at": "20260101T000000Z",
+  "queries": [
+    "er-alias-for-sclc",
+    "e2e-obs-12345",
+    "flush-check-999",
+    "xyz",
+    "unknownzyme-xyz-999",
+    "CHEBI:DEMO_ASPIRIN",
+    "tiny-cell lung ca"
+  ],
+  "candidates": [
+    {
+      "mention": "er-alias-for-sclc",
+      "query": "er-alias-for-sclc",
+      "canonical_entity": null,
+      "external_ids": ["HMD:ENT:IND:sclc"],
+      "confidence": 0.92,
+      "resolution_method": "bern2_candidate",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "e2e-obs-12345",
+      "query": "e2e-obs-12345",
+      "canonical_entity": null,
+      "external_ids": [],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "flush-check-999",
+      "query": "flush-check-999",
+      "canonical_entity": null,
+      "external_ids": [],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "xyz",
+      "query": "unknownzyme-xyz-999",
+      "canonical_entity": null,
+      "external_ids": ["CUI-less"],
+      "confidence": 0.56,
+      "resolution_method": "bern2_candidate",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "CHEBI:DEMO_ASPIRIN",
+      "query": "CHEBI:DEMO_ASPIRIN",
+      "canonical_entity": null,
+      "external_ids": ["CHEBI:DEMO_ASPIRIN"],
+      "confidence": 0.0,
+      "resolution_method": "unmapped",
+      "suggested_op": "create synonym"
+    },
+    {
+      "mention": "tiny-cell lung ca",
+      "query": "tiny-cell lung ca",
+      "canonical_entity": null,
+      "external_ids": ["HMD:ENT:IND:sclc"],
+      "confidence": 0.88,
+      "resolution_method": "bern2_candidate",
+      "suggested_op": "create synonym"
+    }
+  ],
+  "skipped": [],
+  "policy": {
+    "min_confidence_skip": 0.95,
+    "auto_apply": false
+  }
+}

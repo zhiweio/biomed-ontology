@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from rich import box
@@ -15,7 +16,11 @@ from rich.tree import Tree
 
 __all__ = [
     "enrich_resolve",
+    "render_evolve_apply",
+    "render_evolve_enrich",
     "render_evolve_mine",
+    "render_evolve_review",
+    "render_evolve_verify",
     "render_golden_eval",
     "render_golden_eval_compact",
     "render_golden_path",
@@ -1501,3 +1506,152 @@ def _evolve_footer(*, n_candidates: int, n_skipped: int, kgcl_path: str) -> Pane
         text.append("hmd serve --mcp", style="cyan")
         border = "bright_green"
     return Panel(text, border_style=border, box=box.ROUNDED)
+
+
+def render_evolve_enrich(
+    result: Any,
+    *,
+    console: Console | None = None,
+) -> None:
+    """Rich summary for evolve-enrich (counts + artifact paths)."""
+    out = console or Console()
+    payload = result.to_dict() if hasattr(result, "to_dict") else dict(result)
+    counts = payload.get("counts") or {}
+    out.print()
+    body = Text("evolve-enrich", style="bold")
+    body.append("\n")
+    body.append("policy: ", style="dim")
+    body.append(escape(str(payload.get("policy_path") or "")))
+    body.append("\n")
+    body.append("sources: ", style="dim")
+    body.append(escape(", ".join(Path(s).name for s in (payload.get("source_files") or []))))
+    out.print(Panel(body, box=box.ROUNDED, border_style="cyan", padding=(0, 1)))
+    table = Table(title="Filter / Propose", box=box.SIMPLE, show_header=True)
+    table.add_column("metric", style="dim")
+    table.add_column("n", justify="right")
+    for key in (
+        "input",
+        "keep",
+        "dismissed",
+        "soft_downrank",
+        "proposals",
+        "L1",
+        "L2",
+        "L3",
+        "llm_judged",
+        "llm_dismissed",
+        "llm_kept",
+        "llm_soft_downrank",
+        "llm_fallback",
+        "llm_provider",
+    ):
+        if key in counts:
+            table.add_row(key, str(counts[key]))
+    out.print(table)
+    art = Table(box=box.SIMPLE, show_header=False)
+    art.add_column("k", style="dim")
+    art.add_column("v")
+    art.add_row("proposals", str(payload.get("proposals_path") or ""))
+    art.add_row("kgcl", str(payload.get("kgcl_path") or ""))
+    out.print(art)
+    out.print()
+
+
+def render_evolve_review(
+    rows: list[dict[str, Any]],
+    *,
+    console: Console | None = None,
+    title: str = "Pending proposals",
+) -> None:
+    out = console or Console()
+    table = Table(title=title, box=box.SIMPLE_HEAVY)
+    table.add_column("id", style="cyan", no_wrap=True)
+    table.add_column("tier")
+    table.add_column("conf", justify="right")
+    table.add_column("op")
+    table.add_column("target")
+    table.add_column("mention")
+    for row in rows:
+        table.add_row(
+            str(row.get("proposal_id") or "")[:22],
+            str(row.get("risk_tier") or ""),
+            f"{float(row.get('confidence') or 0):.2f}",
+            str(row.get("op") or ""),
+            str(row.get("target_enterprise_id") or "—"),
+            escape(str(row.get("mention") or "")),
+        )
+    out.print()
+    out.print(table)
+    out.print()
+
+
+def render_evolve_apply(
+    result: Any,
+    *,
+    console: Console | None = None,
+) -> None:
+    out = console or Console()
+    payload = result.to_dict() if hasattr(result, "to_dict") else dict(result)
+    mode = "dry-run" if payload.get("dry_run") else "write"
+    out.print()
+    out.print(
+        Panel(
+            Text(f"evolve-apply ({mode})", style="bold"),
+            box=box.ROUNDED,
+            border_style="cyan",
+        )
+    )
+    table = Table(title="Patches", box=box.SIMPLE)
+    table.add_column("action")
+    table.add_column("mention")
+    table.add_column("enterprise_id")
+    table.add_column("path")
+    for row in payload.get("written") or []:
+        table.add_row(
+            str(row.get("action") or ""),
+            escape(str(row.get("mention") or "")),
+            str(row.get("enterprise_id") or ""),
+            str(row.get("path") or ""),
+        )
+    out.print(table)
+    skipped = list(payload.get("skipped") or [])
+    if skipped:
+        st = Table(title="Skipped", box=box.SIMPLE)
+        st.add_column("mention")
+        st.add_column("reason")
+        for row in skipped:
+            st.add_row(escape(str(row.get("mention") or "")), str(row.get("reason") or ""))
+        out.print(st)
+    out.print()
+
+
+def render_evolve_verify(
+    result: Any,
+    *,
+    console: Console | None = None,
+) -> None:
+    out = console or Console()
+    payload = result.to_dict() if hasattr(result, "to_dict") else dict(result)
+    table = Table(title="evolve-verify", box=box.SIMPLE_HEAVY)
+    table.add_column("ok")
+    table.add_column("mention")
+    table.add_column("expect")
+    table.add_column("got")
+    table.add_column("method")
+    table.add_column("conf", justify="right")
+    for row in payload.get("rows") or []:
+        ok = bool(row.get("pass"))
+        table.add_row(
+            "✓" if ok else "✗",
+            escape(str(row.get("mention") or "")),
+            str(row.get("expect") or ""),
+            str(row.get("got") or "—"),
+            str(row.get("method") or ""),
+            f"{float(row.get('confidence') or 0):.2f}",
+        )
+    out.print()
+    out.print(table)
+    out.print(
+        f"passed={payload.get('passed', 0)}  failed={payload.get('failed', 0)}"
+    )
+    out.print()

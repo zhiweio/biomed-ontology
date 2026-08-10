@@ -1,0 +1,70 @@
+# Foundation evolve-enrich filter / rank policy（通用，勿写死单次跑数 mention）
+# CLI: hmd foundation evolve-enrich --policy <path>
+
+version: "1"
+
+mention:
+  min_chars: 2
+  max_chars: 80
+  # 配置项模式库；业务可追加，禁止在 Python 硬编码同批噪声串
+  deny_patterns:
+    - '(?i)^e2e[-_]'
+    - '(?i)^flush-check[-_]'
+    - '(?i)^connect-e2e[-_]'
+    - '(?i)^connect-span[-_]'
+    - '(?i)^e2e-unmapped'
+    - '(?i)^unmapped$'
+    - '(?i)^connect$'
+    - '(?i):DEMO_'
+  allow_patterns: []
+
+query_mention:
+  # 归一化后 token Jaccard；低于阈值 → dismiss (L0)
+  min_overlap: 0.35
+  # 若 mention 是 query 子串或反之，视为对齐
+  accept_substring: true
+
+methods:
+  drop_methods: []
+  min_confidence_by_method:
+    bern2_candidate: 0.0
+    unmapped: 0.0
+
+occurrences:
+  # 无湖时用 candidates 内 mention_key 计数；生产建议 ≥2
+  min: 1
+
+skipped:
+  # 再 resolve 已 ≥ 此置信且有 canonical → 排除
+  min_confidence: 0.95
+
+gold:
+  # data/gold/resolve.yaml 中 expect: null → 自动 L0
+  resolve_path: data/gold/resolve.yaml
+  dismiss_expect_null: true
+
+rank:
+  weight_occurrences: 1.0
+  weight_confidence: 1.0
+  weight_evidence: 0.5
+  weight_overlap: 0.3
+
+sources:
+  deny_source_prefixes: []
+
+# 受限通用 LLM 裁决（Settings HMD_LLM_*；无 key → 自动跳过）
+# 不引入生物医药专垂模型；硬 deny/gold-null 不可被 LLM 推翻
+llm:
+  enabled: true
+  provider: settings
+  route: borderline   # borderline | all_keep
+  batch_size: 16
+  min_confidence: 0.6
+  max_rationale_chars: 200
+  allow_dismiss_labels:
+    - noise
+    - test_traffic
+    - fragment
+    - non_entity
+  fail_mode: keep_rule_decision
+  prompt_path: ontology/policies/evolve_llm_filter_prompt.md

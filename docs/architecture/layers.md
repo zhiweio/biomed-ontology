@@ -48,7 +48,7 @@ L4 语料治理      文档标引 + 三模态抽取 → 结构化事实 + proven
 L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列 + Evidence Index
 L6 Semantic Access  单一 hmd serve：KB 工具（ToolApi）+ Foundation Semantic Ops
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
-L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release；evolve-mine 不自动改本体
+L8 演进闭环      Signal → enrich/proposals → approve → apply(Git) → Release；不自动写生产图
 ```
 
 ```mermaid

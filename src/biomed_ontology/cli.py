@@ -1075,12 +1075,12 @@ def foundation_evolve_mine(
     include_lake: bool | None = typer.Option(
         None,
         "--include-lake/--no-include-lake",
-        help="合并 Iceberg/WAL er_observations（默认 HMD_EVOLVE_INCLUDE_LAKE）",
+        help="合并 Iceberg/WAL er_observations（默认开启；HMD_EVOLVE_INCLUDE_LAKE / --no-include-lake）",
     ),
 ) -> None:
     """P2：unmapped / 低置信 → KGCL 候选落库（不自动改本体）。
 
-    默认 Rich 展示候选与跳过项；`--json` 给脚本，`--compact` 只要摘要。
+    默认合并湖/WAL mention；Rich 展示候选与跳过项；`--json` 给脚本。
     """
     import json
 
@@ -1097,6 +1097,242 @@ def foundation_evolve_mine(
         console.print_json(json.dumps(result.to_dict(), ensure_ascii=False))
         return
     render_evolve_mine(result, console=console, verbose=not compact)
+
+
+@foundation_app.command("evolve-enrich")
+def foundation_evolve_enrich(
+    from_path: list[Path] | None = typer.Option(
+        None,
+        "--from",
+        help="candidates.json 路径；可重复。默认读 foundation_candidates/*.candidates.json",
+    ),
+    policy: Path | None = typer.Option(
+        None, "--policy", help="filter 策略 YAML（默认 ontology/policies/evolve_filter.yaml）"
+    ),
+    out_dir: Path | None = typer.Option(None, "--out-dir", help="proposals 输出目录"),
+    skip_tools: bool = typer.Option(
+        False, "--skip-tools", help="跳过 Resolver/BIOS 取证（仅 filter + 规则提案）"
+    ),
+    use_llm: bool = typer.Option(
+        True,
+        "--llm/--no-llm",
+        help="受限 LLM 裁决 borderline（默认开启；无 API key 自动跳过）",
+    ),
+    json_out: bool = typer.Option(False, "--json", help="输出完整 JSON"),
+) -> None:
+    """candidates → policy filter → LLM 裁决（默认开）→ 取证 → proposals.jsonl。"""
+    import json
+
+    from biomed_ontology.cli_ui import command_header, progress_disabled, tqdm_bar
+    from biomed_ontology.foundation.evolve_propose import run_enrich
+    from biomed_ontology.foundation.obs_log import configure_foundation_logging
+    from biomed_ontology.foundation.render import render_evolve_enrich
+
+    configure_foundation_logging(json_logs=True)
+    disable_progress = json_out or progress_disabled()
+    if not json_out:
+        command_header(
+            "foundation evolve-enrich",
+            meta=[
+                ("from", ",".join(str(p) for p in from_path) if from_path else "glob candidates"),
+                ("policy", str(policy or "default")),
+                ("skip_tools", str(skip_tools)),
+                ("llm", "on" if use_llm else "off"),
+            ],
+        )
+    llm_bar = tqdm_bar(desc="llm-filter", unit="batch", disable=disable_progress)
+    bar = tqdm_bar(desc="enrich", unit="mention", disable=disable_progress)
+    with llm_bar:
+        with bar:
+            result = run_enrich(
+                from_paths=list(from_path) if from_path else None,
+                policy_path=policy,
+                out_dir=out_dir,
+                skip_tools=skip_tools,
+                use_llm=use_llm,
+                progress=bar,
+                llm_progress=llm_bar,
+            )
+    if json_out:
+        print(json.dumps(result.to_dict(), ensure_ascii=False))
+        return
+    render_evolve_enrich(result, console=console)
+
+
+@foundation_app.command("evolve-review")
+def foundation_evolve_review(
+    proposals: Path | None = typer.Option(None, "--proposals", help="proposals.jsonl"),
+    pending: bool = typer.Option(True, "--pending/--all", help="仅 pending_approval"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """列出提案队列（Rich Table / JSON）。"""
+    import json
+
+    from biomed_ontology.foundation.evolve_apply import load_proposals
+    from biomed_ontology.foundation.render import render_evolve_review
+
+    path, rows = load_proposals(proposals)
+    if pending:
+        rows = [r for r in rows if r.get("status") == "pending_approval"]
+    if json_out:
+        print(json.dumps({"proposals_path": str(path), "rows": rows}, ensure_ascii=False))
+        return
+    render_evolve_review(rows, console=console, title=f"{path.name} ({len(rows)})")
+
+
+@foundation_app.command("evolve-approve")
+def foundation_evolve_approve(
+    proposal_id: list[str] | None = typer.Argument(None, help="HMDPROP:…；可多个"),
+    proposals: Path | None = typer.Option(None, "--proposals"),
+    tier: str | None = typer.Option(None, "--tier", help="如 L1"),
+    min_confidence: float | None = typer.Option(None, "--min-confidence"),
+    by: str = typer.Option("curator", "--by"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """批准提案（只改 proposals.jsonl 状态，不写本体）。"""
+    import json
+
+    from biomed_ontology.cli_ui import command_header, metrics_table, progress_disabled, tqdm_bar
+    from biomed_ontology.foundation.evolve_apply import approve_proposals
+    from biomed_ontology.foundation.render import render_evolve_review
+
+    if not proposal_id and not tier:
+        console.print("[red]需要 proposal_id 或 --tier[/red]")
+        raise typer.Exit(2)
+    if not json_out:
+        command_header(
+            "foundation evolve-approve",
+            meta=[("by", by), ("tier", tier or "—"), ("ids", str(len(proposal_id or [])))],
+        )
+    # batch path uses tqdm when many ids implied via tier
+    bar = tqdm_bar(desc="approve", unit="prop", disable=json_out or progress_disabled())
+    with bar:
+        path, selected = approve_proposals(
+            proposals,
+            proposal_ids=list(proposal_id) if proposal_id else None,
+            tier=tier,
+            min_confidence=min_confidence,
+            by=by,
+        )
+        bar.total = len(selected)
+        bar.update(len(selected))
+    if json_out:
+        print(
+            json.dumps(
+                {"proposals_path": str(path), "approved": selected},
+                ensure_ascii=False,
+            )
+        )
+        return
+    render_evolve_review(selected, console=console, title="Approved")
+    metrics_table("approve", [("count", str(len(selected))), ("file", str(path))])
+
+
+@foundation_app.command("evolve-reject")
+def foundation_evolve_reject(
+    proposal_id: list[str] | None = typer.Argument(None, help="HMDPROP:…"),
+    proposals: Path | None = typer.Option(None, "--proposals"),
+    tier: str | None = typer.Option(None, "--tier"),
+    reason: str = typer.Option("rejected", "--reason"),
+    by: str = typer.Option("curator", "--by"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """拒绝提案。"""
+    import json
+
+    from biomed_ontology.cli_ui import command_header, metrics_table
+    from biomed_ontology.foundation.evolve_apply import reject_proposals
+    from biomed_ontology.foundation.render import render_evolve_review
+
+    if not proposal_id and not tier:
+        console.print("[red]需要 proposal_id 或 --tier[/red]")
+        raise typer.Exit(2)
+    if not json_out:
+        command_header("foundation evolve-reject", meta=[("reason", reason), ("by", by)])
+    path, selected = reject_proposals(
+        proposals,
+        proposal_ids=list(proposal_id) if proposal_id else None,
+        tier=tier,
+        reason=reason,
+        by=by,
+    )
+    if json_out:
+        print(
+            json.dumps(
+                {"proposals_path": str(path), "rejected": selected},
+                ensure_ascii=False,
+            )
+        )
+        return
+    render_evolve_review(selected, console=console, title="Rejected")
+    metrics_table("reject", [("count", str(len(selected))), ("file", str(path))])
+
+
+@foundation_app.command("evolve-apply")
+def foundation_evolve_apply(
+    proposals: Path | None = typer.Option(None, "--proposals"),
+    write: bool = typer.Option(
+        False, "--write", help="真正写入 dictionary/zingg；默认 dry-run"
+    ),
+    dictionary: Path | None = typer.Option(None, "--dictionary", help="覆盖 dictionary 路径"),
+    zingg: Path | None = typer.Option(None, "--zingg", help="覆盖 zingg_matches 路径"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """将 approved 提案确定性写回 Git 策展面（默认 dry-run）。"""
+    import json
+
+    from biomed_ontology.cli_ui import command_header, progress_disabled, tqdm_bar
+    from biomed_ontology.foundation.evolve_apply import apply_approved
+    from biomed_ontology.foundation.render import render_evolve_apply
+
+    if not json_out:
+        command_header(
+            "foundation evolve-apply",
+            meta=[("mode", "write" if write else "dry-run")],
+        )
+    bar = tqdm_bar(desc="apply", unit="prop", disable=json_out or progress_disabled())
+    with bar:
+        result = apply_approved(
+            proposals,
+            dry_run=not write,
+            progress=bar,
+            dictionary_path=dictionary,
+            zingg_path=zingg,
+        )
+    if json_out:
+        print(json.dumps(result.to_dict(), ensure_ascii=False))
+        return
+    render_evolve_apply(result, console=console)
+
+
+@foundation_app.command("evolve-verify")
+def foundation_evolve_verify(
+    proposals: Path | None = typer.Option(None, "--proposals"),
+    dictionary: Path | None = typer.Option(
+        None, "--dictionary", help="用指定 dictionary 做 verify（sandbox e2e）"
+    ),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """对 approved/applied 提案再 resolve，断言挂上目标 ENT。"""
+    import json
+
+    from biomed_ontology.cli_ui import command_header, progress_disabled, tqdm_bar
+    from biomed_ontology.foundation.evolve_apply import verify_proposals
+    from biomed_ontology.foundation.render import render_evolve_verify
+
+    if not json_out:
+        command_header("foundation evolve-verify")
+    bar = tqdm_bar(desc="verify", unit="mention", disable=json_out or progress_disabled())
+    with bar:
+        result = verify_proposals(
+            proposals, progress=bar, dictionary_path=dictionary
+        )
+    if json_out:
+        print(json.dumps(result.to_dict(), ensure_ascii=False))
+        raise typer.Exit(1 if result.failed else 0)
+    render_evolve_verify(result, console=console)
+    if result.failed:
+        raise typer.Exit(1)
 
 
 @foundation_app.command("zingg-run")

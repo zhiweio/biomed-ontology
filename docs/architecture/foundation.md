@@ -198,19 +198,20 @@ uv run hmd foundation sync
 uv run hmd foundation resolve "HMPL-504"
 uv run hmd foundation golden --candidate HMPL-504
 uv run hmd foundation evolve-mine
+uv run hmd foundation evolve-enrich --from data/releases/foundation_candidates/<stamp>.candidates.json
 uv run hmd serve --mcp
 ```
 
-### 3.8 P2：Data Loop（脚手架边界）
+### 3.8 P2：Data Loop（propose → approve → apply）
 
 | 做 | 不做 |
 |---|---|
-| unmapped / 低置信 → `evolve-mine` → `.kgcl` + candidates JSON | 自动改 GraphDB ontology |
-| 候选含建议别名 / suggested exactMatch | 自动策展 / `evolve-apply` |
+| unmapped / 低置信 → `evolve-mine` → candidates JSON | 自动改 GraphDB ontology |
+| policy filter + enrich → `proposals.jsonl`；人工 approve 后 `evolve-apply --write` | 无人审校 apply；硬编码单次噪声串 |
 | 观测事件 → Redpanda → Iceberg `obs_tool_io` / `er_observations` | 自研 ObsShipper；OTel（P2 运维） |
 | `zingg-run` 物化/导出模糊 matches | 查询路径 Spark；BIOS 全量当 master |
 
-复用 `src/biomed_ontology/evolution/`、`foundation/evolve.py`、`foundation/zingg_io.py`、`lake/obs_events.py`。
+详情见 [演进闭环](../evolution/loop.md)。复用 `foundation/evolve.py`、`evolve_propose.py`、`evolve_apply.py`、`zingg_io.py`、`lake/obs_events.py`。
 
 ### 3.9 观测入湖与 Zingg 配置
 
@@ -228,7 +229,7 @@ uv run hmd serve --mcp
 | `HMD_ZINGG_MIN_OCCURRENCES` | `1` | 物化最低出现次数 |
 | `HMD_ZINGG_OBSERVATIONS` | `all` | 物化 observation 源 |
 | `HMD_ZINGG_SKIP_DOCKER` | `false` | 跳过 `docker/zingg` |
-| `HMD_EVOLVE_INCLUDE_LAKE` | `false` | evolve-mine 合并湖信号 |
+| `HMD_EVOLVE_INCLUDE_LAKE` | `true` | evolve-mine 默认合并湖信号 |
 
 ```bash
 task obs:up       # Redpanda :19092（Settings 默认已指向）

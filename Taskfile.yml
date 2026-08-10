@@ -464,6 +464,32 @@ tasks:
         fi
       - uv run hmd foundation sync
 
+  evolve:run:
+    desc: evolve-mine（默认含湖）→ evolve-enrich（默认 LLM）
+    cmds:
+      - uv run hmd foundation evolve-mine --json
+      - uv run hmd foundation evolve-enrich
+
+  evolve:apply-approved:
+    desc: 对已 approve 提案 dry-run apply（加 WRITE=1 才真正写 dictionary/zingg）
+    cmds:
+      - |
+        if [ "${WRITE:-}" = "1" ]; then
+          uv run hmd foundation evolve-apply --write
+        else
+          uv run hmd foundation evolve-apply
+        fi
+
+  evolve:verify:
+    desc: 对 approved/applied 提案再 resolve 断言
+    cmds:
+      - uv run hmd foundation evolve-verify
+
+  evolve:e2e:
+    desc: 合成 fixture 跑 enrich→approve→apply(sandbox)→pytest（含 LLM filter 假 provider）
+    cmds:
+      - uv run pytest tests/test_evolve_propose.py tests/test_evolve_llm_filter.py -q
+
   ontology:validate:
     desc: Ontology-as-Code 校验（目录 / 映射 / Golden Path / 种子一致性）
     cmds:

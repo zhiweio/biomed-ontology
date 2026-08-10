@@ -21,7 +21,7 @@ Foundation 侧挖掘：`hmd foundation evolve-mine`（见 [Foundation · Data Lo
 | 信号 ID | 类型 + 载荷哈希（`HMDS:…`） | 自增 ID（重复挖掘淹没队列） |
 | 策展形态 | KGCL changeset（`ChangeSet` / `KgclOp`） | 直接改生产 GraphDB |
 | PoC 范围 | 采集 + 候选 + KGCL 脚手架 | 完整生产策展工作台 |
-| Foundation evolve | 只产出 `.kgcl` + candidates JSON | `evolve-apply` 自动写本体 |
+| Foundation evolve | mine → enrich → 人工 approve → apply 写 Git | 无人审校自动写生产 GraphDB |
 | 质量闸门 | LLM/规则内容 `PENDING`，审校前不进 tool 返回 | 提案绕过审校变「已发布事实」 |
 
 ## 设计与实现
@@ -79,16 +79,25 @@ flowchart LR
 ### Foundation Data Loop（一期硬边界）
 
 ```bash
-uv run hmd foundation evolve-mine "unknownzyme-xyz-999"
+uv run hmd foundation evolve-mine "unknownzyme-xyz-999"   # 默认 include-lake
+uv run hmd foundation evolve-enrich --from data/releases/foundation_candidates/<stamp>.candidates.json  # 默认 --llm
+uv run hmd foundation evolve-review --pending
+uv run hmd foundation evolve-approve --tier L1 --min-confidence 0.9 --by curator@hmd
+uv run hmd foundation evolve-apply            # dry-run
+uv run hmd foundation evolve-apply --write    # 写 dictionary / zingg_matches
+uv run hmd foundation evolve-verify
 uv run hmd foundation zingg-run --mode stub-link --observations bootstrap
 ```
 
+Task 捷径：`task evolve:run` → `task evolve:apply-approved` → `task evolve:verify`；合成 e2e：`task evolve:e2e`。
+
 | 做 | 不做 |
 |---|---|
-| `resolve_entity` unmapped / 低置信 → `.kgcl` + candidates JSON | 自动改 GraphDB ontology |
-| 候选含建议别名 / suggested exactMatch | 自动策展 / `evolve-apply` |
+| `resolve_entity` unmapped / 低置信 → `.candidates.json` | 自动改 GraphDB ontology |
+| policy 驱动 filter/rank → `*.proposals.jsonl` + 可执行 KGCL | Python 硬编码某次 e2e mention |
+| 人工 `evolve-approve` 后 `evolve-apply` 写 Git 策展面 | 无人审校 merge / LLM 直接 mint ENT |
 | runtime/lake 缺口 → Redpanda → Iceberg `hmd.er_observations` | 热路径同步 PyIceberg append |
-| Zingg 离线 link → `zingg_matches.jsonl`（模糊回收已有 ENT） | Zingg mint ENT / auto-apply KGCL / 查询时跑 Spark |
+| Zingg 离线 link → `zingg_matches.jsonl`（模糊回收已有 ENT） | Zingg mint ENT / 查询时跑 Spark |
 
 ```mermaid
 flowchart LR
@@ -97,19 +106,59 @@ flowchart LR
   ice[Iceberg er_observations]
   zingg[Zingg batch]
   matches[zingg_matches.jsonl]
-  evolve[evolve-mine signals]
-  curator[Human curate ontology]
+  mine[evolve-mine]
+  enrich[evolve-enrich]
+  gate[approve reject]
+  apply[evolve-apply Git SSOT]
+  verify[evolve-verify]
 
   usage -->|Kafka API produce| rp
   rp -->|Connect Sink| ice
   ice --> zingg
-  ice --> evolve
+  ice --> mine
   zingg --> matches
   matches -->|fuzzy hit| usage
-  evolve -->|true gaps| curator
+  mine --> enrich --> gate --> apply --> verify
+  verify -->|new gaps| ice
 ```
 
 观测入湖见 [`docker/obs/README.md`](../../docker/obs/README.md)；Zingg 见 [`docker/zingg/README.md`](../../docker/zingg/README.md)。
+
+#### propose → approve → apply → eval
+
+| 阶段 | 命令 | 产物 |
+|---|---|---|
+| Mine | `evolve-mine` | `data/releases/foundation_candidates/<stamp>.{candidates.json,kgcl}` |
+| Filter / Enrich | `evolve-enrich --from … --policy ontology/policies/evolve_filter.yaml` | `data/releases/foundation_proposals/<stamp>.{proposals.jsonl,kgcl}` |
+| Review | `evolve-review --pending` | Rich 表（tier / conf / op / target） |
+| Gate | `evolve-approve` / `evolve-reject` | 仅改提案 `status` |
+| Apply | `evolve-apply`（默认 dry-run；`--write` 落库） | `ontology/dictionary/` 或 `zingg_matches.jsonl` |
+| Verify | `evolve-verify` | 再 resolve；失败 exit 1 |
+
+风险分层：`L0` 策略 dismiss；`L1` 别名挂已有 `HMD:ENT:*`（可批量 approve）；`L2` xref/catalog；`L3` create node 仅草稿，apply 跳过。
+
+#### Stage B 双层 Filter（规则 + 受限通用 LLM）
+
+```text
+candidates
+  → 确定性硬闸门（deny_patterns / gold expect:null / 长度…）→ L0
+  → borderline（低 overlap、低频次等）+ 不清晰 keep
+  → 受限 LLM 裁决 disposition（keep|dismiss|soft_downrank）
+  → Stage C 工具取证（Resolver/BIOS/BERN2/Zingg）
+```
+
+| 层 | 做什么 | 不做什么 |
+|---|---|---|
+| 规则 | 机械噪声、金标负例、长度 | 写死某次 e2e 串在 Python |
+| 受限 LLM | 语义噪声 / 碎片 / 测试话术变体 | 选 `op`/`target`；mint ENT；推翻硬 dismiss |
+| 模型 | 通用 Chat（`HMD_LLM_*`，DeepSeek/OpenAI/Qwen） | 不引入 BioBERT 等专垂模型作 Filter 依赖 |
+
+- Policy：[`evolve_filter.yaml`](../../ontology/policies/evolve_filter.yaml) 的 `llm:` 段 + 提示词 [`evolve_llm_filter_prompt.md`](../../ontology/policies/evolve_llm_filter_prompt.md)
+- CLI：默认 `--llm`；关：`--no-llm`（无 `HMD_LLM_API_KEY` → Null，行为等同仅规则）
+- 失败策略：`fail_mode: keep_rule_decision`（非法 JSON / 调用失败不丢真缺口）
+- Rich 摘要含 `llm_judged` / `llm_dismissed` / `llm_fallback`；`--json` 关闭进度条
+
+Filter **禁止**在代码里写死 `e2e-*` / `flush-check-*` 等业务串：一律进 policy（deny_patterns、overlap、gold `expect: null`、频次、LLM labels）。人读输出走 Rich + `tqdm.rich`（[`cli_ui.py`](../../src/biomed_ontology/cli_ui.py)）。
 
 ### 配置（`Settings` / `.env`）
 
@@ -124,21 +173,23 @@ flowchart LR
 | `HMD_ZINGG_MIN_OCCURRENCES` | `1` | 物化最低频次 |
 | `HMD_ZINGG_OBSERVATIONS` | `all` | `lake` / `bootstrap` / `all` |
 | `HMD_ZINGG_SKIP_DOCKER` | `false` | `zingg-run --mode full` 跳过 Spark 容器 |
-| `HMD_EVOLVE_INCLUDE_LAKE` | `false` | `evolve-mine` 默认合并湖/WAL mention |
+| `HMD_EVOLVE_INCLUDE_LAKE` | `true` | `evolve-mine` 默认合并湖/WAL；关：`false` / `--no-include-lake` |
+| `HMD_LLM_PROVIDER` / `HMD_LLM_API_KEY` | deepseek / 空 | evolve-enrich 默认开 LLM 裁决；无 key → 跳过 |
 
-CLI 覆盖：`hmd foundation zingg-run --observations …`、`--min-score …`；`hmd foundation evolve-mine --include-lake`。
+CLI 覆盖：`zingg-run --observations …`；`evolve-mine --no-include-lake`；`evolve-enrich --policy … --no-llm`。
 
-### 候选落地：回到策展 YAML 再 sync
+### 候选落地：approve 后 apply，再 sync
 
-KGCL / candidates **不是**生产图。人工审校后按变更类型写回 Git 策展面，再走校验与投影：
+candidates / proposals **不是**生产图。默认路径是机器提案 + 人工 approve + `evolve-apply --write` 确定性补丁；也可手改 YAML。随后校验与投影：
 
 ```text
-.kgcl / candidates JSON
-  → 人工编辑 ontology/entities|dictionary|claims|mappings|catalog（按需）
+candidates.json
+  → evolve-enrich → proposals.jsonl
+  → evolve-approve
+  → evolve-apply --write → ontology/dictionary|mappings
   → task ontology:validate
-  → catalog：uv run hmd index --incremental（或 task ontology:refresh-literature）
-  → entities/claims：uv run hmd foundation sync
-  → 新 ontology_release_id 出现在 tool 响应
+  → evolve-verify / hmd foundation resolve
+  → entities/claims：uv run hmd foundation sync（若改了 entities）
   → hmd eval / golden-eval 回归
 ```
 
@@ -178,14 +229,19 @@ LLM/规则生成内容以 `PENDING` 入库，未经审校不得进 tool 返回�
 
 - **hub 不共享**：`mine_signals` 空跑。
 - **跳过 Impact**：发版后静默退化。
-- **把 evolve-mine 当生产修复**：只应产出候选，人工策展后 sync。
+- **把 evolve-mine / enrich 当生产修复**：只应产出候选/提案，approve 后才 apply。
+- **硬编码噪声过滤**：应改 `evolve_filter.yaml`，否则后续批次无法复用。
+- **LLM 推翻硬 dismiss / 直接 mint ENT**：违反 Filter 合同；应只改 disposition。
 
 ## 如何验证
 
 ```bash
 uv run hmd signals --help
-uv run pytest tests/test_quality_evolution.py -q
+uv run pytest tests/test_quality_evolution.py tests/test_evolve_propose.py tests/test_evolve_llm_filter.py -q
 uv run hmd foundation evolve-mine "test-alias" --json
+uv run hmd foundation evolve-enrich --from tests/fixtures/evolve/sample.candidates.json --skip-tools --no-llm
+uv run hmd foundation evolve-enrich --from tests/fixtures/evolve/sample.candidates.json --skip-tools --llm
+task evolve:e2e
 ```
 
 评测回归见 [dual-surface](../eval/dual-surface.md)；观测见 [pillars](../observability/pillars.md)。

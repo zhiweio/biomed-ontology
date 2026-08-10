@@ -88,7 +88,7 @@ def mine_unmapped_candidates(
     *,
     world: WorldModel | None = None,
     out_dir: Path | None = None,
-    include_lake: bool = False,
+    include_lake: bool = True,
 ) -> EvolveMineResult:
     """对一批查询跑 resolve；unmapped / 低置信写入候选文件。"""
     wm = world or load_world_model()

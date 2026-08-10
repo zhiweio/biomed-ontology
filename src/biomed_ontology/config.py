@@ -158,7 +158,7 @@ class Settings(BaseSettings):
 
     # --- Data Loop / evolve-mine --------------------------------------------
     # true：evolve-mine 默认合并 Iceberg/WAL er_observations
-    evolve_include_lake: bool = False
+    evolve_include_lake: bool = True
 
     bios_license_ack: str = ""
     bios_init: Literal["full", "subset"] = "full"

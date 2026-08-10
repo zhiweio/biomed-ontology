@@ -189,11 +189,37 @@ class EntityResolver:
                     entity_kind=ent.entity_kind,
                 )
 
-        # 5) 词典条目里的 external_ids（经 BERN2.scan 注入）
+        # 5) 词典条目里的 enterprise_id / external_ids（经 BERN2.scan 注入）
         dict_entry = self.bern2.dictionary.lookup(mention)
         if dict_entry:
             if dict_entry.get("enterprise_id"):
-                return self.resolve_mention(dict_entry["enterprise_id"])
+                eid = str(dict_entry["enterprise_id"])
+                if is_enterprise_id(eid):
+                    ent = self.index.by_id.get(eid)
+                    if ent:
+                        return ResolveHit(
+                            canonical_entity=eid,
+                            mention=mention,
+                            external_ids=list(ent.exact_match_xrefs),
+                            bios_concepts=_bios_ids(ent.exact_match_xrefs),
+                            confidence=1.0,
+                            resolution_method="dictionary",
+                            entity_kind=ent.entity_kind,
+                        )
+                    # 策展词典可指向 catalog 派生 ENT（尚未写入 entities YAML）
+                    return ResolveHit(
+                        canonical_entity=eid,
+                        mention=mention,
+                        external_ids=[
+                            x
+                            for x in list(dict_entry.get("external_ids") or [])
+                            if x and not str(x).startswith("HMD:ENT:")
+                        ],
+                        bios_concepts=[],
+                        confidence=1.0,
+                        resolution_method="dictionary",
+                        entity_kind=str(dict_entry.get("type") or "") or None,
+                    )
             for xid in dict_entry.get("external_ids", []):
                 hit = self._from_external(str(xid), mention)
                 if hit.canonical_entity:
@@ -216,6 +242,16 @@ class EntityResolver:
         # 局部片段误标成无关基因（无 ENT 公开路径依赖此短路）。
         if stripped and is_external_id(stripped):
             return [self.resolve_mention(stripped)]
+        # 整串已是词典 / zingg / xref 命中时优先于 BERN2 切词，避免子串误吸
+        if stripped:
+            exact = self.resolve_mention(stripped)
+            if exact.canonical_entity and exact.resolution_method in {
+                "dictionary",
+                "zingg",
+                "enterprise_id",
+                "xref",
+            }:
+                return [exact]
         mentions = self.bern2.annotate(text)
         if not mentions:
             # 整句当一个 mention 再试一次（短查询）

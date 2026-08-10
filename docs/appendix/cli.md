@@ -47,7 +47,9 @@
 | `hmd foundation golden-eval [--compact] [--json]` | 多路径金标评测（Rich） | [golden-path](../ontology/golden-path.md) |
 | `hmd foundation sync` | YAML → GraphDB Named Graphs + Milvus Evidence | 同上 |
 | `hmd foundation bios-load` | BIOS 全量（默认）/ `--subset` | [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
-| `hmd foundation evolve-mine [--json] [--compact] [--include-lake]` | unmapped/低置信 → KGCL 候选（**不改**本体）；湖合并默认 `HMD_EVOLVE_INCLUDE_LAKE` | [evolution](../evolution/loop.md) |
+| `hmd foundation evolve-mine [--json] [--compact] [--include-lake/--no-include-lake]` | unmapped/低置信 → KGCL 候选（**不改**本体）；**默认合并湖**（`HMD_EVOLVE_INCLUDE_LAKE=true`） | [evolution](../evolution/loop.md) |
+| `hmd foundation evolve-enrich [--from …] [--llm/--no-llm]` | filter + **默认 LLM 裁决** + 提案；无 API key 自动跳过 LLM | 同上 |
+| `hmd foundation evolve-review` / `approve` / `reject` / `apply` / `verify` | 提案队列 → 人工闸门 → Git 策展面 dry-run/write → 再 resolve | 同上 |
 | `hmd foundation zingg-run [--mode …]` | 物化/导出模糊 matches；观测源/阈值默认见 `HMD_ZINGG_*` | [evolution](../evolution/loop.md)、[docker/zingg](../../docker/zingg/README.md) |
 | `hmd lake init` | 创建 Iceberg 表（含 `obs_tool_io` / `er_observations`） | [pillars](../observability/pillars.md)、[docker/obs](../../docker/obs/README.md) |
 | `task obs:up` / `task zingg:run` | Redpanda；本地 stub Zingg | 同上 |
