@@ -127,6 +127,10 @@ class HybridSearcher:
         backend: SearchBackend,
         neighborhood: ConceptNeighborhood,
         chunk_store: Any | None = None,
+        nen_assist: Any | None = None,
+        lexical_expand: Any | None = None,
+        public_nen_assist: bool | None = None,
+        public_lexical_expand: bool | None = None,
     ) -> None:
         if backend is None:  # type: ignore[comparison-overlap]
             raise ValueError("检索 backend 必填（Milvus）")
@@ -134,6 +138,20 @@ class HybridSearcher:
         self.backend = backend
         self.neighborhood = neighborhood
         self.chunk_store = chunk_store
+        self.nen_assist = nen_assist
+        self.lexical_expand = lexical_expand
+        from biomed_ontology.config import settings as _settings
+
+        self.public_nen_assist = (
+            _settings.public_nen_assist if public_nen_assist is None else public_nen_assist
+        )
+        self.public_lexical_expand = (
+            _settings.public_lexical_expand
+            if public_lexical_expand is None
+            else public_lexical_expand
+        )
+        self.last_expansion_source: str = "none"
+        self.last_expansion_terms: list[str] = []
         self._by_concept: dict[str, set[str]] = defaultdict(set)
         self._chunks: dict[str, Chunk] = {}
         self._meta: dict[str, ChunkMeta] = {}
@@ -239,6 +257,7 @@ class HybridSearcher:
         candidate_k: int | None = None,
         reranker: Reranker | None = None,
         rewrite: bool | None = None,
+        expansion_terms: list[str] | None = None,
     ) -> tuple[list[SearchHit], int]:
         """检索并融合。
 
@@ -249,6 +268,9 @@ class HybridSearcher:
         `rewrite` 控制本体改写是否下发给词法/向量通道，缺省跟随 `expand`。
         拆成两个开关是为了让"图通道用了本体"和"查询串用了本体"能分开消融 ——
         合成一个开关时，一次改动同时动两处，任何结论都归因不到具体哪一处。
+
+        `expansion_terms`：调用方（如 resolve.search_surfaces）注入的公开表面词；
+        无 ENT seeds 时用于 BM25/DENSE 改写，永不作为 GRAPH 种子。
         """
         ent = entitlements if entitlements is not None else ctx.entitlements
         scope = LicenseScope(
@@ -261,9 +283,24 @@ class HybridSearcher:
         # 两者混用会让图通道在不开改写时被整条跳过 —— 而那正是它该独立起作用的配置。
         seeds: list[str] | None = None
         lexical_query, dense_queries = None, ()
+        self.last_expansion_source = "none"
+        self.last_expansion_terms = []
         if do_rewrite and {RetrievalChannelEnum.BM25, RetrievalChannelEnum.DENSE} & set(channels):
             seeds = self._seed_concepts(query, ctx)
             lexical_query, dense_queries = self._rewrite_queries(query, seeds)
+            if seeds:
+                self.last_expansion_source = "enterprise"
+            client_terms = [t for t in (expansion_terms or []) if t and str(t).strip()]
+            if not seeds and client_terms:
+                lexical_query, dense_queries = self._rewrite_with_terms(query, client_terms)
+                self.last_expansion_source = "client_terms"
+                self.last_expansion_terms = list(client_terms)
+            elif not seeds and self.public_lexical_expand and self.lexical_expand is not None:
+                terms = list(self.lexical_expand.propose_terms(query) or [])
+                if terms:
+                    lexical_query, dense_queries = self._rewrite_with_terms(query, terms)
+                    self.last_expansion_source = "public_lexical"
+                    self.last_expansion_terms = terms
 
         request = RetrievalRequest(
             query=query,
@@ -315,6 +352,7 @@ class HybridSearcher:
                     "hmd.orphan_dropped": orphan_dropped,
                     "hmd.reranker": getattr(reranker, "name", "") if reranker else "",
                     "ontology.concept_ids": ",".join(concept_ids),
+                    "hmd.expansion_source": self.last_expansion_source,
                 }
             )
         return hits, filtered
@@ -383,7 +421,38 @@ class HybridSearcher:
 
     def _seed_concepts(self, query: str, ctx: TraceContext) -> list[str]:
         res = self.kb.normalizer.normalize(query, ctx=ctx, detect=True, min_confidence=0.6)
-        return res.concept_ids
+        seeds = list(res.concept_ids)
+        if self.public_nen_assist and self.nen_assist is not None:
+            try:
+                assisted = self.nen_assist.propose_ents(query, exclude=set(seeds))
+            except Exception:
+                assisted = []
+            for eid in assisted:
+                if eid not in seeds:
+                    seeds.append(eid)
+        return seeds
+
+    def _rewrite_with_terms(
+        self, query: str, terms: list[str], *, max_terms: int = 8
+    ) -> tuple[str | None, tuple[str, ...]]:
+        lowered = query.casefold()
+        seen: set[str] = set()
+        cleaned: list[str] = []
+        for t in terms:
+            s = str(t).strip()
+            if not s:
+                continue
+            key = normalize_alias(s) or s.casefold()
+            if key in seen or s.casefold() in lowered:
+                continue
+            seen.add(key)
+            cleaned.append(s)
+            if len(cleaned) >= max_terms:
+                break
+        if not cleaned:
+            return None, ()
+        rewritten = f"{query} {' '.join(cleaned)}"
+        return rewritten, (query, rewritten)
 
     def _rewrite_queries(
         self, query: str, seeds: list[str], *, max_terms: int = 8
@@ -411,6 +480,7 @@ class HybridSearcher:
         terms = [term for _w, term in ranked if term.casefold() not in lowered][:max_terms]
         if not terms:
             return None, ()
+        self.last_expansion_terms = list(terms)
         rewritten = f"{query} {' '.join(terms)}"
         return rewritten, (query, rewritten)
 

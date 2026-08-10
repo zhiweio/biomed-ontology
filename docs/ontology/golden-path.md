@@ -4,7 +4,10 @@
 
 种子实体：**HMPL-504 / savolitinib**（`HMD:ENT:DC:savolitinib`）。文档中的示意代号 `ABC-001` 映射到该实体。
 
-样例包：[`ontology/examples/golden_path/hmpl504/`](https://github.com/zhiweio/biomed-ontology/tree/main/ontology/examples/golden_path/hmpl504)。
+样例包：
+
+- 有 ENT：[`ontology/examples/golden_path/hmpl504/`](https://github.com/zhiweio/biomed-ontology/tree/main/ontology/examples/golden_path/hmpl504)
+- 无 ENT / 公开 CURIE：[`ontology/examples/golden_path/public_no_ent/`](https://github.com/zhiweio/biomed-ontology/tree/main/ontology/examples/golden_path/public_no_ent)（`hmd demo W3`、`hmd eval --suite public_bios`）
 
 ---
 

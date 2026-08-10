@@ -55,6 +55,29 @@ def _register_foundation(mcp: Any, name: str, summary: str) -> None:
         mcp.tool(name=name, description=summary)(resolve_entity)
         return
 
+    if name == "lookup_bios_concept":
+
+        def lookup_bios_concept(
+            query: str | None = None,
+            external_id: str | None = None,
+            bios_curie: str | None = None,
+            max_surfaces: int = 8,
+            max_neighbors: int = 10,
+            include_enterprise_bridges: bool = True,
+        ) -> dict[str, Any]:
+            return _foundation().lookup_bios_concept(
+                query=query,
+                external_id=external_id,
+                bios_curie=bios_curie,
+                max_surfaces=max_surfaces,
+                max_neighbors=max_neighbors,
+                include_enterprise_bridges=include_enterprise_bridges,
+            )
+
+        lookup_bios_concept.__doc__ = summary
+        mcp.tool(name=name, description=summary)(lookup_bios_concept)
+        return
+
     if name in {
         "get_entity",
         "find_related_entities",

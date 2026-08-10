@@ -140,7 +140,7 @@ ontology/
 |---|---|---|
 | `table_metrics.yaml` | 表头（casefold）→ `metric` + `unit` | 表格通道把 ORR / PFS / IC50 等列规范成指标名；供湖侧 / corpus 抽取，**不是** MCP 工具输入 |
 
-#### `examples/golden_path/hmpl504/` — 验收样例
+#### `examples/golden_path/hmpl504/` — 有 ENT 验收样例
 
 | 文件 | 干什么 |
 |---|---|
@@ -149,6 +149,16 @@ ontology/
 | `README.md` | 本地 golden / resolve / MCP 说明 |
 
 样例包用于 `ontology:validate` 与 `hmd foundation golden`；**不是**生产语料。离线 CLI 可做词典 resolve；生产 `get_entity_context` 仍要求三后端，禁止 YAML 冒充。
+
+#### `examples/golden_path/public_no_ent/` — 无 ENT / 公开 CURIE 样例
+
+| 文件 | 干什么 |
+|---|---|
+| `sample_text.txt` | 公开 CURIE 短文本（aspirin / BTK） |
+| `expected.json` | 期望 lookup surfaces / resolve null ENT / public_lexical |
+| `README.md` | `hmd demo W3` / `hmd eval --suite public_bios` |
+
+未策展进企业本体时的默认路径；**不** mint `HMD:ENT:*`。
 
 #### `owl/` 与 `shapes/` — 入口说明 only
 
@@ -187,7 +197,7 @@ hmd_types
 | `hmd_obs.yaml` | ToolIoRecord / DecisionRecord / Candidate / Signal / QualityMetric | Trace / IO / State / Metrics 四支柱 |
 | `hmd_tools.yaml` | Normalize/Expand/Search/Restore/Facts/Feedback Request·Response | **KB 面** 8 工具的 I/O 契约；生成 JSON Schema 与 MCP 描述 |
 
-说明：`hmd_tools.yaml` 覆盖的是文献/术语面 **8** 个 `TOOL_SPECS`。Foundation 面另有 **9** 个 `SEMANTIC_OPS`（见 §3.5）。双面合计 **17** 个具名操作；不要把「8」读成「全仓只有 8 个工具」。
+说明：`hmd_tools.yaml` 覆盖的是文献/术语面 **8** 个 `TOOL_SPECS`。Foundation 面另有 **10** 个 `SEMANTIC_OPS`（见 §3.5，含 `lookup_bios_concept`）。双面合计 **18** 个具名操作；不要把「8」读成「全仓只有 8 个工具」。
 
 #### `schema/shapes/`
 
@@ -357,13 +367,14 @@ REST：`POST /v1/{tool}` · MCP：同名 tool
 
 文献面归一化级联见 [归一化级联](normalize.md)——与 Foundation `EntityResolver` **不是同一条链**。
 
-#### B. Foundation Semantic Ops（9）— 企业世界模型面
+#### B. Foundation Semantic Ops（10）— 企业世界模型面
 
 REST：`POST /v1/{op}` · MCP：同名
 
 | Op | 后端 | 用到的策展 / 运行时资产 |
 |---|---|---|
-| `resolve_entity` | Resolver（本地）；可调 BERN2 | dictionary、entities aliases、zingg、mappings、BERN2 候选 |
+| `resolve_entity` | Resolver（本地）；可调 BERN2；无 ENT 时 BIOS surfaces | dictionary、entities aliases、zingg、mappings、BERN2、BIOS index |
+| `lookup_bios_concept` | biomedical 图 + BIOS sqlite / subset | BIOS_v3、entities exact xref（桥提示） |
 | `get_entity` | GraphDB `graph/ontology` | sync 后的 entities |
 | `get_relationships` | GraphDB knowledge + provenance | claims（默认 validated） |
 | `find_related_entities` | GraphDB | 实体边 + claims |

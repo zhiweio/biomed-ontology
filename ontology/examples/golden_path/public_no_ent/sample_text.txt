@@ -1,0 +1,2 @@
+Aspirin (CHEBI:DEMO_ASPIRIN) is not curated as an HMD enterprise entity.
+BTK (HGNC:DEMO_BTK) likewise has BIOS surfaces only for lexical rewrite.

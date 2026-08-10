@@ -11,7 +11,7 @@
 - 文献检索里本体通道值多少（可消融、可显著性）？
 - KB 归一化与 WM resolve 是否指向同一 ENT？许可还原是否泄漏？
 
-因此 `hmd eval` 编排 **Identity · Literature · Bridge** 三套件；World Model 三后端联调则独占 `hmd foundation golden-eval`，避免把「栈通不通」与「文献科学」混在一张表里。
+因此 `hmd eval` 编排 **Identity · Literature · Bridge** 三套件；可选 **public_bios**（无 ENT / 公开 CURIE）与 **extraction**；World Model 三后端联调则独占 `hmd foundation golden-eval`，避免把「栈通不通」与「文献科学」混在一张表里。
 
 ## 设计取舍
 
@@ -74,6 +74,13 @@ run_dual_eval(surface, entitlements=…)
 - 数据：`data/gold/bridge.yaml`
 - 校验：KB `normalize` 与 WM `resolve` 同 ENT；resolve 后文献可检索；许可 `restore_context` 不泄漏
 - 硬门禁 **B1**：`alias_ok ∧ literature_ok ∧ entitlement_ok`
+
+#### 4. public_bios（可选 EXTRA）
+
+- 数据：`data/gold/public_bios.yaml`（对照 `bridge.yaml` 的 `public_path` 注释）
+- 校验：公开 CURIE → `lookup_bios_concept` / `search_surfaces`；无 ENT 时 `expansion_source=public_lexical`；有 exact xref 时仍落到 ENT
+- 不进 `DualEvalReport.ok`；跑：`uv run hmd eval --suite public_bios --no-retrieval`
+- Demo：`W3`；金路径示例：`ontology/examples/golden_path/public_no_ent/`
 
 ### `DualEvalReport.ok` 逻辑
 

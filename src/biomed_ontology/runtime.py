@@ -9,7 +9,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = ["DualSurface", "build_literature_searcher", "open_dual_surface"]
+__all__ = [
+    "DualSurface",
+    "attach_public_assist",
+    "build_literature_searcher",
+    "open_dual_surface",
+]
 
 
 @dataclass
@@ -47,6 +52,26 @@ def build_literature_searcher(
     return HybridSearcher(
         kb, backend=milvus_backend, neighborhood=neighborhood, chunk_store=chunk_store
     )
+
+
+def attach_public_assist(searcher: Any, foundation: Any) -> Any:
+    """把 WorldModel resolver / GraphDB 接到 HybridSearcher 公开臂。"""
+    from biomed_ontology.search.public_assist import PublicLexicalExpand, PublicNenAssist
+
+    world = getattr(foundation, "world", None)
+    resolver = getattr(world, "resolver", None) if world is not None else None
+    gdb = getattr(foundation, "graphdb", None)
+    if resolver is not None and getattr(resolver, "index", None) is not None:
+        searcher.nen_assist = PublicNenAssist(
+            resolver.index,
+            bern2=getattr(resolver, "bern2", None),
+            graphdb=gdb,
+        )
+    searcher.lexical_expand = PublicLexicalExpand(
+        bern2=getattr(resolver, "bern2", None) if resolver else None,
+        graphdb=gdb,
+    )
+    return searcher
 
 
 def open_dual_surface(
@@ -106,6 +131,7 @@ def open_dual_surface(
         )
     elif getattr(searcher, "chunk_store", None) is None:
         searcher.chunk_store = store
+    attach_public_assist(searcher, foundation)
 
     tools = ToolApi.from_backends(
         kb=kb,

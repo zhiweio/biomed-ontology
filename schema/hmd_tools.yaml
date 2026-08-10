@@ -161,9 +161,16 @@ classes:
       - max_tier
       - date_from
       - date_to
+      - expansion_terms
     slot_usage:
       query:
         required: true
+      expansion_terms:
+        range: string
+        description: >-
+          调用方注入的公开表面词（如 resolve.search_surfaces）；无 ENT 时用于
+          BM25/DENSE 改写，永不作为 GRAPH 种子。与 ExpandResponse 的结构化
+          ExpansionTermOut 不同，此处为纯字符串列表。
 
   SearchResponse:
     is_a: ToolEnvelope
@@ -173,6 +180,12 @@ classes:
       - results
       - total
       - evidence_tree
+      - expansion_source
+      - expansion_terms
+    slot_usage:
+      expansion_terms:
+        range: string
+        description: 实际用于改写的表面词（enterprise / public_lexical / client_terms）。
 
   SearchHit:
     description: >-
@@ -339,6 +352,10 @@ slots:
     range: ExpansionTermOut
     multivalued: true
     inlined_as_list: true
+  expansion_source:
+    range: string
+    description: >-
+      检索改写来源：enterprise | public_lexical | client_terms | none。
   expansion_size:
     range: integer
   term:

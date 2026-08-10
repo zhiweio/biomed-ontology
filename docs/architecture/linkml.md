@@ -46,7 +46,7 @@ Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与
 | `hmd_taxonomy.yaml` | 文档标引标签 | `_generated/hmd_taxonomy.py` |
 | `hmd_enterprise.yaml` | Enterprise Ontology（DrugCandidate / Claim…） | `_generated/hmd_enterprise.py` |
 
-`hmd_tools.yaml` 只覆盖文献/术语面 `TOOL_SPECS`（8）。Foundation 另有 9 个 `SEMANTIC_OPS`；双面合计 17 个具名操作，见 [Semantic Access](../tools/tools.md) 与 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
+`hmd_tools.yaml` 只覆盖文献/术语面 `TOOL_SPECS`（8）。Foundation 另有 10 个 `SEMANTIC_OPS`；双面合计 18 个具名操作，见 [Semantic Access](../tools/tools.md) 与 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
 
 生成管线：`Taskfile` 的 `gen` target → Python 在 `_generated/`，OWL / JSON Schema / SHACL 在 `schema/generated/`（每源通常 `*.owl.ttl` / `*.schema.json` / `*.shacl.ttl`）。
 

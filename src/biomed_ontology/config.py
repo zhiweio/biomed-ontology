@@ -142,6 +142,12 @@ class Settings(BaseSettings):
     bios_batch_size: int = Field(default=500, ge=50)
     bios_alt_labels: bool = False
 
+    # --- 公开实体检索臂（无 HMD:ENT:* 时）--------------------------------
+    # dual-surface 生产默认开：无 ENT seeds → BERN2/BIOS 名改写 BM25/DENSE
+    public_lexical_expand: bool = True
+    # 唯一 exact xref → 补 ENT seeds（有 resolver 时）
+    public_nen_assist: bool = True
+
     # --- 模型权重源 -------------------------------------------------------
     # 内网往往连不上 huggingface.co（TLS 直接被重置）。取不到时自动回落 Gitee
     # 镜像（gitee.com/hf-models），仓库名映射见 embed._MIRRORS。

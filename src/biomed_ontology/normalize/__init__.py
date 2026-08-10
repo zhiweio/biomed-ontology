@@ -24,6 +24,7 @@ from biomed_ontology.normalize.matchers import (
     DictionaryIndex,
     NgramVectorIndex,
     RuleMatcher,
+    VectorIndex,
     detect_spans,
     has_entity_shape,
     maximal_spans,
@@ -94,11 +95,12 @@ class Normalizer:
         synonyms,
         ambiguity_index: dict | None = None,
         release_id: str = "0.1.0",
+        vectors: VectorIndex | None = None,
     ) -> None:
         self.release_id = release_id
         self.dictionary = DictionaryIndex.from_build(concepts, synonyms)
         self.rules = RuleMatcher(self.dictionary)
-        self.vectors = NgramVectorIndex.from_index(self.dictionary)
+        self.vectors: VectorIndex = vectors or NgramVectorIndex.from_index(self.dictionary)
         self._concepts = {c.concept_id: c for c in concepts}
         self._children: dict[str, list[str]] = {}
         key_to_id = {c.seed_key: c.concept_id for c in concepts}

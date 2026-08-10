@@ -215,7 +215,7 @@ def eval_cmd(
     suite: str = typer.Option(
         "identity,literature,bridge",
         "--suite",
-        help="逗号分隔：identity / literature / bridge / extraction",
+        help="逗号分隔：identity / literature / bridge / extraction / public_bios",
     ),
     no_retrieval: bool = typer.Option(
         False, "--no-retrieval", help="跳过 Literature ARMS（仍跑 Identity + Bridge）"
@@ -223,7 +223,7 @@ def eval_cmd(
     json_out: bool = typer.Option(False, "--json", help="输出完整 JSON（机器可读）"),
     compact: bool = typer.Option(False, "--compact", help="仅 Trace 摘要，不展开详情"),
 ) -> None:
-    """双面 Scorecard：Identity + Literature(ARMS) + Bridge（+ 可选 extraction）。
+    """双面 Scorecard：Identity + Literature(ARMS) + Bridge（+ 可选 extraction / public_bios）。
 
     World Model 三后端金路径请用 ``hmd foundation golden-eval``（本命令不重复跑）。
     默认 Rich；``--json`` / ``--compact`` 对齐 foundation 命令。
@@ -235,12 +235,13 @@ def eval_cmd(
     from biomed_ontology.rerank import get_reranker
     from biomed_ontology.runtime import open_dual_surface
 
-    _EXTRA = {"extraction"}
+    _EXTRA = {"extraction", "public_bios"}
     _require_real_embedder(embedder, allow_fake=allow_fake)
 
     suites = [s.strip() for s in suite.split(",") if s.strip()]
     want_extraction = "extraction" in suites
-    suites = [s for s in suites if s != "extraction"]
+    want_public_bios = "public_bios" in suites
+    suites = [s for s in suites if s not in _EXTRA]
     if no_retrieval:
         suites = [s for s in suites if s != "literature"]
     unknown = sorted(set(suites) - set(ALL_SUITES))
@@ -278,6 +279,33 @@ def eval_cmd(
             for line in ext.failures[:12]:
                 console.print(f"  · {line}", style="dim")
         if not ext.ok:
+            raise typer.Exit(1)
+
+    if want_public_bios:
+        from biomed_ontology.eval.public_bios import eval_public_bios
+
+        pub = eval_public_bios(surface)
+        console.print(
+            f"[bold]public_bios[/bold] accuracy={pub.accuracy:.1%} "
+            f"({pub.passed}/{pub.total}) ok={pub.ok}"
+        )
+        if pub.failures and not compact:
+            for row in pub.failures[:12]:
+                console.print(f"  · {row}", style="dim")
+        if json_out and report is None:
+            console.print_json(
+                json.dumps(
+                    {
+                        "ok": pub.ok,
+                        "accuracy": pub.accuracy,
+                        "passed": pub.passed,
+                        "total": pub.total,
+                        "failures": pub.failures,
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        if not pub.ok:
             raise typer.Exit(1)
 
     if report is None:

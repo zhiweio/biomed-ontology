@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from biomed_ontology.foundation.bern2 import Bern2Client, Bern2Mention
-from biomed_ontology.foundation.ids import is_enterprise_id, normalize_alias_key
+from biomed_ontology.foundation.ids import is_enterprise_id, is_external_id, normalize_alias_key
 from biomed_ontology.foundation.models import EnterpriseEntity, ResolveHit
 from biomed_ontology.foundation.paths import ZINGG_MATCHES_PATH
 
@@ -49,6 +49,7 @@ class ResolutionIndex:
     by_id: dict[str, EnterpriseEntity] = field(default_factory=dict)
     by_alias: dict[str, list[str]] = field(default_factory=dict)
     by_external: dict[str, list[str]] = field(default_factory=dict)
+    by_exact_external: dict[str, list[str]] = field(default_factory=dict)
 
     @classmethod
     def from_entities(cls, entities: list[EnterpriseEntity]) -> ResolutionIndex:
@@ -60,11 +61,24 @@ class ResolutionIndex:
                 if not s:
                     continue
                 idx.by_alias.setdefault(normalize_alias_key(s), []).append(e.enterprise_id)
-            for xref in e.exact_match_xrefs + e.related_xrefs:
+            for xref in e.exact_match_xrefs:
                 idx.by_external.setdefault(xref, []).append(e.enterprise_id)
-                # 兼容大小写前缀变体
+                idx.by_external.setdefault(xref.lower(), []).append(e.enterprise_id)
+                idx.by_exact_external.setdefault(xref, []).append(e.enterprise_id)
+                idx.by_exact_external.setdefault(xref.lower(), []).append(e.enterprise_id)
+            for xref in e.related_xrefs:
+                idx.by_external.setdefault(xref, []).append(e.enterprise_id)
                 idx.by_external.setdefault(xref.lower(), []).append(e.enterprise_id)
         return idx
+
+    def lookup_exact_external(self, xid: str) -> list[str]:
+        """仅 exact_match_xrefs（轴 C / PublicNenAssist）。"""
+        return list(
+            dict.fromkeys(
+                self.by_exact_external.get(xid, [])
+                + self.by_exact_external.get(xid.lower(), [])
+            )
+        )
 
 
 class EntityResolver:
@@ -98,9 +112,14 @@ class EntityResolver:
                 entity_kind=ent.entity_kind if ent else None,
             )
 
-        # 2) 外部 ID 直接命中
-        for xid in external_ids or []:
-            hit = self._from_external(xid, mention)
+        # 2) 外部 ID 直接命中（含「mention 本身就是 CURIE」）
+        xids = list(external_ids or [])
+        if ":" in mention and not is_enterprise_id(mention) and mention not in xids:
+            xids.insert(0, mention)
+        for xid in xids:
+            if not xid or str(xid).upper() in {"CUI-LESS", "CUILESS"}:
+                continue
+            hit = self._from_external(str(xid), mention)
             if hit.canonical_entity:
                 return hit
 
@@ -160,10 +179,15 @@ class EntityResolver:
         )
 
     def resolve_text(self, text: str) -> list[ResolveHit]:
+        stripped = (text or "").strip()
+        # 整段即公开 CURIE / 外部 ID：先走词典 xref，避免 BERN2 把 DEMO_* 等
+        # 局部片段误标成无关基因（无 ENT 公开路径依赖此短路）。
+        if stripped and is_external_id(stripped):
+            return [self.resolve_mention(stripped)]
         mentions = self.bern2.annotate(text)
         if not mentions:
             # 整句当一个 mention 再试一次（短查询）
-            return [self.resolve_mention(text.strip())] if text.strip() else []
+            return [self.resolve_mention(stripped)] if stripped else []
         out: list[ResolveHit] = []
         for m in mentions:
             out.append(self._resolve_bern2_mention(m))

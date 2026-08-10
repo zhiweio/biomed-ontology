@@ -1,7 +1,7 @@
 # REST / MCP 服务契约
 
 源码：`src/biomed_ontology/service/`（`app.py`、`deps.py`、`dispatch.py`、`mcp.py`）。  
-清单源：`TOOL_SPECS`（`tools/api.py`，8 个 KB 工具）+ `SEMANTIC_OPS`（`foundation/api.py`，9 个 Foundation ops）；运行时以 `GET /v1/ops` 为准。
+清单源：`TOOL_SPECS`（`tools/api.py`，8 个 KB 工具）+ `SEMANTIC_OPS`（`foundation/api.py`，10 个 Foundation ops）；运行时以 `GET /v1/ops` 为准。
 
 ## 为什么存在
 
@@ -128,7 +128,7 @@ curl -s -X POST http://127.0.0.1:8000/v1/get_entity_context \
 
 ### MCP tools
 
-挂载点：`/mcp`（FastMCP Streamable HTTP）。工具名与 REST 同名，**同一套** `TOOL_SPECS` + `SEMANTIC_OPS`（共 **17** 个）；`golden_path` 不暴露。
+挂载点：`/mcp`（FastMCP Streamable HTTP）。工具名与 REST 同名，**同一套** `TOOL_SPECS` + `SEMANTIC_OPS`（共 **18** 个）；`golden_path` 不暴露。
 
 KB 工具参数为单个 `arguments` 对象（与 REST JSON body 同形），走同一 `dispatch`。  
 Foundation 工具按 op 展开具名参数（与 REST body 字段对齐）。MCP **不接受**客户端自称凭据（`parse_entitlements(None)`）。
@@ -141,16 +141,17 @@ Foundation 工具按 op 展开具名参数（与 REST body 字段对齐）。MCP
 | `resolve_alias` | 单个别名的精确解析，不做文档级 NER |
 | `expand_concept` | 概念 → 加权检索词表（同义词 + 下位词） |
 | `get_concept` | 概念详情：标签、定义、父子、外部映射、许可等级 |
-| `search_documents` | 本体增强混合检索，返回带 section/page 的可溯源片段 |
+| `search_documents` | 本体增强混合检索；无 ENT 时默认公开别名改写；可传 `expansion_terms` |
 | `get_facts` | 结构化事实 + 语句级出处 |
 | `submit_feedback` | 回写判定结果，驱动本体演进闭环 |
 | `restore_context` | 碎片 → 原文：还原所在章节全文、面包屑与原始页码 |
 
-#### Foundation（9）
+#### Foundation（10）
 
 | 工具名 | 说明 | 参数 |
 |---|---|---|
-| `resolve_entity` | 文本/别名 → Enterprise Entity ID | `text`, `type_hint?` |
+| `resolve_entity` | 文本/别名 → Enterprise Entity ID；无 ENT 附 `search_surfaces` | `text`, `type_hint?` |
+| `lookup_bios_concept` | 公开 BIOS 概念卡 + 别名邻域（无需 ENT） | `query?`, `external_id?`, `bios_curie?` |
 | `get_entity` | 按 Enterprise ID 取实体（GraphDB） | `enterprise_id` |
 | `get_relationships` | KnowledgeClaim（GraphDB provenance） | `enterprise_id`, `predicate?` |
 | `find_related_entities` | 一跳相关企业实体（GraphDB） | `enterprise_id` |

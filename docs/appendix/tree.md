@@ -37,7 +37,7 @@ biomed-ontology/
 │   ├── catalog/              # 文献 ENT 目录 + ambiguity
 │   ├── extract/              # 表格指标等抽取配置
 │   ├── owl/ + shapes/        # Protégé / SHACL 入口说明（非 SSOT）
-│   └── examples/golden_path/ # HMPL-504 金路径样例
+│   └── examples/golden_path/ # HMPL-504 + public_no_ent 金路径样例
 ├── data/
 │   ├── foundation/           # 运行投影样例（evidence / assets / BIOS 子集；非身份 SSOT）
 │   ├── corpus/ + parsed/     # 语料 YAML（解析产物）

@@ -13,6 +13,13 @@ literature_bridge:
   - { mention: "savolitinib", expect: "HMD:ENT:DC:savolitinib", top_k: 5 }
   - { mention: "HMPL-504", expect: "HMD:ENT:DC:savolitinib", top_k: 5 }
 
+# 公开路径（无 ENT）：不要求文献命中；验 lookup surfaces + lexical rewrite。
+# 门禁见 eval_public_bios / --suite public_bios，不计入 Bridge B1。
+public_path:
+  - { external_id: "CHEBI:DEMO_ASPIRIN", expect_bios: "BIOS:ASPIRIN_DEMO", expect_surfaces_any: ["aspirin"], expect_expansion_source: "public_lexical" }
+  - { external_id: "HGNC:DEMO_BTK", expect_bios: "BIOS:BTK_DEMO", expect_surfaces_any: ["BTK"], expect_expansion_source: "public_lexical" }
+  - { external_id: "NCBIGene:4233", expect_ent: "HMD:ENT:TGT:MET", expect_expansion_source: "enterprise" }
+
 # 许可：无 entitlement 时受限文档 restore 须拒绝；有 MOCK_LICENSED 须放行
 entitlement:
   licensed_id: MOCK_LICENSED

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from biomed_ontology.eval.bridge import BridgeEval, eval_bridge
 from biomed_ontology.eval.identity import IdentityEval, eval_identity
+from biomed_ontology.eval.public_bios import PublicBiosEval, eval_public_bios
 from biomed_ontology.eval.retrieval import (
     ARMS,
     ONTOLOGY_PROBES,
@@ -43,11 +44,13 @@ __all__ = [
     "DualEvalReport",
     "IdentityEval",
     "NormalizationEval",
+    "PublicBiosEval",
     "RetrievalEval",
     "Significance",
     "eval_bridge",
     "eval_identity",
     "eval_normalization",
+    "eval_public_bios",
     "eval_retrieval",
     "load_gold",
     "paired_significance",

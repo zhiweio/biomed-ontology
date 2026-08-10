@@ -54,7 +54,7 @@ HTTP / MCP **不走** `foundation serve`：统一用 `hmd serve --mcp`（含 `ge
 | 旗标 | 含义 |
 |---|---|
 | `--entitlements MOCK_LICENSED` | Bridge 许可用例与 tier 可见性 |
-| `--suite identity,literature,bridge` | 子集套件 |
+| `--suite identity,literature,bridge` | 子集套件；另有 EXTRA：`extraction`、`public_bios` |
 | `--no-retrieval` | 跳过 Literature ARMS（仍可按配置跑 Identity/Bridge） |
 | `--json` | 机器可读 `DualEvalReport` |
 

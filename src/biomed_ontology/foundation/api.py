@@ -124,7 +124,11 @@ def _search_evidence_milvus(
 SEMANTIC_OPS: list[dict[str, str]] = [
     {
         "name": "resolve_entity",
-        "summary": "文本/别名 → Enterprise Entity ID（词典 / BERN2 候选 + Resolver）",
+        "summary": "文本/别名 → Enterprise Entity ID（词典 / BERN2 候选 + Resolver）；无 ENT 时附 search_surfaces",
+    },
+    {
+        "name": "lookup_bios_concept",
+        "summary": "公开 BIOS/外部 ID 概念卡 + 别名邻域（无需 HMD:ENT:*）",
     },
     {
         "name": "get_entity",
@@ -181,7 +185,10 @@ class FoundationApi:
         return self.graphdb
 
     def resolve_entity(self, text: str, *, type_hint: str | None = None) -> dict[str, Any]:
-        """ER 使用本地词典/Resolver（seed）；不读 YAML 作为 World Model 查询回落。"""
+        """ER 使用本地词典/Resolver（seed）；不读 YAML 作为 World Model 查询回落。
+
+        无 ``canonical_entity`` 时 hydrate BIOS ``search_surfaces``（供 search_documents）。
+        """
         with observe_retrieval(
             "resolver.dictionary",
             op="resolve_entity",
@@ -197,6 +204,7 @@ class FoundationApi:
             hits = self.world.resolver.resolve_text(text)
             if type_hint and len(hits) == 1 and hits[0].canonical_entity is None:
                 hits = [self.world.resolver.resolve_mention(text, type_hint=type_hint)]
+            self._hydrate_resolve_surfaces(hits)
             chosen = next((h.canonical_entity for h in hits if h.canonical_entity), None)
             obs["why"]["chosen"] = chosen
             obs["why"]["candidate_count"] = len(hits)
@@ -206,6 +214,183 @@ class FoundationApi:
                 "query": text,
                 "resolved": [h.to_dict() for h in hits],
                 "backend": "resolver",
+            }
+
+    def _hydrate_resolve_surfaces(self, hits: list[Any]) -> None:
+        from biomed_ontology.foundation.bios_lookup import hydrate_search_surfaces
+        from biomed_ontology.foundation.models import ResolveHit
+
+        gdb = self.graphdb if self.graphdb.health() else None
+        for h in hits:
+            if not isinstance(h, ResolveHit):
+                continue
+            if h.canonical_entity:
+                # ENT 命中：用企业别名作 surfaces（可选）
+                ent = self.world.entities.get(h.canonical_entity)
+                if ent:
+                    surfaces = [
+                        s
+                        for s in [
+                            ent.preferred_label_en,
+                            ent.preferred_label_zh,
+                            *list(ent.aliases or []),
+                        ]
+                        if s
+                    ]
+                    h.search_surfaces = list(dict.fromkeys(surfaces))[:8]
+                continue
+            ext_ids = [
+                str(x)
+                for x in (h.external_ids or [])
+                if x and str(x).upper() not in {"CUI-LESS", "CUILESS"}
+            ]
+            if ":" in (h.mention or "") and not str(h.mention).startswith("HMD:ENT:"):
+                if h.mention not in ext_ids:
+                    ext_ids.insert(0, h.mention)
+            surfaces, cards = hydrate_search_surfaces(
+                mention=h.mention if ":" not in (h.mention or "") else None,
+                external_ids=ext_ids,
+                bios_concepts=list(h.bios_concepts or []),
+                client=gdb,
+                max_surfaces=8,
+            )
+            h.search_surfaces = surfaces
+            h.bios_bridges = [c.to_dict() for c in cards]
+            # 补全 bios_concepts CURIE
+            for c in cards:
+                if c.bios_curie and c.bios_curie not in h.bios_concepts:
+                    h.bios_concepts.append(c.bios_curie)
+
+    def lookup_bios_concept(
+        self,
+        *,
+        query: str | None = None,
+        external_id: str | None = None,
+        bios_curie: str | None = None,
+        max_surfaces: int = 8,
+        max_neighbors: int = 10,
+        include_enterprise_bridges: bool = True,
+    ) -> dict[str, Any]:
+        """公开 BIOS 概念卡（无需 HMD:ENT:*）。"""
+        from biomed_ontology.foundation.bios_lookup import (
+            bios_curie_from_iri,
+            enterprise_bridges_for_ids,
+            fetch_bios_card,
+            lookup_bios_curies,
+            surfaces_from_card,
+        )
+
+        with observe_retrieval(
+            "graphdb.biomedical",
+            op="lookup_bios_concept",
+            input_summary={
+                "query": query,
+                "external_id": external_id,
+                "bios_curie": bios_curie,
+            },
+        ) as obs:
+            obs["backend"] = "bios_lookup"
+            obs["why"] = {"yaml_fallback_card": "subset_ok", "mint_ent": False}
+
+            curies: list[str] = []
+            if bios_curie:
+                c = bios_curie_from_iri(bios_curie)
+                if c:
+                    curies.append(c)
+            if external_id:
+                curies.extend(lookup_bios_curies(external_id=external_id, limit=10))
+            if query and not curies:
+                curies.extend(lookup_bios_curies(term=query, limit=10))
+                # 可选 BERN2
+                if not curies and self.world.resolver and self.world.resolver.bern2:
+                    try:
+                        for m in self.world.resolver.bern2.annotate(query) or []:
+                            for xid in getattr(m, "ids", None) or []:
+                                s = str(xid)
+                                if s.upper().startswith("BIOS:"):
+                                    c = bios_curie_from_iri(s)
+                                    if c:
+                                        curies.append(c)
+                                else:
+                                    curies.extend(
+                                        lookup_bios_curies(external_id=s, limit=5)
+                                    )
+                    except Exception:
+                        pass
+
+            uniq = list(dict.fromkeys(curies))
+            if len(uniq) > 1 and not bios_curie:
+                obs["output"] = {"found": False, "candidates": uniq[:20]}
+                return {
+                    "ontology_release_id": self.world.release_id,
+                    "found": False,
+                    "candidates": uniq[:20],
+                    "reason": "ambiguous_bios_match",
+                    "backend": "bios_lookup",
+                }
+            if not uniq:
+                obs["output"] = {"found": False}
+                return {
+                    "ontology_release_id": self.world.release_id,
+                    "found": False,
+                    "candidates": [],
+                    "reason": "not_found",
+                    "backend": "bios_lookup",
+                }
+
+            gdb = self.graphdb if self.graphdb.health() else None
+            card = fetch_bios_card(gdb, uniq[0], include_alts=True)
+            if card is None:
+                obs["output"] = {"found": False}
+                return {
+                    "ontology_release_id": self.world.release_id,
+                    "found": False,
+                    "reason": "card_missing",
+                    "backend": "bios_lookup",
+                }
+
+            surfaces = surfaces_from_card(card, max_surfaces=max_surfaces)
+            neighbors: list[dict[str, Any]] = [
+                {"kind": "alt_label", "surface": s} for s in card.alt_labels[:max_neighbors]
+            ]
+            bridges: list[dict[str, str]] = []
+            if include_enterprise_bridges:
+                bridges = enterprise_bridges_for_ids(
+                    self.world.entities,
+                    bios_curie=card.bios_curie,
+                    external_ids=card.external_ids,
+                )
+                for b in bridges[:max_neighbors]:
+                    neighbors.append(b)
+
+            # 共享 external_id 的其它 BIOS（v1 同 xref 簇）
+            for xid in card.external_ids[:5]:
+                for other in lookup_bios_curies(external_id=xid, limit=5):
+                    if other == card.bios_curie:
+                        continue
+                    other_card = fetch_bios_card(gdb, other, include_alts=False)
+                    neighbors.append(
+                        {
+                            "kind": "external_same_as",
+                            "bios_curie": other,
+                            "pref_label": other_card.pref_label if other_card else None,
+                            "via": xid,
+                        }
+                    )
+                    if len(neighbors) >= max_neighbors:
+                        break
+                if len(neighbors) >= max_neighbors:
+                    break
+
+            obs["output"] = {"found": True, "bios_curie": card.bios_curie}
+            return {
+                "ontology_release_id": self.world.release_id,
+                "found": True,
+                **card.to_dict(),
+                "search_surfaces": surfaces,
+                "neighbors": neighbors[:max_neighbors],
+                "enterprise_bridges": [b["enterprise_id"] for b in bridges],
+                "backend": card.backend,
             }
 
     def get_entity(self, enterprise_id: str) -> dict[str, Any]:

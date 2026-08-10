@@ -1,0 +1,67 @@
+# 无 HMD:ENT:* / 公开 BIOS 路径 gold（lookup · resolve surfaces · lexical expand）。
+#
+# 与 resolve.yaml / normalization.yaml 分工：
+# - normalization：catalog Normalizer 必须对「未策展」词 abstain
+# - resolve：企业身份；本文件验「公开 CURIE → BIOS 表面词 / 可选 ENT 桥」
+# - 本文件不进 Identity I1 硬门禁；由 eval_public_bios + CI 测试守住
+version: "0.1.0"
+
+# 公开 CURIE 已有 exact xref → 应落到 ENT（轴 C / resolve）
+curie_to_ent:
+  - external_id: "NCBIGene:4233"
+    expect_ent: "HMD:ENT:TGT:MET"
+    expect_bios: "BIOS:MET_DEMO"
+    expect_surfaces_any: ["MET", "c-MET"]
+  - external_id: "HGNC:7029"
+    expect_ent: "HMD:ENT:TGT:MET"
+    expect_bios: "BIOS:MET_DEMO"
+  - text: "NCBIGene:4233"
+    expect_ent: "HMD:ENT:TGT:MET"
+
+# 公开概念在 BIOS subset，但企业未挂靠 → 无 ENT，须有 surfaces
+lookup_no_ent:
+  - external_id: "CHEBI:DEMO_ASPIRIN"
+    expect_bios: "BIOS:ASPIRIN_DEMO"
+    expect_surfaces_any: ["aspirin"]
+    expect_ent_bridges: []
+  - external_id: "HGNC:DEMO_BTK"
+    expect_bios: "BIOS:BTK_DEMO"
+    expect_surfaces_any: ["BTK"]
+    expect_ent_bridges: []
+  - bios_curie: "BIOS:ASPIRIN_DEMO"
+    expect_bios: "BIOS:ASPIRIN_DEMO"
+    expect_surfaces_any: ["acetylsalicylic acid", "aspirin"]
+
+# resolve：无 ENT，但须 hydrate search_surfaces（供 search_documents）
+resolve_no_ent:
+  - text: "CHEBI:DEMO_ASPIRIN"
+    expect_ent: null
+    expect_surfaces_any: ["aspirin"]
+  - text: "HGNC:DEMO_BTK"
+    expect_ent: null
+    expect_surfaces_any: ["BTK"]
+
+# catalog Normalizer 对未策展公开词仍须 abstain（不进 GRAPH 企业种子）
+normalize_abstain:
+  - text: "aspirin"
+    expect: null
+  - text: "CHEBI:DEMO_ASPIRIN"
+    expect: null
+  - text: "BTK"
+    expect: null
+
+# 无 ENT seeds 时检索改写元数据（不要求语料必有 aspirin 正文）
+lexical_rewrite:
+  - query: "CHEBI:DEMO_ASPIRIN"
+    expect_expansion_source: "public_lexical"
+    expect_terms_any: ["aspirin"]
+  - query: "HGNC:DEMO_BTK"
+    expect_expansion_source: "public_lexical"
+    expect_terms_any: ["BTK"]
+
+# 有 ENT 桥的公开 CURIE：search 应走 enterprise（或至少能出 ENT seeds）
+lexical_with_ent:
+  - query: "NCBIGene:4233"
+    expect_ent_seed: "HMD:ENT:TGT:MET"
+    # 有 ENT 时 expansion_source 应为 enterprise（改写走 expand）
+    expect_expansion_source: "enterprise"

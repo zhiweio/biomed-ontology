@@ -796,6 +796,9 @@ def test_bios_subset_external_index() -> None:
     idx = build_external_id_index(concepts)
     assert "BIOS:MET_DEMO" in idx.lookup_external("HGNC:7029")
     assert "BIOS:SAVO_DEMO" in idx.lookup_external("DrugBank:DEMO_SAVO")
+    assert "BIOS:ASPIRIN_DEMO" in idx.lookup_external("CHEBI:DEMO_ASPIRIN")
+    assert "BIOS:BTK_DEMO" in idx.lookup_external("HGNC:DEMO_BTK")
+    assert len(concepts) >= 5
 
 
 def test_enterprise_id_from_iri_roundtrip() -> None:

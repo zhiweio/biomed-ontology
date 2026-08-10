@@ -506,6 +506,58 @@ def demo_bridge_literature(kb: KnowledgeBase, api: ToolApi, foundation: Any) -> 
     return r
 
 
+def demo_public_no_ent(_kb: KnowledgeBase, api: ToolApi, foundation: Any) -> DemoResult:
+    """W3：无 ENT 公开 CURIE → BIOS surfaces → PublicLexicalExpand（不 mint ENT）。"""
+    r = DemoResult(
+        "W3",
+        "World Model · public no-ENT",
+        "CHEBI:DEMO_ASPIRIN：lookup BIOS ∧ resolve 无 ENT ∧ search public_lexical",
+    )
+    if foundation is None:
+        r.passed = False
+        r.lines.append("FoundationApi 未装配")
+        return r
+    try:
+        card = foundation.lookup_bios_concept(external_id="CHEBI:DEMO_ASPIRIN")
+        bios = card.get("bios_curie")
+        surfaces = card.get("search_surfaces") or []
+        bridges = card.get("enterprise_bridges") or []
+        out = foundation.resolve_entity("CHEBI:DEMO_ASPIRIN")
+        ent = next(
+            (
+                h.get("canonical_entity")
+                for h in out.get("resolved") or []
+                if h.get("canonical_entity")
+            ),
+            None,
+        )
+        hit_surfaces: list[str] = []
+        for h in out.get("resolved") or []:
+            hit_surfaces.extend(h.get("search_surfaces") or [])
+        search = api.search_documents("CHEBI:DEMO_ASPIRIN", top_k=3)
+        source = search.get("expansion_source") or getattr(
+            getattr(api, "searcher", None), "last_expansion_source", "none"
+        )
+        terms = search.get("expansion_terms") or getattr(
+            getattr(api, "searcher", None), "last_expansion_terms", []
+        )
+        r.lines.append(f"lookup bios={bios} surfaces={surfaces[:4]} bridges={bridges}")
+        r.lines.append(f"resolve ENT={ent} surfaces={hit_surfaces[:4]}")
+        r.lines.append(f"search expansion_source={source} terms={list(terms)[:4]}")
+        r.passed = (
+            card.get("found") is True
+            and bios == "BIOS:ASPIRIN_DEMO"
+            and not bridges
+            and ent is None
+            and any("aspirin" in str(s).casefold() for s in surfaces + hit_surfaces)
+            and source == "public_lexical"
+        )
+    except Exception as exc:  # noqa: BLE001
+        r.passed = False
+        r.lines.append(f"public no-ENT 失败：{exc}")
+    return r
+
+
 # D* = 文献面；W*/B* = World Model / Bridge
 _KB_DEMOS: dict[str, Callable[[KnowledgeBase, ToolApi], DemoResult]] = {
     "D1": demo_alias_consistency,
@@ -521,6 +573,7 @@ _KB_DEMOS: dict[str, Callable[[KnowledgeBase, ToolApi], DemoResult]] = {
 _WM_DEMOS: dict[str, Callable[[KnowledgeBase, ToolApi, Any], DemoResult]] = {
     "W1": demo_wm_resolve,
     "W2": demo_wm_context,
+    "W3": demo_public_no_ent,
     "B1": demo_bridge_alias,
     "B2": demo_bridge_literature,
 }

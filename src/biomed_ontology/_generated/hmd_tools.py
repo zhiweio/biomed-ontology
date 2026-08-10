@@ -1682,7 +1682,7 @@ class ExpandResponse(ToolEnvelope):
                        'ExpandResponse',
                        'ExpansionTermOut'],
          'slot_uri': 'skos:notation'} })
-    expansion_terms: Optional[list[ExpansionTermOut]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse']} })
+    expansion_terms: Optional[list[ExpansionTermOut]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse', 'SearchRequest', 'SearchResponse']} })
     expansion_size: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse', 'SearchResponse']} })
     concept_detail: Optional[ConceptDetail] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse']} })
     trace_id: str = Field(default=..., description="""随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord',
@@ -1771,7 +1771,15 @@ class SearchRequest(ConfiguredBaseModel):
     本体增强混合检索。
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
-         'slot_usage': {'query': {'name': 'query', 'required': True}}})
+         'slot_usage': {'expansion_terms': {'description': '调用方注入的公开表面词（如 '
+                                                           'resolve.search_surfaces）；无 '
+                                                           'ENT 时用于 BM25/DENSE 改写，永不作为 '
+                                                           'GRAPH 种子。与 ExpandResponse '
+                                                           '的结构化 ExpansionTermOut '
+                                                           '不同，此处为纯字符串列表。',
+                                            'name': 'expansion_terms',
+                                            'range': 'string'},
+                        'query': {'name': 'query', 'required': True}}})
 
     query: str = Field(default=..., json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest', 'FeedbackRequest']} })
     top_k: Optional[int] = Field(default=None, ge=1, json_schema_extra = { "linkml_meta": {'domain_of': ['NormalizeRequest',
@@ -1787,16 +1795,24 @@ class SearchRequest(ConfiguredBaseModel):
     max_tier: Optional[LicenseTierEnum] = Field(default=None, description="""调用方主动设定的 tier 上限，用于在外发场景下自我约束。""", json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
     date_from: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
     date_to: Optional[date] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchRequest']} })
+    expansion_terms: Optional[list[str]] = Field(default=None, description="""调用方注入的公开表面词（如 resolve.search_surfaces）；无 ENT 时用于 BM25/DENSE 改写，永不作为 GRAPH 种子。与 ExpandResponse 的结构化 ExpansionTermOut 不同，此处为纯字符串列表。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse', 'SearchRequest', 'SearchResponse']} })
 
 
 class SearchResponse(ToolEnvelope):
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://w3id.org/asliva/biomed-ontology/tools',
+         'slot_usage': {'expansion_terms': {'description': '实际用于改写的表面词（enterprise / '
+                                                           'public_lexical / '
+                                                           'client_terms）。',
+                                            'name': 'expansion_terms',
+                                            'range': 'string'}}})
 
     matched_concepts: Optional[list[MatchedConcept]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['NormalizeResponse', 'SearchResponse']} })
     expansion_size: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse', 'SearchResponse']} })
     results: Optional[list[SearchHit]] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse']} })
     total: Optional[int] = Field(default=None, json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse', 'FactsResponse']} })
     evidence_tree: Optional[list[EvidenceDoc]] = Field(default=None, description="""文档 → 章节 → 碎片的聚合视图。扁平列表会让同一段落的多个碎片 看上去像多条独立证据，造成证据量的错觉。""", json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse']} })
+    expansion_source: Optional[str] = Field(default=None, description="""检索改写来源：enterprise | public_lexical | client_terms | none。""", json_schema_extra = { "linkml_meta": {'domain_of': ['SearchResponse']} })
+    expansion_terms: Optional[list[str]] = Field(default=None, description="""实际用于改写的表面词（enterprise / public_lexical / client_terms）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ExpandResponse', 'SearchRequest', 'SearchResponse']} })
     trace_id: str = Field(default=..., description="""随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。""", json_schema_extra = { "linkml_meta": {'domain_of': ['ToolIoRecord',
                        'DecisionRecord',
                        'ToolEnvelope',

@@ -109,6 +109,8 @@ class ResolveHit:
     resolution_method: str = "unmapped"
     entity_kind: str | None = None
     alternatives: list[dict[str, Any]] = field(default_factory=list)
+    search_surfaces: list[str] = field(default_factory=list)
+    bios_bridges: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)

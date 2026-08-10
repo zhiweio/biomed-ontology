@@ -27,6 +27,7 @@ cases:
   - { text: "regorafenib", expect: "HMD:ENT:DC:regorafenib", entity_type: SUBSTANCE }
   - { text: "瑞戈非尼", expect: "HMD:ENT:DC:regorafenib", entity_type: SUBSTANCE }
   - { text: "aspirin", expect: null, entity_type: SUBSTANCE }
+  - { text: "CHEBI:DEMO_ASPIRIN", expect: null, entity_type: SUBSTANCE }
   - { text: "XYZ-9999", expect: null, entity_type: SUBSTANCE }
   - { text: "osimertinib", expect: "HMD:ENT:DC:osimertinib", entity_type: SUBSTANCE }
   - { text: "AZD9291", expect: "HMD:ENT:DC:osimertinib", entity_type: SUBSTANCE }

@@ -1,0 +1,25 @@
+{
+  "path": "public_curie→BIOS_surfaces→public_lexical（no ENT）",
+  "lookup": {
+    "external_id": "CHEBI:DEMO_ASPIRIN",
+    "bios_curie": "BIOS:ASPIRIN_DEMO",
+    "enterprise_bridges": [],
+    "search_surfaces_any_of": ["aspirin", "acetylsalicylic acid", "ASA"]
+  },
+  "resolve": {
+    "text": "CHEBI:DEMO_ASPIRIN",
+    "canonical_entity": null,
+    "search_surfaces_any_of": ["aspirin"]
+  },
+  "normalize_abstain": ["aspirin", "CHEBI:DEMO_ASPIRIN", "BTK"],
+  "lexical_rewrite": {
+    "query": "CHEBI:DEMO_ASPIRIN",
+    "expansion_source": "public_lexical",
+    "expansion_terms_any_of": ["aspirin"]
+  },
+  "contrast_with_ent": {
+    "external_id": "NCBIGene:4233",
+    "expect_ent": "HMD:ENT:TGT:MET",
+    "expansion_source": "enterprise"
+  }
+}

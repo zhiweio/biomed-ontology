@@ -28,6 +28,7 @@ __all__ = [
     "LlmDisambiguator",
     "NgramVectorIndex",
     "RuleMatcher",
+    "VectorIndex",
     "detect_spans",
 ]
 
@@ -41,6 +42,19 @@ class CandidateHit:
     alias_raw: str | None = None
     scope: SynonymScopeEnum | None = None
     entity_type: EntityTypeEnum | None = None
+
+
+class VectorIndex(Protocol):
+    """Normalizer 向量级契约；生产可换 Embedding / MilvusAlias，默认 Ngram。"""
+
+    def search(
+        self,
+        text: str,
+        *,
+        top_k: int = 5,
+        entity_types: set[EntityTypeEnum] | None = None,
+        min_score: float = 0.60,
+    ) -> list[CandidateHit]: ...
 
 
 @dataclass

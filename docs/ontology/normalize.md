@@ -97,6 +97,8 @@ Normalizer 的职责是「文本 → **唯一企业概念 ID**」。身份 SSOT 
 若 Normalizer 直接吃 BERN2：身份随公共服务漂移，企业主键失控。  
 若把 BIOS 当词典：召回爆炸、歧义失控，且违反「企业 ID 才是主键」。BIOS 经 `skos:exactMatch` **挂靠**，不替代 catalog。
 
+公开覆盖不靠扩大 Normalizer：无 `HMD:ENT:*` 时由检索侧 **PublicLexicalExpand**（BERN2→BIOS 名→BM25/DENSE）与 Foundation **`lookup_bios_concept`** 承接；向量级可经 `VectorIndex` Protocol 注入（默认仍为 n-gram）。
+
 事实抽取侧的 `_ground` 也只调用 Normalizer（见 [事实抽取](extract.md)）。Foundation 面短查询 / 金路径 ER 另走 `EntityResolver`（词典 + BERN2 + Zingg）——**不要混用两套入口当同一词典**。
 
 ### 3.5 Scope 如何约束行为（D2）

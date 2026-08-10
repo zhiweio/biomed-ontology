@@ -53,6 +53,15 @@ class AssetSearchBody(BaseModel):
     entity_ids: list[str] = Field(default_factory=list)
 
 
+class LookupBiosBody(BaseModel):
+    query: str | None = None
+    external_id: str | None = None
+    bios_curie: str | None = None
+    max_surfaces: int = 8
+    max_neighbors: int = 10
+    include_enterprise_bridges: bool = True
+
+
 def create_app(
     *,
     config: Settings | None = None,
@@ -160,6 +169,17 @@ def _register_foundation_routes(app: FastAPI) -> None:
     @app.post("/v1/resolve_entity")
     def resolve_entity(body: ResolveBody) -> dict[str, Any]:
         return _foundation().resolve_entity(body.text, type_hint=body.type_hint)
+
+    @app.post("/v1/lookup_bios_concept")
+    def lookup_bios_concept(body: LookupBiosBody) -> dict[str, Any]:
+        return _foundation().lookup_bios_concept(
+            query=body.query,
+            external_id=body.external_id,
+            bios_curie=body.bios_curie,
+            max_surfaces=body.max_surfaces,
+            max_neighbors=body.max_neighbors,
+            include_enterprise_bridges=body.include_enterprise_bridges,
+        )
 
     @app.post("/v1/get_entity")
     def get_entity(body: EntityBody) -> dict[str, Any]:

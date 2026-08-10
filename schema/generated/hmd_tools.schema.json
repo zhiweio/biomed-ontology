@@ -2459,6 +2459,16 @@
                         "null"
                     ]
                 },
+                "expansion_terms": {
+                    "description": "\u8c03\u7528\u65b9\u6ce8\u5165\u7684\u516c\u5f00\u8868\u9762\u8bcd\uff08\u5982 resolve.search_surfaces\uff09\uff1b\u65e0 ENT \u65f6\u7528\u4e8e BM25/DENSE \u6539\u5199\uff0c\u6c38\u4e0d\u4f5c\u4e3a GRAPH \u79cd\u5b50\u3002\u4e0e ExpandResponse \u7684\u7ed3\u6784\u5316 ExpansionTermOut \u4e0d\u540c\uff0c\u6b64\u5904\u4e3a\u7eaf\u5b57\u7b26\u4e32\u5217\u8868\u3002",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
                 "labels": {
                     "description": "\u6807\u5f15\u5206\u7c7b\u6253\u7684\u591a\u6807\u7b7e\uff0c\u53d6\u503c\u6765\u81ea taxonomy\u3002",
                     "items": {
@@ -2529,6 +2539,23 @@
                 "expansion_size": {
                     "type": [
                         "integer",
+                        "null"
+                    ]
+                },
+                "expansion_source": {
+                    "description": "\u68c0\u7d22\u6539\u5199\u6765\u6e90\uff1aenterprise | public_lexical | client_terms | none\u3002",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "expansion_terms": {
+                    "description": "\u5b9e\u9645\u7528\u4e8e\u6539\u5199\u7684\u8868\u9762\u8bcd\uff08enterprise / public_lexical / client_terms\uff09\u3002",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
                         "null"
                     ]
                 },

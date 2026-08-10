@@ -74,12 +74,24 @@ Gold 覆盖 en/zh、文本/图像意图。`ArmResult` 提供：
 
 每条 query 上计算 `citation_fidelity`：命中声称的概念是否真出现在该文档切片关联的概念集中。这是 **T5 硬底线**（≥ 1.0，不可豁免），见 [citationware](../tools/citationware.md)。
 
-### 如何维护 gold
+### 身份 / 公开 BIOS gold（非检索章节键）
+
+| 文件 | 用途 |
+|---|---|
+| `data/gold/resolve.yaml` | WM `resolve_entity` → `HMD:ENT:*`（含公开 CURIE→ENT / 无 ENT abstain） |
+| `data/gold/normalization.yaml` | KB Normalizer；未策展词（如 `aspirin`、`CHEBI:DEMO_ASPIRIN`）须 `expect: null` |
+| `data/gold/bridge.yaml` | 跨面同 ENT；`public_path` 为无 ENT 诊断切片（门禁见 public_bios） |
+| `data/gold/public_bios.yaml` | 无 ENT 默认路径：lookup surfaces · resolve surfaces · PublicLexicalExpand |
+
+PoC BIOS 子集（含无企业挂靠的 aspirin / BTK）：`data/foundation/bios_subset.jsonl`。
+
+## 如何维护 gold
 
 1. `dump_sections` 对照写键；
 2. 跑 eval，确认无 dangling；
 3. 扩样本后重读小样本时代的「巨大提升」结论（常缩一个数量级）；
-4. 改解析导致 section 改名 → gold 必须同步，否则整次评测红灯（这是特性，不是阻碍）。
+4. 改解析导致 section 改名 → gold 必须同步，否则整次评测红灯（这是特性，不是阻碍）；
+5. 改公开无 ENT 路径时同步 `public_bios.yaml` 与 `hmd eval --suite public_bios`。
 
 ## 不变量与失败模式
 

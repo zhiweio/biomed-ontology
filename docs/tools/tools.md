@@ -7,19 +7,20 @@
 
 本仓库**不做 Agent 编排**。`hmd serve` 把 Ontology Semantic Layer 与 Foundation 世界模型以 **MCP / REST 契约**暴露给仓外调用方——不是「检索工具箱」产品页，而是**世界模型的访问面**。
 
-调用方（Agent、内部服务、评测脚本）需要一套稳定、可契约校验、可许可过滤、可观测的语义 API，而不是直接碰 KB 内部对象或 GraphDB SPARQL。Semantic Access 把「术语归一 → 概念扩展 → 混合检索 → 引用还原 → 反馈回写」与「企业实体解析 → 关系遍历 → 证据索引 → 资产聚合」收敛到 17 个具名操作，由 `dispatch` 统一走契约校验、许可闸门与四支柱观测。
+调用方（Agent、内部服务、评测脚本）需要一套稳定、可契约校验、可许可过滤、可观测的语义 API，而不是直接碰 KB 内部对象或 GraphDB SPARQL。Semantic Access 把「术语归一 → 概念扩展 → 混合检索 → 引用还原 → 反馈回写」与「企业实体解析 → 公开 BIOS 查阅 → 关系遍历 → 证据索引 → 资产聚合」收敛到 **18** 个具名操作（KB 8 + Foundation 10），由 `dispatch` / Foundation 路由统一走契约校验、许可闸门与四支柱观测。
 
 ## 设计取舍
 
 | 取舍 | 选择 | 放弃 |
 |---|---|---|
 | 契约形态 | LinkML 生成请求/响应类 + `TOOL_SPECS` 清单 | 手写 OpenAPI 与实现分叉 |
-| 世界模型面 | `FoundationApi` 独立 9 ops，后端不可达时硬失败 | YAML 回落冒充 GraphDB / Milvus |
-| 文献检索 | 经 `HybridSearcher`，Milvus 为生产后端 | 内存词法「悄悄顶替」Milvus |
+| 世界模型面 | `FoundationApi` 独立 10 ops，后端不可达时硬失败 | YAML 回落冒充 GraphDB / Milvus |
+| 文献检索 | 经 `HybridSearcher`，Milvus 为生产后端；无 ENT 时默认公开别名改写 BM25/DENSE | 内存词法「悄悄顶替」Milvus；公开概念进 GRAPH 种子 |
 | Citationware | 检索响应内嵌 `evidence_tree` + 独立 `restore_context` | 只返回扁平 snippet、无还原路径 |
 | 编排型分析 | 不暴露 | `get_landscape` / `find_analogous` 等分析编排 |
 | 裸 SPARQL | 不对外 | `sparql_query` 作主契约 |
-| 诊断入口 | `golden_path` 仅 REST/CLI | 不进 MCP 主工具表（避免与 17 工具混淆） |
+| 诊断入口 | `golden_path` 仅 REST/CLI | 不进 MCP 主工具表（避免与 18 工具混淆） |
+| 公开 BIOS | `lookup_bios_concept`（无需 ENT） | 用 `get_entity` 接受 BIOS URI |
 
 改 `TOOL_SPECS` 或 `SEMANTIC_OPS` 必须同步 `schema/hmd_tools.yaml` 与 README 工具数绊线。
 
@@ -41,14 +42,15 @@
 | 术语与身份 | KB | `normalize_entity`、`resolve_alias` | 自由文本 / 单别名 → 概念 code；`resolve_alias` 不做文档级 NER |
 | 层级与扩展 | KB | `expand_concept`、`get_concept` | 加权检索词表、概念详情与许可 tier |
 | 结构化事实 | KB | `get_facts` | 三元组 + 语句级 evidence |
-| 证据检索 | KB | `search_documents` | 本体增强混合检索；每条 hit 带 `provenance`；响应含 `evidence_tree` |
+| 证据检索 | KB | `search_documents` | 本体增强混合检索；无 ENT 时默认 PublicLexicalExpand；可传 `expansion_terms`；响应含 `expansion_source` / `evidence_tree` |
 | Citationware | KB | `evidence_tree`（检索内嵌）、`restore_context` | 碎片 → 章节全文；见 [citationware](citationware.md) |
 | 演进信号 | KB | `submit_feedback` | 以**被评价调用**的 `trace_id` 为主键回写 |
-| 企业身份 | Foundation | `resolve_entity` | 词典 / BERN2 候选 + Resolver |
+| 企业身份 | Foundation | `resolve_entity` | 词典 / BERN2 + Resolver；无 ENT 时附 `search_surfaces` |
+| 公开 BIOS | Foundation | `lookup_bios_concept` | 无需 ENT；卡片 + 别名邻域 + 可选企业桥；可接 `search_documents` |
 | 关系遍历 | Foundation | `get_entity`、`get_relationships`、`find_related_entities` | GraphDB；claim 带 provenance |
 | Evidence Index | Foundation | `search_evidence`、`get_entity_evidence` | Milvus |
 | 企业资产 | Foundation | `search_assets`、`get_entity_assets` | OpenMetadata Glossary |
-| 聚合上下文 | Foundation | `get_entity_context` | GraphDB + Milvus + OM 聚合；**禁止 YAML fallback** |
+| 聚合上下文 | Foundation | `get_entity_context` | GraphDB + Milvus + OM 聚合；**禁止 YAML fallback**（需 ENT） |
 
 策展 YAML / 映射文件分别被哪些 op 消费（`entities`→`get_entity`、`dictionary`→`resolve_entity`、`catalog`→`normalize_entity`…）：见 [策展资产与运行时机制 · 资产→工具矩阵](../ontology/curation-and-runtime.md#35-rest-mcp)。
 
@@ -66,8 +68,18 @@
 
 ### FoundationApi 契约要点
 
-- `resolve_entity`：仅用词典 Resolver 做 ER，**不**把 seed YAML 当作 World Model 查询回落。
-- `get_entity_context`：三后端聚合的主契约；任一必需后端不可达 → `BackendUnavailableError`。
+- `resolve_entity`：词典 / BERN2 做 ER，**不**把 seed YAML 当作 World Model 查询回落；`bern2_candidate` 附 `search_surfaces`（BIOS pref/alt）。
+- `lookup_bios_concept`：公开概念只读卡；不 mint ENT；邻居 v1 = 别名 / 同 xref / 企业 exact 桥。
+- `search_documents`：有 ENT → rewrite+GRAPH；无 ENT → 默认公开别名改写（`HMD_PUBLIC_LEXICAL_EXPAND`，默认 true）。
+- `get_entity_context`：三后端聚合的主契约（需 ENT）；任一必需后端不可达 → `BackendUnavailableError`。
+
+推荐 Agent 组合：
+
+```text
+resolve_entity / lookup_bios_concept → search_documents([expansion_terms]) → restore_context
+# 有 HMD:ENT:* 时再:
+get_entity_context / expand_concept / get_relationships
+```
 - `golden_path`：诊断用金路径（含文献腿），由 CLI `hmd foundation golden` / REST `GET /v1/golden_path` 暴露，不在 MCP 17 工具内。
 
 ### 已退役（不再对外暴露）

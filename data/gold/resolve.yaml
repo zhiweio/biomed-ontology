@@ -18,5 +18,11 @@ cases:
   # ---- Indication
   - { text: "NSCLC", expect: "HMD:ENT:IND:nsclc", gate: true }
   - { text: "非小细胞肺癌", expect: "HMD:ENT:IND:nsclc" }
+  # ---- 公开 CURIE → ENT（exact xref；诊断，非 I1 门禁）
+  - { text: "NCBIGene:4233", expect: "HMD:ENT:TGT:MET" }
+  - { text: "HGNC:7029", expect: "HMD:ENT:TGT:MET" }
   # ---- abstain（不应映射到企业实体）
   - { text: "unknownzyme-xyz-999", expect: null, gate: true }
+  # ---- 无 ENT：公开 CURIE 在 BIOS subset，企业未挂靠（诊断）
+  - { text: "CHEBI:DEMO_ASPIRIN", expect: null }
+  - { text: "HGNC:DEMO_BTK", expect: null }

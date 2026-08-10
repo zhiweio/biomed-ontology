@@ -456,6 +456,7 @@ class ToolApi:
         labels: list[str] | None = None,
         modalities: list[str] | None = None,
         max_tier: str = "TIER_3",
+        expansion_terms: list[str] | None = None,
         client_id: str | None = None,
         session_id: str | None = None,
         entitlements: frozenset[str] = frozenset(),
@@ -469,6 +470,7 @@ class ToolApi:
             "labels": labels or [],
             "modalities": modalities or [],
             "max_tier": max_tier,
+            "expansion_terms": expansion_terms or [],
         }
 
         def handler(ctx: TraceContext):
@@ -483,6 +485,7 @@ class ToolApi:
                 channels=chans,
                 labels=labels,
                 modalities=tuple(modalities or ()),
+                expansion_terms=expansion_terms,
             )
             max_returned = max(
                 (h.license_tier for h in hits), key=tier_rank, default=LicenseTierEnum.TIER_0
@@ -491,6 +494,10 @@ class ToolApi:
                 {
                     "results": [_hit_json(h) for h in hits],
                     "total": len(hits),
+                    "expansion_source": getattr(self.searcher, "last_expansion_source", "none"),
+                    "expansion_terms": list(
+                        getattr(self.searcher, "last_expansion_terms", []) or []
+                    ),
                     # 扁平列表里同一文档的 5 个碎片看着像 5 条独立证据，
                     # 实际可能全出自同一段 —— 证据树消除这种数量错觉。
                     "evidence_tree": build_evidence_tree(self.kb, hits),
