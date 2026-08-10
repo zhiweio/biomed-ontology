@@ -16,6 +16,9 @@
 | 演示 | `hmd demo` 对齐 golden 场景 | 手写 curl 脚本 |
 | 契约导出 | `hmd contract` | 手工复制 OpenAPI |
 | 任务编排 | `task` 封装 docker / gen / check | 散落 shell 脚本 |
+| 长任务 UX | Rich header/metrics + `tqdm.rich` 进度（`index` / `bios-load` / lake ingest 等） | 裸 `print` 刷进度 |
+
+长任务在 TTY 下显示进度条；管道 / CI / `TQDM_DISABLE=1` / `HMD_NO_PROGRESS=1` 时静默。`lake ingest-*` 的人读摘要走 stderr，stdout 仍为 JSON。
 
 ## 设计与实现
 

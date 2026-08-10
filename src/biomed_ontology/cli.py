@@ -13,6 +13,12 @@ from rich.console import Console
 from rich.table import Table
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology.cli_ui import (
+    command_header,
+    console,
+    metrics_table,
+    tqdm_bar,
+)
 from biomed_ontology.ingest import build_from_seed, load_ambiguity_registry
 from biomed_ontology.licensing import POLICIES
 from biomed_ontology.ontology.ids import IdLedger, SequenceLedger
@@ -27,7 +33,8 @@ build_app = typer.Typer(help="术语层构建", no_args_is_help=True)
 app.add_typer(sources_app, name="sources")
 app.add_typer(build_app, name="build")
 
-console = Console()
+# Lake 命令 stdout 保留纯 JSON；人读 chrome 走 stderr。
+_err_console = Console(stderr=True)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CATALOG_DIR = REPO_ROOT / "ontology" / "catalog"
@@ -115,6 +122,14 @@ def build_seed(
     if seed_dir is not None:
         console.print("[yellow]--seed-dir 已弃用，请改用 --catalog-dir[/yellow]")
         catalog_dir = seed_dir
+    command_header(
+        "build seed",
+        meta=[
+            ("catalog", str(catalog_dir)),
+            ("release", release),
+            ("dry_run", str(dry_run)),
+        ],
+    )
     registry = load_registry()
     seed_files = sorted(p for p in catalog_dir.glob("*.yaml") if p.name != "ambiguity.yaml")
     if not seed_files:
@@ -135,17 +150,18 @@ def build_seed(
         ambiguity=ambiguity,
     )
 
-    table = Table(title=f"种子构建 release={release}")
-    table.add_column("指标")
-    table.add_column("值", justify="right")
-    table.add_row("种子文件", str(len(seed_files)))
-    table.add_row("概念", str(len(result.concepts)))
-    table.add_row("别名", str(len(result.synonyms)))
-    table.add_row("生成变体", str(sum(1 for s in result.synonyms if s.is_generated_variant)))
-    table.add_row("歧义别名", str(sum(1 for s in result.synonyms if s.is_ambiguous)))
-    table.add_row("alias_norm 碰撞", str(len(result.ambiguity_collisions)))
-    table.add_row("未登记碰撞", str(len(result.unregistered_collisions)))
-    console.print(table)
+    metrics_table(
+        f"种子构建 release={release}",
+        [
+            ("种子文件", str(len(seed_files))),
+            ("概念", str(len(result.concepts))),
+            ("别名", str(len(result.synonyms))),
+            ("生成变体", str(sum(1 for s in result.synonyms if s.is_generated_variant))),
+            ("歧义别名", str(sum(1 for s in result.synonyms if s.is_ambiguous))),
+            ("alias_norm 碰撞", str(len(result.ambiguity_collisions))),
+            ("未登记碰撞", str(len(result.unregistered_collisions))),
+        ],
+    )
 
     if result.unregistered_collisions:
         console.print("\n[yellow]未登记的歧义（需人工处理）:[/yellow]")
@@ -169,13 +185,15 @@ def kb_stats() -> None:
     """构建文献知识库（ENT）并打印统计。"""
     from biomed_ontology.pipeline import build_literature_base
 
+    command_header("kb", meta=[("graph", "off")])
     kb = build_literature_base(with_graph=False)
-    table = Table(title=f"知识库 release={kb.release_id}")
-    table.add_column("指标")
-    table.add_column("值", justify="right")
-    for k, v in kb.stats().items():
-        table.add_row(k, f"{v:.4f}" if isinstance(v, float) else str(v))
-    console.print(table)
+    metrics_table(
+        f"知识库 release={kb.release_id}",
+        [
+            (k, f"{v:.4f}" if isinstance(v, float) else str(v))
+            for k, v in kb.stats().items()
+        ],
+    )
     for w in kb.warnings:
         console.print(f"[yellow]warn[/yellow] {w}")
 
@@ -538,6 +556,15 @@ def parse_cmd(
     from biomed_ontology.observability import TraceContext, new_trace_id
     from biomed_ontology.parse import parse_document
 
+    command_header(
+        "parse",
+        meta=[
+            ("pdf", str(pdf)),
+            ("doc_id", doc_id),
+            ("source_id", source_id),
+            ("layout", layout or "auto"),
+        ],
+    )
     ctx = TraceContext(trace_id=new_trace_id(), ontology_release_id="0.1.0")
     parsed = parse_document(
         pdf,
@@ -555,20 +582,21 @@ def parse_cmd(
         encoding="utf-8",
     )
 
-    table = Table(title=f"解析 {doc_id}")
-    table.add_column("指标")
-    table.add_column("值", justify="right")
-    table.add_row("后端", parsed.backend)
-    table.add_row("章节", str(len(parsed.sections)))
-    table.add_row("正文段", str(len(parsed.document.sections)))
-    table.add_row("表格", str(len(parsed.document.tables)))
-    table.add_row("SAME-AS", str(len(parsed.same_as)))
-    console.print(table)
+    metrics_table(
+        f"解析 {doc_id}",
+        [
+            ("后端", parsed.backend),
+            ("章节", str(len(parsed.sections))),
+            ("正文段", str(len(parsed.document.sections))),
+            ("表格", str(len(parsed.document.tables))),
+            ("SAME-AS", str(len(parsed.same_as))),
+            ("输出", str(target)),
+        ],
+    )
 
     if parsed.degraded:
         # 高亮而非静默：能力缺失必须让运行的人当场看见
         console.print(f"[yellow]降级[/yellow] 本次解析缺失能力：{', '.join(parsed.degraded)}")
-    console.print(f"已写入 {target}")
 
 
 @app.command("index")
@@ -611,8 +639,8 @@ def index_cmd(
     from biomed_ontology.embed import get_embedder
     from biomed_ontology.lake.chunk_store import chunks_to_evidence_rows
     from biomed_ontology.lake.tables import append_evidence_chunks
-    from biomed_ontology.parse.figure_type import get_figure_typer
     from biomed_ontology.ontology.neighborhood import NullNeighborhood
+    from biomed_ontology.parse.figure_type import get_figure_typer
     from biomed_ontology.pipeline import DATA_ROOT, build_literature_base
     from biomed_ontology.registry import load_registry
     from biomed_ontology.search import HybridSearcher
@@ -625,6 +653,18 @@ def index_cmd(
         console.print("[red]--recreate 仅用于全量路径；勿与 --incremental / --doc-id 联用[/red]")
         raise typer.Exit(2)
 
+    mode = "doc" if doc_id else ("incremental" if incremental else "full")
+    coll = collection or settings.milvus_collection
+    command_header(
+        "index",
+        meta=[
+            ("mode", mode),
+            ("embedder", embedder),
+            ("collection", coll),
+            ("figure_typer", figure_typer),
+            ("recreate", str(recreate)),
+        ],
+    )
     _require_real_embedder(embedder, allow_fake=allow_fake)
 
     if incremental or doc_id:
@@ -645,20 +685,23 @@ def index_cmd(
             print(f"增量 index 失败：{exc}", file=sys.stderr)
             raise typer.Exit(1) from exc
 
-        table = Table(title=f"索引增量 · {result.mode}")
-        table.add_column("指标")
-        table.add_column("值", justify="right")
-        table.add_row("skipped", str(result.skipped))
+        rows_m = [
+            ("skipped", str(result.skipped)),
+        ]
         if result.reason:
-            table.add_row("reason", result.reason)
-        table.add_row("catalog_sha256", (result.catalog_sha256 or "")[:16] + "…")
-        table.add_row("chunks", str(result.chunk_total))
-        table.add_row("dirty", str(result.dirty_count))
-        table.add_row("reembed", str(result.reembed_count))
-        table.add_row("patch", str(result.patch_count))
-        table.add_row("Milvus", str(result.milvus_n))
-        table.add_row("Iceberg", str(result.iceberg_n))
-        console.print(table)
+            rows_m.append(("reason", result.reason))
+        rows_m.extend(
+            [
+                ("catalog_sha256", (result.catalog_sha256 or "")[:16] + "…"),
+                ("chunks", str(result.chunk_total)),
+                ("dirty", str(result.dirty_count)),
+                ("reembed", str(result.reembed_count)),
+                ("patch", str(result.patch_count)),
+                ("Milvus", str(result.milvus_n)),
+                ("Iceberg", str(result.iceberg_n)),
+            ]
+        )
+        metrics_table(f"索引增量 · {result.mode}", rows_m)
         if result.dirty_document_ids:
             console.print(f"dirty docs {result.dirty_document_ids[:20]}")
         return
@@ -710,7 +753,16 @@ def index_cmd(
     ]
     for row in rows:
         row["release_id"] = kb.release_id
-    written = backend.upsert(rows, batch_size=128)
+    batch_size = 128
+    with tqdm_bar(total=len(rows), desc="Milvus upsert", unit="chunk") as bar:
+        last = 0
+
+        def _on_batch(written: int, _total: int) -> None:
+            nonlocal last
+            bar.update(written - last)
+            last = written
+
+        written = backend.upsert(rows, batch_size=batch_size, on_batch=_on_batch)
 
     # 全量成功后刷新 fingerprint，便于后续 --incremental no-op
     try:
@@ -733,17 +785,18 @@ def index_cmd(
     except Exception as exc:
         console.print(f"[yellow]index state 未写入：{exc}[/yellow]")
 
-    table = Table(title=f"索引 {backend.collection}")
-    table.add_column("指标")
-    table.add_column("值", justify="right")
-    table.add_row("release_id", kb.release_id)
-    table.add_row("embedder", model.name)
-    table.add_row("Milvus 切片", str(written))
-    table.add_row("Iceberg 切片", str(lake_n))
-    table.add_row("向量列", str(len(backend.vector_fields())))
-    table.add_row("带图切片", str(sum(1 for r in rows if r["asset_path"])))
-    table.add_row("图型已标注", f"{sum(typed.values())}（{figure_typer}）")
-    console.print(table)
+    metrics_table(
+        f"索引 {backend.collection}",
+        [
+            ("release_id", kb.release_id),
+            ("embedder", model.name),
+            ("Milvus 切片", str(written)),
+            ("Iceberg 切片", str(lake_n)),
+            ("向量列", str(len(backend.vector_fields()))),
+            ("带图切片", str(sum(1 for r in rows if r["asset_path"]))),
+            ("图型已标注", f"{sum(typed.values())}（{figure_typer}）"),
+        ],
+    )
     if typed:
         console.print(f"图型分布 {dict(sorted(typed.items(), key=lambda kv: -kv[1]))}")
 
@@ -884,6 +937,15 @@ def foundation_bios_load(
         "true",
         "yes",
     }
+    max_concepts = int(settings.bios_max_concepts or 0)
+    command_header(
+        "foundation bios-load",
+        meta=[
+            ("mode", "full" if want_full else "subset"),
+            ("force", str(force)),
+            ("max_concepts", str(max_concepts) if max_concepts else "unlimited"),
+        ],
+    )
     # 已初始化且非 force：可跳过 ACK；真正重灌时仍要求
     if want_full and not settings.bios_license_ack and (force or read_bios_init_marker() is None):
         console.print(
@@ -892,16 +954,43 @@ def foundation_bios_load(
             "仅子集：HMD_BIOS_INIT=subset"
         )
         raise typer.Exit(2)
-    result = initialize_bios(
-        full=want_full,
-        cfg=settings,
-        graphdb=GraphDbClient.from_settings(settings),
-        gate=BiosLicenseGate.from_settings(settings) if want_full else BiosLicenseGate(True, "poc"),
-        force=force,
-    )
+
+    with tqdm_bar(
+        total=max_concepts or None,
+        desc="BIOS load",
+        unit="concept",
+    ) as bar:
+        last = 0
+
+        def _on_progress(loaded: int) -> None:
+            nonlocal last
+            bar.update(loaded - last)
+            last = loaded
+
+        result = initialize_bios(
+            full=want_full,
+            cfg=settings,
+            graphdb=GraphDbClient.from_settings(settings),
+            gate=BiosLicenseGate.from_settings(settings)
+            if want_full
+            else BiosLicenseGate(True, "poc"),
+            force=force,
+            on_progress=_on_progress,
+        )
+
     if result.get("skipped"):
         console.print("[yellow]BIOS already initialized — skipped[/yellow]")
-    console.print(result)
+    metrics_table(
+        "BIOS load",
+        [
+            ("source", str(result.get("source") or "-")),
+            ("concepts", str(result.get("concepts") or 0)),
+            ("graph_loaded", str(result.get("graph_loaded") or 0)),
+            ("skipped", str(bool(result.get("skipped")))),
+            ("index", str(result.get("index") or "-")),
+            ("cache", str(result.get("cache") or "-")),
+        ],
+    )
 
 
 @foundation_app.command("sync")
@@ -910,6 +999,12 @@ def foundation_sync() -> None:
     from biomed_ontology.config import settings
     from biomed_ontology.foundation.sync import sync_world_model
 
+    command_header(
+        "foundation sync",
+        meta=[
+            ("require", "graphdb+milvus+om"),
+        ],
+    )
     result = sync_world_model(
         cfg=settings,
         require_graphdb=True,
@@ -917,15 +1012,18 @@ def foundation_sync() -> None:
         require_om=True,
     )
     for line in result.details:
-        console.print(line)
-    table = Table(title="Foundation Sync")
-    table.add_column("backend")
-    table.add_column("ok")
-    table.add_column("count", justify="right")
-    table.add_row("GraphDB", "✓" if result.graphdb_ok else "✗", str(result.entities))
-    table.add_row("Milvus", "✓" if result.milvus_ok else "✗", str(result.evidence_upserted))
-    table.add_row("OpenMetadata", "✓" if result.om_ok else "✗", str(result.assets))
-    console.print(table)
+        console.print(f"[dim]{line}[/dim]")
+    metrics_table(
+        "Foundation Sync",
+        [
+            ("GraphDB", f"{'✓' if result.graphdb_ok else '✗'}  entities={result.entities}"),
+            (
+                "Milvus",
+                f"{'✓' if result.milvus_ok else '✗'}  evidence={result.evidence_upserted}",
+            ),
+            ("OpenMetadata", f"{'✓' if result.om_ok else '✗'}  assets={result.assets}"),
+        ],
+    )
     if not (result.graphdb_ok and result.milvus_ok and result.om_ok):
         raise typer.Exit(1)
 
@@ -1000,9 +1098,9 @@ def lake_init() -> None:
 @lake_app.command("trino-smoke")
 def lake_trino_smoke() -> None:
     """SHOW TABLES FROM iceberg.hmd。"""
-    from biomed_ontology.config import settings
-
     from trino.dbapi import connect
+
+    from biomed_ontology.config import settings
 
     conn = connect(
         host=settings.trino_host,
@@ -1040,6 +1138,11 @@ def lake_ingest_doc(
     """单文档双写（纯函数；claim_status=extracted）。"""
     from biomed_ontology.lake.ingest import ingest_document
 
+    command_header(
+        "lake ingest-doc",
+        meta=[("source", source), ("doc_id", doc_id)],
+        console=_err_console,
+    )
     result = ingest_document(
         source_id=source,
         doc_id=doc_id,
@@ -1047,6 +1150,15 @@ def lake_ingest_doc(
         corpus_yaml=corpus_yaml,
         bern2_url=bern2_url,
         register_asset=not no_asset,
+    )
+    metrics_table(
+        "ingest-doc",
+        [
+            ("doc_id", str(result.get("doc_id") or doc_id)),
+            ("claim_status", str(result.get("claim_status") or "-")),
+            ("errors", str(len(result.get("errors") or []))),
+        ],
+        console=_err_console,
     )
     console.print_json(data=result)
     if result.get("errors"):
@@ -1064,12 +1176,26 @@ def lake_ingest_flow(
     """Prefect Flow 编排单文档双写。"""
     from biomed_ontology.lake.flows import document_dual_write_flow
 
+    command_header(
+        "lake ingest-flow",
+        meta=[("source", source), ("doc_id", doc_id)],
+        console=_err_console,
+    )
     result = document_dual_write_flow(
         source_id=source,
         doc_id=doc_id,
         file_path=str(file) if file else None,
         corpus_yaml=str(corpus_yaml) if corpus_yaml else None,
         bern2_url=bern2_url,
+    )
+    metrics_table(
+        "ingest-flow",
+        [
+            ("doc_id", str(result.get("doc_id") or doc_id)),
+            ("claim_status", str(result.get("claim_status") or "-")),
+            ("errors", str(len(result.get("errors") or []))),
+        ],
+        console=_err_console,
     )
     console.print_json(data=result)
 
@@ -1082,7 +1208,35 @@ def lake_ingest_batch(
     """Prefect 批量双写。"""
     from biomed_ontology.lake.flows import document_batch_ingest_flow
 
-    result = document_batch_ingest_flow(manifest=str(manifest), bern2_url=bern2_url)
+    command_header(
+        "lake ingest-batch",
+        meta=[("manifest", str(manifest))],
+        console=_err_console,
+    )
+    with tqdm_bar(desc="lake ingest", unit="doc") as bar:
+        last = 0
+
+        def _on_item(done: int, total: int) -> None:
+            nonlocal last
+            if bar.total != total:
+                bar.total = total
+            bar.update(done - last)
+            last = done
+
+        result = document_batch_ingest_flow(
+            manifest=str(manifest),
+            bern2_url=bern2_url,
+            on_item=_on_item,
+        )
+    errors = sum(1 for r in result if r.get("error") or r.get("errors"))
+    metrics_table(
+        "ingest-batch",
+        [
+            ("docs", str(len(result))),
+            ("errors", str(errors)),
+        ],
+        console=_err_console,
+    )
     console.print_json(data=result)
 
 

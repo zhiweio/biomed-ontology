@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -500,10 +500,13 @@ def initialize_bios(
     gate: BiosLicenseGate | None = None,
     cfg: Settings | None = None,
     force: bool = False,
+    on_progress: Callable[[int], None] | None = None,
 ) -> dict[str, Any]:
     """默认全量流式下载并灌库；subset 仅测试。全量勿 list() 进内存。
 
     若 ``.initialized`` 已存在且 GraphDB 仍有 Concept，则跳过重灌（``force=True`` 强制）。
+
+    ``on_progress(loaded)``：每写入（或索引）一个 concept 后可选回调（CLI 挂进度条）。
     """
     cfg = cfg or settings
     g = gate or BiosLicenseGate.from_settings(cfg)
@@ -630,11 +633,11 @@ def initialize_bios(
                             batch.append(f'  skos:altLabel "{_esc(t)}" ;')
                 batch.append(f'  hmd:biosId "{_esc(c.bios_id)}" .')
                 loaded += 1
+                if on_progress is not None:
+                    on_progress(loaded)
                 if loaded % batch_size == 0:
                     client.load_turtle("\n".join(batch), graph_uri=GRAPH_BIOMEDICAL)
                     batch = batch[:4]
-                    if loaded % (batch_size * 20) == 0:
-                        print(f"[bios] loaded {loaded} concepts…", flush=True)
             if len(batch) > 4:
                 client.load_turtle("\n".join(batch), graph_uri=GRAPH_BIOMEDICAL)
         except Exception as exc:
@@ -646,6 +649,8 @@ def initialize_bios(
         # 仍耗尽迭代以写完 sqlite
         for _ in indexed_iter:
             loaded += 1
+            if on_progress is not None:
+                on_progress(loaded)
         source += "+graphdb_skipped"
 
     _write_init_marker(

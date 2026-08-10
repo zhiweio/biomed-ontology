@@ -207,6 +207,66 @@ def test_milvus_upsert_encode_false_keeps_vectors():
     assert "concept_ids_expanded" in client.data[0]
 
 
+def test_milvus_upsert_on_batch_callback():
+    from biomed_ontology.embed import FakeEmbedder
+    from biomed_ontology.search.backends.milvus import MilvusBackend
+
+    class FakeClient:
+        def upsert(self, *, collection_name: str, data: list) -> None:
+            return None
+
+        def flush(self, _name: str) -> None:
+            return None
+
+        def has_collection(self, _name: str) -> bool:
+            return True
+
+        def describe_collection(self, _name: str) -> dict:
+            return {
+                "description": "embedder=fake;release=0.3.0-ent",
+                "fields": [{"name": "chunk_id"}, {"name": "dense_general"}],
+            }
+
+    backend = MilvusBackend(
+        collection="hmd_chunks",
+        embedder=FakeEmbedder(),
+        client=FakeClient(),
+        release_id="0.3.0-ent",
+    )
+    rows = [
+        {
+            "chunk_id": f"c{i}",
+            "doc_id": "d1",
+            "source_id": "SRC",
+            "license_rank": 0,
+            "section_id": "",
+            "section_path": "",
+            "sort_order": i,
+            "page": 1,
+            "modality": "TEXT",
+            "degraded": "",
+            "asset_path": "",
+            "figure_type": "",
+            "labels": [],
+            "concept_ids_expanded": [],
+            "text": f"t{i}",
+            "release_id": "0.3.0-ent",
+            "dense_general": [0.1] * 8,
+            "sparse_lexical": {"1": 1.0},
+        }
+        for i in range(5)
+    ]
+    seen: list[tuple[int, int]] = []
+    n = backend.upsert(
+        rows,
+        encode=False,
+        batch_size=2,
+        on_batch=lambda written, total: seen.append((written, total)),
+    )
+    assert n == 5
+    assert seen == [(2, 5), (4, 5), (5, 5)]
+
+
 def test_concept_label_terms_from_kb():
     kb = build_normalizer_from_catalog()
     # pick any concept

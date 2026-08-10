@@ -13,6 +13,7 @@ WHY 这一支的载体。所以这里只返回各列的 `(chunk_id, score)`，�
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -29,8 +30,8 @@ from biomed_ontology.search.backends.base import (
 __all__ = [
     "MilvusBackend",
     "collection_schema",
-    "parse_collection_stamp",
     "format_collection_stamp",
+    "parse_collection_stamp",
 ]
 
 _PAYLOAD_FIELDS = (
@@ -275,6 +276,7 @@ class MilvusBackend:
         flush: bool = True,
         batch_size: int = 128,
         encode: bool = True,
+        on_batch: Callable[[int, int], None] | None = None,
     ) -> int:
         """`rows` 需含元数据与 `text`；默认在此处算向量。
 
@@ -286,6 +288,8 @@ class MilvusBackend:
 
         ``batch_size``：按批 encode+upsert，避免一次加载整库文本/图像把 FD
         打满（macOS 默认 soft limit 256 时常见 Errno 24）。
+
+        ``on_batch(written, total)``：每批写入后可选回调（CLI 挂进度条）。
         """
         if not rows:
             return 0
@@ -298,9 +302,10 @@ class MilvusBackend:
         if self.release_id:
             rows = [{**r, "release_id": r.get("release_id") or self.release_id} for r in rows]
         step = max(1, int(batch_size))
+        total = len(rows)
         written = 0
         vector_fields = set(self.vector_fields()) if not encode else set()
-        for i in range(0, len(rows), step):
+        for i in range(0, total, step):
             batch = rows[i : i + step]
             if encode:
                 bundles = self.embedder.encode(
@@ -322,6 +327,8 @@ class MilvusBackend:
                         )
             self.client.upsert(collection_name=self.collection, data=payload)
             written += len(payload)
+            if on_batch is not None:
+                on_batch(written, total)
         if flush:
             self.client.flush(self.collection)
         return written
