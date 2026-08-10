@@ -1593,6 +1593,8 @@ def render_evolve_apply(
     out = console or Console()
     payload = result.to_dict() if hasattr(result, "to_dict") else dict(result)
     mode = "dry-run" if payload.get("dry_run") else "write"
+    written = list(payload.get("written") or [])
+    skipped = list(payload.get("skipped") or [])
     out.print()
     out.print(
         Panel(
@@ -1601,12 +1603,21 @@ def render_evolve_apply(
             border_style="cyan",
         )
     )
+    if not written and not skipped:
+        out.print(
+            "[yellow]无 approved 提案可写回。[/yellow] "
+            "先 [cyan]evolve-review --pending[/cyan]，再 "
+            "[cyan]evolve-approve --tier L1 --by you@hmd[/cyan]，然后重跑 apply。\n"
+            f"proposals: {escape(str(payload.get('proposals_path') or ''))}"
+        )
+        out.print()
+        return
     table = Table(title="Patches", box=box.SIMPLE)
     table.add_column("action")
     table.add_column("mention")
     table.add_column("enterprise_id")
     table.add_column("path")
-    for row in payload.get("written") or []:
+    for row in written:
         table.add_row(
             str(row.get("action") or ""),
             escape(str(row.get("mention") or "")),
@@ -1614,7 +1625,6 @@ def render_evolve_apply(
             str(row.get("path") or ""),
         )
     out.print(table)
-    skipped = list(payload.get("skipped") or [])
     if skipped:
         st = Table(title="Skipped", box=box.SIMPLE)
         st.add_column("mention")
