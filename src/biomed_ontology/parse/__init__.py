@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum, MappingJustificationEnum
 from biomed_ontology._generated.hmd_fact import DocTypeEnum, LanguageEnum
@@ -171,30 +172,66 @@ def describe_assets(
     *,
     vision: VisionProvider,
     ctx: TraceContext | None = None,
-) -> dict[tuple[int, tuple[float, ...]], AssetRecord]:
-    """图片/表格 → 落盘的图像 + 可选的文本摘要。键为 (页码, bbox)。
+) -> dict[tuple[int, tuple[Any, ...]], AssetRecord]:
+    """图片/表格 → 落盘的图像 + 可选的文本摘要。
+
+    键与 ``asset_lookup_key(block)`` 对齐：PDF 多为 ``(page, bbox)``；
+    Office 无 bbox 时为 ``(page, ('__path__', asset_path))``。
 
     **渲染与描述是两件事，不能绑在一起**：即使没配 VLM 也要把图渲染出来，
     因为多模态向量列吃的是像素，不是摘要。早先这里对 NullVisionProvider 直接返回空，
     结果是"没配 VLM"连带把视觉检索也悄悄关掉了。
-    """
-    from biomed_ontology.parse.assets import image_regions, render_regions
 
-    regions = image_regions(layout.blocks)
-    if not regions:
+    像素来源：① PDF 族 ``render_regions``；② 版面后端已导出的 ``block.asset_path``
+    （Office Docling / MinerU）。二者都没有则记 ``asset.missing_pixels``，不假装看过图。
+    """
+    from biomed_ontology.parse.assets import (
+        asset_lookup_key,
+        image_regions,
+        load_backend_asset,
+        render_regions,
+    )
+
+    targets = [b for b in layout.blocks if b.kind in {"image", "table"}]
+    if not targets:
         return {}
 
-    out: dict[tuple[int, tuple[float, ...]], AssetRecord] = {}
-    rendered = render_regions(pdf_path, regions, out_dir)
+    regions = image_regions(targets)
+    rendered_by_region: dict[tuple[int, tuple[float, ...]], Any] = {}
+    if regions:
+        for region, asset in zip(
+            regions, render_regions(pdf_path, regions, out_dir), strict=False
+        ):
+            rendered_by_region[region] = asset
+
+    out: dict[tuple[int, tuple[Any, ...]], AssetRecord] = {}
     described = not isinstance(vision, NullVisionProvider)
 
-    for (page, bbox), asset in zip(regions, rendered, strict=False):
+    for block in targets:
+        key = asset_lookup_key(block)
+        asset = None
+        if len(block.bbox) == 4:
+            asset = rendered_by_region.get((block.page, block.bbox))
+        if asset is None:
+            asset = load_backend_asset(out_dir, getattr(block, "asset_path", None))
+        if asset is None:
+            if ctx is not None and block.kind == "image":
+                ctx.record_decision(
+                    stage="parse.vision",
+                    justification=MappingJustificationEnum.UnspecifiedMatching,
+                    chosen=f"page={block.page}",
+                    confidence=0.0,
+                    rule_id="asset.missing_pixels",
+                    state_after="image 块无 PDF 渲染结果且无后端侧车像素",
+                )
+            continue
+
         result = (
             vision.describe(asset.data, prompt=_ASSET_PROMPT, media_type="image/png")
             if described
             else None
         )
-        out[(page, tuple(bbox))] = AssetRecord(rel_path=asset.rel_path, vision=result)
+        out[key] = AssetRecord(rel_path=asset.rel_path, vision=result)
         if ctx is not None and result is not None:
             for w in result.warnings:
                 ctx.record_decision(

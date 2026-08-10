@@ -25,6 +25,8 @@ Citationware 要求每个文本碎片能指回 PDF 上的**页码与 bbox**，�
 | bbox 缺失 = 空元组 | 不伪造整页坐标；无 bbox 的图块跳过像素渲染 |
 | 表导出为侧车 Markdown/HTML | 大表不挤进块内 `text`；`asset_path` 指向 `tables/*.md` 等 |
 | Docling 关 `torch.compile` | 避免 MPS/少 SM GPU 上 dynamo 噪声；与解析结果无关 |
+| PDF 不开 `generate_picture_images` | 像素由 `render_regions` 按 bbox 渲染；与 Docling 页裁切同构，避免双轨 |
+| Office picture/chart 落盘 | Docling `PictureItem.get_image` → `images/docling_*.png`；chart 可选 LibreOffice |
 | MinerU 本地/HTTP 双传输 | 内网可离线；云 API 需 key 与法务确认 |
 | 页码 1-based 原始页 | 分片偏移由后端内部消化，下游永远看到读者页码 |
 
@@ -61,6 +63,8 @@ Citationware 要求每个文本碎片能指回 PDF 上的**页码与 bbox**，�
 
 Office 后缀：`.docx` / `.pptx` / `.xlsx`（Router 默认 docling）。  
 图像：`.png` / `.jpg` / `.jpeg`（Router 默认 mineru）。
+
+Docling 对 `picture`/`chart`：caption 剥离 `Image not available` 占位注释；若 item 上已有 PIL（Office 嵌入图 / 已渲染 chart）则写入 `asset_path`。PDF 图块通常无 PIL，由下游 bbox 渲染补齐。`HMD_DOCLING_RENDER_CHART_IMAGES`（默认 true）控制 Office 原生 chart 位图；无 LibreOffice 时不硬失败。
 
 ### 3.3 提取数据流
 

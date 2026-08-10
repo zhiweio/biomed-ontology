@@ -65,7 +65,7 @@ Router 还承担**审计责任**：每次路由写入 `RouteTrace` 与 `TraceCon
 
 ```text
 后缀判断
-  .docx / .pptx / .xlsx  → docling（office_main）
+  .docx / .pptx / .xlsx  → docling（office_main；嵌入 picture/chart → 侧车 PNG → 视觉融合）
   .png / .jpg / .jpeg     → mineru（image_ocr）
   其他非 PDF              → UnsupportedFormat
 

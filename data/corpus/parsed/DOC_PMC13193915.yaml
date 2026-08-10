@@ -4,17 +4,10 @@ parse:
   degraded: []
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 6
-      image_count: 5
-      table_candidates: 1
-      text_chars: 27439
-      avg_blocks_per_page: 17.5
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -300,7 +293,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC13193915
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC13193915
   title: 'Primary testicular neuroendocrine tumor with retroperitoneal lymph nodes
     metastasis: a case report.'
   doc_type: JOURNAL_ARTICLE
@@ -729,8 +723,6 @@ documents:
   tables: []
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 48.016557508209694
@@ -741,8 +733,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 47.78973619603247
@@ -753,8 +743,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r001.png
   - image_id: IMG:0002
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 2
     bbox:
     - 303.5068490650317
@@ -765,8 +753,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0002_r002.png
   - image_id: IMG:0003
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 48.31499695974958
@@ -777,8 +763,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r003.png
   - image_id: IMG:0004
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 48.61877284444313
@@ -789,11 +773,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r004.png
   - image_id: IMG:0005
-    caption: 'FIGURE 4
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: FIGURE 4
     page: 4
     bbox:
     - 83.87693405507852

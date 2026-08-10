@@ -30,9 +30,11 @@
 | 渲染与 VLM 描述分离 | `NullVisionProvider` 下仍渲染；视觉列依赖像素存在 |
 | PyMuPDF 渲染走法务闸门 | 侧门绕过 layout 后端也会触发 AGPL 检查 |
 | 无 bbox 不渲染整页 | 整页 pixmap 会把正文当图，污染视觉空间 |
-| Office/纯图像无 PDF 页 | `render_regions` 返回空；依赖后端已导出资产 |
+| Office/纯图像无 PDF 页 | `render_regions` 返回空；依赖后端已导出资产（Docling `images/docling_*.png`、MinerU `img_path`） |
+| `asset_lookup_key` | 有 bbox 用 `(page, bbox)`；无 bbox 用 `(page, ('__path__', asset_path))`，避免同页多图碰撞 |
+| 缺像素记 `asset.missing_pixels` | 禁止静默把 IMAGE 行当成「看过图」 |
 
-默认渲染 DPI：144（`zoom = dpi/72`）。
+默认渲染 DPI：144（`zoom = dpi/72`）。PDF 科研图多为矢量，渲染区域才是视觉模型该看的内容；与开启 Docling `generate_picture_images`（页光栅+裁切）同构，故不双开。
 
 ---
 
@@ -89,7 +91,9 @@ sequenceDiagram
   Note over M: encode(text, images=resolve_asset(...))
 ```
 
-`describe_assets` 提示词（固定）：要求报告可读数值与单位，服务检索而非闲聊。
+`describe_assets` 像素优先级：① `render_regions`（PDF 族）；② `load_backend_asset(block.asset_path)`（Office/MinerU 侧车）。随后可选 VLM。提示词（固定）：要求报告可读数值与单位，服务检索而非闲聊。
+
+`emit` 写 `ImageBlock.asset_path` 时：物化结果优先，否则回退 `LayoutBlock.asset_path`。
 
 ### 3.4 与 figure_type 的衔接
 

@@ -15,6 +15,9 @@ __all__ = [
     "AssetRecord",
     "RenderedAsset",
     "asset_dir_name",
+    "asset_lookup_key",
+    "image_regions",
+    "load_backend_asset",
     "render_regions",
     "resolve_asset",
     "safe_asset_name",
@@ -130,3 +133,30 @@ def render_regions(
 def image_regions(blocks: Any) -> list[tuple[int, tuple[float, ...]]]:
     """从版面块里挑出需要渲染的区域。没有 bbox 的跳过 —— 渲染整页会把正文也当图。"""
     return [(b.page, b.bbox) for b in blocks if b.kind in {"image", "table"} and len(b.bbox) == 4]
+
+
+def asset_lookup_key(block: Any) -> tuple[int, tuple[Any, ...]]:
+    """``describe_assets`` / ``emit`` 共用的资产查找键。
+
+    有合法 bbox 时用 ``(page, bbox)``；Office 常无 bbox，改用 ``asset_path``
+    避免同页多图撞在 ``(page, ())`` 上互相覆盖。
+    """
+    page = int(getattr(block, "page", 0) or 0)
+    bbox = tuple(getattr(block, "bbox", ()) or ())
+    if len(bbox) == 4:
+        return page, bbox
+    rel = str(getattr(block, "asset_path", None) or "")
+    return page, ("__path__", rel)
+
+
+def load_backend_asset(out_dir: Path, rel_path: str | None) -> RenderedAsset | None:
+    """读取版面后端已写入 ``out_dir`` 的侧车图（Office Docling / MinerU）。"""
+    if not rel_path:
+        return None
+    rel = str(rel_path).replace("\\", "/").lstrip("/")
+    if ".." in rel.split("/"):
+        return None
+    path = out_dir / rel
+    if not path.is_file():
+        return None
+    return RenderedAsset(rel_path=rel, page=0, bbox=(), data=path.read_bytes())

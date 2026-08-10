@@ -4,17 +4,10 @@ parse:
   degraded: []
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 8
-      image_count: 5
-      table_candidates: 0
-      text_chars: 29782
-      avg_blocks_per_page: 15.0
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -288,7 +281,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC12133497
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC12133497
   title: 'Surufatinib related nephrotic syndrome in a pancreatic neuroendocrine tumor:
     a case report and review of literature.'
   doc_type: JOURNAL_ARTICLE
@@ -753,8 +747,6 @@ documents:
   tables: []
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 48.84559415662035
@@ -765,8 +757,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 48.594766529633844
@@ -777,11 +767,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r001.png
   - image_id: IMG:0002
-    caption: 'FIGURE 1
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: FIGURE 1
     page: 2
     bbox:
     - 83.76497584020234
@@ -792,8 +778,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0002_r002.png
   - image_id: IMG:0003
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 48.24536757694847
@@ -804,8 +788,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r003.png
   - image_id: IMG:0004
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 4
     bbox:
     - 48.532397444299306
@@ -816,8 +798,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0004_r004.png
   - image_id: IMG:0005
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 5
     bbox:
     - 140.84233496320755

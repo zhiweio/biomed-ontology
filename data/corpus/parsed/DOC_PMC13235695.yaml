@@ -5,17 +5,10 @@ parse:
   - table_structure
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 27
-      image_count: 27
-      table_candidates: 6
-      text_chars: 66183
-      avg_blocks_per_page: 38.05
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -800,7 +793,8 @@ sections_meta:
   - docling 版面信号 level=1 page=22
 documents:
 - doc_id: DOC:PMC13235695
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC13235695
   title: 'Precision Medicine in Treating Lung Cancer: A Narrative Review on Treatments
     Targeting Oncogenic Genetic Mutations.'
   doc_type: JOURNAL_ARTICLE
@@ -2942,8 +2936,6 @@ documents:
     asset_path: images/p0011_r019.png
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 31.528831481933594
@@ -2954,8 +2946,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 2
     bbox:
     - 31.514549255371094
@@ -2966,8 +2956,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0002_r001.png
   - image_id: IMG:0002
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 31.569881439208984
@@ -2978,11 +2966,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r002.png
   - image_id: IMG:0003
-    caption: 'FIGURE 1: Etiologic risk factors for lung cancer
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: 'FIGURE 1: Etiologic risk factors for lung cancer'
     page: 3
     bbox:
     - 184.64730834960938
@@ -2993,8 +2977,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r003.png
   - image_id: IMG:0004
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 4
     bbox:
     - 31.527179718017578
@@ -3005,8 +2987,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0004_r004.png
   - image_id: IMG:0005
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 5
     bbox:
     - 31.577838897705078
@@ -3017,8 +2997,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0005_r006.png
   - image_id: IMG:0006
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 6
     bbox:
     - 31.526508331298828
@@ -3030,11 +3008,7 @@ documents:
     asset_path: images/p0006_r008.png
   - image_id: IMG:0007
     caption: 'FIGURE 2: Composite figure of graphs on incidence, ASIR, and ASMR of
-      lung cancer cases across men and women across the United Nations regions
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+      lung cancer cases across men and women across the United Nations regions'
     page: 6
     bbox:
     - 182.23411560058594
@@ -3045,8 +3019,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0006_r009.png
   - image_id: IMG:0008
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 7
     bbox:
     - 31.649831771850586
@@ -3057,8 +3029,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0007_r010.png
   - image_id: IMG:0009
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 8
     bbox:
     - 31.62989616394043
@@ -3069,8 +3039,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0008_r012.png
   - image_id: IMG:0010
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 9
     bbox:
     - 31.556358337402344
@@ -3084,11 +3052,7 @@ documents:
     caption: 'FIGURE 3: Composite figure with four sections: (A) common EGFR mutations
       causing lung cancer, (B) MOA of first- and second-generation EGFR TKIs, (C)
       MOA of third- and fourth-generation EGFR TKIs, and (D) other therapies targeting
-      EGFR
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+      EGFR'
     page: 9
     bbox:
     - 182.2681427001953
@@ -3099,8 +3063,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0009_r015.png
   - image_id: IMG:0012
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 10
     bbox:
     - 31.535686492919922
@@ -3111,8 +3073,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0010_r016.png
   - image_id: IMG:0013
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 11
     bbox:
     - 31.657564163208008
@@ -3123,8 +3083,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0011_r018.png
   - image_id: IMG:0014
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 12
     bbox:
     - 31.564516067504883
@@ -3135,8 +3093,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0012_r020.png
   - image_id: IMG:0015
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 12
     bbox:
     - 182.38577270507812
@@ -3147,8 +3103,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0012_r021.png
   - image_id: IMG:0016
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 13
     bbox:
     - 31.4383602142334
@@ -3159,8 +3113,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0013_r022.png
   - image_id: IMG:0017
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 14
     bbox:
     - 31.478111267089844
@@ -3171,8 +3123,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0014_r023.png
   - image_id: IMG:0018
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 15
     bbox:
     - 31.53240394592285
@@ -3183,8 +3133,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0015_r024.png
   - image_id: IMG:0019
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 15
     bbox:
     - 190.4302520751953
@@ -3195,8 +3143,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0015_r025.png
   - image_id: IMG:0020
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 16
     bbox:
     - 31.56553840637207
@@ -3207,8 +3153,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0016_r026.png
   - image_id: IMG:0021
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 16
     bbox:
     - 182.66580200195312
@@ -3219,8 +3163,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0016_r027.png
   - image_id: IMG:0022
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 17
     bbox:
     - 31.44151496887207
@@ -3231,8 +3173,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0017_r028.png
   - image_id: IMG:0023
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 18
     bbox:
     - 31.478158950805664
@@ -3243,8 +3183,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0018_r029.png
   - image_id: IMG:0024
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 19
     bbox:
     - 31.559051513671875
@@ -3255,8 +3193,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0019_r030.png
   - image_id: IMG:0025
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 19
     bbox:
     - 182.6223907470703
@@ -3267,8 +3203,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0019_r031.png
   - image_id: IMG:0026
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 20
     bbox:
     - 31.430063247680664
@@ -3279,8 +3213,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0020_r032.png
   - image_id: IMG:0027
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 21
     bbox:
     - 31.458948135375977
@@ -3291,8 +3223,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0021_r033.png
   - image_id: IMG:0028
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 22
     bbox:
     - 31.4655818939209
@@ -3303,8 +3233,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0022_r034.png
   - image_id: IMG:0029
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 23
     bbox:
     - 31.528566360473633
@@ -3315,8 +3243,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0023_r035.png
   - image_id: IMG:0030
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 24
     bbox:
     - 31.528331756591797
@@ -3327,8 +3253,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0024_r036.png
   - image_id: IMG:0031
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 25
     bbox:
     - 31.489273071289062
@@ -3339,8 +3263,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0025_r037.png
   - image_id: IMG:0032
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 26
     bbox:
     - 31.51119041442871
@@ -3351,8 +3273,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0026_r038.png
   - image_id: IMG:0033
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 27
     bbox:
     - 31.56093406677246

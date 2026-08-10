@@ -5,17 +5,10 @@ parse:
   - table_structure
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 9
-      image_count: 5
-      table_candidates: 1
-      text_chars: 48196
-      avg_blocks_per_page: 17.22222222222222
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -349,7 +342,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC12515981
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC12515981
   title: 'First-line treatment with chemotherapy, surufatinib (an angio-immuno kinase
     inhibitor), and camrelizumab (an anti-PD-1 antibody) for locally advanced or metastatic
     pancreatic ductal adenocarcinoma: a phase Ib/II randomized study.'
@@ -1434,8 +1428,6 @@ documents:
     asset_path: images/p0006_r005.png
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 525.5393217146396
@@ -1446,14 +1438,10 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: 'Fig. 1 Trial pro fi le. Two deaths occurred in the NASCA group, one
-      due to liver failure and the other due to unspeci fi ed causes. In the nabpaclitaxel
+    caption: Fig. 1 Trial pro fi le. Two deaths occurred in the NASCA group, one due
+      to liver failure and the other due to unspeci fi ed causes. In the nabpaclitaxel
       and gemcitabine group, one death was attributed to an infection and one due
       to unspeci fi ed causes
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
     page: 3
     bbox:
     - 54.392330325022336
@@ -1464,13 +1452,9 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r001.png
   - image_id: IMG:0002
-    caption: 'Fig. 2 Kaplan -Meier analyses of survival in the intention-to-treat
-      population as assessed by investigators. a Kaplan -Meier curves of progression-free
-      survival (%). b Kaplan -Meier curves of overall survival
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: Fig. 2 Kaplan -Meier analyses of survival in the intention-to-treat population
+      as assessed by investigators. a Kaplan -Meier curves of progression-free survival
+      (%). b Kaplan -Meier curves of overall survival
     page: 5
     bbox:
     - 111.66365816202014
@@ -1481,7 +1465,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0005_r004.png
   - image_id: IMG:0003
-    caption: 'Fig. 3 Fluorescent multiplex immunohistochemistry analysis of baseline
+    caption: Fig. 3 Fluorescent multiplex immunohistochemistry analysis of baseline
       tissue samples from 26 patients who received NASCA treatment. a Comparison of
       the ratio of M1/M2 macrophage percentages in the stroma between patients with
       partial response (PR) and those with stable disease (SD) or progressive disease
@@ -1495,10 +1479,6 @@ documents:
       to de fi ne high and low groups. f Progression-free survival was analyzed in
       relation to the levels of CD8 + PD-1 + cells, strati fi ed by the median value.
       HR Hazard Ratio, NA not available 2
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
     page: 7
     bbox:
     - 54.08188746785745
@@ -1509,8 +1489,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0007_r006.png
   - image_id: IMG:0004
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 9
     bbox:
     - 300.7396277733147

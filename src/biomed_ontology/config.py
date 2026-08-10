@@ -75,6 +75,8 @@ class Settings(BaseSettings):
     # --- PDF / 文档攻击面限制 ---------------------------------------------
     parse_max_pages: int = Field(default=400, gt=0)
     parse_max_bytes: int = Field(default=64 * 1024 * 1024, gt=0)
+    # Office（docx/pptx/xlsx）原生 chart → 位图；需本机 LibreOffice，失败不硬崩
+    docling_render_chart_images: bool = True
 
     # --- 视觉融合 ---------------------------------------------------------
     vision_provider: VisionProviderName = "null"

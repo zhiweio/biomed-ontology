@@ -5,17 +5,10 @@ parse:
   - table_structure
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 9
-      image_count: 8
-      table_candidates: 0
-      text_chars: 30562
-      avg_blocks_per_page: 15.11111111111111
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -344,7 +337,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC13052964
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC13052964
   title: Post-marketing signal detection of fruquintinib-associated adverse events
     using the FAERS database.
   doc_type: JOURNAL_ARTICLE
@@ -1312,8 +1306,6 @@ documents:
     asset_path: images/p0009_r011.png
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 412.26953125
@@ -1324,12 +1316,8 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: 'Figure 1. The process of selecting AEs from the FAERS database. AEs
-      = adverse events, FAERS = FDA adverse event reporting system.
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: Figure 1. The process of selecting AEs from the FAERS database. AEs =
+      adverse events, FAERS = FDA adverse event reporting system.
     page: 2
     bbox:
     - 110.97272491455078
@@ -1340,8 +1328,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0002_r001.png
   - image_id: IMG:0002
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
+    caption: Figure 2. Distribution of AEs over time. AEs = adverse events.
     page: 4
     bbox:
     - 60.17565155029297
@@ -1352,8 +1339,8 @@ documents:
     extracted_values: {}
     asset_path: images/p0004_r005.png
   - image_id: IMG:0003
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
+    caption: Figure 3. Results of SOC classification of ADE signals. ADE = adverse
+      drug event, SOC = system organ classification.
     page: 4
     bbox:
     - 35.17253112792969
@@ -1364,11 +1351,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0004_r006.png
   - image_id: IMG:0004
-    caption: 'Figure 5. Top 30 PT of signal intensity. PT = preferred term.
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: Figure 5. Top 30 PT of signal intensity. PT = preferred term.
     page: 6
     bbox:
     - 63.11698913574219
@@ -1379,11 +1362,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0006_r008.png
   - image_id: IMG:0005
-    caption: 'Figure 7. The subgroup analysis in age.
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: Figure 7. The subgroup analysis in age.
     page: 8
     bbox:
     - 84.36170959472656

@@ -4,17 +4,10 @@ parse:
   degraded: []
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 6
-      image_count: 6
-      table_candidates: 0
-      text_chars: 26798
-      avg_blocks_per_page: 18.0
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -329,7 +322,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC13201154
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC13201154
   title: 'Clinical response in advanced non-small cell lung cancer with high PD-L1
     expression and &lt;i&gt;MET&lt;/i&gt; exon 14 skipping mutation: a case analysis
     of overcoming immunotherapy resistance and literature review.'
@@ -755,8 +749,6 @@ documents:
   tables: []
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 47.996463814274875
@@ -767,8 +759,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 47.77852892297156
@@ -779,8 +769,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r001.png
   - image_id: IMG:0002
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 47.885433176835264
@@ -791,8 +779,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r002.png
   - image_id: IMG:0003
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 48.04580100920412
@@ -803,11 +789,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r003.png
   - image_id: IMG:0004
-    caption: 'FIGURE 3
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: FIGURE 3
     page: 4
     bbox:
     - 50.88776467319915
@@ -818,16 +800,12 @@ documents:
     extracted_values: {}
     asset_path: images/p0004_r004.png
   - image_id: IMG:0005
-    caption: '(A) The computed tomography (CT) scan before treatment. (B) the CT scan
+    caption: (A) The computed tomography (CT) scan before treatment. (B) the CT scan
       after 6 cycles of administration of tislelizumab, showing that the tumor signi
       fi cant reduction. (C) The CT scan after 8 cycles of administration of tislelizumab,
       showing that the tumor had increased in size. It indicates that the tumor has
       developed resistance to tislelizumab. (D) the CT scan conducted two months after
       the administration of savolitinib showed that the tumor shrank again.
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
     page: 4
     bbox:
     - 48.53127900730787
@@ -838,8 +816,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0004_r005.png
   - image_id: IMG:0006
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 4
     bbox:
     - 48.356127193820186

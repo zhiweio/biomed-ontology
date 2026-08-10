@@ -77,8 +77,9 @@ LinkML 还要求：`degraded[]` 透传解析能力缺口；`labels[]` 标引分�
   chunk_id 种子：首片 table_id，续片 table_id#n
 
 对每个 image:
-  单片：caption + vision_summary
-  modality=IMAGE, asset_path 来自 ImageBlock
+  单片：caption + vision_summary（caption 不得含 Docling Image-not-available 占位）
+  modality=IMAGE, asset_path 来自 ImageBlock（PDF 渲染或 Office 侧车）
+  → Milvus upsert 时 images=[resolve_asset(...)] 喂视觉列
 ```
 
 Boilerplate 检测：section 路径**末段**匹配 `References|Acknowledgments|…`（避免父路径误杀）。

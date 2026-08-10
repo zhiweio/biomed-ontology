@@ -5,17 +5,10 @@ parse:
   - table_structure
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 7
-      image_count: 1
-      table_candidates: 2
-      text_chars: 39276
-      avg_blocks_per_page: 18.285714285714285
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -433,7 +426,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC12994080
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC12994080
   title: Fruquintinib in combination with tislelizumab versus trifluridine/tipiracil
     and bevacizumab in third-line and beyond MSS mCRC without active liver metastases-the
     IKF-080/AIO-QUINTIS trial.
@@ -1125,8 +1119,6 @@ documents:
     asset_path: images/p0004_r004.png
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 54.32446916116473
@@ -1137,8 +1129,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 476.887763169171
@@ -1149,8 +1139,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r001.png
   - image_id: IMG:0002
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 2
     bbox:
     - 55.049967019403276
@@ -1161,11 +1149,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0002_r002.png
   - image_id: IMG:0003
-    caption: 'Figure 1. Study schedule overview.
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: Figure 1. Study schedule overview.
     page: 6
     bbox:
     - 54.12113191550019

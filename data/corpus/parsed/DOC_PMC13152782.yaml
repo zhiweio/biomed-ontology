@@ -4,17 +4,10 @@ parse:
   degraded: []
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 6
-      image_count: 4
-      table_candidates: 0
-      text_chars: 23138
-      avg_blocks_per_page: 17.166666666666668
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -286,7 +279,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC13152782
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC13152782
   title: 'Savolitinib in brain and leptomeningeal metastases from non-small cell lung
     cancer: a case report.'
   doc_type: JOURNAL_ARTICLE
@@ -664,8 +658,6 @@ documents:
   tables: []
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 48.0242835029901
@@ -676,8 +668,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 47.78552965144353
@@ -688,8 +678,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r001.png
   - image_id: IMG:0002
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 2
     bbox:
     - 47.91061136931134
@@ -700,8 +688,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0002_r002.png
   - image_id: IMG:0003
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 48.30713736328077
@@ -712,8 +698,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0003_r003.png
   - image_id: IMG:0004
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 3
     bbox:
     - 48.136348599217

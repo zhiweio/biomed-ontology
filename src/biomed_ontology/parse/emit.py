@@ -161,8 +161,11 @@ def _link_parents(meta: list[dict[str, Any]]) -> None:
 
 
 def _table_block(block: Any, idx: int, assets: dict[Any, Any]) -> TableBlock:
+    from biomed_ontology.parse.assets import asset_lookup_key
+
     header, rows = _markdown_table(block.text)
-    result = assets.get((block.page, tuple(block.bbox)))
+    result = assets.get(asset_lookup_key(block))
+    rel = (result.rel_path if result else None) or getattr(block, "asset_path", None)
     return TableBlock(
         table_id=f"TBL:{idx:04d}",
         caption=(result.summary or None) if result else None,
@@ -170,12 +173,15 @@ def _table_block(block: Any, idx: int, assets: dict[Any, Any]) -> TableBlock:
         bbox=list(block.bbox) or [0.0, 0.0, 0.0, 0.0],
         header=header,
         rows=rows,
-        asset_path=result.rel_path if result else None,
+        asset_path=rel,
     )
 
 
 def _image_block(block: Any, idx: int, assets: dict[Any, Any]) -> ImageBlock:
-    result = assets.get((block.page, tuple(block.bbox)))
+    from biomed_ontology.parse.assets import asset_lookup_key
+
+    result = assets.get(asset_lookup_key(block))
+    rel = (result.rel_path if result else None) or getattr(block, "asset_path", None)
     return ImageBlock(
         image_id=f"IMG:{idx:04d}",
         caption=block.text or None,
@@ -185,7 +191,7 @@ def _image_block(block: Any, idx: int, assets: dict[Any, Any]) -> ImageBlock:
         vision_summary=(result.summary or None) if result else None,
         # 只放行过了形状校验的值 —— sanitize 在 vision 层已经做过
         extracted_values=dict(result.extracted) if result else {},
-        asset_path=result.rel_path if result else None,
+        asset_path=rel,
     )
 
 

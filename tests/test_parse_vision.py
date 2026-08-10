@@ -219,3 +219,83 @@ def test_every_chunk_claiming_an_asset_can_actually_read_it():
     ]
     assert chunks, "语料里一个带资产的切片都没有，这条断言就形同虚设"
     assert not unresolved, f"{len(unresolved)}/{len(chunks)} 个切片读不到自己的图：{unresolved[:3]}"
+
+
+# --------------------------------------------------- Office / 后端侧车回退
+
+
+def test_asset_lookup_key_uses_path_when_bbox_missing():
+    from biomed_ontology.parse.assets import asset_lookup_key
+    from biomed_ontology.parse.layout.base import LayoutBlock
+
+    block = LayoutBlock(
+        kind="image", text="Fig", page=2, bbox=(), asset_path="images/docling_0000.png"
+    )
+    assert asset_lookup_key(block) == (2, ("__path__", "images/docling_0000.png"))
+
+
+def test_describe_assets_falls_back_to_backend_sidecar_for_office(tmp_path: Path):
+    """docx/pptx 无 PDF pixmap；必须吃后端已落盘的 asset_path，否则视觉列静默退化。"""
+    from biomed_ontology.observability import TraceContext, new_trace_id
+    from biomed_ontology.parse import describe_assets
+    from biomed_ontology.parse.assets import asset_lookup_key
+    from biomed_ontology.parse.layout.base import LayoutBlock, LayoutResult
+    from biomed_ontology.parse.vision import NullVisionProvider
+
+    rel = "images/docling_0000.png"
+    (tmp_path / "images").mkdir(parents=True)
+    (tmp_path / rel).write_bytes(b"\x89PNG\r\n\x1a\noffice-bytes")
+    block = LayoutBlock(kind="image", text="FIGURE 1", page=1, bbox=(), asset_path=rel)
+    layout = LayoutResult(
+        blocks=(block,),
+        assets_dir=tmp_path,
+        page_count=1,
+        backend="docling",
+    )
+    ctx = TraceContext(trace_id=new_trace_id(), ontology_release_id="0.1.0")
+    # 后缀非 PDF → render_regions 空；应回退侧车
+    out = describe_assets(
+        tmp_path / "deck.pptx",
+        layout,
+        tmp_path,
+        vision=NullVisionProvider(),
+        ctx=ctx,
+    )
+    key = asset_lookup_key(block)
+    assert key in out
+    assert out[key].rel_path == rel
+    assert not any(d.rule_id == "asset.missing_pixels" for d in ctx.decisions)
+
+
+def test_describe_assets_records_missing_pixels(tmp_path: Path):
+    from biomed_ontology.observability import TraceContext, new_trace_id
+    from biomed_ontology.parse import describe_assets
+    from biomed_ontology.parse.layout.base import LayoutBlock, LayoutResult
+    from biomed_ontology.parse.vision import NullVisionProvider
+
+    block = LayoutBlock(kind="image", text="", page=1, bbox=(), asset_path=None)
+    layout = LayoutResult(
+        blocks=(block,), assets_dir=tmp_path, page_count=1, backend="docling"
+    )
+    ctx = TraceContext(trace_id=new_trace_id(), ontology_release_id="0.1.0")
+    out = describe_assets(
+        tmp_path / "deck.pptx", layout, tmp_path, vision=NullVisionProvider(), ctx=ctx
+    )
+    assert out == {}
+    assert any(d.rule_id == "asset.missing_pixels" for d in ctx.decisions)
+
+
+def test_emit_image_uses_block_asset_path_when_assets_map_empty():
+    from biomed_ontology.parse.emit import _image_block
+    from biomed_ontology.parse.layout.base import LayoutBlock
+
+    block = LayoutBlock(
+        kind="image",
+        text="FIGURE 1",
+        page=1,
+        bbox=(),
+        asset_path="images/docling_0000.png",
+    )
+    img = _image_block(block, 0, {})
+    assert img.asset_path == "images/docling_0000.png"
+    assert img.caption == "FIGURE 1"

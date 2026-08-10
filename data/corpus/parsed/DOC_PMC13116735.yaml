@@ -5,17 +5,10 @@ parse:
   - table_structure
   same_as: {}
   route:
-    requested: auto
+    requested: docling
     chosen: docling
-    reason: structured_pdf
-    probe:
-      page_count: 11
-      image_count: 4
-      table_candidates: 0
-      text_chars: 35205
-      avg_blocks_per_page: 17.90909090909091
-      multi_column_hint: true
-      text_extractable: true
+    reason: forced
+    probe: {}
     attempts:
     - backend: docling
       status: ok
@@ -411,7 +404,8 @@ sections_meta:
   - 命中标准章节名
 documents:
 - doc_id: DOC:PMC13116735
-  source_id: PMC
+  source_id: PUBMED
+  external_id: PMC13116735
   title: 'Metastatic Colorectal Cancer Beyond Third-Line Treatment: Systematic Review
     and Meta-Analysis of Later-Line Therapies.'
   doc_type: JOURNAL_ARTICLE
@@ -1115,8 +1109,6 @@ documents:
     asset_path: images/p0008_r008.png
   images:
   - image_id: IMG:0000
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 34.008772084303196
@@ -1127,8 +1119,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r000.png
   - image_id: IMG:0001
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 109.83798258211463
@@ -1139,8 +1129,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r001.png
   - image_id: IMG:0002
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 34.48547931667417
@@ -1151,8 +1139,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r002.png
   - image_id: IMG:0003
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 407.7709119901061
@@ -1163,8 +1149,6 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r003.png
   - image_id: IMG:0004
-    caption: <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->
     page: 1
     bbox:
     - 515.1601197272539
@@ -1175,11 +1159,7 @@ documents:
     extracted_values: {}
     asset_path: images/p0001_r004.png
   - image_id: IMG:0005
-    caption: 'Figure 1. Study flow chart.
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
+    caption: Figure 1. Study flow chart.
     page: 5
     bbox:
     - 167.77123841717838
@@ -1190,14 +1170,10 @@ documents:
     extracted_values: {}
     asset_path: images/p0005_r005.png
   - image_id: IMG:0006
-    caption: 'Figure 2. Overall survival probability over time according to treatment.
+    caption: Figure 2. Overall survival probability over time according to treatment.
       Estimated overall survival probabilities at 3, 6, 9, 12, 15, and 18 months for
       patients treated with fruquintinib, regorafenib (CONCUR trial [13] and CORRECT
       trial [2]) and TAS-102.
-
-
-      <!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)`
-      -->'
     page: 6
     bbox:
     - 51.57017145277932
