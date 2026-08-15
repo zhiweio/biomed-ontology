@@ -41,7 +41,7 @@ ELN/LIMS 资产，经 `hmd serve`（MCP/REST）把 **Data-for-Agent 契约**交�
 | 可观测与演进 | Trace 四支柱；feedback → KGCL；approve 后 apply 写 Git，不自动改生产图 |
 | Schema 治理 | LinkML SSOT → OWL / SHACL / Pydantic |
 
-**完整手册**（机制、不变量、读数方法）：见 [`docs/`](docs/index.md)。
+**完整手册**（机制、不变量、读数方法）：[在线](https://zhiweio.github.io/biomed-ontology/) · 源码 [`docs/`](docs/index.md)。
 
 ```bash
 uv sync --extra docs --extra dev

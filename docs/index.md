@@ -65,6 +65,8 @@ Interoperable（LinkML/RDF/SSSOM，外部标准只 xref）· Reusable（PROV + `
 
 ## 本地预览手册
 
+在线：<https://zhiweio.github.io/biomed-ontology/>（`master` 上 `docs/` / `mkdocs.yml` 变更后由 Actions 发布）。
+
 ```bash
 uv sync --extra docs --extra dev
 task docs:serve    # http://127.0.0.1:8000
