@@ -4,10 +4,17 @@ parse:
   degraded: []
   same_as: {}
   route:
-    requested: docling
+    requested: auto
     chosen: docling
-    reason: forced
-    probe: {}
+    reason: structured_pdf
+    probe:
+      page_count: 6
+      image_count: 6
+      table_candidates: 0
+      text_chars: 26798
+      avg_blocks_per_page: 18.0
+      multi_column_hint: true
+      text_extractable: true
     attempts:
     - backend: docling
       status: ok

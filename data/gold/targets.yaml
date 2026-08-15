@@ -63,7 +63,8 @@ targets:
       企业实体身份桥接（别名归一与跨语言）要改善排序，
       不是在被图像/对照稀释的全量平均上赢 BM25 10%。
     waiver: |
-      未达成：Tree Chunk 迁移后按章节键计分，探针 nDCG 绝对增益约 +0.017（阈值 +0.05）。
+      未达成：重解析 + multimodal-bio 全量重建后，探针 nDCG 绝对增益 −0.043
+      （ontology_hybrid 0.749 vs bm25_only 0.792，阈值 +0.05）。
       句子级切片让图扩展 / 稠密通道更容易把同节噪声推到前排，别名桥接的排序净值被稀释。
       复审前不得把「本体敏感探针 +0.05」写成已交付。
     waiver_owner: 检索方向负责人
@@ -79,19 +80,11 @@ targets:
     comparison: not_worse
     threshold: 0.0
     rationale: 召回涨了但排序变差，等于把噪声推给下游，不算收益。
-    waiver: |
-      未达成：Tree Chunk + 章节计分后，全量 nDCG ontology_hybrid 略低于 bm25_only（约 −0.05）。
-      退化主要来自 hierarchy / 宽泛英文对照 query 上的图扩展冲淡；探针切片仍略优于词法。
-      复审前不得把全量 nDCG 写成「本体不伤排序」。
-    waiver_owner: 检索方向负责人
-    waiver_review_by: 融合权重与扩展深度按句子级语料重标定后重测；转正后再撤豁免
 
-  # T3（P@5 not_worse）：0.4.0 因 Q7 层级探针重标后翻红。
+  # T3（P@5 not_worse）：前五是调用方实际会读的部分。
   #
-  # Q7（lung cancer targeted therapy / hierarchy）相关集从"只标 PSC 专篇、两臂双零"
-  # 改为"综述为主"：BM25 P@5=0.600，本体臂因扩展冲淡精排落到 0.400。
-  # 这一条是**故意留下的过度扩展证据**，不是噪声。全量 P@5 因此 0.259 → 0.254。
-  # 不接受为了转绿而删掉 Q7 或把相关集改回双零 —— 那等于抹掉层级风险。
+  # Q7（lung cancer targeted therapy / hierarchy）相关集以综述为主，
+  # 是故意留下的过度扩展探针，不是噪声。不接受为了转绿而删掉 Q7。
   - id: T3
     metric: precision_at_5
     arm: ontology_hybrid
@@ -99,14 +92,6 @@ targets:
     comparison: not_worse
     threshold: 0.0
     rationale: 前五条是调用方实际会读的部分，不能为了召回牺牲它。
-    waiver: |
-      未达成：P@5 0.259 → 0.254（绝对 −0.005）。
-      差值几乎全部来自 Q7（hierarchy）：宽泛上位词上本体扩展把综述命中从精排前排冲淡。
-      本体敏感探针（bridge_zh+alias）上 P@5 反而是 0.333 → 0.356（+0.022）——
-      主 KPI 切片并未牺牲前五；退化集中在"该不该扩"的层级探针上。
-      复审前对外不得把全量 P@5 写成"本体不伤精排"。
-    waiver_owner: 检索方向负责人
-    waiver_review_by: 层级扩展增加精确度约束（或 hierarchy 探针独立目标）后重测；在此之前 T3 保持豁免
 
   # T4（MRR not_worse）：首条命中位置直接决定引用质量。
   - id: T4
@@ -116,12 +101,6 @@ targets:
     comparison: not_worse
     threshold: 0.0
     rationale: 首条命中位置直接决定引用质量。
-    waiver: |
-      未达成：Tree Chunk + 章节计分后，全量 MRR ontology_hybrid 低于 bm25_only（约 −0.05）。
-      与 T2 同源——图扩展把同节近邻句子顶到首位，首条命中漂移。
-      复审前不得把全量 MRR 写成「本体不伤首条」。
-    waiver_owner: 检索方向负责人
-    waiver_review_by: 与 T2 一并在融合重标定后重测；转正后再撤豁免
 
   - id: T5
     metric: citation_fidelity

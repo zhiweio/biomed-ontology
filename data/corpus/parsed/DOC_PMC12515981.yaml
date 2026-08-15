@@ -5,10 +5,17 @@ parse:
   - table_structure
   same_as: {}
   route:
-    requested: docling
+    requested: auto
     chosen: docling
-    reason: forced
-    probe: {}
+    reason: structured_pdf
+    probe:
+      page_count: 9
+      image_count: 5
+      table_candidates: 1
+      text_chars: 48196
+      avg_blocks_per_page: 17.22222222222222
+      multi_column_hint: true
+      text_extractable: true
     attempts:
     - backend: docling
       status: ok

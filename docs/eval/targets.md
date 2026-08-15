@@ -62,13 +62,13 @@ targets 机制的核心设计：
 
 | ID | 指标 | 口径摘要 | 状态要点 |
 |---|---|---|---|
-| **T1** | nDCG@10 `absolute_gain` ≥ +0.05 | `ontology_hybrid − bm25_only`，**仅** `probes: [bridge_zh, alias]` | 主 KPI；全量 R@10 只作回归诊断 |
+| **T1** | nDCG@10 `absolute_gain` ≥ +0.05 | `ontology_hybrid − bm25_only`，**仅** `probes: [bridge_zh, alias]` | **已署名豁免**（见 YAML 全文） |
 | **T2** | nDCG@10 `not_worse` | 全量回归哨兵 | 已达成 |
-| **T3** | P@5 `not_worse` | 全量；Q7 hierarchy 过度扩展证据 | **已署名豁免**（见 YAML 全文） |
+| **T3** | P@5 `not_worse` | 全量；Q7 hierarchy 仍是过度扩展探针 | 已达成 |
 | **T4** | MRR `not_worse` | 全量 | 已达成 |
 | **T5** | `citation_fidelity` `at_least` 1.0 | 全臂；**不接受豁免** | 造引用 = 缺陷修掉，不能签 waiver |
 
-T3 豁免说明（摘要）：差值主要来自 hierarchy 探针 Q7——宽泛上位词上本体扩展冲淡精排前排；**主 KPI 切片 P@5 反而上升**，退化集中在「该不该扩」的层级探针。复审前对外不得把全量 P@5 写成「本体不伤精排」。
+T1 豁免说明（摘要）：重解析后探针 nDCG 绝对增益为负（阈值 +0.05）。句子级切片让图扩展把同节噪声推到前排，别名桥接净值被稀释。复审前不得把「本体敏感探针 +0.05」写成已交付。
 
 ### 与 Literature 报告的关系
 

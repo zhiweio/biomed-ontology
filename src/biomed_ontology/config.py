@@ -86,11 +86,12 @@ class Settings(BaseSettings):
     vision_cache_dir: Path = Path("data/cache/vision")
 
     # --- 文本 LLM（Knowledge Extraction）------------------------------------
-    # 默认 DeepSeek 官方 OpenAI-compatible API + deepseek-v4-flash。
-    # 未配置 HMD_LLM_API_KEY 时 get_chat_provider 回落 null，抽取自动开规则旁路。
-    llm_provider: LlmProviderName = "deepseek"
+    # 默认 null：不配 key、不联网也能跑通抽取（规则旁路）。
+    # 打开时在 .env 设 HMD_LLM_PROVIDER=deepseek 与 HMD_LLM_API_KEY；
+    # 空 base_url 按 provider 填官方端点（见 llm.chat.DEFAULT_LLM_BASE_URLS）。
+    llm_provider: LlmProviderName = "null"
     llm_model: str = "deepseek-v4-flash"
-    llm_base_url: str = "https://api.deepseek.com"
+    llm_base_url: str = ""
     llm_api_key: SecretStr = SecretStr("")
     llm_cache_dir: Path = Path("data/cache/llm")
     llm_timeout_s: float = Field(default=60.0, gt=0)
