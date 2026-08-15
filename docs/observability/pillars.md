@@ -113,4 +113,6 @@ task obs:register
 uv run hmd lake init         # 含 obs_tool_io / er_observations
 ```
 
+新鲜度 SLO 口径在 [`ontology/policies/ops_slo.yaml`](../../ontology/policies/ops_slo.yaml)；值班看 `hmd pipeline ops-snapshot` / `slo_gate`，红不回滚已入湖文档。不上 Monte Carlo / OTel SDK。
+
 演进闭环见 [loop](../evolution/loop.md)；Zingg 模糊回收见 [Foundation](../architecture/foundation.md)。

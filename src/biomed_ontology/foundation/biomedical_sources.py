@@ -39,6 +39,12 @@ SOURCE_REGISTRY: dict[str, BiomedicalSource] = {
         license="UMLS Metathesaurus License (per-SAB categories)",
         graph_uri="http://asliva.com/graph/biomedical",
     ),
+    "hgnc": BiomedicalSource(
+        source_id="hgnc",
+        description="HGNC gene nomenclature — graph/biomedical + Target exact_match_xrefs",
+        license="CC0",
+        graph_uri="http://asliva.com/graph/biomedical",
+    ),
 }
 
 _LOADERS: dict[str, Loader] = {}
@@ -62,7 +68,51 @@ def register_source(source: BiomedicalSource, loader: Loader) -> None:
     _LOADERS[source.source_id] = loader
 
 
+def _load_hgnc(*, license_ack: str = "", **kwargs: object) -> dict:
+    """官方下载可选；测试与 CI 只读 catalog / entities 已有 HGNC xref。不改 HMD:ENT:*。"""
+    import yaml
+
+    from biomed_ontology.foundation.paths import ENTITIES_PATH, ONTOLOGY_ROOT, REPO_ROOT
+
+    cache = REPO_ROOT / "data" / "cache" / "hgnc" / "hgnc_complete_set.txt"
+    downloaded = cache.is_file()
+    xrefs: list[dict[str, str]] = []
+    if ENTITIES_PATH.is_file():
+        raw = yaml.safe_load(ENTITIES_PATH.read_text(encoding="utf-8")) or {}
+        for ent in raw.get("entities") or []:
+            eid = str(ent.get("enterprise_id") or "")
+            for xref in ent.get("exact_match_xrefs") or []:
+                if str(xref).startswith("HGNC:"):
+                    xrefs.append(
+                        {
+                            "enterprise_id": eid,
+                            "xref": str(xref),
+                            "graph": "http://asliva.com/graph/biomedical",
+                        }
+                    )
+    catalog = ONTOLOGY_ROOT / "catalog" / "targets.yaml"
+    symbols: list[str] = []
+    if catalog.is_file():
+        raw = yaml.safe_load(catalog.read_text(encoding="utf-8")) or {}
+        for concept in raw.get("concepts") or []:
+            hint = (concept.get("xref_hints") or {}).get("HGNC") or {}
+            if hint.get("value"):
+                symbols.append(str(hint["value"]))
+    return {
+        "source_id": "hgnc",
+        "graph_uri": SOURCE_REGISTRY["hgnc"].graph_uri,
+        "concepts": len(symbols),
+        "xrefs": xrefs,
+        "downloaded": downloaded,
+        "cache": str(cache) if downloaded else None,
+        "enterprise_ids_unchanged": True,
+        "license_ack": license_ack or "public",
+        **{k: v for k, v in kwargs.items() if isinstance(v, str | int | bool)},
+    }
+
+
 register_source(SOURCE_REGISTRY["umls_subset"], _load_umls_subset)
+register_source(SOURCE_REGISTRY["hgnc"], _load_hgnc)
 
 
 def load_biomedical_source(

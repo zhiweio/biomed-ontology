@@ -81,6 +81,17 @@ entities:
     target_ids: [HMD:ENT:TGT:MET]
     asset_fqn: asliva.lims.asy_001
 
+  - key: savo_lot_demo
+    entity_kind: Compound
+    enterprise_id: HMD:ENT:CMP:savo_lot_demo
+    preferred_label_en: savolitinib lot DEMO-001
+    preferred_label_zh: 赛沃替尼批次 DEMO-001
+    definition: Compound-lot xref demo only; not an inventory system
+    exact_match_xrefs:
+      - CHEBI:DEMO_SAVO
+    aliases: [CMP-SAVO-DEMO, savo-lot-demo]
+    candidate_id: HMD:ENT:DC:savolitinib
+
   - key: pmid_demo
     entity_kind: Publication
     enterprise_id: HMD:ENT:PUB:pmid_demo_savo

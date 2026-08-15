@@ -27,7 +27,11 @@ from biomed_ontology.lake.steps import IngestContext
 @pytest.fixture(autouse=True)
 def _prefect_home(tmp_path_factory, monkeypatch: pytest.MonkeyPatch) -> None:
     home = tmp_path_factory.mktemp("prefect-home")
+    qdir = tmp_path_factory.mktemp("quarantine")
+    zfp = tmp_path_factory.mktemp("zingg-fp") / "fp.txt"
     monkeypatch.setenv("PREFECT_HOME", str(home))
+    monkeypatch.setenv("HMD_QUARANTINE_DIR", str(qdir))
+    monkeypatch.setenv("HMD_ZINGG_FP_PATH", str(zfp))
     monkeypatch.delenv("PREFECT_API_URL", raising=False)
     monkeypatch.setenv("PREFECT_LOGGING_LEVEL", "ERROR")
 
@@ -46,6 +50,8 @@ def test_pipeline_cli_registered() -> None:
     assert "identity-match" in out
     assert "data-loop-enrich" in out
     assert "eval" in out
+    assert "replay" in out
+    assert "ops-snapshot" in out
 
 
 def test_batch_one_doc_failure_does_not_count_as_ok(tmp_path: Path) -> None:
@@ -278,7 +284,7 @@ def test_sync_world_model_does_not_clear_extracted() -> None:
         om = om_cls.from_settings.return_value
         om.ping.side_effect = RuntimeError("om skip")
         result = sync_mod.sync_world_model(
-            world=wm,  # type: ignore[arg-type]
+            world=wm,  # ty: ignore[invalid-argument-type]
             graphdb=gdb,
             require_graphdb=True,
             require_milvus=False,

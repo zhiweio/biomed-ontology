@@ -8,7 +8,13 @@ from typing import Any
 
 from prefect import flow, task
 
-from biomed_ontology.foundation.paths import CLAIMS_PATH, ENTITIES_PATH, ONTOLOGY_ROOT
+from biomed_ontology.foundation.paths import (
+    CLAIMS_PATH,
+    DICTIONARY_PATH,
+    ENTITIES_PATH,
+    ONTOLOGY_ROOT,
+    ZINGG_MATCHES_PATH,
+)
 from biomed_ontology.index_state import compute_catalog_fingerprint
 
 __all__ = ["bios_bootstrap", "catalog_publish", "world_model_sync"]
@@ -20,7 +26,7 @@ def compute_world_model_fingerprint() -> str:
     """catalog + entities + validated claims。任一变了才该 sync。"""
     h = hashlib.sha256()
     h.update(compute_catalog_fingerprint().encode())
-    for path in (ENTITIES_PATH, CLAIMS_PATH):
+    for path in (ENTITIES_PATH, CLAIMS_PATH, DICTIONARY_PATH, ZINGG_MATCHES_PATH):
         h.update(path.name.encode())
         h.update(b"\0")
         if path.is_file():
@@ -60,7 +66,24 @@ def world_model_sync() -> dict[str, Any]:
     sync = task_sync_world_model()
     fp = compute_world_model_fingerprint()
     _save_fingerprint(fp)
-    return {**sync, "fingerprint": fp, "extracted_graph_cleared": False}
+    lineage = None
+    try:
+        from biomed_ontology.lake.om_governance import publish_run_lineage
+
+        lineage = publish_run_lineage(
+            pipeline="hmd.world_model_sync",
+            from_fqn="ontology.catalog",
+            to_fqn="openmetadata.glossary.HMDEnterpriseAssets",
+            extra={"graph_uri": "http://asliva.com/graph/ontology", "fingerprint": fp},
+        )
+    except Exception as exc:
+        lineage = {"ok": False, "error": str(exc)}
+    return {
+        **sync,
+        "fingerprint": fp,
+        "extracted_graph_cleared": False,
+        "lineage": lineage,
+    }
 
 
 @task(tags=["graphdb-replace"])

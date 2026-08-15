@@ -25,6 +25,7 @@ def test_security_sensitive_defaults_are_closed():
     assert any("法务闸门" in w for w in s.warnings())
     # 关掉 accept 后，milvus 默认本身不应再触发其它告警
     closed = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "false"})
+    assert closed.env == "dev"
     assert closed.warnings() == []
 
 

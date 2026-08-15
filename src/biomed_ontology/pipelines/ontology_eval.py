@@ -15,7 +15,7 @@ __all__ = ["EVAL_DIR", "ontology_eval"]
 
 EVAL_DIR = Path("data/releases/eval")
 CHEAP_FACETS = ("validate", "identity", "extraction")
-RELEASE_FACETS = (*CHEAP_FACETS, "literature", "bridge", "golden", "quality_gate")
+RELEASE_FACETS = (*CHEAP_FACETS, "literature", "bridge", "golden", "context", "quality_gate")
 
 
 def _write_scorecard(suite: str, payload: dict[str, Any]) -> Path:
@@ -113,6 +113,34 @@ def task_facet_golden() -> dict[str, Any]:
 
 
 @task
+def task_facet_context() -> dict[str, Any]:
+    from biomed_ontology.foundation.api import FoundationApi
+    from biomed_ontology.foundation.context_eval import eval_context_packs
+    from biomed_ontology.foundation.golden_eval import DEFAULT_CANDIDATES
+    from biomed_ontology.foundation.world import load_world_model
+
+    api = FoundationApi(load_world_model())
+    packs: list[dict[str, Any]] = []
+    for text in DEFAULT_CANDIDATES[:3]:
+        resolved = api.resolve_entity(text)
+        eid = next(
+            (
+                h.get("canonical_entity")
+                for h in resolved.get("resolved") or []
+                if h.get("canonical_entity")
+            ),
+            None,
+        )
+        if not eid:
+            continue
+        packs.append(api.get_entity_context(str(eid)))
+    ev = eval_context_packs(packs)
+    if not ev["ok"]:
+        raise RuntimeError(f"context pack contract failed: {ev['failures'][:8]}")
+    return {"ok": True, "facet": "context", **ev}
+
+
+@task
 def task_facet_quality_gate() -> dict[str, Any]:
     from biomed_ontology.pipeline import build_literature_base
     from biomed_ontology.quality import QualityGate
@@ -128,7 +156,15 @@ def task_facet_quality_gate() -> dict[str, Any]:
 def ontology_eval(*, suite: str = "cheap") -> dict[str, Any]:
     """cheap = validate+identity+extraction；release 再加 literature/bridge/golden/QualityGate。"""
     wanted = suite.strip().lower()
-    if wanted not in {"cheap", "release", "validate", "identity", "extraction", "golden"}:
+    if wanted not in {
+        "cheap",
+        "release",
+        "validate",
+        "identity",
+        "extraction",
+        "golden",
+        "context",
+    }:
         raise ValueError(f"unknown eval suite {suite!r}")
     facets: dict[str, Any] = {}
     if wanted in {"cheap", "release", "validate"}:
@@ -140,9 +176,12 @@ def ontology_eval(*, suite: str = "cheap") -> dict[str, Any]:
     if wanted == "release":
         facets["literature"] = task_facet_literature()
         facets["golden"] = task_facet_golden()
+        facets["context"] = task_facet_context()
         facets["quality_gate"] = task_facet_quality_gate()
     if wanted == "golden":
         facets["golden"] = task_facet_golden()
+    if wanted == "context":
+        facets["context"] = task_facet_context()
     payload = {
         "ok": True,
         "suite": wanted,

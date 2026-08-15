@@ -10,9 +10,11 @@ __all__ = [
     "DOCUMENTS_TABLE",
     "ER_OBSERVATIONS_TABLE",
     "EVIDENCE_CHUNKS_TABLE",
+    "INGEST_QUARANTINE_TABLE",
     "KNOWLEDGE_CLAIMS_TABLE",
     "OBS_TOOL_IO_TABLE",
     "ensure_lake_tables",
+    "expire_lake_snapshots",
     "open_catalog",
 ]
 
@@ -22,6 +24,7 @@ EVIDENCE_CHUNKS_TABLE = f"{NAMESPACE}.evidence_chunks"
 KNOWLEDGE_CLAIMS_TABLE = f"{NAMESPACE}.knowledge_claims"
 OBS_TOOL_IO_TABLE = f"{NAMESPACE}.obs_tool_io"
 ER_OBSERVATIONS_TABLE = f"{NAMESPACE}.er_observations"
+INGEST_QUARANTINE_TABLE = f"{NAMESPACE}.ingest_quarantine"
 
 
 def open_catalog(cfg: Settings | None = None) -> Any:
@@ -137,6 +140,18 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             NestedField(16, "ingested_at", StringType(), required=False),
             NestedField(17, "event_date", StringType(), required=False),
         ),
+        "ingest_quarantine": Schema(
+            NestedField(1, "doc_id", StringType(), required=True),
+            NestedField(2, "plane", StringType(), required=True),
+            NestedField(3, "reason_code", StringType(), required=False),
+            NestedField(4, "error", StringType(), required=False),
+            NestedField(5, "retry_json", StringType(), required=False),
+            NestedField(6, "prefect_run_id", StringType(), required=False),
+            NestedField(7, "first_seen", StringType(), required=False),
+            NestedField(8, "last_seen", StringType(), required=False),
+            NestedField(9, "status", StringType(), required=False),
+            NestedField(10, "replay_count", IntegerType(), required=False),
+        ),
     }
     for name, schema in schemas.items():
         ident = (NAMESPACE, name)
@@ -144,9 +159,54 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             table = cat.load_table(ident)
             _ensure_optional_columns(table, schema)
         except Exception:
-            cat.create_table(ident, schema=schema)
+            extra: dict[str, Any] = {}
+            if name == "er_observations":
+                spec = _event_date_partition_spec()
+                if spec is not None:
+                    extra["partition_spec"] = spec
+            cat.create_table(ident, schema=schema, **extra)
             created.append(f"{NAMESPACE}.{name}")
     return created
+
+
+def _event_date_partition_spec() -> Any | None:
+    try:
+        from pyiceberg.partitioning import PartitionField, PartitionSpec
+        from pyiceberg.transforms import IdentityTransform
+
+        return PartitionSpec(
+            PartitionField(
+                source_id=17,
+                field_id=1000,
+                transform=IdentityTransform(),
+                name="event_date",
+            )
+        )
+    except Exception:
+        return None
+
+
+def expire_lake_snapshots(*, older_than_days: int | None = None) -> dict[str, Any]:
+    """Iceberg snapshot expire；不是 Spark 作业。open quarantine 不删。"""
+    from datetime import UTC, datetime, timedelta
+
+    from biomed_ontology.config import settings
+
+    days = int(older_than_days or settings.lake_observation_retain_days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
+    cat = open_catalog()
+    expired: dict[str, Any] = {}
+    for name in ("er_observations", "obs_tool_io"):
+        try:
+            table = cat.load_table((NAMESPACE, name))
+            before = len(table.inspect.snapshots())
+            table.maintenance.expire_snapshots(older_than=cutoff)
+            after = len(table.inspect.snapshots())
+            expired[name] = max(0, before - after)
+        except Exception as exc:
+            expired[name] = -1
+            expired[f"{name}_error"] = str(exc)
+    return {"older_than_days": days, "expired": expired}
 
 
 def _ensure_optional_columns(table: Any, want: Any) -> None:

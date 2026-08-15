@@ -81,11 +81,16 @@ def eval_extraction(
             continue
         text = str(case.get("text") or "")
         cid = str(case.get("id") or f"case-{i}")
+        raw_type = str(case.get("doc_type") or "JOURNAL_ARTICLE")
+        try:
+            doc_type = DocTypeEnum(raw_type)
+        except ValueError:
+            doc_type = DocTypeEnum.JOURNAL_ARTICLE
         doc = Document(
             doc_id=f"DOC:EVAL:{cid}",
             source_id="PUBMED",
             title=cid,
-            doc_type=DocTypeEnum.JOURNAL_ARTICLE,
+            doc_type=doc_type,
             language=LanguageEnum.en,
             license_tier=LicenseTierEnum.TIER_0,
             sections=[],

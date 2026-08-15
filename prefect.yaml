@@ -107,6 +107,30 @@ deployments:
     parameters:
       suite: cheap
 
+  - name: replay-quarantine
+    entrypoint: biomed_ontology.pipelines.replay:replay_quarantine
+    work_pool:
+      name: hmd-cpu
+    tags: [ingest, replay]
+
+  - name: ops-snapshot
+    entrypoint: biomed_ontology.pipelines.ops:ops_snapshot
+    work_pool:
+      name: hmd-cpu
+    tags: [ops]
+    schedules:
+      - cron: "15 4 * * *"
+        timezone: Asia/Shanghai
+        active: false
+
+  - name: claim-promote
+    entrypoint: biomed_ontology.pipelines.claims:claim_promote
+    work_pool:
+      name: hmd-cpu
+    tags: [data-loop]
+    parameters:
+      write: false
+
   - name: ontology-eval-release
     entrypoint: biomed_ontology.pipelines.ontology_eval:ontology_eval
     work_pool:

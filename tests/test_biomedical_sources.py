@@ -13,7 +13,9 @@ from biomed_ontology.foundation.biomedical_sources import (
 def test_bios_and_umls_are_registered():
     assert "bios_v3" in SOURCE_REGISTRY
     assert "umls_subset" in SOURCE_REGISTRY
+    assert "hgnc" in SOURCE_REGISTRY
     assert SOURCE_REGISTRY["umls_subset"].graph_uri.endswith("graph/biomedical")
+    assert SOURCE_REGISTRY["hgnc"].graph_uri.endswith("graph/biomedical")
 
 
 def test_umls_requires_license_ack():

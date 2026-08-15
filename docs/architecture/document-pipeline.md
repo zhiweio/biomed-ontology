@@ -129,6 +129,7 @@ CLI 是单步调试；生产失败域、并发与评测合同走 Prefect（D16�
 | `hmd pipeline identity-match` | `pipelines/identity_match.py` | 身份 | 生产禁 stub；`--dev` 才允许 |
 | `hmd pipeline data-loop-*` | `pipelines/data_loop.py` | 闭环 | enrich 停在提案；apply 只消费 `approved` |
 | `hmd pipeline eval` | `pipelines/ontology_eval.py` | 发布 | `cheap` / `release` 评测合同 |
+| `hmd pipeline replay` | `pipelines/replay.py` | 入仓 | 按 `doc_id` / `reason` 回放 quarantine；IngestQA 不空转成功 |
 | `hmd index` / `--incremental` / `--doc-id` | `cli.py` | 入仓 | 文献 index 单步 |
 | `task ontology:refresh-literature` | `Taskfile.yml` | 入仓 | validate + `--incremental` |
 | `task prefect:up` / `prefect:worker` | `docker/docker-compose.prefect.yml` | 控制面 | Server `:4200` + 宿主机 worker |

@@ -149,5 +149,49 @@ documents:
           acquired resistance to MET inhibitors and bypass activation mechanisms.
           Savolitinib was evaluated in EGFR-mutant non-small cell lung cancer with MET
           amplification. Savolitinib in combination with osimertinib is discussed as a
-          combination therapy. The analyst forecast is proprietary and must not leave the
+          combination therapy.           The analyst forecast is proprietary and must not leave the
           entitled workspace.
+
+  - doc_id: DOC:CSR.SAVO.SLICE
+    source_id: PUBMED
+    external_id: CSR-SAVO-SLICE
+    title: "Savolitinib NSCLC CSR public slice"
+    doc_type: CLINICAL_STUDY_REPORT
+    published_on: "2021-08-01"
+    language: en
+    license_tier: TIER_0
+    sections:
+      - name: Efficacy
+        page: 1
+        text: >-
+          Savolitinib was evaluated in NSCLC. The confirmed ORR was 42% in the ITT
+          population. Median PFS was 6.8 months.
+
+  - doc_id: DOC:IB.SAVO.SLICE
+    source_id: PUBMED
+    external_id: IB-SAVO-SLICE
+    title: "Savolitinib Investigator Brochure public slice"
+    doc_type: INVESTIGATOR_BROCHURE
+    published_on: "2020-01-01"
+    language: en
+    license_tier: TIER_1
+    sections:
+      - name: Mechanism
+        page: 1
+        text: >-
+          Savolitinib targets MET. Savolitinib for the treatment of NSCLC.
+
+  - doc_id: DOC:LABEL.SAVO.SLICE
+    source_id: PUBMED
+    external_id: LABEL-SAVO-SLICE
+    title: "Savolitinib label public slice"
+    doc_type: LABEL
+    published_on: "2021-06-01"
+    language: en
+    license_tier: TIER_0
+    sections:
+      - name: Adverse reactions
+        page: 1
+        text: >-
+          Savolitinib for the treatment of NSCLC. Savolitinib was associated with
+          peripheral edema. No MedDRA code is assigned in this fixture.

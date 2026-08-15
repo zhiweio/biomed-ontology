@@ -15,6 +15,8 @@ cases:
   - { text: "MET", expect: "HMD:ENT:TGT:MET", gate: true }
   - { text: "c-MET", expect: "HMD:ENT:TGT:MET", gate: true }
   - { text: "c-Met", expect: "HMD:ENT:TGT:MET" }
+  - { text: "HGFR", expect: "HMD:ENT:TGT:MET" }
+  - { text: "MET proto-oncogene", expect: "HMD:ENT:TGT:MET" }
   # ---- Indication
   - { text: "NSCLC", expect: "HMD:ENT:IND:nsclc", gate: true }
   - { text: "非小细胞肺癌", expect: "HMD:ENT:IND:nsclc" }

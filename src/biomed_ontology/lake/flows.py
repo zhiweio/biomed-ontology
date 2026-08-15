@@ -213,6 +213,13 @@ def document_batch_ingest(
             )
         if on_item is not None:
             on_item(i, total)
+    from biomed_ontology.lake.quarantine import persist_records
+
+    persist_records(quarantined, plane="lake")
+    persist_records(
+        [{**r, "reason_code": r.get("reason")} for r in failed],
+        plane="lake",
+    )
     return {
         "ok": ok,
         "failed": failed,

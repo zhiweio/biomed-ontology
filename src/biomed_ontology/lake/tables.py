@@ -10,6 +10,7 @@ from biomed_ontology.lake.catalog import (
     DOCUMENTS_TABLE,
     ER_OBSERVATIONS_TABLE,
     EVIDENCE_CHUNKS_TABLE,
+    INGEST_QUARANTINE_TABLE,
     KNOWLEDGE_CLAIMS_TABLE,
     OBS_TOOL_IO_TABLE,
     open_catalog,
@@ -19,6 +20,7 @@ __all__ = [
     "append_documents",
     "append_er_observations",
     "append_evidence_chunks",
+    "append_ingest_quarantine",
     "append_knowledge_claims",
     "append_obs_tool_io",
     "replace_rows",
@@ -181,3 +183,29 @@ def append_obs_tool_io(rows: Sequence[dict[str, Any]]) -> int:
 def append_er_observations(rows: Sequence[dict[str, Any]]) -> int:
     """ER 缺口事件真 append（仅 Connect/批路径/测试；热路径走 Kafka）。"""
     return _append(ER_OBSERVATIONS_TABLE, rows)
+
+
+def append_ingest_quarantine(rows: Sequence[dict[str, Any]]) -> int:
+    """失败清单按 doc_id 覆盖；Iceberg 不可达时由调用方忽略。"""
+    import json
+
+    enriched = []
+    for r in rows:
+        enriched.append(
+            {
+                "doc_id": r.get("doc_id"),
+                "plane": r.get("plane") or "lake",
+                "reason_code": r.get("reason_code") or r.get("reason"),
+                "error": r.get("error"),
+                "retry_json": json.dumps(r.get("retry") or {}, ensure_ascii=False),
+                "prefect_run_id": r.get("prefect_run_id"),
+                "first_seen": r.get("first_seen"),
+                "last_seen": r.get("last_seen"),
+                "status": r.get("status") or "open",
+                "replay_count": int(r.get("replay_count") or 0),
+            }
+        )
+    n = 0
+    for row in enriched:
+        n += replace_rows(INGEST_QUARANTINE_TABLE, "doc_id", str(row["doc_id"]), [row])
+    return n

@@ -12,6 +12,8 @@ from biomed_ontology.foundation.models import AssetHit
 __all__ = [
     "ensure_trino_service",
     "publish_cross_lineage",
+    "publish_run_lineage",
+    "runtime_lineage_meta",
     "trigger_trino_metadata_ingest",
     "upsert_document_asset",
 ]
@@ -106,12 +108,40 @@ def trigger_trino_metadata_ingest() -> dict[str, Any]:
         return {"ok": False, "error": str(exc)}
 
 
-def publish_cross_lineage(*, doc_id: str, asset_fqn: str | None) -> dict[str, Any]:
+def runtime_lineage_meta() -> dict[str, Any]:
+    """Prefect run / deployment / ontology release；无 Server 时字段为空。"""
+    from biomed_ontology.pipeline import DEFAULT_RELEASE
+
+    meta: dict[str, Any] = {
+        "prefect_run_id": None,
+        "deployment": None,
+        "ontology_release_id": DEFAULT_RELEASE,
+    }
+    try:
+        from prefect.runtime import deployment, flow_run
+
+        meta["prefect_run_id"] = getattr(flow_run, "id", None)
+        meta["deployment"] = getattr(deployment, "name", None)
+    except Exception:
+        pass
+    return meta
+
+
+def publish_cross_lineage(
+    *,
+    doc_id: str,
+    asset_fqn: str | None,
+    pipeline: str = "hmd.lake.dual_write",
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """补充 Document → Iceberg 表 → Milvus/GraphDB 的跨系统血缘边（REST）。"""
     om = OpenMetadataClient.from_settings()
     om.ensure_auth()
     if not om.base_url:
         return {"ok": False, "error": "openmetadata disabled"}
+    details = {"pipeline": pipeline, "doc_id": doc_id, **runtime_lineage_meta()}
+    if extra:
+        details.update(extra)
     # OM Lineage API 形状随版本变化；尽力而为，失败不阻断 ingest
     edges = [
         {
@@ -145,11 +175,7 @@ def publish_cross_lineage(*, doc_id: str, asset_fqn: str | None) -> dict[str, An
                 "edge": {
                     "fromEntity": {"type": "table", "fullyQualifiedName": edge["from"]},
                     "toEntity": {"type": "table", "fullyQualifiedName": edge["to"]},
-                    "lineageDetails": {
-                        "description": json.dumps(
-                            {"pipeline": "hmd.lake.dual_write", "doc_id": doc_id}
-                        )
-                    },
+                    "lineageDetails": {"description": json.dumps(details, ensure_ascii=False)},
                 }
             }
             try:
@@ -164,4 +190,20 @@ def publish_cross_lineage(*, doc_id: str, asset_fqn: str | None) -> dict[str, An
                     errors.append(f"{edge['from']}→{edge['to']}: {r.status_code}")
             except Exception as exc:
                 errors.append(str(exc))
-    return {"ok": recorded > 0, "recorded": recorded, "errors": errors}
+    return {"ok": recorded > 0, "recorded": recorded, "errors": errors, "details": details}
+
+
+def publish_run_lineage(
+    *,
+    pipeline: str,
+    from_fqn: str,
+    to_fqn: str,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """sync / Zingg / apply 的资产血缘（glossary / matches / claims YAML，不是伪造图边）。"""
+    return publish_cross_lineage(
+        doc_id=pipeline,
+        asset_fqn=from_fqn,
+        pipeline=pipeline,
+        extra={"from": from_fqn, "to": to_fqn, **(extra or {})},
+    )

@@ -8,7 +8,13 @@ from pathlib import Path
 
 import yaml
 
-__all__ = ["MetricTerm", "MetricVocab", "load_metric_vocab"]
+__all__ = [
+    "MetricTerm",
+    "MetricVocab",
+    "load_metric_vocab",
+    "metric_codes_from_vocab",
+    "schema_metric_codes",
+]
 
 _DEFAULT = Path(__file__).resolve().parents[3] / "ontology" / "extract" / "table_metrics.yaml"
 
@@ -57,3 +63,18 @@ def load_metric_vocab(path: str | None = None) -> MetricVocab:
             )
         )
     return MetricVocab(version=version, terms=tuple(terms))
+
+
+def metric_codes_from_vocab(vocab: MetricVocab | None = None) -> set[str]:
+    v = vocab or load_metric_vocab()
+    return {t.metric for t in v.terms}
+
+
+def schema_metric_codes() -> set[str]:
+    """LinkML ``MetricCode`` permissible values（不跑 gen）。"""
+    from biomed_ontology.foundation.paths import REPO_ROOT
+
+    path = REPO_ROOT / "schema" / "hmd_types.yaml"
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    values = ((raw.get("enums") or {}).get("MetricCode") or {}).get("permissible_values") or {}
+    return set(values)

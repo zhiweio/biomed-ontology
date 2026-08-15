@@ -108,6 +108,16 @@ def data_loop_apply(
 
             published = catalog_publish()
             evaluated = ontology_eval(suite="cheap")
+            try:
+                from biomed_ontology.lake.om_governance import publish_run_lineage
+
+                publish_run_lineage(
+                    pipeline="hmd.data_loop_apply",
+                    from_fqn="ontology.dictionary",
+                    to_fqn="ontology.mappings.zingg_matches",
+                )
+            except Exception:
+                pass
     return {
         "apply": applied,
         "verify": verified,

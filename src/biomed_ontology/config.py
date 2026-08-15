@@ -157,6 +157,12 @@ class Settings(BaseSettings):
     # full 模式是否跳过 docker/zingg（本地 stub-link）
     zingg_skip_docker: bool = False
 
+    # --- 运行面环境（dev 可 stub；prod 禁止降级）---------------------------
+    env: Literal["dev", "prod"] = "dev"
+    # 观测 / quarantine 保留天数（lake:expire）
+    lake_observation_retain_days: int = Field(default=90, ge=1)
+    eval_scorecard_retain_days: int = Field(default=180, ge=1)
+
     # --- Data Loop / evolve-mine --------------------------------------------
     # true：evolve-mine 默认合并 Iceberg/WAL er_observations
     evolve_include_lake: bool = True
@@ -247,7 +253,13 @@ class Settings(BaseSettings):
             out.append(
                 f"HMD_LLM_BASE_URL={self.llm_base_url}：Knowledge Extraction 将调用外部 LLM API。"
             )
+        if self.env == "prod" and self.zingg_skip_docker:
+            out.append("HMD_ENV=prod 且 HMD_ZINGG_SKIP_DOCKER=true：生产禁止 stub-link。")
         return out
+
+    @property
+    def is_prod(self) -> bool:
+        return self.env == "prod"
 
 
 class _ExplicitSettings(Settings):

@@ -185,15 +185,18 @@ def _candidate_from_hit(hit: dict[str, Any], *, query: str) -> dict[str, Any]:
 
 
 def _kgcl_stub(cand: dict[str, Any]) -> list[str]:
-    mention = str(cand["mention"]).replace('"', "")
-    op = cand.get("suggested_op") or "create synonym"
+    mention = str(cand["mention"]).replace("'", "")
     method = cand.get("resolution_method") or "unmapped"
     canon = cand.get("canonical_entity")
-    if op == "review mapping" and canon:
-        header = (
-            f'# review mapping "{mention}" → {canon} '
-            f"(method={method}, conf={cand.get('confidence')})"
-        )
-    else:
-        header = f'# create synonym "{mention}" for unresolved enterprise entity (method={method})'
-    return [header, f'# TODO curate: "{mention}"', ""]
+    if canon:
+        return [
+            f"# method={method} conf={cand.get('confidence')}",
+            f"create exact synonym '{mention}' for {canon}",
+            "",
+        ]
+    key = str(cand.get("query") or mention).replace(" ", "_")[:40]
+    return [
+        f"# L3 draft method={method}; do not apply from flow",
+        f"create node NEW:{key} '{mention}'",
+        "",
+    ]

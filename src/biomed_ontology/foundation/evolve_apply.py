@@ -12,7 +12,7 @@ import yaml
 
 from biomed_ontology.foundation.evolve_propose import PROPOSALS_DIR
 from biomed_ontology.foundation.ids import normalize_alias_key
-from biomed_ontology.foundation.paths import DICTIONARY_PATH, ZINGG_MATCHES_PATH
+from biomed_ontology.foundation.paths import DICTIONARY_PATH, ENTITIES_PATH, ZINGG_MATCHES_PATH
 
 __all__ = [
     "EvolveApplyResult",
@@ -287,6 +287,122 @@ def _patch_zingg(
     return action
 
 
+def _patch_xref(
+    enterprise_id: str,
+    xref: str,
+    *,
+    surface: str,
+    dry_run: bool,
+    entities_path: Path | None = None,
+) -> dict[str, Any]:
+    """只改 xref/alias，不改 enterprise_id / kind。"""
+    if surface == "sssom":
+        return _patch_sssom(enterprise_id, xref, dry_run=dry_run)
+    if surface == "catalog":
+        return _patch_catalog_xref(enterprise_id, xref, dry_run=dry_run)
+    path = entities_path or ENTITIES_PATH
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    raw = raw or {}
+    entities = list(raw.get("entities") or [])
+    action = {
+        "path": str(path),
+        "action": "append_xref",
+        "mention": xref,
+        "xref": xref,
+        "enterprise_id": enterprise_id,
+        "write_surface": "entities_xref",
+    }
+    target = next((e for e in entities if str(e.get("enterprise_id")) == enterprise_id), None)
+    if target is None:
+        action["action"] = "skip"
+        action["reason"] = "entity_not_found"
+        return action
+    xrefs = [str(x) for x in (target.get("exact_match_xrefs") or [])]
+    if xref in xrefs:
+        action["action"] = "noop"
+        action["reason"] = "xref_already_present"
+        return action
+    if dry_run:
+        return action
+    target["exact_match_xrefs"] = [*xrefs, xref]
+    raw["entities"] = entities
+    path.write_text(yaml.safe_dump(raw, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    return action
+
+
+def _patch_sssom(enterprise_id: str, xref: str, *, dry_run: bool) -> dict[str, Any]:
+    from biomed_ontology.foundation.paths import ONTOLOGY_ROOT
+
+    path = ONTOLOGY_ROOT / "mappings" / "sssom.tsv"
+    row = f"{enterprise_id}\tskos:exactMatch\t{xref}\tevolve-apply\n"
+    action = {
+        "path": str(path),
+        "action": "append_sssom",
+        "mention": xref,
+        "xref": xref,
+        "enterprise_id": enterprise_id,
+        "write_surface": "sssom",
+    }
+    if path.is_file() and xref in path.read_text(encoding="utf-8"):
+        action["action"] = "noop"
+        action["reason"] = "already_present"
+        return action
+    if dry_run:
+        return action
+    if not path.is_file():
+        path.write_text(
+            "subject_id\tpredicate_id\tobject_id\tmapping_justification\n",
+            encoding="utf-8",
+        )
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(row)
+    return action
+
+
+def _patch_catalog_xref(enterprise_id: str, xref: str, *, dry_run: bool) -> dict[str, Any]:
+    from biomed_ontology.foundation.paths import ONTOLOGY_ROOT
+
+    prefix, _, local = xref.partition(":")
+    key = enterprise_id.rsplit(":", 1)[-1]
+    catalog_dir = ONTOLOGY_ROOT / "catalog"
+    action = {
+        "path": str(catalog_dir),
+        "action": "append_xref",
+        "mention": xref,
+        "xref": xref,
+        "enterprise_id": enterprise_id,
+        "write_surface": "catalog",
+    }
+    hits = list(catalog_dir.glob("*.yaml")) if catalog_dir.is_dir() else []
+    for path in hits:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        concepts = list(raw.get("concepts") or [])
+        for concept in concepts:
+            if str(concept.get("key") or "") != key:
+                continue
+            hints = dict(concept.get("xref_hints") or {})
+            if prefix in hints:
+                action["action"] = "noop"
+                action["reason"] = "catalog_hint_present"
+                action["path"] = str(path)
+                return action
+            if dry_run:
+                action["path"] = str(path)
+                return action
+            hints[prefix] = {"by": "curie", "value": local or xref}
+            concept["xref_hints"] = hints
+            raw["concepts"] = concepts
+            path.write_text(
+                yaml.safe_dump(raw, allow_unicode=True, sort_keys=False),
+                encoding="utf-8",
+            )
+            action["path"] = str(path)
+            return action
+    action["action"] = "skip"
+    action["reason"] = "catalog_concept_not_found"
+    return action
+
+
 def apply_approved(
     path: Path | None = None,
     *,
@@ -344,6 +460,16 @@ def apply_approved(
                     dictionary_path=dictionary_path,
                 )
             )
+        elif surface in {"entities_xref", "catalog", "sssom"} or op == "add_xref":
+            xref = str(prop.get("xref") or mention)
+            written.append(
+                _patch_xref(
+                    str(target),
+                    xref,
+                    surface=str(surface or "entities_xref"),
+                    dry_run=dry_run,
+                )
+            )
         else:
             skipped.append(
                 {
@@ -356,12 +482,19 @@ def apply_approved(
             progress.update(1)
 
     if not dry_run:
+        from biomed_ontology.foundation.evolve_kgcl import write_kgcl_copy
+
+        write_kgcl_copy(approved, Path(str(p).replace(".jsonl", ".kgcl")))
         now = datetime.now(UTC).isoformat()
         applied_ids = {
-            w.get("mention") for w in written if w.get("action") in {"append_alias", "append"}
+            w.get("mention") or w.get("xref")
+            for w in written
+            if w.get("action") in {"append_alias", "append", "append_xref", "append_sssom"}
         }
         for row in rows:
-            if row.get("status") == "approved" and row.get("mention") in applied_ids:
+            if row.get("status") == "approved" and (
+                row.get("mention") in applied_ids or row.get("xref") in applied_ids
+            ):
                 row["status"] = "applied"
                 row["applied_at"] = now
         save_proposals(p, rows)

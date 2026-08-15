@@ -51,6 +51,7 @@ class IngestContext:
     resolver: Any | None = None
     parse_degraded: list[str] = field(default_factory=list)
     qa: Any | None = None
+    claim_quarantine: list[str] = field(default_factory=list)
 
 
 def require_bern2(bern2_url: str | None = None) -> str:
@@ -308,7 +309,34 @@ def write_claims(ctx: IngestContext, *, bern2_url: str | None = None) -> IngestC
             ctx.errors.append("graphdb: unreachable — skipped provenance append")
     except Exception as exc:
         ctx.errors.append(f"graphdb.provenance: {exc}")
+
+    from biomed_ontology.quality import QualityGate
+
+    gate = QualityGate().evaluate_claims(claim_rows, release_id="extracted")
+    if not gate.passed:
+        ctx.claim_quarantine = list(gate.blocking)
+        _persist_claim_quarantine(ctx.doc_id, gate.blocking)
+        ctx.errors.append("evaluate_claims: missing evidence quarantined (not validated)")
     return ctx
+
+
+def _persist_claim_quarantine(doc_id: str, blocking: list[str]) -> None:
+    import json
+    from datetime import UTC, datetime
+
+    from biomed_ontology.lake.quarantine import claims_path
+
+    dest = claims_path()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    row = {
+        "doc_id": doc_id,
+        "blocking": blocking,
+        "claim_status": "extracted",
+        "promoted": False,
+        "seen_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    with dest.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def register_om_document(ctx: IngestContext) -> IngestContext:

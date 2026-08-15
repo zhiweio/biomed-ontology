@@ -627,3 +627,63 @@ def foundation_zingg_run(
             f"export written={summary['written']} ambiguous={summary['ambiguous']} "
             f"path={summary['path']} min_score={summary['min_score']}"
         )
+
+
+@foundation_app.command("source-load")
+def foundation_source_load(
+    source: str = typer.Option("hgnc", "--source"),
+    license_ack: str = typer.Option("", "--license-ack"),
+) -> None:
+    """公开源 loader（HGNC / UMLS 子集）。不改 HMD:ENT:*。"""
+    from biomed_ontology.config import settings
+    from biomed_ontology.foundation.biomedical_sources import load_biomedical_source
+
+    ack = license_ack or (
+        settings.umls_license_ack if source == "umls_subset" else settings.bios_license_ack
+    )
+    command_header("foundation source-load", meta=[("source", source)])
+    console.print_json(data=load_biomedical_source(source, license_ack=ack))
+
+
+@foundation_app.command("claim-review")
+def foundation_claim_review(
+    extracted: Path | None = typer.Option(None, "--extracted"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """列出 extracted claims（Iceberg 或本地 jsonl）。不晋升。"""
+    import json
+
+    from biomed_ontology.foundation.claim_promote import list_extracted
+
+    rows = list_extracted(extracted_path=extracted)
+    if json_out:
+        print(json.dumps({"rows": rows, "n": len(rows)}, ensure_ascii=False))
+        return
+    command_header("foundation claim-review", meta=[("n", str(len(rows)))])
+    console.print_json(data={"n": len(rows), "rows": rows[:50]})
+
+
+@foundation_app.command("claim-promote")
+def foundation_claim_promote(
+    claim_id: list[str] | None = typer.Argument(None),
+    by: str = typer.Option("curator", "--by"),
+    write: bool = typer.Option(False, "--write"),
+    promotions: Path | None = typer.Option(None, "--promotions"),
+    extracted: Path | None = typer.Option(None, "--extracted"),
+) -> None:
+    """人审后写 ontology/claims YAML。Prefect 不 INSERT knowledge 边。"""
+    from biomed_ontology.foundation.claim_promote import (
+        apply_approved_promotions,
+        approve_promotions,
+        list_extracted,
+    )
+
+    ids = list(claim_id or [])
+    if not ids:
+        console.print("[red]需要 claim_id[/red]")
+        raise typer.Exit(2)
+    command_header("foundation claim-promote", meta=[("by", by), ("write", str(write))])
+    src = list_extracted(extracted_path=extracted)
+    dest, approved = approve_promotions(ids, by=by, path=promotions, extracted=src)
+    applied = apply_approved_promotions(dest, dry_run=not write)
+    console.print_json(data={"approved": approved, "apply": applied, "graph_insert": False})

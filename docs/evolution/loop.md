@@ -103,6 +103,8 @@ uv run hmd pipeline data-loop-apply --write     # 只消费 approved；不 git c
 
 `data_loop_enrich` 不得调用 apply。无 `approved` 提案时 `data_loop_apply` 为 Failed，不是空成功。write 之后才 `catalog_publish` + cheap eval。
 
+Claim 晋升是另一条人审面：`hmd foundation claim-review` 列出 extracted；`claim-promote --claim-id … --by curator` 只写 `ontology/claims/`。Prefect `claim_promote` 只消费 `status=approved`，不 `INSERT` knowledge 边；随后 `world_model_sync` 才物化 validated。
+
 | 做 | 不做 |
 |---|---|
 | `resolve_entity` unmapped / 低置信 → `.candidates.json` | 自动改 GraphDB ontology |

@@ -59,6 +59,12 @@ def pipeline_identity_match(
     if observations not in allowed:
         raise typer.BadParameter("observations must be lake|bootstrap|all")
     obs = cast(Literal["lake", "bootstrap", "all"], observations)
+    if dev:
+        from biomed_ontology.config import settings
+
+        if settings.is_prod:
+            console.print("[red]HMD_ENV=prod 禁止 --dev / identity_match_dev[/red]")
+            raise typer.Exit(2)
     result = identity_match_dev(observations=obs) if dev else identity_match(observations=obs)
     console.print_json(data=result)
 
@@ -102,3 +108,47 @@ def pipeline_eval(
 
     command_header("pipeline eval", meta=[("suite", suite)])
     console.print_json(data=ontology_eval(suite=suite))
+
+
+@pipeline_app.command("replay")
+def pipeline_replay(
+    doc_id: list[str] | None = typer.Option(None, "--doc-id"),
+    reason: str | None = typer.Option(None, "--reason"),
+    plane: str | None = typer.Option(None, "--plane"),
+) -> None:
+    from biomed_ontology.pipelines.replay import replay_quarantine
+
+    command_header("pipeline replay")
+    result = replay_quarantine(doc_ids=list(doc_id or []), reason=reason, plane=plane)
+    console.print_json(data=result)
+    if result.get("open_n"):
+        raise typer.Exit(1)
+
+
+@pipeline_app.command("ops-snapshot")
+def pipeline_ops_snapshot() -> None:
+    from biomed_ontology.pipelines.ops import ops_snapshot
+
+    command_header("pipeline ops-snapshot")
+    console.print_json(data=ops_snapshot())
+
+
+@pipeline_app.command("slo-gate")
+def pipeline_slo_gate() -> None:
+    from biomed_ontology.pipelines.ops import slo_gate
+
+    command_header("pipeline slo-gate")
+    console.print_json(data=slo_gate())
+
+
+@pipeline_app.command("claim-promote")
+def pipeline_claim_promote(
+    write: bool = typer.Option(False, "--write"),
+    promotions: Path | None = typer.Option(None, "--promotions"),
+) -> None:
+    from biomed_ontology.pipelines.claims import claim_promote
+
+    command_header("pipeline claim-promote", meta=[("write", str(write))])
+    console.print_json(
+        data=claim_promote(write=write, promotions=str(promotions) if promotions else None)
+    )

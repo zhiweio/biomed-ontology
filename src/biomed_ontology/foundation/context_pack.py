@@ -42,5 +42,7 @@ def attach_pack_fields(
         "note": "许可在候选期过滤；Pack 不编造缺失字段",
     }
     payload["evidence_tree"] = list(evidence or [])
+    payload.setdefault("assets", list(assets or []))
+    payload.setdefault("bios_bridges", list(bios_bridges or []))
     payload["missing"] = missing
     return payload

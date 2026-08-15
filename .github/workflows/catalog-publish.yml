@@ -1,0 +1,30 @@
+name: catalog-publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ontology/catalog/**"
+      - "ontology/entities/**"
+      - "ontology/claims/**"
+      - "ontology/dictionary/**"
+      - "ontology/mappings/zingg_matches.jsonl"
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Trigger Prefect catalog-publish
+        env:
+          PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
+        run: |
+          if [ -z "$PREFECT_API_URL" ]; then
+            echo "PREFECT_API_URL unset — skip (do not sync_world_model in Actions)"
+            exit 0
+          fi
+          uv sync --extra dev
+          uv run prefect deployment run 'catalog-publish/catalog-publish'

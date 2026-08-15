@@ -199,15 +199,45 @@ def literature_refresh(
             task_literature_qa(doc_id, source_id)
             ok.append(task_refresh_document(doc_id, embedder_name))
         except IngestQAError as exc:
-            quarantined.append({"doc_id": doc_id, "reason": "ingest_qa", "error": str(exc)})
+            quarantined.append(
+                {
+                    "doc_id": doc_id,
+                    "reason": "ingest_qa",
+                    "error": str(exc),
+                    "retry": {
+                        "source_id": source_id,
+                        "file": item.get("pdf"),
+                        "record": item.get("record"),
+                        "embedder_name": embedder_name,
+                    },
+                }
+            )
         except Exception as exc:
-            failed.append({"doc_id": doc_id, "reason": type(exc).__name__, "error": str(exc)})
+            failed.append(
+                {
+                    "doc_id": doc_id,
+                    "reason": type(exc).__name__,
+                    "error": str(exc),
+                    "retry": {
+                        "source_id": source_id,
+                        "file": item.get("pdf"),
+                        "record": item.get("record"),
+                    },
+                }
+            )
 
     fp = compute_catalog_fingerprint()
     prev = load_state()
     incr: dict[str, Any] | None = None
     if prev is None or prev.catalog_sha256 != fp:
         incr = task_catalog_incremental(embedder_name)
+    from biomed_ontology.lake.quarantine import persist_records
+
+    persist_records(quarantined, plane="literature")
+    persist_records(
+        [{**r, "reason_code": r.get("reason")} for r in failed],
+        plane="literature",
+    )
     return {
         "dirty_n": len(dirty),
         "ok": ok,

@@ -229,6 +229,9 @@ data/raw/*.pdf
 data/assets/
 data/cache/
 data/releases/eval/
+data/releases/ops/
+data/releases/quarantine/
+data/releases/claims/
 data/obs_wal/
 data/zingg/input/
 data/zingg/reports/

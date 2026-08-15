@@ -4,6 +4,7 @@ from __future__ import annotations
 
 __all__ = [
     "catalog_publish",
+    "claim_promote",
     "data_loop_apply",
     "data_loop_enrich",
     "data_loop_mine",
@@ -14,6 +15,9 @@ __all__ = [
     "literature_refresh",
     "literature_reindex_full",
     "ontology_eval",
+    "ops_snapshot",
+    "replay_quarantine",
+    "slo_gate",
     "world_model_sync",
 ]
 
@@ -43,4 +47,16 @@ def __getattr__(name: str):
         from biomed_ontology.pipelines.ontology_eval import ontology_eval
 
         return ontology_eval
+    if name == "replay_quarantine":
+        from biomed_ontology.pipelines.replay import replay_quarantine
+
+        return replay_quarantine
+    if name in {"ops_snapshot", "slo_gate"}:
+        from biomed_ontology.pipelines import ops as _m
+
+        return getattr(_m, name)
+    if name == "claim_promote":
+        from biomed_ontology.pipelines.claims import claim_promote
+
+        return claim_promote
     raise AttributeError(name)

@@ -15,11 +15,15 @@ from biomed_ontology.foundation.paths import REPO_ROOT, ZINGG_MATCHES_PATH
 
 __all__ = [
     "ZINGG_COMPOSE",
+    "ZINGG_INPUT_FP_PATH",
     "ZinggMaterializeResult",
+    "compute_zingg_input_fingerprint",
     "export_matches",
     "link_stub_from_materialized",
+    "load_zingg_input_fingerprint",
     "materialize",
     "run_zingg_docker",
+    "save_zingg_input_fingerprint",
     "scan_er_observations",
     "write_training_samples",
 ]
@@ -30,6 +34,56 @@ INPUT_DIR = ZINGG_DIR / "input"
 REPORTS_DIR = ZINGG_DIR / "reports"
 BOOTSTRAP_PAIRS = ZINGG_DIR / "bootstrap_pairs.jsonl"
 TRAINING_CSV = ZINGG_DIR / "training.csv"
+ZINGG_INPUT_FP_PATH = REPO_ROOT / "data" / "cache" / "zingg_input_fingerprint.txt"
+
+
+def compute_zingg_input_fingerprint(
+    *,
+    enterprise_path: Path,
+    observation_path: Path,
+    window_days: int,
+    observation_rows: int,
+    mention_keys: list[str] | None = None,
+) -> str:
+    """企业面 hash + 观测窗口 hash。未变则 skip train-link。"""
+    h = hashlib.sha256()
+    for path in (enterprise_path, observation_path):
+        h.update(path.name.encode())
+        if path.is_file():
+            h.update(path.read_bytes())
+        h.update(b"\0")
+    h.update(str(int(window_days)).encode())
+    h.update(b"\0")
+    h.update(str(int(observation_rows)).encode())
+    h.update(b"\0")
+    for key in sorted(mention_keys or []):
+        h.update(key.encode())
+        h.update(b"\0")
+    return h.hexdigest()
+
+
+def _fp_path(path: Path | None = None) -> Path:
+    import os
+
+    if path is not None:
+        return path
+    override = os.environ.get("HMD_ZINGG_FP_PATH")
+    if override:
+        return Path(override)
+    return ZINGG_INPUT_FP_PATH
+
+
+def load_zingg_input_fingerprint(path: Path | None = None) -> str:
+    dest = _fp_path(path)
+    if not dest.is_file():
+        return ""
+    return dest.read_text(encoding="utf-8").strip()
+
+
+def save_zingg_input_fingerprint(fp: str, path: Path | None = None) -> None:
+    dest = _fp_path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(fp + "\n", encoding="utf-8")
 
 
 @dataclass

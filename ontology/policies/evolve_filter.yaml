@@ -49,6 +49,13 @@ rank:
   weight_evidence: 0.5
   weight_overlap: 0.3
 
+# L2：已有 HMD:ENT:*，补 exact_match_xrefs / SSSOM / catalog 别名范围，不是新节点。
+# write_surface: catalog | sssom | entities_xref。L3 create_node 仍 skip。
+l2:
+  write_surfaces: [catalog, sssom, entities_xref]
+  public_prefixes: [HGNC, CHEBI, MONDO, UMLS, NCBIGene, DOID]
+  mint_ent: false
+
 sources:
   deny_source_prefixes: []
 

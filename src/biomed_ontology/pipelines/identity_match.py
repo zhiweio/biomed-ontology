@@ -77,8 +77,27 @@ def _run_match(
     min_score: float | None,
     skip_smoke: bool,
 ) -> dict[str, Any]:
+    from biomed_ontology.config import settings
+    from biomed_ontology.foundation.zingg_io import (
+        compute_zingg_input_fingerprint,
+        load_zingg_input_fingerprint,
+        save_zingg_input_fingerprint,
+    )
+
     mat = task_materialize(observations)
-    link = task_zingg_link(allow_stub=allow_stub)
+    fp = compute_zingg_input_fingerprint(
+        enterprise_path=Path(mat["enterprise_path"]),
+        observation_path=Path(mat["observation_path"]),
+        window_days=settings.zingg_window_days,
+        observation_rows=int(mat["observation_rows"]),
+    )
+    prev = load_zingg_input_fingerprint()
+    if prev == fp:
+        link = {"mode": "skipped", "reason": "input fingerprint unchanged", "fingerprint": fp}
+    else:
+        link = task_zingg_link(allow_stub=allow_stub)
+        save_zingg_input_fingerprint(fp)
+        link = {**link, "fingerprint": fp}
     exported = task_export_matches(min_score)
     smoke = None if skip_smoke else task_identity_smoke()
     return {
@@ -87,6 +106,7 @@ def _run_match(
         "export": exported,
         "identity_smoke": smoke,
         "allow_stub": allow_stub,
+        "fingerprint": fp,
     }
 
 
@@ -114,6 +134,10 @@ def identity_match_dev(
     skip_smoke: bool = True,
 ) -> dict[str, Any]:
     """仅本地：允许 stub-link。"""
+    from biomed_ontology.config import settings
+
+    if settings.is_prod:
+        raise RuntimeError("identity_match_dev is forbidden when HMD_ENV=prod")
     return _run_match(
         observations=observations,
         allow_stub=True,

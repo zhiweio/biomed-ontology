@@ -107,7 +107,7 @@ uv run hmd serve     # 起 REST + MCP 服务（:8000）
 task check           # ruff + ty + 全量测试
 ```
 
-`task check` = ruff + ty + 全量测试，共 **722 条测试**（默认跳过需 GraphDB 的 integration）。
+`task check` = ruff + ty + 全量测试，共 **744 条测试**（默认跳过需 GraphDB 的 integration）。
 Milvus 集成测试需 Docker；**失败不回落**到本地后端。
 
 ### 工作区包

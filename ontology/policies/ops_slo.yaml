@@ -1,0 +1,26 @@
+# 运行面新鲜度 SLO。口径变更走 ontology release，不上 Monte Carlo / OTel。
+version: "1"
+
+er_observations:
+  unmapped_backlog_max: 500
+  require_nightly_mine_if_over: true
+
+world_model_sync:
+  max_age_hours: 24
+  fingerprint_noop_counts: true
+
+identity_match:
+  extra_cron_days: 1
+
+ontology_eval:
+  cheap_refresh_on_apply: true
+  release_max_age_hours: 26
+
+ingest_quarantine:
+  open_max_docs: 50
+  open_max_age_hours: 48
+
+retention:
+  observations_days: 90
+  scorecard_days: 180
+  open_quarantine_keep: true

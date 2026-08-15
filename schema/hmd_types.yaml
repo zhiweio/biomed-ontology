@@ -96,6 +96,22 @@ enums:
         annotations:
           id_segment: AE
 
+  MetricCode:
+    description: >-
+      受控指标口径。策展 SSOT 是 ontology/extract/table_metrics.yaml；
+      本枚举是 LinkML 合同。口径变更走 ontology release，禁止 prompt 私货。
+    permissible_values:
+      ORR:
+        description: Objective response rate
+      PFS:
+        description: Progression-free survival
+      OS:
+        description: Overall survival
+      DCR:
+        description: Disease control rate
+      IC50:
+        description: Half-maximal inhibitory concentration
+
   SynonymScopeEnum:
     description: >-
       别名范围，直接决定检索行为（设计决策 D2）。

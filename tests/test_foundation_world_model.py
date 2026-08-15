@@ -684,7 +684,8 @@ def test_evolve_mine_writes_candidates_only(tmp_path: Path) -> None:
     )
     assert result.signals >= 1
     text = result.kgcl_path.read_text(encoding="utf-8")
-    assert "TODO curate" in text
+    assert "TODO curate" not in text
+    assert "create node" in text
     assert "禁止自动写入" in text
     assert result.json_path.exists()
     # 未知词进候选（可能被分词成片段）；金标 HMPL-504 高置信跳过
@@ -695,8 +696,7 @@ def test_evolve_mine_writes_candidates_only(tmp_path: Path) -> None:
     assert "HMPL-504" in skipped_mentions
     payload = result.json_path.read_text(encoding="utf-8")
     assert '"auto_apply": false' in payload
-    assert "create synonym" in text
-    assert "TODO curate" in text
+    assert "create node" in text
     assert result.candidates, "未知词应至少产生一条候选"
 
 

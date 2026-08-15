@@ -30,4 +30,4 @@
 
 实现细节以源码与 schema 描述为准；本表供跳转。新增决策时：写进相关 schema 字段描述 + 本表一行 + 必要时加不变量条目。
 
-D16 补充：CLI（`hmd lake` / `hmd foundation` / `hmd pipeline`）保持单步可跑。生产 DAG 按平面隔离——入仓失败不触发 apply；评测失败不回滚已入湖文档；Zingg 失败不改 dictionary。`world_model_sync` 与 `identity_match` 限并发 1。生产 Zingg 禁止 stub（仅 `identity_match_dev` / CLI fallback）。Worker 不 `git commit`。
+D16 补充：CLI（`hmd lake` / `hmd foundation` / `hmd pipeline`）保持单步可跑。生产 DAG 按平面隔离——入仓失败不触发 apply；评测失败不回滚已入湖文档；Zingg 失败不改 dictionary。`world_model_sync` 与 `identity_match` 限并发 1。生产 Zingg 禁止 stub（仅 `identity_match_dev` / CLI fallback）。Worker 不 `git commit`。GitOps：目录 PR 跑 cheap 静态门；merge 后 Action 只 `POST` Prefect `catalog-publish`，不在 Actions 里 `sync_world_model`。`HMD_ENV=prod` 禁止 `identity_match_dev`。

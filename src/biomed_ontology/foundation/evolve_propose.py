@@ -368,6 +368,25 @@ def _gather_evidence(
     return evidence
 
 
+_PUBLIC_PREFIXES = ("HGNC:", "CHEBI:", "MONDO:", "UMLS:", "NCBIGene:", "DOID:", "DrugBank:")
+
+
+def _is_public_curie(value: str) -> bool:
+    return any(value.startswith(p) for p in _PUBLIC_PREFIXES) and not is_enterprise_id(value)
+
+
+def _public_xrefs(mention: str, cand: dict[str, Any], evidence: dict[str, Any]) -> list[str]:
+    ids = [mention, *[str(x) for x in (cand.get("external_ids") or [])]]
+    bios = evidence.get("bios")
+    if isinstance(bios, dict):
+        ids.extend(str(x) for x in (bios.get("external_ids") or []))
+    elif isinstance(bios, list):
+        for card in bios:
+            if isinstance(card, dict):
+                ids.extend(str(x) for x in (card.get("external_ids") or []))
+    return list(dict.fromkeys(x for x in ids if _is_public_curie(x)))
+
+
 def _build_proposal(cand: dict[str, Any], evidence: dict[str, Any]) -> dict[str, Any]:
     mention = str(cand["mention"])
     key = str(cand["mention_key"])
@@ -385,7 +404,15 @@ def _build_proposal(cand: dict[str, Any], evidence: dict[str, Any]) -> dict[str,
         conf = max(conf, float(zingg["score"]))
 
     cand_ent_ids = [str(x) for x in (cand.get("external_ids") or []) if is_enterprise_id(str(x))]
-    if targets:
+    public_xrefs = _public_xrefs(mention, cand, evidence)
+    if targets and _is_public_curie(mention) and public_xrefs:
+        target = targets[0]
+        op = "add_xref"
+        write_surface = "entities_xref"
+        risk = "L2"
+        xref = public_xrefs[0]
+        kgcl = f"create exact match '{xref}' for {target}"
+    elif targets:
         target = targets[0]
         if cand_ent_ids or (
             resolver.get("canonical_entity") and is_enterprise_id(str(resolver["canonical_entity"]))
@@ -453,6 +480,7 @@ def _build_proposal(cand: dict[str, Any], evidence: dict[str, Any]) -> dict[str,
         "rank_score": round(rank, 4),
         "status": "pending_approval",
         "kgcl": kgcl,
+        "xref": public_xrefs[0] if public_xrefs else None,
         "query_overlap": cand.get("query_overlap"),
         "resolution_method": cand.get("resolution_method"),
     }

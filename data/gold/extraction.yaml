@@ -27,3 +27,27 @@ cases:
     expect: []
     rules: false
     note: "不确定语气由 LLM uncertain 标志抑制；规则评测跳过"
+
+  - id: trial_csr_evaluated_in
+    doc_type: CLINICAL_STUDY_REPORT
+    text: "Savolitinib was evaluated in NSCLC."
+    expect:
+      - { subject: "HMD:ENT:DC:savolitinib", predicate: in_clinical_trial_for, object: "HMD:ENT:IND:nsclc" }
+
+  - id: has_target_gene
+    text: "Savolitinib targets MET."
+    expect:
+      - { subject: "HMD:ENT:DC:savolitinib", predicate: has_target, object: "HMD:ENT:TGT:MET" }
+
+  - id: ae_label_no_meddra_knowledge
+    doc_type: LABEL
+    text: "Savolitinib was associated with peripheral edema."
+    expect: []
+    note: "无 MedDRA 不 mint HMD:ENT:AE:*，不写 knowledge 边"
+
+  - id: orr_ib_llm
+    doc_type: INVESTIGATOR_BROCHURE
+    text: "The confirmed ORR was 42% in the ITT population."
+    expect: []
+    rules: false
+    note: "指标口径走 table_metrics / MetricCode；规则评测跳过"

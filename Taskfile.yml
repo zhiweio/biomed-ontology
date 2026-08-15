@@ -143,6 +143,11 @@ tasks:
       - docker compose -f {{.FOUNDATION_COMPOSE}} up -d minio iceberg-rest trino
       - 'echo "MinIO :9000  Iceberg REST :8181  Trino :8080"'
 
+  lake:expire:
+    desc: Iceberg snapshot expire（观测保留期；open quarantine 不删）
+    cmds:
+      - uv run python -c "from biomed_ontology.lake.catalog import expire_lake_snapshots; print(expire_lake_snapshots())"
+
   milvus:down:
     desc: 仅停止 Milvus 三服务（不拆 GraphDB/OM）
     cmds:

@@ -37,21 +37,97 @@ class BackendUnavailableError(RuntimeError):
     """GraphDB / Milvus / OpenMetadata 不可用；禁止回落 YAML。"""
 
 
+def _query_foundation_evidence(
+    client: Any,
+    *,
+    entity_ids: list[str] | None,
+) -> list[dict[str, Any]]:
+    if not client.has_collection("foundation_evidence"):
+        raise BackendUnavailableError(
+            "Milvus 集合 foundation_evidence 不存在；请先 hmd foundation sync"
+        )
+    filt: str | None = None
+    if entity_ids:
+        quoted = ", ".join(f'"{e}"' for e in entity_ids)
+        filt = f"ARRAY_CONTAINS_ANY(entity_ids, [{quoted}])"
+    fields = [
+        "evidence_id",
+        "chunk_id",
+        "text",
+        "quote",
+        "entity_ids",
+        "doc_id",
+        "collection",
+        "score",
+    ]
+    try:
+        rows = client.query(
+            collection_name="foundation_evidence",
+            filter=filt or 'evidence_id != ""',
+            output_fields=fields,
+            limit=64,
+        )
+    except Exception:
+        rows = client.query(
+            collection_name="foundation_evidence",
+            filter='evidence_id != ""',
+            output_fields=fields,
+            limit=256,
+        )
+        if entity_ids:
+            wanted = set(entity_ids)
+            rows = [r for r in rows if wanted & set(r.get("entity_ids") or [])]
+    return list(rows)
+
+
+def _search_hmd_chunks(client: Any, query: str) -> list[dict[str, Any]]:
+    """语义检索走 hmd_chunks；失败则空列表（再按 chunk_id join）。"""
+    name = settings.milvus_collection or "hmd_chunks"
+    if not client.has_collection(name):
+        return []
+    try:
+        rows = client.query(
+            collection_name=name,
+            filter='chunk_id != ""',
+            output_fields=["chunk_id", "text", "doc_id"],
+            limit=64,
+        )
+    except Exception:
+        return []
+    q = query.lower()
+    hits = []
+    for r in rows:
+        text = str(r.get("text") or "")
+        if q and q not in text.lower():
+            continue
+        hits.append(
+            {
+                "chunk_id": str(r.get("chunk_id") or ""),
+                "text": text,
+                "doc_id": r.get("doc_id"),
+                "milvus_collection": name,
+                "score": 1.0,
+            }
+        )
+    return hits
+
+
 def _search_evidence_milvus(
     *,
     query: str | None,
     entity_ids: list[str] | None,
 ) -> list[EvidenceHit]:
     with observe_retrieval(
-        "milvus.foundation_evidence",
+        "milvus.evidence_index",
         op="search_evidence_milvus",
         input_summary={"query": query, "entity_ids": entity_ids or []},
     ) as obs:
         obs["backend"] = "milvus"
         obs["why"] = {
-            "reason": "evidence_index_required",
+            "reason": "hmd_chunks_join_foundation_evidence",
             "yaml_fallback": False,
-            "collection": "foundation_evidence",
+            "collection": "hmd_chunks+foundation_evidence",
+            "embedded": False,
         }
         try:
             from pymilvus import MilvusClient
@@ -63,62 +139,59 @@ def _search_evidence_milvus(
         uri = settings.milvus_uri
         try:
             client = MilvusClient(uri=uri)
-            if not client.has_collection("foundation_evidence"):
-                raise BackendUnavailableError(
-                    "Milvus 集合 foundation_evidence 不存在；请先 hmd foundation sync"
-                )
-            filt: str | None = None
-            if entity_ids:
-                quoted = ", ".join(f'"{e}"' for e in entity_ids)
-                filt = f"ARRAY_CONTAINS_ANY(entity_ids, [{quoted}])"
-            fields = [
-                "evidence_id",
-                "text",
-                "quote",
-                "entity_ids",
-                "doc_id",
-                "collection",
-                "score",
-            ]
-            try:
-                rows = client.query(
-                    collection_name="foundation_evidence",
-                    filter=filt or 'evidence_id != ""',
-                    output_fields=fields,
-                    limit=64,
-                )
-            except Exception:
-                rows = client.query(
-                    collection_name="foundation_evidence",
-                    filter='evidence_id != ""',
-                    output_fields=fields,
-                    limit=256,
-                )
-                if entity_ids:
-                    wanted = set(entity_ids)
-                    rows = [r for r in rows if wanted & set(r.get("entity_ids") or [])]
+            evidence_rows = _query_foundation_evidence(client, entity_ids=entity_ids)
+            chunk_hits = _search_hmd_chunks(client, query) if query else []
+            from biomed_ontology.lake.evidence_join import join_chunks_to_evidence
+
+            if chunk_hits:
+                joined = join_chunks_to_evidence(chunk_hits, evidence_rows)
+            else:
+                joined = [
+                    {
+                        **r,
+                        "chunk_id": r.get("chunk_id"),
+                        "joined": True,
+                        "embedded": False,
+                        "milvus_collection": "foundation_evidence",
+                    }
+                    for r in evidence_rows
+                ]
+                if query:
+                    q = query.lower()
+                    joined = [
+                        r for r in joined if q in str(r.get("quote") or r.get("text") or "").lower()
+                    ]
         except BackendUnavailableError:
             raise
         except Exception as exc:
             raise BackendUnavailableError(f"Milvus Evidence Index 不可用：{exc}") from exc
 
         hits: list[EvidenceHit] = []
-        for r in rows:
+        for r in joined:
             text = str(r.get("quote") or r.get("text") or "")
-            if query and query.lower() not in text.lower():
-                continue
+            raw_entity_ids = r.get("entity_ids")
+            entity_ids = (
+                [str(x) for x in raw_entity_ids]
+                if isinstance(raw_entity_ids, (list, tuple))
+                else []
+            )
+            raw_doc_id = r.get("doc_id")
+            doc_id = raw_doc_id if isinstance(raw_doc_id, str) else None
             hits.append(
                 EvidenceHit(
-                    evidence_id=str(r["evidence_id"]),
+                    evidence_id=str(r.get("evidence_id") or r.get("chunk_id") or ""),
                     text=str(r.get("text") or text),
                     quote=text,
-                    entity_ids=list(r.get("entity_ids") or []),
-                    doc_id=r.get("doc_id"),
-                    collection=str(r.get("collection") or "milvus"),
+                    entity_ids=entity_ids,
+                    doc_id=doc_id,
+                    chunk_id=str(r.get("chunk_id") or "") or None,
+                    collection=str(
+                        r.get("milvus_collection") or r.get("collection") or "hmd_chunks"
+                    ),
                     score=float(r.get("score") or 1.0),
                 )
             )
-        obs["output"] = {"hit_count": len(hits)}
+        obs["output"] = {"hit_count": len(hits), "join": "chunk_id"}
         return hits
 
 
