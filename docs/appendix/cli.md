@@ -33,7 +33,7 @@
 | `hmd index` | 写入 Milvus（默认 multimodal-bio；盖 embedder 戳） | [milvus](../retrieval/milvus.md) |
 | `hmd serve [--mcp]` | 唯一 HTTP 入口：REST + MCP（默认 :8000） | [serve](../tools/serve.md) |
 | `hmd contract` | 导出 OpenAPI / MCP 描述符 | [linkml](../architecture/linkml.md) |
-| `hmd signals` | 演进信号与 KGCL 挖掘 | [evolution](../evolution/loop.md) |
+| `hmd signals [--from-lake]` | 演进信号与 KGCL 挖掘；`--from-lake` 读 Iceberg obs_* | [evolution](../evolution/loop.md) |
 | `hmd parse` | 单篇 PDF → 语料 YAML | [layout](../parse/layout.md) |
 | `hmd sources` | 注册表与采购插槽 | [tiers](../licensing/tiers.md) |
 

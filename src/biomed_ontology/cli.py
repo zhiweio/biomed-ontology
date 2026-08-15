@@ -471,6 +471,8 @@ def signals_cmd(
     release: str = typer.Option("0.2.0", "--release", help="候选 release ID"),
     out_dir: Path = typer.Option(REPO_ROOT / "data" / "releases", "--out"),
     approved_by: str | None = typer.Option(None, "--approved-by", help="人工审批人"),
+    from_lake: bool = typer.Option(False, "--from-lake", help="从 Iceberg obs_* 挖 WHY，不跑 demo"),
+    window_days: int = typer.Option(7, "--window-days", help="from-lake 窗口（天）"),
 ) -> None:
     """挖掘演进信号并生成 KGCL changeset。"""
     from biomed_ontology.demo import run_all
@@ -488,10 +490,14 @@ def signals_cmd(
     kb = build_literature_base(with_graph=True)
     surface = open_dual_surface(literature_kb=kb)
     api = surface.tools
-    # 先跑一遍 demo 制造真实使用痕迹：没有使用就没有信号，
-    # 这正是"信号必须来自真实使用"这条设计约束的直接体现。
-    run_all(kb, api, foundation=surface.foundation)
-    sigs = mine_signals(MiningInput.from_runtime(kb, api))
+    if from_lake:
+        mi = MiningInput.from_lake(kb, window_days=window_days)
+    else:
+        # 先跑一遍 demo 制造真实使用痕迹：没有使用就没有信号，
+        # 这正是"信号必须来自真实使用"这条设计约束的直接体现。
+        run_all(kb, api, foundation=surface.foundation)
+        mi = MiningInput.from_runtime(kb, api)
+    sigs = mine_signals(mi)
 
     table = Table(title=f"演进信号 {len(sigs)} 条")
     for col in ("优先级", "类型", "载荷", "次数"):

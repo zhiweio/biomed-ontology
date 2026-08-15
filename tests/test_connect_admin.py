@@ -7,19 +7,17 @@ from biomed_ontology.lake.maintain import lake_maintain
 
 
 def test_connectors_healthy_requires_running_tasks() -> None:
+    running = {
+        "status": {
+            "connector": {"state": "RUNNING"},
+            "tasks": [{"id": 0, "state": "RUNNING"}],
+        }
+    }
     ok = {
-        "hmd-obs-tool-io": {
-            "status": {
-                "connector": {"state": "RUNNING"},
-                "tasks": [{"id": 0, "state": "RUNNING"}],
-            }
-        },
-        "hmd-er-observations": {
-            "status": {
-                "connector": {"state": "RUNNING"},
-                "tasks": [{"id": 0, "state": "RUNNING"}],
-            }
-        },
+        "hmd-obs-tool-io": running,
+        "hmd-obs-decision": running,
+        "hmd-obs-span": running,
+        "hmd-er-observations": running,
     }
     assert connectors_healthy(ok) is True
     assert connectors_healthy({"_error": "down"}) is False

@@ -12,7 +12,7 @@ from biomed_ontology.lake.connect_admin import paused_iceberg_sinks
 __all__ = ["compact_obs_tables", "lake_maintain"]
 
 _LOG = logging.getLogger(__name__)
-_OBS_TABLES = ("obs_tool_io", "er_observations")
+_OBS_TABLES = ("obs_tool_io", "obs_decision", "obs_span", "er_observations")
 
 
 def compact_obs_tables(cfg: Settings | None = None) -> dict[str, Any]:

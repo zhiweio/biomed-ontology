@@ -21,7 +21,9 @@ from biomed_ontology.foundation.ids import normalize_alias_key
 __all__ = [
     "ObsEventProducer",
     "count_wal_lines",
+    "emit_decisions",
     "emit_er_observation",
+    "emit_spans",
     "emit_tool_io",
     "flush_obs_events",
     "get_obs_producer",
@@ -32,6 +34,11 @@ __all__ = [
     "topic_from_wal_filename",
     "wal_dir",
 ]
+
+_CANDIDATE_MAX = 8
+_STATE_MAX_BYTES = 2048
+_STATE_KEYS = frozenset({"text", "concept_id", "query"})
+_ATTR_EXACT = frozenset({"ontology.release_id", "error.message"})
 
 _LOG = logging.getLogger(__name__)
 _lock = threading.Lock()
@@ -93,7 +100,13 @@ class ObsEventProducer:
         if not self.cfg.obs_events_enabled:
             return
         payload = json.dumps(record, ensure_ascii=False, default=str).encode("utf-8")
-        key = str(record.get("observation_id") or record.get("trace_id") or "").encode("utf-8")
+        key = str(
+            record.get("observation_id")
+            or record.get("decision_id")
+            or record.get("span_id")
+            or record.get("trace_id")
+            or ""
+        ).encode("utf-8")
         if self._kafka is not None:
             try:
                 self._kafka.produce(topic, value=payload, key=key or None)
@@ -108,7 +121,13 @@ class ObsEventProducer:
         if self._kafka is None:
             raise RuntimeError(self._kafka_err or "obs kafka producer unavailable")
         payload = json.dumps(record, ensure_ascii=False, default=str).encode("utf-8")
-        key = str(record.get("observation_id") or record.get("trace_id") or "").encode("utf-8")
+        key = str(
+            record.get("observation_id")
+            or record.get("decision_id")
+            or record.get("span_id")
+            or record.get("trace_id")
+            or ""
+        ).encode("utf-8")
         self._kafka.produce(topic, value=payload, key=key or None)
         self._kafka.poll(0)
 
@@ -253,6 +272,223 @@ def emit_er_observation(
     }
     producer = get_obs_producer(cfg)
     producer.produce(cfg.kafka_er_observations_topic, row)
+    if flush:
+        producer.flush()
+
+
+def _clip_chars(text: str, max_chars: int) -> tuple[str, bool]:
+    if len(text) <= max_chars:
+        return text, False
+    return text[:max_chars], True
+
+
+def _project_state(value: Any) -> tuple[str | None, bool]:
+    """结构化 state 只留白名单 key；超预算整段丢掉，禁止半截 JSON。"""
+    if value is None or value == "":
+        return None, False
+    if isinstance(value, str):
+        clipped, trunc = _clip_chars(value, 256)
+        return clipped, trunc
+    if isinstance(value, dict):
+        dropped = any(key not in _STATE_KEYS for key in value)
+        slim = {key: value[key] for key in _STATE_KEYS if key in value}
+        if not slim:
+            return None, True
+        raw = json.dumps(slim, ensure_ascii=False, default=str)
+        if len(raw.encode("utf-8")) > _STATE_MAX_BYTES:
+            return None, True
+        return raw, dropped
+    raw = json.dumps(value, ensure_ascii=False, default=str)
+    if len(raw.encode("utf-8")) > _STATE_MAX_BYTES:
+        return None, True
+    return raw, False
+
+
+def _norm_candidate(item: Any) -> dict[str, Any]:
+    if isinstance(item, dict):
+        cid = item.get("id") or item.get("candidate_id")
+        score = item.get("score")
+        channel = item.get("channel")
+        label = item.get("label")
+    else:
+        cid = getattr(item, "candidate_id", None)
+        score = getattr(item, "score", None)
+        channel = getattr(item, "channel", None)
+        label = getattr(item, "label", None)
+    try:
+        score_f = float(score) if score is not None else None
+    except (TypeError, ValueError):
+        score_f = None
+    return {
+        "id": str(cid) if cid else None,
+        "score": score_f,
+        "channel": channel,
+        "label": label,
+    }
+
+
+def _project_candidates(candidates: Any, chosen: Any) -> tuple[str, int, bool]:
+    """按 score 降序取 K 条，必留 chosen；``candidates_n`` 是原始条数。"""
+    items = [_norm_candidate(item) for item in list(candidates or [])]
+    total = len(items)
+    items.sort(key=lambda row: (row["score"] is None, -(row["score"] or 0.0)))
+    top = items[:_CANDIDATE_MAX]
+    chosen_s = str(chosen) if chosen else ""
+    ids = {row["id"] for row in top if row["id"]}
+    truncated = total > _CANDIDATE_MAX
+    if chosen_s and chosen_s not in ids:
+        chosen_row = next(
+            (row for row in items if row["id"] == chosen_s),
+            {"id": chosen_s, "score": None, "channel": None, "label": None},
+        )
+        if len(top) < _CANDIDATE_MAX:
+            top.append(chosen_row)
+        else:
+            top[-1] = chosen_row
+        truncated = True
+    return json.dumps(top, ensure_ascii=False, default=str), total, truncated
+
+
+def _project_attributes(attrs: Any) -> tuple[str | None, bool]:
+    if not attrs:
+        return None, False
+    if not isinstance(attrs, dict):
+        return None, True
+    kept: dict[str, Any] = {}
+    dropped = False
+    for key, value in attrs.items():
+        name = str(key)
+        if name in _ATTR_EXACT or name.startswith("hmd."):
+            kept[name] = value
+        else:
+            dropped = True
+    if not kept:
+        return None, dropped
+    raw = json.dumps(kept, ensure_ascii=False, default=str)
+    if len(raw.encode("utf-8")) > _STATE_MAX_BYTES:
+        return None, True
+    return raw, dropped
+
+
+def _truncated_fields(*pairs: tuple[str, bool]) -> str | None:
+    names = [name for name, flag in pairs if flag]
+    return ",".join(names) if names else None
+
+
+def _record_dict(record: Any) -> dict[str, Any]:
+    if isinstance(record, dict):
+        return record
+    to_json = getattr(record, "to_json", None)
+    if callable(to_json):
+        payload = to_json()
+        if isinstance(payload, dict):
+            return payload
+    return {
+        "span_id": getattr(record, "span_id", None),
+        "trace_id": getattr(record, "trace_id", None),
+        "name": getattr(record, "name", None),
+        "parent_id": getattr(record, "parent_id", None),
+        "duration_ms": getattr(record, "duration_ms", None),
+        "status": getattr(record, "status", None),
+        "attributes": getattr(record, "attributes", None),
+    }
+
+
+def emit_decisions(
+    records: list[Any] | None,
+    *,
+    cfg: Settings | None = None,
+    flush: bool = True,
+) -> None:
+    """Hub DecisionRecord → topic hmd.obs.decision。WHY 投影，不按字节切 JSON。"""
+    from biomed_ontology.observability import subject_from_state
+
+    cfg = cfg or settings
+    if not cfg.obs_events_enabled or not records:
+        return
+    event_ts, event_date = _now_parts()
+    producer = get_obs_producer(cfg)
+    for record in records:
+        payload = _record_dict(record)
+        trace_id = str(payload.get("trace_id") or "")
+        step_seq = int(payload.get("step_seq") or 0)
+        stage = str(payload.get("stage") or "")
+        justification = payload.get("justification")
+        if hasattr(justification, "value"):
+            justification = justification.value
+        subject, subject_trunc = subject_from_state(payload.get("state_before"))
+        if not subject and payload.get("subject_text"):
+            subject, subject_trunc = subject_from_state(
+                None, subject_text=str(payload.get("subject_text"))
+            )
+        candidates_json, candidates_n, cands_trunc = _project_candidates(
+            payload.get("candidates"), payload.get("chosen")
+        )
+        state_before, before_trunc = _project_state(payload.get("state_before"))
+        state_after, after_trunc = _project_state(payload.get("state_after"))
+        row = {
+            "decision_id": hashlib.sha1(f"{trace_id}|{step_seq}|{stage}".encode()).hexdigest()[:24],
+            "trace_id": trace_id,
+            "step_seq": step_seq,
+            "stage": stage,
+            "justification": str(justification or ""),
+            "chosen": payload.get("chosen"),
+            "span_id": payload.get("span_id"),
+            "subject_text": subject or None,
+            "candidates_json": candidates_json,
+            "candidates_n": candidates_n,
+            "state_before": state_before,
+            "state_after": state_after,
+            "confidence": payload.get("confidence"),
+            "rule_id": payload.get("rule_id"),
+            "model_id": payload.get("model_id"),
+            "elapsed_ms": float(payload.get("elapsed_ms") or 0.0),
+            "truncated_fields": _truncated_fields(
+                ("subject", subject_trunc),
+                ("candidates", cands_trunc),
+                ("state_before", before_trunc),
+                ("state_after", after_trunc),
+            ),
+            "event_ts": event_ts,
+            "ingested_at": event_ts,
+            "event_date": event_date,
+        }
+        producer.produce(cfg.kafka_obs_decision_topic, row)
+    if flush:
+        producer.flush()
+
+
+def emit_spans(
+    records: list[Any] | None,
+    *,
+    cfg: Settings | None = None,
+    flush: bool = True,
+) -> None:
+    """Hub Span → topic hmd.obs.span。"""
+    cfg = cfg or settings
+    if not cfg.obs_events_enabled or not records:
+        return
+    event_ts, event_date = _now_parts()
+    producer = get_obs_producer(cfg)
+    for record in records:
+        payload = _record_dict(record)
+        attrs_json, attrs_trunc = _project_attributes(payload.get("attributes"))
+        row = {
+            "span_id": str(payload.get("span_id") or ""),
+            "trace_id": str(payload.get("trace_id") or ""),
+            "name": str(payload.get("name") or ""),
+            "parent_id": payload.get("parent_id"),
+            "duration_ms": float(payload.get("duration_ms") or 0.0),
+            "status": str(payload.get("status") or "OK"),
+            "attributes_json": attrs_json,
+            "truncated_fields": _truncated_fields(("attributes", attrs_trunc)),
+            "event_ts": event_ts,
+            "ingested_at": event_ts,
+            "event_date": event_date,
+        }
+        if not row["span_id"]:
+            continue
+        producer.produce(cfg.kafka_obs_span_topic, row)
     if flush:
         producer.flush()
 

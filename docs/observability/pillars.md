@@ -69,7 +69,7 @@
 ### 存储与扩展
 
 - 热路径：`ObservabilityHub.commit` → 本地 Jsonl（`JsonlStore`）+ **Kafka-API produce**（`lake/obs_events.py`）。
-- 入湖：Redpanda → Iceberg Kafka Connect Sink → `hmd.obs_tool_io` / `hmd.er_observations`（**禁止**请求路径同步 `table.append`）。
+- 入湖：Redpanda → Iceberg Kafka Connect Sink → `hmd.obs_tool_io` / `hmd.obs_decision` / `hmd.obs_span` / `hmd.er_observations`（**禁止**请求路径同步 `table.append`）。Decision/Span 是 WHY 投影：`subject_text`（256 字）、candidates 按 score 留 chosen+落选者（K=8，另记 `candidates_n`）、state/attributes 白名单；超预算整段丢并写 `truncated_fields`，不按字节切 JSON。过夜 miner 用 `MiningInput.from_lake` / `hmd signals --from-lake` 读湖。不另开 MetricPoint topic。
 - broker 未配或不可达：写 `HMD_OBS_WAL_DIR`（默认 `data/obs_wal/`）。恢复后 `hmd lake obs-replay` produce 回原 topic（成功归档到 `obs_wal/replayed/`），不直写 Iceberg。
 - 运行面新鲜度：`ontology/policies/ops_slo.yaml` + `hmd pipeline ops-snapshot` / `slo-gate`。快照含 `er_unmapped_backlog`、`obs_wal_lines`、Connect `RUNNING`。红 Failed，不回滚已入湖文档。不上 Monte Carlo / OTel SDK。
 - 湖维护：`hmd lake maintain`（pause Connect → expire snapshots → Trino optimize）。
@@ -82,6 +82,8 @@
 | `HMD_OBS_EVENTS_ENABLED` | `obs_events_enabled` | `true` | `false` 时不 produce、不写 WAL |
 | `HMD_KAFKA_BOOTSTRAP_SERVERS` | `kafka_bootstrap_servers` | `127.0.0.1:19092` | 默认 Redpanda；设空=仅 WAL |
 | `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `kafka_obs_tool_io_topic` | `hmd.obs.tool_io` | 工具 I/O topic |
+| `HMD_KAFKA_OBS_DECISION_TOPIC` | `kafka_obs_decision_topic` | `hmd.obs.decision` | WHY / DecisionRecord topic |
+| `HMD_KAFKA_OBS_SPAN_TOPIC` | `kafka_obs_span_topic` | `hmd.obs.span` | WHERE / Span topic |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `kafka_er_observations_topic` | `hmd.er.observations` | ER 缺口事件 topic |
 | `HMD_KAFKA_CONNECT_URL` | `kafka_connect_url` | `http://127.0.0.1:8083` | Connect REST（status / pause） |
 | `HMD_OBS_WAL_DIR` | `obs_wal_dir` | `data/obs_wal` | broker 不可达时 Jsonl WAL |
@@ -114,7 +116,8 @@ uv run hmd signals --help    # 挖掘依赖 hub / feedback
 # 观测入湖（Redpanda + Iceberg Connect Sink）
 task obs:up
 task obs:register
-uv run hmd lake init         # 含 obs_tool_io / er_observations
+uv run hmd lake init         # 含 obs_tool_io / obs_decision / obs_span / er_observations
+uv run hmd signals --from-lake --window-days 7
 uv run hmd lake connect-status
 uv run hmd lake obs-replay --dry-run
 ```

@@ -12,10 +12,13 @@ __all__ = [
     "EVIDENCE_CHUNKS_TABLE",
     "INGEST_QUARANTINE_TABLE",
     "KNOWLEDGE_CLAIMS_TABLE",
+    "OBS_DECISION_TABLE",
+    "OBS_SPAN_TABLE",
     "OBS_TOOL_IO_TABLE",
     "ensure_lake_tables",
     "expire_lake_snapshots",
     "open_catalog",
+    "scan_obs_table",
 ]
 
 NAMESPACE = "hmd"
@@ -23,8 +26,15 @@ DOCUMENTS_TABLE = f"{NAMESPACE}.documents"
 EVIDENCE_CHUNKS_TABLE = f"{NAMESPACE}.evidence_chunks"
 KNOWLEDGE_CLAIMS_TABLE = f"{NAMESPACE}.knowledge_claims"
 OBS_TOOL_IO_TABLE = f"{NAMESPACE}.obs_tool_io"
+OBS_DECISION_TABLE = f"{NAMESPACE}.obs_decision"
+OBS_SPAN_TABLE = f"{NAMESPACE}.obs_span"
 ER_OBSERVATIONS_TABLE = f"{NAMESPACE}.er_observations"
 INGEST_QUARANTINE_TABLE = f"{NAMESPACE}.ingest_quarantine"
+_EVENT_DATE_SOURCE_IDS = {
+    "er_observations": 17,
+    "obs_decision": 17,
+    "obs_span": 10,
+}
 
 
 def open_catalog(cfg: Settings | None = None) -> Any:
@@ -120,6 +130,41 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             NestedField(13, "ingested_at", StringType(), required=False),
             NestedField(14, "event_date", StringType(), required=False),
         ),
+        "obs_decision": Schema(
+            NestedField(1, "decision_id", StringType(), required=True),
+            NestedField(2, "trace_id", StringType(), required=True),
+            NestedField(3, "step_seq", IntegerType(), required=False),
+            NestedField(4, "stage", StringType(), required=False),
+            NestedField(5, "justification", StringType(), required=False),
+            NestedField(6, "chosen", StringType(), required=False),
+            NestedField(7, "span_id", StringType(), required=False),
+            NestedField(8, "candidates_json", StringType(), required=False),
+            NestedField(9, "state_before", StringType(), required=False),
+            NestedField(10, "state_after", StringType(), required=False),
+            NestedField(11, "confidence", FloatType(), required=False),
+            NestedField(12, "rule_id", StringType(), required=False),
+            NestedField(13, "model_id", StringType(), required=False),
+            NestedField(14, "elapsed_ms", FloatType(), required=False),
+            NestedField(15, "event_ts", StringType(), required=False),
+            NestedField(16, "ingested_at", StringType(), required=False),
+            NestedField(17, "event_date", StringType(), required=False),
+            NestedField(18, "subject_text", StringType(), required=False),
+            NestedField(19, "candidates_n", IntegerType(), required=False),
+            NestedField(20, "truncated_fields", StringType(), required=False),
+        ),
+        "obs_span": Schema(
+            NestedField(1, "span_id", StringType(), required=True),
+            NestedField(2, "trace_id", StringType(), required=True),
+            NestedField(3, "name", StringType(), required=False),
+            NestedField(4, "parent_id", StringType(), required=False),
+            NestedField(5, "duration_ms", FloatType(), required=False),
+            NestedField(6, "status", StringType(), required=False),
+            NestedField(7, "attributes_json", StringType(), required=False),
+            NestedField(8, "event_ts", StringType(), required=False),
+            NestedField(9, "ingested_at", StringType(), required=False),
+            NestedField(10, "event_date", StringType(), required=False),
+            NestedField(11, "truncated_fields", StringType(), required=False),
+        ),
         "er_observations": Schema(
             NestedField(1, "observation_id", StringType(), required=True),
             NestedField(2, "mention", StringType(), required=True),
@@ -160,8 +205,9 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
             _ensure_optional_columns(table, schema)
         except Exception:
             extra: dict[str, Any] = {}
-            if name == "er_observations":
-                spec = _event_date_partition_spec()
+            source_id = _EVENT_DATE_SOURCE_IDS.get(name)
+            if source_id is not None:
+                spec = _event_date_partition_spec(source_id)
                 if spec is not None:
                     extra["partition_spec"] = spec
             cat.create_table(ident, schema=schema, **extra)
@@ -169,14 +215,14 @@ def ensure_lake_tables(cfg: Settings | None = None) -> list[str]:
     return created
 
 
-def _event_date_partition_spec() -> Any | None:
+def _event_date_partition_spec(source_id: int = 17) -> Any | None:
     try:
         from pyiceberg.partitioning import PartitionField, PartitionSpec
         from pyiceberg.transforms import IdentityTransform
 
         return PartitionSpec(
             PartitionField(
-                source_id=17,
+                source_id=source_id,
                 field_id=1000,
                 transform=IdentityTransform(),
                 name="event_date",
@@ -184,6 +230,32 @@ def _event_date_partition_spec() -> Any | None:
         )
     except Exception:
         return None
+
+
+def scan_obs_table(
+    table_ident: str,
+    *,
+    window_days: int = 7,
+    cfg: Settings | None = None,
+) -> list[dict[str, Any]]:
+    """扫观测表并按 ``event_date`` 窗口过滤。湖不可达则抛错。"""
+    from datetime import UTC, datetime, timedelta
+
+    cat = open_catalog(cfg)
+    arrow = cat.load_table(table_ident).scan().to_arrow()
+    if arrow is None or arrow.num_rows == 0:
+        return []
+    cutoff = None
+    if window_days > 0:
+        cutoff = (datetime.now(UTC) - timedelta(days=window_days)).strftime("%Y-%m-%d")
+    cols = arrow.to_pydict()
+    rows: list[dict[str, Any]] = []
+    for i in range(arrow.num_rows):
+        event_date = str((cols.get("event_date") or [None])[i] or "")
+        if cutoff and event_date and event_date < cutoff:
+            continue
+        rows.append({name: cols[name][i] for name in cols})
+    return rows
 
 
 def expire_lake_snapshots(*, older_than_days: int | None = None) -> dict[str, Any]:
@@ -196,7 +268,7 @@ def expire_lake_snapshots(*, older_than_days: int | None = None) -> dict[str, An
     cutoff = datetime.now(UTC) - timedelta(days=days)
     cat = open_catalog()
     expired: dict[str, Any] = {}
-    for name in ("er_observations", "obs_tool_io"):
+    for name in ("er_observations", "obs_tool_io", "obs_decision", "obs_span"):
         try:
             table = cat.load_table((NAMESPACE, name))
             before = len(table.inspect.snapshots())

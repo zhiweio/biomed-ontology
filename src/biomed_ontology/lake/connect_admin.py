@@ -23,7 +23,12 @@ __all__ = [
 ]
 
 _LOG = logging.getLogger(__name__)
-EXPECTED_ICEBERG_SINKS = ("hmd-obs-tool-io", "hmd-er-observations")
+EXPECTED_ICEBERG_SINKS = (
+    "hmd-obs-tool-io",
+    "hmd-obs-decision",
+    "hmd-obs-span",
+    "hmd-er-observations",
+)
 _CONNECT_TIMEOUT = 0.6
 _UNREACHABLE_TTL_S = 30.0
 _pause_depth = 0

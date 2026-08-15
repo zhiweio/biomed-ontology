@@ -45,7 +45,10 @@ __all__ = [
     "Span",
     "ToolIoRecord",
     "TraceContext",
+    "decision_subject",
+    "hub_from_obs_rows",
     "new_trace_id",
+    "subject_from_state",
 ]
 
 
@@ -134,6 +137,7 @@ class TraceContext:
         model_id: str | None = None,
         elapsed_ms: float = 0.0,
     ) -> DecisionRecord:
+        subject, _ = subject_from_state(state_before)
         rec = DecisionRecord(
             trace_id=self.trace_id,
             span_id=self.current_span_id,
@@ -148,6 +152,7 @@ class TraceContext:
             rule_id=rule_id,
             model_id=model_id,
             elapsed_ms=elapsed_ms,
+            subject_text=subject or None,
         )
         self.decisions.append(rec)
         return rec
@@ -175,6 +180,34 @@ class Candidate:
     stage: str | None = None
 
 
+_SUBJECT_MAX_CHARS = 256
+
+
+def subject_from_state(
+    state_before: Any,
+    *,
+    subject_text: str | None = None,
+    max_chars: int = _SUBJECT_MAX_CHARS,
+) -> tuple[str, bool]:
+    """WHY 主语：mention / query。按字符截，不切 JSON。"""
+    if subject_text:
+        raw = str(subject_text)
+    elif isinstance(state_before, dict):
+        raw = str(state_before.get("text") or state_before.get("query") or "")
+    elif isinstance(state_before, str):
+        raw = state_before
+    else:
+        raw = ""
+    if len(raw) <= max_chars:
+        return raw, False
+    return raw[:max_chars], True
+
+
+def decision_subject(dec: DecisionRecord) -> str:
+    text, _ = subject_from_state(dec.state_before, subject_text=getattr(dec, "subject_text", None))
+    return text
+
+
 @dataclass
 class DecisionRecord:
     trace_id: str
@@ -190,6 +223,7 @@ class DecisionRecord:
     rule_id: str | None = None
     model_id: str | None = None
     elapsed_ms: float = 0.0
+    subject_text: str | None = None
 
     def to_json(self) -> dict[str, Any]:
         d = asdict(self)
@@ -306,12 +340,14 @@ class ObservabilityHub:
             for d in ctx.decisions:
                 self._dec_store.append(d.to_json())
         try:
-            from biomed_ontology.lake.obs_events import emit_tool_io
+            from biomed_ontology.lake.obs_events import emit_decisions, emit_spans, emit_tool_io
 
             emit_tool_io(payload)
+            emit_decisions(ctx.decisions, flush=False)
+            emit_spans(ctx.spans)
         except Exception:
             self.emit_failures += 1
-            _LOG.warning("obs emit_tool_io failed trace_id=%s", io.trace_id, exc_info=True)
+            _LOG.warning("obs emit failed trace_id=%s", io.trace_id, exc_info=True)
 
     def record_metric(self, point: MetricPoint) -> None:
         self.metrics.append(point)
@@ -341,3 +377,95 @@ class ObservabilityHub:
             return None
         idx = min(len(vals) - 1, round((pct / 100.0) * (len(vals) - 1)))
         return vals[idx]
+
+
+def _parse_json_maybe(value: Any) -> Any:
+    if value is None or value == "":
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
+def _justification(value: Any) -> MappingJustificationEnum:
+    raw = value.value if hasattr(value, "value") else value
+    try:
+        return MappingJustificationEnum(str(raw))
+    except ValueError:
+        return MappingJustificationEnum.UnspecifiedMatching
+
+
+def _candidates_from_row(value: Any) -> list[Candidate]:
+    parsed = _parse_json_maybe(value) or []
+    if not isinstance(parsed, list):
+        return []
+    out: list[Candidate] = []
+    for item in parsed:
+        if not isinstance(item, dict):
+            continue
+        out.append(
+            Candidate(
+                candidate_id=str(item.get("id") or item.get("candidate_id") or ""),
+                score=float(item.get("score") or 0.0),
+                channel=str(item.get("channel") or ""),
+                label=item.get("label"),
+            )
+        )
+    return out
+
+
+def _tool_io_from_row(row: dict[str, Any]) -> ToolIoRecord:
+    cv = row.get("contract_valid")
+    contract_valid = cv not in (False, "false", "False", "0")
+    return ToolIoRecord(
+        trace_id=str(row.get("trace_id") or ""),
+        tool_name=str(row.get("tool_name") or ""),
+        ontology_release_id=str(row.get("ontology_release_id") or ""),
+        input_json=str(row.get("input_json") or "{}"),
+        output_json=str(row.get("output_json") or "{}"),
+        latency_ms=float(row.get("latency_ms") or 0.0),
+        status=str(row.get("status") or "OK"),
+        agent_id=row.get("agent_id"),
+        session_id=row.get("session_id"),
+        error_message=row.get("error_message"),
+        contract_valid=contract_valid,
+    )
+
+
+def _decision_from_row(row: dict[str, Any]) -> DecisionRecord:
+    before = _parse_json_maybe(row.get("state_before"))
+    subject, _ = subject_from_state(before, subject_text=row.get("subject_text"))
+    return DecisionRecord(
+        trace_id=str(row.get("trace_id") or ""),
+        step_seq=int(row.get("step_seq") or 0),
+        stage=str(row.get("stage") or ""),
+        justification=_justification(row.get("justification")),
+        chosen=row.get("chosen"),
+        span_id=row.get("span_id"),
+        candidates=_candidates_from_row(row.get("candidates_json") or row.get("candidates")),
+        state_before=before,
+        state_after=_parse_json_maybe(row.get("state_after")),
+        confidence=row.get("confidence"),
+        rule_id=row.get("rule_id"),
+        model_id=row.get("model_id"),
+        elapsed_ms=float(row.get("elapsed_ms") or 0.0),
+        subject_text=subject or None,
+    )
+
+
+def hub_from_obs_rows(
+    io_rows: list[dict[str, Any]] | None = None,
+    decision_rows: list[dict[str, Any]] | None = None,
+) -> ObservabilityHub:
+    """把湖行填进临时 hub，供 miner 过夜读湖。"""
+    hub = ObservabilityHub()
+    for row in io_rows or []:
+        hub.io_records.append(_tool_io_from_row(row))
+    for row in decision_rows or []:
+        hub.decisions.append(_decision_from_row(row))
+    return hub

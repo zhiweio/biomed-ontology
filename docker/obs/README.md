@@ -10,7 +10,7 @@
 # 若入仓报 SQLITE_BUSY / Table UUID mismatch：先 pause Connect，再 docker restart iceberg-rest。
 task obs:up          # Redpanda :19092 + Connect :8083（自建镜像含 Iceberg 1.9.2 插件）
 task obs:register    # PUT connector configs
-uv run hmd lake init # 确保 hmd.obs_tool_io / hmd.er_observations 存在
+uv run hmd lake init # 确保 obs_tool_io / obs_decision / obs_span / er_observations 存在
 ```
 
 Connect worker 镜像：`docker/obs/Dockerfile.connect`（`confluentinc/cp-kafka-connect` + [Confluent Hub Iceberg Sink 1.9.2](https://www.confluent.io/hub/iceberg/iceberg-kafka-connect)）。无现成 all-in-one 公共镜像。
@@ -22,6 +22,8 @@ App 环境变量（`Settings` / `.env`，完整列表见仓库根 `.env.example`
 | `HMD_OBS_EVENTS_ENABLED` | `true` | `false` 关闭 produce/WAL |
 | `HMD_KAFKA_BOOTSTRAP_SERVERS` | `127.0.0.1:19092` | 默认 Redpanda；设空=仅 WAL |
 | `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `hmd.obs.tool_io` | → Iceberg `hmd.obs_tool_io` |
+| `HMD_KAFKA_OBS_DECISION_TOPIC` | `hmd.obs.decision` | → Iceberg `hmd.obs_decision` |
+| `HMD_KAFKA_OBS_SPAN_TOPIC` | `hmd.obs.span` | → Iceberg `hmd.obs_span` |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | → Iceberg `hmd.er_observations` |
 | `HMD_OBS_WAL_DIR` | `data/obs_wal` | broker 不可达时的 Jsonl WAL |
 

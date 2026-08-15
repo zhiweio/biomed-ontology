@@ -111,6 +111,40 @@ def signals(kb):
     return mine_signals(MiningInput.from_runtime(kb, api)), api
 
 
+def test_from_lake_mines_without_runtime_hub(kb):
+    """过夜 miner 读湖行，不依赖长寿进程 hub。"""
+    mi = MiningInput.from_lake(
+        kb,
+        io_rows=[
+            {
+                "trace_id": "t-lake",
+                "tool_name": "normalize_entity",
+                "ontology_release_id": kb.release_id,
+                "input_json": "{}",
+                "output_json": '{"unmapped_spans":["e2e-from-lake"]}',
+                "latency_ms": 1.0,
+                "status": "OK",
+            }
+        ],
+        decision_rows=[
+            {
+                "trace_id": "t-lake",
+                "step_seq": 0,
+                "stage": "LLM",
+                "justification": "LLMDisambiguation",
+                "chosen": None,
+                "subject_text": "e2e-from-lake",
+                "state_before": "e2e-from-lake",
+            }
+        ],
+    )
+    sigs = mine_signals(mi)
+    assert any(
+        s.payload == "e2e-from-lake" and s.signal_type is SignalTypeEnum.unmapped_span for s in sigs
+    )
+    assert any(s.signal_type is SignalTypeEnum.ambiguous_unstable for s in sigs)
+
+
 def test_signals_come_from_real_usage(signals):
     sigs, _ = signals
     assert sigs

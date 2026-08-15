@@ -109,6 +109,30 @@ class MiningInput:
             clicks=list(getattr(api, "click_log", [])),
         )
 
+    @classmethod
+    def from_lake(
+        cls,
+        kb: KnowledgeBase,
+        *,
+        window_days: int = 7,
+        io_rows: list[dict[str, Any]] | None = None,
+        decision_rows: list[dict[str, Any]] | None = None,
+        cfg: Any | None = None,
+    ) -> MiningInput:
+        """扫 ``obs_tool_io`` / ``obs_decision`` 填临时 hub，不依赖长寿进程。"""
+        from biomed_ontology.lake.catalog import (
+            OBS_DECISION_TABLE,
+            OBS_TOOL_IO_TABLE,
+            scan_obs_table,
+        )
+        from biomed_ontology.observability import hub_from_obs_rows
+
+        if io_rows is None:
+            io_rows = scan_obs_table(OBS_TOOL_IO_TABLE, window_days=window_days, cfg=cfg)
+        if decision_rows is None:
+            decision_rows = scan_obs_table(OBS_DECISION_TABLE, window_days=window_days, cfg=cfg)
+        return cls(kb=kb, hub=hub_from_obs_rows(io_rows, decision_rows))
+
 
 SignalMiner = Any  # Callable[[MiningInput], list[Signal]]
 
@@ -171,20 +195,32 @@ def _mine_low_confidence(mi: MiningInput) -> list[Signal]:
     return out_signals
 
 
+def _is_llm_decision(dec: Any) -> bool:
+    stage = str(getattr(dec, "stage", "") or "")
+    if stage in {"LLM", "LLM_DISAMBIGUATION", "llm_disambiguation"}:
+        return True
+    if stage not in {"ABSTAIN", "abstain"}:
+        return False
+    just = getattr(dec, "justification", None)
+    value = just.value if hasattr(just, "value") else str(just or "")
+    return value == "LLMDisambiguation"
+
+
 def _mine_ambiguous_unstable(mi: MiningInput) -> list[Signal]:
     """同一别名在不同上下文落到不同概念 —— 且至少出现过一次弃权。
 
     只看"落到不同概念"会把正常的上下文消歧误判成不稳定；
     真正值得人工介入的是系统自己都拿不准（ABSTAIN）的那一批。
     """
+    from biomed_ontology.observability import decision_subject
+
     by_text: dict[str, set[str]] = defaultdict(set)
     abstained: dict[str, int] = Counter()
     traces: dict[str, list[str]] = defaultdict(list)
     for dec in mi.hub.decisions:
-        if dec.stage not in {"LLM_DISAMBIGUATION", "llm_disambiguation"}:
+        if not _is_llm_decision(dec):
             continue
-        before = dec.state_before
-        text = (before.get("text") if isinstance(before, dict) else None) or dec.chosen or ""
+        text = decision_subject(dec)
         if not text:
             continue
         traces[text].append(dec.trace_id)

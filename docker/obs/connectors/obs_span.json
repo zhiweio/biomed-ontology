@@ -1,0 +1,21 @@
+{
+  "connector.class": "org.apache.iceberg.connect.IcebergSinkConnector",
+  "tasks.max": "1",
+  "topics": "hmd.obs.span",
+  "iceberg.tables": "hmd.obs_span",
+  "iceberg.tables.evolve-schema-enabled": "true",
+  "iceberg.control.topic": "control-iceberg-span",
+  "iceberg.control.commit.interval-ms": "15000",
+  "iceberg.catalog.type": "rest",
+  "iceberg.catalog.uri": "http://iceberg-rest:8181",
+  "iceberg.catalog.warehouse": "s3://hmd-lake/",
+  "iceberg.catalog.io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
+  "iceberg.catalog.s3.endpoint": "http://minio:9000",
+  "iceberg.catalog.s3.path-style-access": "true",
+  "iceberg.catalog.client.region": "us-east-1",
+  "iceberg.catalog.s3.access-key-id": "minioadmin",
+  "iceberg.catalog.s3.secret-access-key": "minioadmin",
+  "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+  "value.converter.schemas.enable": "false"
+}

@@ -32,6 +32,8 @@ register() {
 wait_connect
 register "hmd-er-observations" "${ROOT}/connectors/er_observations.json"
 register "hmd-obs-tool-io" "${ROOT}/connectors/obs_tool_io.json"
+register "hmd-obs-decision" "${ROOT}/connectors/obs_decision.json"
+register "hmd-obs-span" "${ROOT}/connectors/obs_span.json"
 
 echo "status:"
 curl -fsS "${CONNECT_URL}/connectors?expand=status" | python3 -m json.tool 2>/dev/null \

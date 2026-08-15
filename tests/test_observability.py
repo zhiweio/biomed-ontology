@@ -14,6 +14,8 @@ from biomed_ontology.observability import (
     ObservabilityHub,
     ToolIoRecord,
     TraceContext,
+    decision_subject,
+    hub_from_obs_rows,
     new_trace_id,
 )
 from biomed_ontology.observability.contracts import (
@@ -75,6 +77,8 @@ def test_decision_captures_candidates_and_state():
     assert d.chosen == "HMD:ENT:DC:savolitinib"
     assert len(d.candidates) == 2
     assert d.state_before is not None and d.state_before["text"] == "沃利替尼"
+    assert d.subject_text == "沃利替尼"
+    assert decision_subject(d) == "沃利替尼"
     assert d.span_id is not None
 
 
@@ -125,6 +129,58 @@ def test_hub_commit_logs_emit_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     assert hub.emit_failures == 1
     _spans, _decs, rec = hub.by_trace(ctx.trace_id)
     assert rec is not None
+
+
+def test_hub_from_obs_rows_restores_decision_state() -> None:
+    hub = hub_from_obs_rows(
+        [
+            {
+                "trace_id": "t1",
+                "tool_name": "normalize_entity",
+                "ontology_release_id": "0.1.0",
+                "input_json": "{}",
+                "output_json": '{"unmapped_spans":["zzz"]}',
+                "latency_ms": 2.0,
+                "status": "OK",
+                "contract_valid": "true",
+            }
+        ],
+        [
+            {
+                "trace_id": "t1",
+                "step_seq": 0,
+                "stage": "LLM_DISAMBIGUATION",
+                "justification": "LLMDisambiguation",
+                "chosen": None,
+                "candidates_json": '[{"id":"A","score":0.2,"channel":"llm","label":"a"}]',
+                "state_before": '{"text":"foo"}',
+                "state_after": None,
+            }
+        ],
+    )
+    assert hub.io_records[0].output_json
+    dec = hub.decisions[0]
+    assert dec.stage == "LLM_DISAMBIGUATION"
+    assert dec.state_before == {"text": "foo"}
+    assert dec.subject_text == "foo"
+    assert decision_subject(dec) == "foo"
+    assert dec.candidates[0].candidate_id == "A"
+    assert dec.justification is MappingJustificationEnum.LLMDisambiguation
+
+
+def test_decision_subject_reads_plain_string_state() -> None:
+    from biomed_ontology.observability import DecisionRecord
+
+    dec = DecisionRecord(
+        trace_id="t",
+        step_seq=0,
+        stage="LLM",
+        justification=MappingJustificationEnum.LLMDisambiguation,
+        chosen="HMD:ENT:X",
+        state_before="surufatinib",
+        subject_text="surufatinib",
+    )
+    assert decision_subject(dec) == "surufatinib"
 
 
 def test_latency_percentile_is_monotonic():

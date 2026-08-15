@@ -14,6 +14,8 @@ def test_obs_bus_defaults():
     s = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "false"})
     assert s.kafka_connect_url == "http://127.0.0.1:8083"
     assert s.obs_wal_replay_max_lines == 10000
+    assert s.kafka_obs_decision_topic == "hmd.obs.decision"
+    assert s.kafka_obs_span_topic == "hmd.obs.span"
 
 
 def test_defaults_prefer_milvus_evidence_index():

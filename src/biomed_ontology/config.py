@@ -149,6 +149,8 @@ class Settings(BaseSettings):
     # 显式设空字符串 = 仅 Jsonl WAL
     kafka_bootstrap_servers: str = "127.0.0.1:19092"
     kafka_obs_tool_io_topic: str = "hmd.obs.tool_io"
+    kafka_obs_decision_topic: str = "hmd.obs.decision"
+    kafka_obs_span_topic: str = "hmd.obs.span"
     kafka_er_observations_topic: str = "hmd.er.observations"
     kafka_connect_url: str = "http://127.0.0.1:8083"
     # broker 不可达时的本地 WAL 目录（相对仓库 CWD）
