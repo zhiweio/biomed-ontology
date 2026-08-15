@@ -17,7 +17,7 @@ from biomed_ontology.llm.chat import ChatProvider, NullChatProvider, get_chat_pr
 from biomed_ontology.normalize import Normalizer
 from biomed_ontology.observability import TraceContext
 
-__all__ = ["LlmTextRelationExtractor"]
+__all__ = ["LlmTextRelationExtractor", "system_prompt_for"]
 
 _ALLOWED = frozenset(
     {
@@ -37,10 +37,41 @@ _SYSTEM = (
     '{"relations":[{"subject","object","predicate","negated","uncertain","confidence","quote"}]}. '
     "predicate MUST be one of: inhibits, treats, has_target, biomarker_for, "
     "has_adverse_event, in_clinical_trial_for, none. "
+    "Cover drugs, targets, diseases, genes, and adverse events when present. "
     "Use none when no clear relation. Set negated=true for negation. "
     "quote must be a verbatim substring of the sentence. "
     "Do not invent entity IDs; use the provided surfaces or IDs only."
 )
+
+_SYSTEM_BY_DOCTYPE: dict[str, str] = {
+    "JOURNAL_ARTICLE": (
+        _SYSTEM + " Domain=literature. Prefer mechanism (inhibits/has_target), "
+        "biomarker_for, and gene–target mentions. Do not mint new IDs."
+    ),
+    "CLINICAL_STUDY_REPORT": (
+        _SYSTEM + " Domain=CSR. Prefer in_clinical_trial_for, treats, has_adverse_event. "
+        "Keep endpoints and AE terms grounded to provided entities only."
+    ),
+    "INVESTIGATOR_BROCHURE": (
+        _SYSTEM + " Domain=IB. Prefer has_target, treats, has_adverse_event, "
+        "in_clinical_trial_for. Safety and mechanism only from the sentence."
+    ),
+    "LABEL": (
+        _SYSTEM + " Domain=label/SmPC. Prefer treats, has_adverse_event, has_target. "
+        "Do not infer off-label uses."
+    ),
+    "PATENT": (
+        _SYSTEM + " Domain=patent. Prefer has_target and inhibits. "
+        "Ignore claim-construction rhetoric; extract only explicit relations."
+    ),
+}
+
+
+def system_prompt_for(doc: Document | None) -> str:
+    raw = getattr(getattr(doc, "doc_type", None), "value", None) or str(
+        getattr(doc, "doc_type", "") or ""
+    )
+    return _SYSTEM_BY_DOCTYPE.get(raw, _SYSTEM)
 
 
 class LlmTextRelationExtractor:
@@ -111,7 +142,7 @@ class LlmTextRelationExtractor:
             )
             result = chat.complete(
                 [
-                    {"role": "system", "content": _SYSTEM},
+                    {"role": "system", "content": system_prompt_for(doc)},
                     {"role": "user", "content": user},
                 ],
                 response_format={"type": "json_object"},

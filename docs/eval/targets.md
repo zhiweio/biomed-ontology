@@ -62,7 +62,7 @@ targets 机制的核心设计：
 
 | ID | 指标 | 口径摘要 | 状态要点 |
 |---|---|---|---|
-| **T1** | nDCG@10 `absolute_gain` ≥ +0.05 | `ontology_hybrid − bm25_only`，**仅** `probes: [bridge_zh, alias]` | 主 KPI；旧全量 R@10 +10% 已退役 |
+| **T1** | nDCG@10 `absolute_gain` ≥ +0.05 | `ontology_hybrid − bm25_only`，**仅** `probes: [bridge_zh, alias]` | 主 KPI；全量 R@10 只作回归诊断 |
 | **T2** | nDCG@10 `not_worse` | 全量回归哨兵 | 已达成 |
 | **T3** | P@5 `not_worse` | 全量；Q7 hierarchy 过度扩展证据 | **已署名豁免**（见 YAML 全文） |
 | **T4** | MRR `not_worse` | 全量 | 已达成 |

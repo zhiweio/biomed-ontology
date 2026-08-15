@@ -313,7 +313,7 @@ hmd:Document a sh:NodeShape ;
             sh:nodeKind sh:IRI ;
             sh:order 2 ;
             sh:path hmd:external_id ],
-        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" ) ;
+        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" "INVESTIGATOR_BROCHURE" "CLINICAL_STUDY_REPORT" ) ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:order 4 ;

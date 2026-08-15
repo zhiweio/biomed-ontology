@@ -27,10 +27,9 @@ Enterprise Ontology 需要同时满足：
 | **Protégé 只审阅** | class / axiom 语义审查 | 写回 SSOT |
 | **rdflib + pyshacl** | RDF parse / transform / SHACL / ETL | 世界模型存储 |
 | **SHACL** | 「入图数据是否符合约束」 | 定义世界模型本身 |
-| **GraphDB** | Runtime 事实来源 | 本体编辑 |
-| **不引入 Apache Jena** | — | 第一版不部署 Jena 服务 |
+| **GraphDB** | Runtime 事实来源（唯一图引擎） | 本体编辑 |
 
-业界「Jena = RDF engineering」角色由 `ontology/rdf.py`、`foundation/sync.py`、`quality/` 承担。
+RDF 工程（parse / transform / SHACL / ETL）由 `ontology/rdf.py`、`foundation/sync.py`、`quality/` 承担。
 
 ---
 
@@ -149,7 +148,7 @@ uv run hmd foundation sync    # 策展 YAML → 三后端
 | LinkML 唯一 SSOT | Protégé / OWL 不得回写 schema |
 | validate 先于 sync | SHACL 失败不应入图 |
 | sync 不清 extracted 图 | 湖侧 claim 与 seed provenance 分离 |
-| 不部署 Jena | 避免第二套 RDF 服务运维面 |
+| 图引擎只认 GraphDB | 避免第二套 RDF 服务运维面 |
 | Golden Path 可机检 | `ontology:validate` 绑定 HMPL-504 链路 |
 
 | 失败模式 | 处理 |

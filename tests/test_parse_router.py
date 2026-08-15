@@ -77,6 +77,37 @@ def test_unsupported_format(tmp_path: Path):
         select_backend(path, config=load_settings({"HMD_LAYOUT_BACKEND": "auto"}))
 
 
+def test_html_routes_to_docling(tmp_path: Path):
+    path = tmp_path / "a.html"
+    path.write_text("<p>x</p>")
+    d = select_backend(path, config=load_settings({"HMD_LAYOUT_BACKEND": "auto"}))
+    assert d.backend == "docling"
+    assert d.reason == "html_main"
+
+
+def test_markdown_routes_to_text(tmp_path: Path):
+    path = tmp_path / "note.md"
+    path.write_text("# t\n\nbody")
+    d = select_backend(path, config=load_settings({"HMD_LAYOUT_BACKEND": "auto"}))
+    assert d.backend == "text"
+    assert d.reason == "plain_text"
+
+
+def test_txt_routes_to_text(tmp_path: Path):
+    path = tmp_path / "note.txt"
+    path.write_text("hello")
+    d = select_backend(path, config=load_settings({"HMD_LAYOUT_BACKEND": "auto"}))
+    assert d.backend == "text"
+
+
+def test_legacy_doc_routes_to_mineru(tmp_path: Path):
+    path = tmp_path / "old.doc"
+    path.write_bytes(b"x")
+    d = select_backend(path, config=load_settings({"HMD_LAYOUT_BACKEND": "auto"}))
+    assert d.backend == "mineru"
+    assert d.reason == "legacy_office"
+
+
 def test_fallback_chain_on_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     path = tmp_path / "a.pdf"
     path.write_bytes(b"%PDF-1.4\n")

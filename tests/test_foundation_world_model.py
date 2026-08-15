@@ -670,6 +670,9 @@ def test_get_entity_context_mocked_stores() -> None:
     assert ctx["backends"]["assets"] == "openmetadata"
     assert ctx["targets"][0]["id"] == "HMD:ENT:TGT:MET"
     assert ctx["internal_assets"][0]["id"] == "asliva.eln.exp_2025_012"
+    assert ctx["pack_version"] == "1.0"
+    assert "missing" in ctx
+    assert ctx["identity"]["enterprise_id"] == "HMD:ENT:DC:savolitinib"
 
 
 def test_evolve_mine_writes_candidates_only(tmp_path: Path) -> None:

@@ -1677,7 +1677,5 @@ def render_evolve_verify(
         )
     out.print()
     out.print(table)
-    out.print(
-        f"passed={payload.get('passed', 0)}  failed={payload.get('failed', 0)}"
-    )
+    out.print(f"passed={payload.get('passed', 0)}  failed={payload.get('failed', 0)}")
     out.print()

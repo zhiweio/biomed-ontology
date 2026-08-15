@@ -107,9 +107,7 @@ def approve_proposals(
     by: str = "curator",
 ) -> tuple[Path, list[dict[str, Any]]]:
     p, rows = load_proposals(path)
-    selected = _match(
-        rows, proposal_ids=proposal_ids, tier=tier, min_confidence=min_confidence
-    )
+    selected = _match(rows, proposal_ids=proposal_ids, tier=tier, min_confidence=min_confidence)
     if not selected and proposal_ids:
         raise ValueError(f"no matching pending proposals for {proposal_ids}")
     now = datetime.now(UTC).isoformat()
@@ -155,7 +153,7 @@ def _patch_dictionary(
     dictionary_path: Path | None = None,
 ) -> dict[str, Any]:
     path = dictionary_path or DICTIONARY_PATH
-    text = path.read_text(encoding="utf-8") if path.exists() else "version: \"0.2.0\"\nentries:\n"
+    text = path.read_text(encoding="utf-8") if path.exists() else 'version: "0.2.0"\nentries:\n'
     raw = yaml.safe_load(text) or {}
     entries = list(raw.get("entries") or [])
     key = normalize_alias_key(mention)
@@ -241,6 +239,7 @@ def _patch_dictionary(
         lines.insert(insert_at, f"      - {mention}\n")
     path.write_text("".join(lines), encoding="utf-8")
     return action
+
 
 def _patch_zingg(
     mention: str,

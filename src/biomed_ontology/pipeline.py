@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
+from biomed_ontology.contracts.graph import GraphClient
 from biomed_ontology.corpus import Chunk, Document, load_corpus
 from biomed_ontology.corpus.classify import (
     DocumentLabel,
@@ -21,8 +22,8 @@ from biomed_ontology.corpus.classify import (
 )
 from biomed_ontology.corpus.extract import ExtractedFact, TriModalPipeline
 from biomed_ontology.corpus.tree import build_document_tree, tree_to_chunks
-from biomed_ontology.foundation.graphdb import GraphDbClient
 from biomed_ontology.ingest import build_from_seed, load_ambiguity_registry
+from biomed_ontology.ingest.catalog import ONTOLOGY_CATALOG, catalog_files
 from biomed_ontology.ingest.seed import BuiltConcept, BuiltSynonym
 from biomed_ontology.normalize import Normalizer
 from biomed_ontology.observability import ObservabilityHub, TraceContext
@@ -45,7 +46,6 @@ __all__ = [
 
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
 REPO_ROOT = DATA_ROOT.parent
-ONTOLOGY_CATALOG = REPO_ROOT / "ontology" / "catalog"
 DEFAULT_RELEASE = "0.3.0-ent"
 
 _CATALOG_SOURCE = "SEED_INTERNAL"
@@ -107,17 +107,6 @@ class KnowledgeBase:
         }
 
 
-def catalog_files(catalog_dir: Path | None = None) -> list[Path]:
-    """仅 ``ontology/catalog/*.yaml``（ENT 目录 SSOT）。缺失或空目录硬失败。"""
-    catalog = catalog_dir or ONTOLOGY_CATALOG
-    if not catalog.is_dir():
-        raise FileNotFoundError(f"ontology catalog 不存在：{catalog}")
-    files = sorted(p for p in catalog.glob("*.yaml") if p.name != "ambiguity.yaml")
-    if not files:
-        raise FileNotFoundError(f"ontology catalog 无概念 YAML：{catalog}")
-    return files
-
-
 def build_normalizer_from_catalog(
     *,
     data_root: Path | None = None,
@@ -125,7 +114,7 @@ def build_normalizer_from_catalog(
     ledger_dir: Path | None = None,
     hub: ObservabilityHub | None = None,
     id_mode: str = "enterprise",
-    graph_client: GraphDbClient | None = None,
+    graph_client: GraphClient | None = None,
     with_graph: bool = False,
 ) -> KnowledgeBase:
     """仅从 ``ontology/catalog/`` 装配 Normalizer + 空 corpus（增量 retag 入口）。"""
@@ -170,7 +159,7 @@ def build_literature_base(
     with_corpus: bool = True,
     with_graph: bool = False,
     id_mode: str = "enterprise",
-    graph_client: GraphDbClient | None = None,
+    graph_client: GraphClient | None = None,
 ) -> KnowledgeBase:
     """装配文献面：ENT 目录 + corpus（身份不经 HMD:SUB 铸造）。
 

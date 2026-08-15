@@ -90,9 +90,7 @@ class LlmFilterStats:
 
 
 def is_hard_dismiss(reasons: list[str] | None) -> bool:
-    return any(
-        r in HARD_REASONS or r.startswith(HARD_REASON_PREFIXES) for r in reasons or []
-    )
+    return any(r in HARD_REASONS or r.startswith(HARD_REASON_PREFIXES) for r in reasons or [])
 
 
 def select_llm_pool(
@@ -178,11 +176,7 @@ def validate_item(
         return None
     if conf < 0 or conf > 1:
         return None
-    labels = [
-        str(x)
-        for x in (raw.get("labels") or [])
-        if str(x) in ALLOWED_LABELS
-    ]
+    labels = [str(x) for x in (raw.get("labels") or []) if str(x) in ALLOWED_LABELS]
     rationale = str(raw.get("rationale") or "")[:max_rationale_chars]
     if disposition == "dismiss" and (
         conf < min_confidence or not (set(labels) & allow_dismiss_labels)
@@ -294,12 +288,16 @@ def adjudicate_candidates(
     min_conf = float(cfg.get("min_confidence") or 0.6)
     max_rat = int(cfg.get("max_rationale_chars") or 200)
     allow_dismiss = {
-        str(x) for x in (cfg.get("allow_dismiss_labels") or [
-            "noise",
-            "test_traffic",
-            "fragment",
-            "non_entity",
-        ])
+        str(x)
+        for x in (
+            cfg.get("allow_dismiss_labels")
+            or [
+                "noise",
+                "test_traffic",
+                "fragment",
+                "non_entity",
+            ]
+        )
     }
     system = _load_system_prompt(prompt_path)
 
@@ -309,9 +307,13 @@ def adjudicate_candidates(
 
     pool = select_llm_pool(keep, borderline, route=route)
     if not pool:
-        return keep, hard_dismissed + [
-            d for d in dismissed if not is_hard_dismiss(list(d.get("filter_reasons") or []))
-        ], borderline, stats
+        return (
+            keep,
+            hard_dismissed
+            + [d for d in dismissed if not is_hard_dismiss(list(d.get("filter_reasons") or []))],
+            borderline,
+            stats,
+        )
 
     keep_by_key = {str(k.get("mention_key")): k for k in keep}
     border_by_key = {str(k.get("mention_key")): k for k in borderline}
@@ -414,7 +416,5 @@ def adjudicate_candidates(
         new_soft.append(row)
         stats.fallback += 1
 
-    new_keep.sort(
-        key=lambda r: (-float(r.get("rank_score") or 0), r.get("mention_key") or "")
-    )
+    new_keep.sort(key=lambda r: (-float(r.get("rank_score") or 0), r.get("mention_key") or ""))
     return new_keep, new_dismissed, new_soft, stats

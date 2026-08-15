@@ -1,14 +1,46 @@
-# 表格通道指标列 → (metric_name, unit)
+# 表格通道指标列 → 受控词表（口径变更走 ontology release）
 # 键为表头 casefold 后匹配
-version: "0.1.0"
+version: "0.2.0"
 metrics:
-  orr: { metric: ORR, unit: "%" }
-  objective response rate: { metric: ORR, unit: "%" }
-  客观缓解率: { metric: ORR, unit: "%" }
-  pfs: { metric: PFS, unit: months }
-  median pfs: { metric: PFS, unit: months }
-  无进展生存期: { metric: PFS, unit: months }
-  os: { metric: OS, unit: months }
-  median os: { metric: OS, unit: months }
-  dcr: { metric: DCR, unit: "%" }
-  ic50: { metric: IC50, unit: nM }
+  orr:
+    metric: ORR
+    unit: "%"
+    definition: Objective response rate
+    population: ITT unless a qualifier names another analysis set
+  objective response rate:
+    metric: ORR
+    unit: "%"
+    definition: Objective response rate
+  客观缓解率:
+    metric: ORR
+    unit: "%"
+    definition: Objective response rate
+  pfs:
+    metric: PFS
+    unit: months
+    definition: Progression-free survival
+  median pfs:
+    metric: PFS
+    unit: months
+    definition: Median progression-free survival
+  无进展生存期:
+    metric: PFS
+    unit: months
+    definition: Progression-free survival
+  os:
+    metric: OS
+    unit: months
+    definition: Overall survival
+  median os:
+    metric: OS
+    unit: months
+    definition: Median overall survival
+  dcr:
+    metric: DCR
+    unit: "%"
+    definition: Disease control rate
+  ic50:
+    metric: IC50
+    unit: nM
+    definition: Half-maximal inhibitory concentration
+

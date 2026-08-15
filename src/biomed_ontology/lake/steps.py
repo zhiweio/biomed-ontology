@@ -49,6 +49,8 @@ class IngestContext:
     errors: list[str] = field(default_factory=list)
     # annotate_bern2 装配后供 write_claims 复用，避免二次 load_world_model
     resolver: Any | None = None
+    parse_degraded: list[str] = field(default_factory=list)
+    qa: Any | None = None
 
 
 def require_bern2(bern2_url: str | None = None) -> str:
@@ -134,6 +136,7 @@ def parse_and_tree(
             layout=layout,
         )
         doc = parsed.document
+        ctx.parse_degraded = [str(x) for x in (getattr(parsed, "degraded", ()) or ())]
     else:
         raise RuntimeError("需要 --corpus-yaml、原始 file_path 或注入 Document")
     ctx.document = doc
@@ -213,8 +216,8 @@ def annotate_bern2(ctx: IngestContext, *, bern2_url: str | None = None) -> Inges
 
 
 def write_evidence(ctx: IngestContext) -> IngestContext:
+    from biomed_ontology.ingest.catalog import DEFAULT_RELEASE
     from biomed_ontology.lake.chunk_store import chunks_to_evidence_rows
-    from biomed_ontology.pipeline import DEFAULT_RELEASE
 
     docs = [ctx.document] if ctx.document is not None else []
     rows = chunks_to_evidence_rows(
@@ -238,30 +241,35 @@ def write_evidence(ctx: IngestContext) -> IngestContext:
 def write_claims(ctx: IngestContext, *, bern2_url: str | None = None) -> IngestContext:
     from biomed_ontology.corpus.extract import TriModalPipeline
     from biomed_ontology.foundation.world import load_world_model
+    from biomed_ontology.identity import IdentityService
     from biomed_ontology.normalize import Normalizer
     from biomed_ontology.observability import ObservabilityHub
-    from biomed_ontology.pipeline import build_literature_base
 
     assert ctx.document is not None
     hub = ObservabilityHub()
     ctx_trace = hub.start_trace(release_id="lake-ingest", agent_id="lake")
     try:
-        kb = build_literature_base(with_corpus=False, with_graph=False)
-        normalizer = kb.normalizer
+        identity = IdentityService.from_catalog(resolver=ctx.resolver)
     except Exception:
-        normalizer = Normalizer(concepts=[], synonyms=[], ambiguity_index={}, release_id="0.0.0")
+        identity = IdentityService(
+            normalizer=Normalizer(concepts=[], synonyms=[], ambiguity_index={}, release_id="0.0.0"),
+            resolver=ctx.resolver,
+        )
 
     # annotate_bern2 已写入 chunk.entity_ids；LLM/候选层直接复用，避免二次 NER
-    facts = TriModalPipeline().run([ctx.document], ctx.chunks, normalizer=normalizer, ctx=ctx_trace)
-    resolver = ctx.resolver
+    facts = TriModalPipeline().run(
+        [ctx.document], ctx.chunks, normalizer=identity.normalizer, ctx=ctx_trace
+    )
+    resolver = identity.resolver
     if resolver is None:
         world = load_world_model(bern2_url=bern2_url or settings.bern2_url or None)
         assert world.resolver is not None
         resolver = world.resolver
         ctx.resolver = resolver
+        identity.resolver = resolver
 
     def _resolve(text: str) -> Any:
-        return resolver.resolve_text(text)
+        return identity.resolve_text(text)
 
     claims, skipped = facts_to_claims(facts, document_id=ctx.doc_id, resolve_fn=_resolve)
     ctx.claims = claims

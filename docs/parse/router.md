@@ -26,7 +26,7 @@ Router 还承担**审计责任**：每次路由写入 `RouteTrace` 与 `TraceCon
 | 三后端矩阵 vs 万能引擎 | 快路径（`pymupdf4llm`）、结构化路径（`docling`）、 OCR/扫描路径（`mineru`）分工，而不是一个「什么都试」的黑盒 |
 | 能力降级 vs 静默补全 | 命中 `FALLBACK_TRIGGERS` 且块数过少时可选换后端；缺失能力记入 `degraded`，不伪造 bbox/OCR |
 | 法务闸门集中在 registry | `get_layout_backend` 是唯一 import 后端的入口，`assert_component_cleared` 在此统一执行 |
-| 废弃 `pymupdf` 别名 | 旧名直接报错并指向 `pymupdf4llm`，避免两套实现并存 |
+| 只认 `pymupdf4llm` | 配置写成 `pymupdf` 直接报错，避免两套实现并存 |
 
 **降级触发条件**（`FALLBACK_TRIGGERS` ∩ `degraded` 非空，且 `len(blocks) < 8`）：
 
@@ -55,7 +55,7 @@ Router 还承担**审计责任**：每次路由写入 `RouteTrace` 与 `TraceCon
 
 | 键 | 默认 | 含义 |
 |----|------|------|
-| `HMD_LAYOUT_BACKEND` | `auto` | `pymupdf4llm` / `docling` / `mineru` / `auto` |
+| `HMD_LAYOUT_BACKEND` | `auto` | `pymupdf4llm` / `docling` / `mineru` / `text` / `auto` |
 | `HMD_LAYOUT_FALLBACK` | `false` | 是否在降级链上重试 |
 | `HMD_PARSE_MAX_PAGES` | 400 | 各后端页数上限 |
 | `HMD_PARSE_MAX_BYTES` | 64MiB | 单文件字节上限 |
@@ -66,6 +66,9 @@ Router 还承担**审计责任**：每次路由写入 `RouteTrace` 与 `TraceCon
 ```text
 后缀判断
   .docx / .pptx / .xlsx  → docling（office_main；嵌入 picture/chart → 侧车 PNG → 视觉融合）
+  .doc / .ppt            → mineru（legacy_office）
+  .html / .htm           → docling（html_main）
+  .txt / .md             → text（plain_text；无版面引擎，degraded 声明 bbox/ocr/formula/table）
   .png / .jpg / .jpeg     → mineru（image_ocr）
   其他非 PDF              → UnsupportedFormat
 
@@ -88,6 +91,12 @@ Office：
   .docx/.pptx → docling → mineru
 
 图像：mineru ↔ docling（primary 优先）
+
+HTML：仅 docling
+
+TXT / MD：仅 text
+
+旧 Office（.doc / .ppt）：mineru ↔ docling
 ```
 
 `layout_fallback=false` 时，首次 `extract` 抛错即向上传播，不吞异常。

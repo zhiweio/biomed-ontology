@@ -98,7 +98,7 @@ PoC BIOS 子集（含无企业挂靠的 aspirin / BTK）：`data/foundation/bios
 | 不变量 | 违反后果 |
 |---|---|
 | 键必须可解析到 ≥1 chunk | dangling → eval 拒绝 |
-| 一节多 chunk 全映射 | 召回莫名偏低（历史 bug 类） |
+| 一节多 chunk 全映射 | 召回偏低：gold 键必须覆盖该节全部 chunk |
 | 探针标签与 query 一致 | 主 KPI 读错切片 |
 | 图像意图上本体臂可相同 | 全量显著性被压向零（报表已拆 TEXT 意图） |
 
@@ -106,7 +106,7 @@ PoC BIOS 子集（含无企业挂靠的 aspirin / BTK）：`data/foundation/bios
 
 - **手写 section 路径**：最常见 dangling 原因。
 - **只标一篇 PSC 专篇导致 hierarchy 双零**：改标后 P@5 回归（见 targets.yaml T3 豁免说明）。
-- **拿 README 旧数对比新 gold**：样本与标注版本必须对齐。
+- **拿过期 README 数字对比新 gold**：样本与标注版本必须对齐。
 
 ## 如何验证
 

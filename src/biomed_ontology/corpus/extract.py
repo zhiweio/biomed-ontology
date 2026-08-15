@@ -14,9 +14,7 @@ import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Protocol
-
-import yaml
+from typing import Any, Protocol
 
 from biomed_ontology._generated.hmd_concept import (
     LicenseTierEnum,
@@ -38,6 +36,7 @@ __all__ = [
     "TextRelationExtractor",
     "TriModalPipeline",
     "default_extractors",
+    "detect_conflicts",
     "load_table_metrics",
 ]
 
@@ -241,17 +240,13 @@ _TABLE_METRICS_PATH = (
 
 @lru_cache(maxsize=1)
 def load_table_metrics(path: str | None = None) -> dict[str, tuple[str, str]]:
-    """表头 casefold → (metric, unit)。"""
+    """表头 casefold → (metric, unit)。口径来自受控词表。"""
+    from biomed_ontology.ontology.metrics import load_metric_vocab
+
     p = Path(path) if path else _TABLE_METRICS_PATH
     if not p.is_file():
         return {}
-    raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-    metrics = raw.get("metrics") or {}
-    out: dict[str, tuple[str, str]] = {}
-    for key, spec in metrics.items():
-        if isinstance(spec, dict):
-            out[str(key).casefold()] = (str(spec.get("metric") or key), str(spec.get("unit") or ""))
-    return out
+    return load_metric_vocab(str(p)).as_header_map()
 
 
 class TableExtractor:
@@ -330,7 +325,7 @@ def _row_qualifiers(header: list[str], row: list[str]) -> list[str]:
 
 
 class ImageExtractor:
-    """图像通道。PoC 消费视觉模型已输出的结构化字段，只做本体对齐与溯源挂接。
+    """图像通道。优先消费 vision 结构化字段；缺省时回填 vision_summary 或调用 vision。
 
     KM 曲线读数的准确率由视觉模型决定，因此该通道 confidence 上限压得比表格低 ——
     抽样核验时也应按模态分层，否则文本通道的高准确率会掩盖图像通道的问题。
@@ -343,13 +338,16 @@ class ImageExtractor:
         self, chunk: Chunk, doc: Document, normalizer: Normalizer, ctx: TraceContext
     ) -> list[ExtractedFact]:
         image = next((im for im in doc.images if im.image_id == chunk.source_ref), None)
-        if image is None or not image.extracted_values:
+        if image is None:
+            return []
+        values = _ensure_image_values(image)
+        if not values:
             return []
         subject_id = _ground(normalizer, image.caption or "", ctx, doc.title)
         if not subject_id:
             return []
         out = []
-        for metric, value in image.extracted_values.items():
+        for metric, value in values.items():
             num = _NUM_RE.search(str(value))
             if not num:
                 continue
@@ -378,6 +376,67 @@ class ImageExtractor:
                 )
             )
         return out
+
+
+_VISION_KV = re.compile(
+    r"(?P<metric>[A-Za-z][A-Za-z0-9_-]{1,24})\s*[=:]\s*(?P<value>-?\d+(?:\.\d+)?\s*%?)",
+)
+
+
+def _ensure_image_values(image: Any) -> dict[str, str]:
+    """extracted_values → vision_summary 解析 → 可选 vision.describe。"""
+    values = dict(image.extracted_values or {})
+    if values:
+        return values
+    summary = str(getattr(image, "vision_summary", "") or "")
+    if summary:
+        for m in _VISION_KV.finditer(summary):
+            values[m.group("metric")] = m.group("value").strip()
+        if values:
+            image.extracted_values.update(values)
+            return values
+    path = getattr(image, "asset_path", None)
+    if not path:
+        return values
+    try:
+        from biomed_ontology.parse import get_vision_provider
+        from biomed_ontology.parse.vision import NullVisionProvider
+
+        vision = get_vision_provider()
+        if isinstance(vision, NullVisionProvider):
+            return values
+        data = Path(path).read_bytes()
+        result = vision.describe(data, prompt="Extract metric=value pairs.", media_type="image/png")
+        filled = dict(getattr(result, "extracted", None) or {})
+        if filled:
+            image.extracted_values.update(filled)
+            return filled
+    except Exception:
+        return values
+    return values
+
+
+def detect_conflicts(facts: list[ExtractedFact]) -> list[tuple[str, list[str]]]:
+    """同一 (subject, predicate, metric) 下互斥 object_value。不自动 validated。"""
+    groups: dict[tuple[str, str, str], set[str]] = {}
+    for f in facts:
+        metric = next((q.split("=", 1)[1] for q in f.qualifiers if q.startswith("metric=")), "")
+        key = (f.subject_id, f.predicate.value, metric)
+        if f.object_value:
+            groups.setdefault(key, set()).add(f.object_value)
+    out: list[tuple[str, list[str]]] = []
+    for key, vals in groups.items():
+        if len(vals) > 1:
+            label = "|".join(key)
+            out.append((label, sorted(vals)))
+            for f in facts:
+                metric = next(
+                    (q.split("=", 1)[1] for q in f.qualifiers if q.startswith("metric=")), ""
+                )
+                same = (f.subject_id, f.predicate.value, metric) == key
+                if same and "conflict=true" not in f.qualifiers:
+                    f.qualifiers.append("conflict=true")
+    return out
 
 
 def _unit_of(value: str) -> str | None:
@@ -484,6 +543,7 @@ class TriModalPipeline:
                 0.97, max(cur.confidence, f.confidence) + 0.05 * (distinct_docs - 1)
             )
         out = sorted(by_sig.values(), key=lambda f: (f.subject_id, f.predicate.value, f.fact_id))
+        detect_conflicts(out)
         for i, f in enumerate(out, start=1):
             f.fact_id = f"HMDF:{i:09d}"
         return out

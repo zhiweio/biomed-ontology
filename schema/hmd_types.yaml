@@ -253,6 +253,8 @@ enums:
       REGULATORY_DOCUMENT: { description: 监管文件（NMPA/FDA 审评） }
       LABEL: { description: 药品说明书 }
       INTERNAL_REPORT: { description: 企业内部报告，PoC 不涉及 }
+      INVESTIGATOR_BROCHURE: { description: 研究者手册（IB）；临床开发文档，不是 CTMS 替换 }
+      CLINICAL_STUDY_REPORT: { description: 临床试验报告（CSR）；文档 Pipeline 入口 }
 
   ModalityChannelEnum:
     description: >-

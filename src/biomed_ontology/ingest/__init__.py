@@ -1,5 +1,10 @@
 """数据源接入。open / licensed 双轨，全部经 registry 声明许可后才可写入术语层。"""
 
+from biomed_ontology.ingest.catalog import (
+    ONTOLOGY_CATALOG,
+    catalog_files,
+    load_catalog_normalizer,
+)
 from biomed_ontology.ingest.seed import (
     AmbiguityRegistry,
     SeedBuildResult,
@@ -10,10 +15,13 @@ from biomed_ontology.ingest.seed import (
 )
 
 __all__ = [
+    "ONTOLOGY_CATALOG",
     "AmbiguityRegistry",
     "SeedBuildResult",
     "build_from_seed",
+    "catalog_files",
     "enterprise_id_for",
     "load_ambiguity_registry",
+    "load_catalog_normalizer",
     "load_seed_file",
 ]

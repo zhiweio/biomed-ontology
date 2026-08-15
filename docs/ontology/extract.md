@@ -1,6 +1,6 @@
 # 事实抽取（TriModal）与接地
 
-源码：`src/biomed_ontology/corpus/extract.py`（`TriModalPipeline`、`_ground`）、`corpus/candidates.py`、`corpus/extractors/llm_text.py`、`lake/claim_bridge.py`、`lake/steps.py`（`write_claims`）。
+源码：`src/biomed_ontology/corpus/extract.py`（`TriModalPipeline`、`detect_conflicts`、`_ground`）、`corpus/candidates.py`、`corpus/extractors/llm_text.py`（分域 prompt）、`ontology/metrics.py`、`lake/claim_bridge.py`、`lake/steps.py`（`write_claims`）。
 
 文档入湖把正文切成 Evidence，再抽 **(S, P, O) 候选事实**；两端实体必须落到已有 `HMD:ENT:*`。文档**不发明** Ontology 概念节点。
 
@@ -71,10 +71,10 @@ flowchart LR
 
 | 模态 | 抽取器 | 算法要点 |
 |---|---|---|
-| TEXT | `LlmTextRelationExtractor`（`text-llm-v1`，主） | MentionPair 候选 + 受限 JSON LLM |
+| TEXT | `LlmTextRelationExtractor`（`text-llm-v1`，主） | MentionPair + 分域 prompt（文献 / CSR / IB / 说明书 / 专利）+ 基因与 AE |
 | TEXT | `RuleTextRelationExtractor`（旁路） | 中英正则；LLM 不可用或 `HMD_EXTRACT_RULE_BOOST` 时开启 |
-| TABLE | `TableExtractor` | 表头映射 `ontology/extract/table_metrics.yaml` → 数值事实 |
-| IMAGE | `ImageExtractor` | 弱通道 / 占位 |
+| TABLE | `TableExtractor` | 表头映射受控词表 `MetricVocab`（`ontology/metrics.py` ← `table_metrics.yaml`） |
+| IMAGE | `ImageExtractor` | vision 结构化字段；缺省时解析 vision_summary 或调用 vision |
 
 装配：`default_extractors()`；入口：`TriModalPipeline.run(docs, chunks, normalizer=…)`。
 
@@ -91,6 +91,8 @@ chunk
   → subject/object → 候选已有 entity_id，或 _ground
   → ExtractedFact（review_status=PENDING）
   → merge：同 signature 合并证据；跨文档小幅加置信（封顶 0.97）
+  → detect_conflicts：同 subject+metric 数值冲突写入 fact.qualifiers
+  → QualityGate.evaluate_claims：缺证据 / 冲突值拦发版，不拦入库
 ```
 
 类型兼容矩阵（剪枝非法谓词，`COMPATIBLE_PREDICATES`）：
@@ -186,7 +188,7 @@ task ontology:validate
   → 换 embedder / schema / release：hmd index --recreate（全量）
 ```
 
-硬边界：`evolve-mine` 只出候选，**无**无人审校的 `evolve-apply` 自动改本体。
+硬边界：`evolve-mine` 只出候选；`evolve-apply --write` 必须先人工 approve，且不直接改生产 GraphDB。
 
 catalog 贡献示例（示意）：
 

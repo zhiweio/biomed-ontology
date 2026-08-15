@@ -5,18 +5,18 @@
 
 ## 为什么存在
 
-仓库能力横跨语料解析、KB 构建、Milvus 索引、双面评测、Foundation 三后端、Semantic Access 服务与演进挖掘。CLI 是**运维与研发的主操作面**，把易混入口（如 `hmd serve` vs 已废弃的独立 foundation HTTP）收敛到可记忆的一组子命令。
+仓库能力横跨语料解析、KB 构建、Milvus 索引、双面评测、Foundation 三后端、Semantic Access 服务与演进挖掘。CLI 是**运维与研发的主操作面**，把 HTTP 入口收敛到唯一的 `hmd serve`，把评测拆成可记忆的一组子命令。
 
 ## 设计取舍
 
 | 取舍 | 选择 | 放弃 |
 |---|---|---|
-| 对外 HTTP | 仅 `hmd serve`（REST + MCP） | `foundation serve` |
+| 对外 HTTP | 仅 `hmd serve`（REST + MCP） | 第二套 Foundation HTTP 进程 |
 | 评测拆分 | `hmd eval` vs `hmd foundation golden-eval` | 单命令混跑 |
-| 演示 | `hmd demo` 对齐 golden 场景 | 手写 curl 脚本 |
+| 演示 | `hmd demo` 对齐 golden 场景（13 个） | 手写 curl 脚本 |
 | 契约导出 | `hmd contract` | 手工复制 OpenAPI |
 | 任务编排 | `task` 封装 docker / gen / check | 散落 shell 脚本 |
-| 长任务 UX | Rich header/metrics + `tqdm.rich` 进度（`index` / `bios-load` / lake ingest 等） | 裸 `print` 刷进度 |
+| 长任务 UX | Rich header/metrics + `tqdm.rich` 进度 | 裸 `print` 刷进度 |
 
 长任务在 TTY 下显示进度条；管道 / CI / `TQDM_DISABLE=1` / `HMD_NO_PROGRESS=1` 时静默。`lake ingest-*` 的人读摘要走 stderr，stdout 仍为 JSON。
 
@@ -41,21 +41,22 @@
 
 | 命令 | 作用 | 相关手册 |
 |---|---|---|
-| `hmd foundation resolve [--json]` | 文本 → `HMD:ENT:*` + 反查别名（Rich）；无 ENT 时可附 BIOS surfaces | [foundation](../architecture/foundation.md) |
-| `hmd foundation lookup-bios [--query|--external-id|--bios-curie] [--json]` | 公开 BIOS 概念卡（不 mint ENT） | 同上 |
+| `hmd foundation resolve [--json]` | 文本 → `HMD:ENT:*` + 反查别名（Rich）；无 ENT 时可附 BIOS surfaces | [IdentityService](../ontology/identity.md) |
+| `hmd foundation lookup-bios [--query|--external-id|--bios-curie] [--json]` | 公开 BIOS 概念卡（不 mint ENT） | [Foundation](../architecture/foundation.md) |
 | `hmd foundation golden [--compact] [--json]` | 金路径验收（Rich） | 同上 |
 | `hmd foundation golden-eval [--compact] [--json]` | 多路径金标评测（Rich） | [golden-path](../ontology/golden-path.md) |
 | `hmd foundation sync` | YAML → GraphDB Named Graphs + Milvus Evidence | 同上 |
 | `hmd foundation bios-load` | BIOS 全量（默认）/ `--subset` | [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
-| `hmd foundation evolve-mine [--json] [--compact] [--include-lake/--no-include-lake]` | unmapped/低置信 → KGCL 候选（**不改**本体）；**默认合并湖**（`HMD_EVOLVE_INCLUDE_LAKE=true`） | [evolution](../evolution/loop.md) |
-| `hmd foundation evolve-enrich [--from …] [--llm/--no-llm]` | filter + **默认 LLM 裁决** + 提案；无 API key 自动跳过 LLM | 同上 |
+| `hmd foundation evolve-mine [--json] [--compact] [--include-lake/--no-include-lake]` | unmapped/低置信 → KGCL 候选（**不改**本体） | [evolution](../evolution/loop.md) |
+| `hmd foundation evolve-enrich [--from …] [--llm/--no-llm]` | filter + 默认 LLM 裁决 + 提案；无 API key 自动跳过 LLM | 同上 |
 | `hmd foundation evolve-review` / `approve` / `reject` / `apply` / `verify` | 提案队列 → 人工闸门 → Git 策展面 dry-run/write → 再 resolve | 同上 |
-| `hmd foundation zingg-run [--mode …]` | 物化/导出模糊 matches；观测源/阈值默认见 `HMD_ZINGG_*` | [evolution](../evolution/loop.md)、[docker/zingg](../../docker/zingg/README.md) |
-| `hmd lake init` | 创建 Iceberg 表（含 `obs_tool_io` / `er_observations`） | [pillars](../observability/pillars.md)、[docker/obs](../../docker/obs/README.md) |
+| `hmd foundation zingg-run [--mode …]` | 物化/导出模糊 matches | [evolution](../evolution/loop.md) |
+| `hmd lake init` | 创建 Iceberg 表 | [pillars](../observability/pillars.md) |
+| `hmd lake ingest-doc` | 单文档入湖（经 IngestQA） | [IngestQA](../parse/ingest-qa.md) |
 | `task obs:up` / `task zingg:run` | Redpanda；本地 stub Zingg | 同上 |
 | `task ontology:validate` | Ontology-as-Code + Golden Path 校验 | [toolchain](../ontology/toolchain.md) |
 
-HTTP / MCP **不走** `foundation serve`：统一用 `hmd serve --mcp`（含 `get_entity_context` 等 9 个 Foundation ops）。
+HTTP / MCP **只走** `hmd serve --mcp`（含 `get_entity_context` 等 10 个 Foundation ops）。
 
 ### `hmd eval` 常用旗标
 
@@ -78,6 +79,7 @@ HTTP / MCP **不走** `foundation serve`：统一用 `hmd serve --mcp`（含 `ge
 | 目标 | 作用 |
 |---|---|
 | `task check` | lint（ruff + ty）+ 全量测试 |
+| `task check:nlu` | 瘦安装剖面（`hmd-nlu`） |
 | `task lint` | ruff check + ruff format --check + ty check |
 | `task fmt` | ruff format + autofix |
 | `task gen` | LinkML → `_generated/`（含 `hmd_enterprise`） |

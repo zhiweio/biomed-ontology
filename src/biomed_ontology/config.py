@@ -32,7 +32,7 @@ __all__ = [
     "settings",
 ]
 
-LayoutBackendName = Literal["auto", "pymupdf4llm", "docling", "mineru"]
+LayoutBackendName = Literal["auto", "pymupdf4llm", "docling", "mineru", "text"]
 MinerUTransportName = Literal["local", "http"]
 MinerUParseMethodName = Literal["auto", "txt", "ocr"]
 MinerUEffortName = Literal["medium", "high"]
@@ -161,6 +161,7 @@ class Settings(BaseSettings):
     evolve_include_lake: bool = True
 
     bios_license_ack: str = ""
+    umls_license_ack: str = ""
     bios_init: Literal["full", "subset"] = "full"
     bios_max_concepts: int = Field(default=0, ge=0)  # 0 = 全量不截断
     bios_batch_size: int = Field(default=500, ge=50)

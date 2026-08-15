@@ -50,7 +50,7 @@
 | 关系遍历 | Foundation | `get_entity`、`get_relationships`、`find_related_entities` | GraphDB；claim 带 provenance |
 | Evidence Index | Foundation | `search_evidence`、`get_entity_evidence` | Milvus |
 | 企业资产 | Foundation | `search_assets`、`get_entity_assets` | OpenMetadata Glossary |
-| 聚合上下文 | Foundation | `get_entity_context` | GraphDB + Milvus + OM 聚合；**禁止 YAML fallback**（需 ENT） |
+| 聚合上下文 | Foundation | `get_entity_context` | Context Pack（`pack_version` + `missing[]`）；**禁止 YAML fallback** |
 
 策展 YAML / 映射文件分别被哪些 op 消费（`entities`→`get_entity`、`dictionary`→`resolve_entity`、`catalog`→`normalize_entity`…）：见 [策展资产与运行时机制 · 资产→工具矩阵](../ontology/curation-and-runtime.md#35-rest-mcp)。
 
@@ -80,15 +80,14 @@ resolve_entity / lookup_bios_concept → search_documents([expansion_terms]) →
 # 有 HMD:ENT:* 时再:
 get_entity_context / expand_concept / get_relationships
 ```
-- `golden_path`：诊断用金路径（含文献腿），由 CLI `hmd foundation golden` / REST `GET /v1/golden_path` 暴露，不在 MCP 17 工具内。
+- `golden_path`：诊断用金路径（含文献腿），由 CLI `hmd foundation golden` / REST `GET /v1/golden_path` 暴露，不在 MCP 18 工具内。
 
-### 已退役（不再对外暴露）
+### 不对外暴露
 
-| 工具 | 原因 |
+| 能力 | 原因 |
 |---|---|
-| `sparql_query` | 禁止裸 SPARQL 作主契约；图访问经具名 ops |
-| `get_landscape` | 分析编排型，不属于 Semantic Access |
-| `find_analogous` | 同上 |
+| 裸 SPARQL | 图访问只经具名 ops；任意 SPARQL = 许可旁路 |
+| 分析编排（landscape / analogous） | 不属于 Semantic Access；仓内不做 Agent 编排 |
 
 ## 不变量与失败模式
 

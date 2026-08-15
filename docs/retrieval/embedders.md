@@ -133,7 +133,7 @@ flowchart TB
 | upsert 全失败 | schema 含 embedder 未产出的列 |
 | 检索列不存在 | 用 4 列建表却搜第 5 列 — `vector_fields()` 应用库内列 |
 | 语义随机 | fake 嵌入器用于报数 |
-| SapBERT 中文差 | 预期；看 P13 分语种表 |
+| SapBERT 中文差 | 预期；见 README 分语种表 |
 | 视觉列无差异 | image 未传入 — 查 asset_path / resolve_asset |
 | Gitee 半拉子目录 | clone 中断 — `test_interrupted_gitee_clone_leaves_no_half_model` |
 | git-lfs 未装 | 权重是指针文件 |

@@ -66,6 +66,9 @@ hmd:KnowledgeClaim a owl:Class ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:object_id ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:source_count ],
+        [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:predicate ],
         [ a owl:Restriction ;
@@ -92,6 +95,15 @@ hmd:KnowledgeClaim a owl:Class ;
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:created_at ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom hmd:ClaimStatusEnum ;
+            owl:onProperty hmd:claim_status ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:source_count ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:claim_status ],
         [ a owl:Restriction ;
             owl:minCardinality 1 ;
             owl:onProperty hmd:predicate ],
@@ -108,15 +120,21 @@ hmd:KnowledgeClaim a owl:Class ;
             owl:allValuesFrom hmd:ClaimPredicateEnum ;
             owl:onProperty hmd:predicate ],
         [ a owl:Restriction ;
+            owl:minCardinality 1 ;
+            owl:onProperty hmd:claim_status ],
+        [ a owl:Restriction ;
             owl:allValuesFrom hmd:ProvenanceSourceTypeEnum ;
             owl:onProperty hmd:source_type ],
         [ a owl:Restriction ;
             owl:allValuesFrom xsd:anyURI ;
             owl:onProperty hmd:subject_id ],
         [ a owl:Restriction ;
+            owl:allValuesFrom xsd:integer ;
+            owl:onProperty hmd:source_count ],
+        [ a owl:Restriction ;
             owl:minCardinality 1 ;
             owl:onProperty hmd:subject_id ] ;
-    skos:definition "带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。" ;
+    skos:definition "带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。 claim_status=extracted 仅为候选；validated 才可物化为 World Model knowledge 边。" ;
     skos:inScheme hmd:enterprise .
 
 hmd:enterprise.owl.ttl a owl:Ontology ;
@@ -495,10 +513,40 @@ biolink:treats a owl:Class ;
     rdfs:subClassOf hmd:ClaimPredicateEnum ;
     skos:definition "属于某项目" .
 
+<https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasActivityIn> a owl:Class ;
+    rdfs:label "hasActivityIn" ;
+    rdfs:subClassOf hmd:ClaimPredicateEnum ;
+    skos:definition "在模型或疾病场景中显示活性" .
+
 <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasAssay> a owl:Class ;
     rdfs:label "hasAssay" ;
     rdfs:subClassOf hmd:ClaimPredicateEnum ;
     skos:definition "候选药关联某 LIMS / Assay" .
+
+<https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasBiomarker> a owl:Class ;
+    rdfs:label "hasBiomarker" ;
+    rdfs:subClassOf hmd:ClaimPredicateEnum ;
+    skos:definition "关联生物标志物" .
+
+<https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasMechanism> a owl:Class ;
+    rdfs:label "hasMechanism" ;
+    rdfs:subClassOf hmd:ClaimPredicateEnum ;
+    skos:definition "作用机制" .
+
+<https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasResult> a owl:Class ;
+    rdfs:label "hasResult" ;
+    rdfs:subClassOf hmd:ClaimPredicateEnum ;
+    skos:definition "实验结果类断言" .
+
+<https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#inPathway> a owl:Class ;
+    rdfs:label "inPathway" ;
+    rdfs:subClassOf hmd:ClaimPredicateEnum ;
+    skos:definition "参与通路" .
+
+<https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#inhibits> a owl:Class ;
+    rdfs:label "inhibits" ;
+    rdfs:subClassOf hmd:ClaimPredicateEnum ;
+    skos:definition "抑制（如磷酸化/通路活性）" .
 
 <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#investigates> a owl:Class ;
     rdfs:label "investigates" ;
@@ -535,6 +583,21 @@ biolink:treats a owl:Class ;
     rdfs:subClassOf hmd:ClaimPredicateEnum ;
     skos:definition "治疗关系（声明级，须带出处）" .
 
+<https://w3id.org/asliva/biomed-ontology/ClaimStatusEnum#extracted> a owl:Class ;
+    rdfs:label "extracted" ;
+    rdfs:subClassOf hmd:ClaimStatusEnum ;
+    skos:definition "自动抽取候选；仅写 provenance，不物化 knowledge 边" .
+
+<https://w3id.org/asliva/biomed-ontology/ClaimStatusEnum#validated> a owl:Class ;
+    rdfs:label "validated" ;
+    rdfs:subClassOf hmd:ClaimStatusEnum ;
+    skos:definition "经策展/规则验证；可物化为 World Model knowledge 边" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT> a owl:Class ;
+    rdfs:label "CLINICAL_STUDY_REPORT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "临床试验报告（CSR）；文档 Pipeline 入口" .
+
 <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> a owl:Class ;
     rdfs:label "CLINICAL_TRIAL_RECORD" ;
     rdfs:subClassOf hmd:DocTypeEnum ;
@@ -549,6 +612,11 @@ biolink:treats a owl:Class ;
     rdfs:label "INTERNAL_REPORT" ;
     rdfs:subClassOf hmd:DocTypeEnum ;
     skos:definition "企业内部报告，PoC 不涉及" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE> a owl:Class ;
+    rdfs:label "INVESTIGATOR_BROCHURE" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "研究者手册（IB）；临床开发文档，不是 CTMS 替换" .
 
 <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> a owl:Class ;
     rdfs:label "JOURNAL_ARTICLE" ;
@@ -1058,6 +1126,12 @@ hmd:claim_id a owl:DatatypeProperty ;
     rdfs:range xsd:string ;
     skos:inScheme hmd:enterprise .
 
+hmd:claim_status a owl:ObjectProperty ;
+    rdfs:label "claim_status" ;
+    rdfs:range hmd:ClaimStatusEnum ;
+    skos:definition "extracted=自动抽取候选；validated=企业认可的 World Model 事实" ;
+    skos:inScheme hmd:enterprise .
+
 hmd:confidence a owl:DatatypeProperty ;
     rdfs:label "confidence" ;
     rdfs:range xsd:float ;
@@ -1144,6 +1218,12 @@ hmd:replaced_by a owl:DatatypeProperty ;
     rdfs:range xsd:anyURI ;
     skos:inScheme hmd:enterprise .
 
+hmd:source_count a owl:DatatypeProperty ;
+    rdfs:label "source_count" ;
+    rdfs:range xsd:integer ;
+    skos:definition "独立来源/证据条数（多源佐证）" ;
+    skos:inScheme hmd:enterprise .
+
 hmd:source_id a owl:DatatypeProperty ;
     rdfs:label "source_id" ;
     rdfs:range xsd:string ;
@@ -1174,6 +1254,13 @@ hmd:therapeutic_area a owl:DatatypeProperty ;
     rdfs:label "therapeutic_area" ;
     rdfs:range xsd:string ;
     skos:inScheme hmd:enterprise .
+
+hmd:ClaimStatusEnum a owl:Class ;
+    rdfs:label "ClaimStatusEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/ClaimStatusEnum#extracted> <https://w3id.org/asliva/biomed-ontology/ClaimStatusEnum#validated> ) ;
+    skos:inScheme hmd:enterprise ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/ClaimStatusEnum#extracted>,
+        <https://w3id.org/asliva/biomed-ontology/ClaimStatusEnum#validated> .
 
 hmd:LicenseTierEnum a owl:Class ;
     rdfs:label "LicenseTierEnum" ;
@@ -1365,20 +1452,6 @@ hmd:SignalStatusEnum a owl:Class ;
         <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#RELEASED>,
         <https://w3id.org/asliva/biomed-ontology/SignalStatusEnum#TRIAGED> .
 
-hmd:DocTypeEnum a owl:Class ;
-    rdfs:label "DocTypeEnum" ;
-    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> ) ;
-    skos:definition "文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。" ;
-    skos:inScheme hmd:types ;
-    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> .
-
 hmd:EntityTypeEnum a owl:Class ;
     rdfs:label "EntityTypeEnum" ;
     owl:unionOf ( biolink:GeneOrGeneProduct biolink:ChemicalEntity biolink:Disease biolink:MolecularActivity <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#MODALITY> biolink:ClinicalTrial biolink:BiologicalEntity <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#ADVERSE_EVENT> ) ;
@@ -1433,6 +1506,22 @@ hmd:ProvenanceSourceTypeEnum a owl:Class ;
         <https://w3id.org/asliva/biomed-ontology/ProvenanceSourceTypeEnum#manual>,
         <https://w3id.org/asliva/biomed-ontology/ProvenanceSourceTypeEnum#patent> .
 
+hmd:DocTypeEnum a owl:Class ;
+    rdfs:label "DocTypeEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT> ) ;
+    skos:definition "文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> .
+
 hmd:AliasTypeEnum a owl:Class ;
     rdfs:label "AliasTypeEnum" ;
     owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INN> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#BRAND> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#INTERNAL_CODE> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#PARTNER_CODE> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#RESEARCH_CODE> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#ABBREV> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#SYMBOL> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#CHEMICAL_NAME> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#TRANSLATION> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#MISSPELLING> <https://w3id.org/asliva/biomed-ontology/AliasTypeEnum#LEGACY> ) ;
@@ -1483,11 +1572,17 @@ hmd:PredicateEnum a owl:Class ;
 
 hmd:ClaimPredicateEnum a owl:Class ;
     rdfs:label "ClaimPredicateEnum" ;
-    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#targets> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#investigates> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#treats> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#belongsTo> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#testedIn> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasAssay> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#associatedWith> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#mentions> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#supportedBy> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#sameAsExternal> ) ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#targets> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#investigates> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#treats> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#belongsTo> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#testedIn> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasAssay> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#associatedWith> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#mentions> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#supportedBy> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#sameAsExternal> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#inhibits> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasActivityIn> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasMechanism> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#inPathway> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasBiomarker> <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasResult> ) ;
     skos:inScheme hmd:enterprise ;
     linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#associatedWith>,
         <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#belongsTo>,
+        <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasActivityIn>,
         <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasAssay>,
+        <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasBiomarker>,
+        <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasMechanism>,
+        <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#hasResult>,
+        <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#inPathway>,
+        <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#inhibits>,
         <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#investigates>,
         <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#mentions>,
         <https://w3id.org/asliva/biomed-ontology/ClaimPredicateEnum#sameAsExternal>,
@@ -1507,7 +1602,7 @@ xsd:anyURI a rdfs:Datatype ;
             owl:withRestrictions ( [ xsd:pattern "^[A-Za-z][A-Za-z0-9._-]*:\\S+$" ] ) ],
         [ a rdfs:Datatype ;
             owl:onDatatype xsd:string ;
-            owl:withRestrictions ( [ xsd:pattern "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$" ] ) ],
+            owl:withRestrictions ( [ xsd:pattern "^HMD:((TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}|ENT:(DC|PRG|TGT|IND|EXP|PUB|ASY|CMP|BMK):[A-Za-z0-9_-]+)$" ] ) ],
         [ a rdfs:Datatype ;
             owl:onDatatype xsd:string ;
             owl:withRestrictions ( [ xsd:pattern "^HMD:ENT:(DC|PRG|TGT|IND|EXP|PUB|ASY|CMP|BMK):[A-Za-z0-9_-]+$" ] ) ] .

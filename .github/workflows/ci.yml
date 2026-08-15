@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --extra dev
+      - run: uv run ruff check src tests
+      - run: uv run pytest -q -m "not integration"
+          --ignore=tests/test_eval_demo.py
+          --ignore=tests/test_readme.py
+          tests/test_identity.py
+          tests/test_catalog_normalizer.py
+          tests/test_parse_router.py
+          tests/test_parse_text.py
+          tests/test_biomedical_sources.py
+          tests/test_doc_types.py
+          tests/test_workspace_packages.py
+          tests/test_ingest_qa.py
+          tests/test_domain_re.py
+          tests/test_claim_fusion.py
+          tests/test_context_pack.py
+          tests/test_metric_vocab.py
+          tests/test_evidence_embedded.py
+
+  nlu-slim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --package hmd-nlu
+      - name: slim package has no torch/docling
+        run: |
+          uv run --package hmd-nlu python - <<'PY'
+          import importlib.util
+          import hmd_nlu
+          assert hmd_nlu.OWNS
+          for banned in ("torch", "docling", "mineru"):
+              assert importlib.util.find_spec(banned) is None, banned
+          print("slim-ok", hmd_nlu.OWNS)
+          PY

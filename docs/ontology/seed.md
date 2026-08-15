@@ -1,6 +1,6 @@
 # 企业身份与目录 SSOT
 
-源码：`src/biomed_ontology/ingest/seed.py`、`src/biomed_ontology/pipeline.py`（`catalog_files`、`build_literature_base`）。
+源码：`src/biomed_ontology/ingest/seed.py`、`src/biomed_ontology/ingest/catalog.py`（`catalog_files`、`load_catalog_normalizer`）、`src/biomed_ontology/pipeline.py`（`build_literature_base`）。
 
 本文档描述**文献/检索面的企业身份与术语目录**——不是 Foundation 金路径实体的唯一文档（后者见 `ontology/entities/`），但与之共享 `HMD:ENT:*` 命名规则。
 
@@ -23,12 +23,12 @@
 
 | 决策 | 理由 | 放弃 |
 |---|---|---|
-| **唯一 SSOT `ontology/catalog/`** | 与金路径实体同仓策展、可 PR 审查 | 双源 / `data/seed` |
-| **确定性 `HMD:ENT:*`**（`enterprise_id_for`） | 同 seed_key 永远同一 ID，无需 IdLedger | `HMD:SUB` 递增铸造 |
+| **唯一 SSOT `ontology/catalog/`** | 与金路径实体同仓策展、可 PR 审查 | 运行时再造第二份目录 |
+| **确定性 `HMD:ENT:*`**（`enterprise_id_for`） | 同 seed_key 永远同一 ID，无需 IdLedger | 运行时递增铸造主键 |
 | **`id_mode=enterprise` 默认** | 生产/文献/评测一致 | 每环境重新 mint |
 | **外部 ID 仅 xref_hints** | 与 registry 快照版本对齐 | 手抄 DrugBank ID |
 
-> `data/seed/` 已删除。`id_mode=ledger` 单测请用临时 fixture 目录；新概念写入 `ontology/catalog/` 或金路径 `ontology/entities/`。
+> `id_mode=ledger` 仅单测夹具。新概念写入 `ontology/catalog/` 或金路径 `ontology/entities/`。
 
 ---
 
@@ -95,7 +95,7 @@ segment 映射示例：
 ```
 
 - `_ENT_OVERRIDES`：少数金路径实体显式覆盖
-- `id_mode=ledger`：旧 `IdLedger.mint` → `HMD:SUB|TGT|DIS`（**仅单测**）
+- `id_mode=ledger`：仅单测夹具（临时 fixture 目录）
 
 ### 3.4 类型化链接谓词
 
@@ -133,14 +133,14 @@ indications → (treats, treated_by)
 
 构建**不因警告失败**（PoC 先跑通），但 `hmd kb` 与发版前应清零未解析链接。
 
-### 3.6 与 Foundation ER 的关系
+### 3.6 与 IdentityService 的关系
 
 | 面 | 身份来源 | 解析入口 |
 |---|---|---|
-| 文献/检索 | `BuiltConcept.concept_id`（`HMD:ENT:*`） | `normalize.Normalizer` |
-| Foundation WM | `ontology/entities/` 策展实体 | `foundation.resolve.EntityResolver` |
+| 文献/检索 | `BuiltConcept.concept_id`（`HMD:ENT:*`） | `IdentityService.normalize` |
+| Foundation WM | `ontology/entities/` 策展实体 | `IdentityService.resolve_text` |
 
-两者 ID 规则一致（`HMD:ENT:*`），但 ER 链含 BERN2 / Zingg / 词典，目录构建走 `build_from_seed`。金路径实体以 `ontology/entities/enterprise_entities.yaml` 为准，经 `hmd foundation sync` 入 GraphDB。
+两者 ID 规则一致（`HMD:ENT:*`），由 **同一 `IdentityService`** 持有目录 Normalizer 与 EntityResolver。ER 链含 BERN2 / Zingg / 词典；目录构建走 `build_from_seed`。金路径实体以 `ontology/entities/enterprise_entities.yaml` 为准，经 `hmd foundation sync` 入 GraphDB。详见 [IdentityService](identity.md)。
 
 ### 3.7 调用链（文献装配）
 
@@ -166,7 +166,7 @@ ensure_catalog_graphs(graph, concepts, synonyms)
 
 | 不变量 | 说明 |
 |---|---|
-| 运行时权威是 catalog + ENT | 不得再铸造 `HMD:SUB` 作主键 |
+| 运行时权威是 catalog + ENT | 生产主键只有 `HMD:ENT:*` |
 | 外部 ID 不当主键 | xref 从快照解析，手抄不可版本化 |
 | BROAD 不进精确归一 | scope 必填（D2） |
 | 链接只写正向 | 反向查询侧合成 |

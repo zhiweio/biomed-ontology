@@ -271,15 +271,19 @@ def materialize(
     obs_rows = list(dedup.values())
 
     # Zingg 两侧 pipe 必须同 schema：id / label / kind
-    ent_zingg = [{"id": r["id"], "label": r["label"], "kind": r.get("kind") or ""} for r in enterprise_rows]
-    obs_zingg = [{"id": r["id"], "label": r["label"], "kind": r.get("kind") or ""} for r in obs_rows]
+    ent_zingg = [
+        {"id": r["id"], "label": r["label"], "kind": r.get("kind") or ""} for r in enterprise_rows
+    ]
+    obs_zingg = [
+        {"id": r["id"], "label": r["label"], "kind": r.get("kind") or ""} for r in obs_rows
+    ]
     ent_path = out / "enterprise.parquet"
     obs_path = out / "observation.parquet"
     _write_parquet(ent_path, ent_zingg)
     _write_parquet(obs_path, obs_zingg)
     try:
         write_training_samples(enterprise_rows=enterprise_rows, observation_rows=obs_rows)
-    except Exception as exc:  # noqa: BLE001 — materialize 仍可用，train 再报错
+    except Exception as exc:
         warnings.append(f"training.csv: {exc}")
     return ZinggMaterializeResult(
         enterprise_path=ent_path,
@@ -291,7 +295,9 @@ def materialize(
     )
 
 
-def _synthetic_observations_for_volume(enterprise_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _synthetic_observations_for_volume(
+    enterprise_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """为 Zingg blocking 学习补充 observation 样本量（受控变体，非生产噪声）。"""
     rows: list[dict[str, Any]] = []
     for er in enterprise_rows:

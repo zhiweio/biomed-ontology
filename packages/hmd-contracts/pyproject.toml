@@ -1,0 +1,17 @@
+[project]
+name = "hmd-contracts"
+version = "0.1.0"
+description = "LinkML 生成物 / licensing / alias / GraphClient DTO"
+requires-python = ">=3.11,<3.13"
+license = { text = "Proprietary" }
+dependencies = [
+    "pydantic>=2.9.0",
+    "linkml-runtime>=1.8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hmd_contracts"]

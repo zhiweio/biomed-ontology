@@ -354,6 +354,14 @@ class DocTypeEnum(str, Enum):
     """
     企业内部报告，PoC 不涉及
     """
+    INVESTIGATOR_BROCHURE = "INVESTIGATOR_BROCHURE"
+    """
+    研究者手册（IB）；临床开发文档，不是 CTMS 替换
+    """
+    CLINICAL_STUDY_REPORT = "CLINICAL_STUDY_REPORT"
+    """
+    临床试验报告（CSR）；文档 Pipeline 入口
+    """
 
 
 class ModalityChannelEnum(str, Enum):

@@ -1,22 +1,34 @@
 # biomed-ontology
 
-面向阿斯利华创新药研发的 **Enterprise Biomedical World Model / AI Data Foundation** PoC。
+**AI-Ready Scientific Data Foundation for Drug Discovery**  
+面向创新药研发的 **AI 原生科研数据基座**。
 
-用企业内部实体 ID（`HMD:ENT:*`）锚定候选药、靶点、项目等对象，挂上关系、可引用证据与
-ELN/LIMS 资产，经 MCP/REST（`hmd serve`）暴露给仓外 Agent。公共生物医学知识（BIOS 等）是
-挂靠层，不是企业主键。
+用企业内部实体 ID（`HMD:ENT:*`）锚定候选药、靶点、项目，挂上关系、可引用证据与
+ELN/LIMS 资产，经 `hmd serve`（MCP/REST）把 **Data-for-Agent 契约**交给仓外 Agent。
+公共生物医学知识（BIOS / 未来 UMLS 子集）只进 `graph/biomedical` 与 xref，
+**不是企业主键**。图谱是六层栈里的一层，不是产品本身。
 
 > BIOS provides the biomedical world. Enterprise Ontology provides the company's world.
 
-**不做 Agent 编排**（无意图解析 / 多步 runtime）。本仓库交付的是 Agent 依赖的语义世界与访问面。
+**不做** Agent 编排、靶点发现应用、GNN / 组学平台，也不把裸 SPARQL / 湖 SQL 当 Agent 主契约。
+交付的是可治理的语义世界与访问面。
 
-### Ontology Semantic Layer（能力面，不是产品口号）
+### 仓外 Agent 能依赖什么
+
+| 数据形态 | 回答什么 | 入口 |
+|---|---|---|
+| Document | 原文在哪 | MinIO；经 `restore_context` |
+| Evidence | 证据在哪、原文怎么说 | `search_documents` / `search_evidence` |
+| Claim | 抽了什么 / 企业认可什么 | `extracted` 默认不进推理；`validated` 经 `get_relationships` |
+| Context Pack | 推理该吃什么（含 `missing[]`） | `get_entity_context`（`pack_version=1.0`） |
+
+### Ontology Semantic Layer
 
 世界模型可查询，靠的是完整语义层，而不是「多几个同义词」：
 
 | 能力群 | 做什么 |
 |---|---|
-| 术语与身份 | 别名 / 消歧 / 归一化 → 稳定 code 或 Enterprise ID |
+| 术语与身份 | `IdentityService`：别名 / 消歧 / 归一化 → 稳定 `HMD:ENT:*` |
 | 层级与扩展 | 上下位、`expand_concept` 加权扩展 |
 | 类型化关系 | 药↔靶点↔适应症；GraphDB 关系遍历 |
 | 外部挂靠 | SSSOM / BIOS / ChEBI… 挂靠企业主键 |
@@ -24,12 +36,12 @@ ELN/LIMS 资产，经 MCP/REST（`hmd serve`）暴露给仓外 Agent。公共生
 | 证据检索 | 混合检索 + Evidence Index（含多模态） |
 | Citationware | 证据树与 `restore_context`（许可同源） |
 | 企业资产 | OpenMetadata：ELN/LIMS「数据在哪」 |
-| 聚合上下文 | `get_entity_context`（禁止 YAML fallback） |
+| 聚合上下文 | Context Pack：`pack_version` + `identity` + `missing[]` |
 | 许可与合规 | Tier / entitlement；组件闸门；BIOS ACK |
 | 可观测与演进 | Trace 四支柱；feedback → KGCL 候选（不自动改本体） |
 | Schema 治理 | LinkML SSOT → OWL / SHACL / Pydantic |
 
-**完整手册**（机制、事故教训、设计不变量）：见 [`docs/`](docs/index.md)，本地预览：
+**完整手册**（机制、不变量、读数方法）：见 [`docs/`](docs/index.md)。
 
 ```bash
 uv sync --extra docs --extra dev
@@ -37,8 +49,8 @@ task docs:serve    # http://127.0.0.1:8000
 task docs          # mkdocs build --strict
 ```
 
-命令与**实测数字只维护在本 README**（有测试守着）；手册讲为什么，不抄表。
-构建入口是 **[Taskfile](Taskfile.yml)**（`task …`），不再维护 Makefile。
+命令与**实测数字只维护在本 README**（有 `tests/test_readme.py` 守着）；手册讲为什么，不抄表。
+构建入口是 **[Taskfile](Taskfile.yml)**（`task …`）。
 
 ### 运行时组件
 
@@ -48,10 +60,12 @@ task docs          # mkdocs build --strict
 |---|---|
 | Enterprise Ontology（LinkML `hmd_enterprise`） | 世界模型主键 `HMD:ENT:*` |
 | BIOS_v3 | 公共 biomedical KG（外部概念，非企业主键） |
+| IdentityService | 目录 Normalizer + EntityResolver 的单一句柄 |
 | BERN2 + 企业词典 + Zingg | NLU 候选 → Entity Resolution |
 | GraphDB Named Graphs | biomedical / ontology / knowledge / provenance / inference |
 | Milvus | **Evidence Index**（证据在哪；`entity_ids` = Enterprise ID） |
 | OpenMetadata | **Data Context**（资产在哪） |
+| IngestQA | 入湖质检：空树 / 降级 / 许可 / `doc_id` 幂等 |
 
 ```bash
 # 联调栈：Milvus + GraphDB + OpenMetadata（BERN2 profile：macOS→MPS 原生 / Linux→CUDA Docker）
@@ -73,7 +87,7 @@ task foundation:golden-eval                          # GraphDB(+BIOS)/Milvus/OM�
 ```
 
 金路径：`DrugCandidate → Target → Disease → Evidence → ELN/LIMS Asset`。策展 YAML 在 `ontology/{entities,dictionary,claims}/`；
-入库后查询只走 GraphDB / Milvus / OpenMetadata，**禁止 fallback 到 YAML**。配置见 `Settings`（`.env` 前缀 `HMD_`；观测/Zingg 见 `HMD_OBS_*` / `HMD_ZINGG_*` / `HMD_EVOLVE_*`）。**不引入 Jena**。
+入库后查询只走 GraphDB / Milvus / OpenMetadata。配置见 `Settings`（`.env` 前缀 `HMD_`；观测/Zingg 见 `HMD_OBS_*` / `HMD_ZINGG_*` / `HMD_EVOLVE_*`）。图引擎只认 **GraphDB**。
 
 ---
 
@@ -81,9 +95,10 @@ task foundation:golden-eval                          # GraphDB(+BIOS)/Milvus/OM�
 
 ```bash
 uv sync --extra docs --extra dev
+# 瘦安装（身份 / 抽取，不拉 torch / docling）：uv sync --package hmd-nlu
 
 uv run hmd kb        # 构建知识库并打印统计
-uv run hmd demo              # 跑 12 个演示场景（K/W/B 双面；Rich + 可证伪断言）
+uv run hmd demo              # 跑 13 个演示场景（K/W/B 双面；Rich + 可证伪断言）
 uv run hmd demo --compact    # 仅 Trace 摘要（对齐 hmd foundation golden）
 uv run hmd eval --entitlements MOCK_LICENSED   # 双面：Identity + Literature + Bridge
 uv run hmd eval --suite identity,bridge --no-retrieval  # 跳过 ARMS 长跑
@@ -92,8 +107,24 @@ uv run hmd serve     # 起 REST + MCP 服务（:8000）
 task check           # ruff + ty + 全量测试
 ```
 
-`task check` = ruff + ty + 全量测试，共 **591 条测试**（默认跳过需 GraphDB 的 integration）。
+`task check` = ruff + ty + 全量测试，共 **705 条测试**（默认跳过需 GraphDB 的 integration）。
 Milvus 集成测试需 Docker；**失败不回落**到本地后端。
+
+### 工作区包
+
+根仓是 `uv workspace` 伞项目。代码仍在 `src/biomed_ontology/`；`packages/hmd-*` 声明依赖剖面，便于瘦安装。
+
+| 包 | 职责 |
+|---|---|
+| `hmd-contracts` | LinkML 生成物 / licensing / alias / GraphClient DTO |
+| `hmd-core` | Settings / observability / registry |
+| `hmd-ingest` | parse / tree / lake steps / IngestQA |
+| `hmd-nlu` | normalize / BERN2 / extract / IdentityService |
+| `hmd-kg` | GraphDB / sync / world / biomedical sources |
+| `hmd-index` | embed / search / rerank / Evidence Index |
+| `hmd-access` | tools / service / CLI / eval |
+
+默认 `uv sync` 拉全栈。身份与抽取剖面：`uv sync --package hmd-nlu`。
 
 ### Milvus（Evidence Index，必选）
 
@@ -114,17 +145,26 @@ Milvus 臂不可达列在「未运行的臂」下，**绝不回落到本地后�
 
 ## 分层架构
 
-检索底座按 L0–L8 组织；Foundation 叠加 **Enterprise World Model**（GraphDB + Evidence Index + Data Context）。详见 [Foundation](docs/architecture/foundation.md) · [分层手册](docs/architecture/layers.md)。
+对外是业界六层栈；仓内实现编号为 L0–L8。详见 [Foundation](docs/architecture/foundation.md) · [分层手册](docs/architecture/layers.md)。
+
+| 业界层 | 本仓库落点 |
+|---|---|
+| Lakehouse | Iceberg + MinIO + Trino |
+| Metadata Catalog | OpenMetadata |
+| Scientific KG | GraphDB named graphs |
+| Vector / Evidence | Milvus |
+| Ontology Services | LinkML + IdentityService + BiomedicalSource |
+| AI Context APIs | `hmd serve` MCP/REST |
 
 ```
 L0 Source        构建期联网拉快照 → 版本化存储（version / license / retrieved_on）
 L1 术语层        Concept / Synonym / Xref(SSSOM) / Hierarchy → RDF named graph per source
 L2 语义层        LinkML（Biolink 子集 + hmd_enterprise）→ OWL + SHACL + JSON Schema + Pydantic
-L3 归一化 / ER   文本 → CURIE；Foundation：BERN2 候选 → Enterprise ID
-L4 语料治理      文档标引分类 + 三模态抽取（文本/表格/图像）→ 结构化事实 + provenance
+L3 身份          IdentityService：文本 → HMD:ENT:*（目录级联 + ER）
+L4 语料治理      Router → 语义树 → IngestQA → 三模态抽取 → 结构化事实 + provenance
 L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列检索 + Evidence Index
 L6 Semantic Access  唯一 REST/MCP：KB 工具 + Foundation Semantic Ops（`hmd serve`）
-L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)；dual obs
+L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
 L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release；evolve-mine 不自动改本体
 ```
 
@@ -192,7 +232,7 @@ gold：**14 篇 / 37 query**（en 26 / zh 11；文本 25 / 图像 12），每条
 | 纯向量（无本体） | 0.233 | 0.238 | 0.305 | 0.470 | 0.181 | 1.000 |
 | 本体增强混合 | **0.274** | 0.254 | **0.340** | **0.532** | **0.201** | 1.000 |
 
-全量 Recall 相对提升 **+1.9%**（ENT 接地后），**不再作为产品门槛** —— 只作回归诊断。
+全量 Recall 相对提升 **+1.9%**（ENT 接地后）。这条数字只作回归诊断，**不是产品门槛**。
 
 **分语种**
 
@@ -351,9 +391,9 @@ uv run hmd serve --mcp --port 8000
 | 入口 | 地址 |
 |---|---|
 | REST（KB） | `POST /v1/{tool_name}` × 8 |
-| REST（Foundation） | `POST /v1/{op}`（resolve/get_entity/…） |
+| REST（Foundation） | `POST /v1/{op}`（resolve / get_entity / get_entity_context / …） |
 | OpenAPI | `GET /openapi.json`（KB 契约 + Foundation 路径） |
-| MCP | `POST /mcp/`（Streamable HTTP） |
+| MCP | `POST /mcp/`（Streamable HTTP；8 KB + 10 Foundation = 18） |
 | 健康 | `GET /health` |
 
 **MCP 不接受客户端自称的凭据。** REST 侧 `X-HMD-Entitlements` 默认忽略，仅当 `HMD_TRUST_ENTITLEMENT_HEADER=true` 时解析。
@@ -382,11 +422,14 @@ uv run hmd serve --mcp --port 8000
 | 路径 | 职责 |
 |---|---|
 | `schema/` | LinkML SSOT（含 `hmd_enterprise`） |
-| `ontology/` | 策展 SSOT + Ontology-as-Code（entities / dictionary / claims / mappings） |
+| `ontology/` | 策展 SSOT（entities / dictionary / claims / mappings / catalog） |
+| `packages/` | uv workspace 依赖剖面（`hmd-contracts` … `hmd-access`） |
 | `Taskfile.yml` | 统一任务入口 |
-| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic Ops |
+| `src/biomed_ontology/identity.py` | IdentityService：目录归一化 + ER |
+| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic Ops / Context Pack |
+| `src/biomed_ontology/lake/` | 入湖 steps / IngestQA / Evidence Index / Iceberg |
 | `src/biomed_ontology/registry/` | 数据源注册表 + 许可分层 |
-| `src/biomed_ontology/ontology/` | 等价团构建、ID 分配、发版、RDF |
+| `src/biomed_ontology/ontology/` | 等价团、ID 分配、发版、RDF |
 | `src/biomed_ontology/parse/` | PDF → 语义树（衍生自 knowhere，见 NOTICE） |
 | `src/biomed_ontology/embed/` | BGE-M3 + SapBERT + Qwen3-VL + BiomedCLIP，五向量列 |
 | `src/biomed_ontology/rerank/` | bge-reranker-v2-m3 交叉编码器精排 |
@@ -410,16 +453,18 @@ uv run hmd serve --mcp --port 8000
 完整清单见 [设计不变量](docs/invariants.md)。
 
 - **Enterprise Ontology ID（`HMD:ENT:*`）是世界模型与身份主键**；BIOS/ChEBI/HGNC 只做 External Concept xref
-- **身份走 ER**（BERN2 → dictionary → Zingg → xref → ENT）；术语目录仅 `ontology/catalog/`（`HMD:SUB` 铸造已退役）
-- **文献语料**在 `data/corpus/` → Milvus；外部 ID 一律作为 xref 挂靠（供应商中立）
-- **Milvus = Evidence Index（必选）**；失败不回落；`fake` 需 `--allow-fake`
+- **身份走 `IdentityService`**（目录级联 + BERN2 → dictionary → Zingg → xref → ENT）；术语目录只在 `ontology/catalog/`
+- **文档不 mint `HMD:ENT:*`**；挂不上的词进 unmapped / 演进信号
+- **文献语料**在 `data/corpus/` → Milvus；外部 ID 一律作为 xref 挂靠
+- **Milvus = Evidence Index（必选）**；失败不回落；`fake` 需 `--allow-fake`；占位向量必须标 `embedded=false`
 - **Knowledge = Claim + Provenance + Evidence**（Knowledge ≠ Truth）
+- **IngestQA 与 QualityGate 分开**：前者拦入库，后者拦发版
 - **Semantic Ops 隐藏后端**；不对 Agent 默认暴露裸 SPARQL / 原始向量 API
 - **别名必须带 scope**，检索扩展行为由 scope 驱动
 - **许可分层贯穿全链路**，tier ≥ 2 内容不得进入导出物与训练语料；BIOS 全量需 `HMD_BIOS_LICENSE_ACK`
 - **构建期可联网，运行期完全内网离线**
 - **RRF 用名次而非分数融合**；**融合不下推到 Milvus**（保住 `explain`）
-- **Ontology Evolution 一期只落候选**（`evolve-mine`），不自动改本体
+- **Ontology Evolution 只落候选**（`evolve-mine`），不自动改本体
 
 ---
 

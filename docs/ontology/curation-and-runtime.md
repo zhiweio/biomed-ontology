@@ -12,7 +12,7 @@
 
 1. **改错面**：在 Protégé / 手写 TTL / `data/` 投影里改「真相」，Git 策展与运行时各说各话。
 2. **改完不生效**：YAML 已改，但未 `validate` / `sync` / `bios-load`，Semantic Ops 仍读旧图。
-3. **搞混两套身份**：文献面 `Normalizer`（catalog）与 Foundation 面 `EntityResolver`（dictionary + BERN2）混用，或把 BIOS URI 当企业主键。
+3. **搞混两套身份**：绕过 `IdentityService`，把 catalog Normalizer 与 Foundation Resolver 当成互不相干的两套词典，或把 BIOS URI 当企业主键。
 
 没有一张「策展资产 → 写入路径 → 工具消费 → 外部系统」的地图，演进闭环（信号 → 策展 → 发版）也无法落地。
 
@@ -56,7 +56,7 @@
 |---|---|---|---|
 | **Schema SSOT** | `schema/` | LinkML 唯一模式/契约 | 放在 `ontology/` 下；手写第二份枚举 |
 | **Ontology 策展** | `ontology/` | `HMD:ENT:*`、Dictionary、claims、mappings、catalog | 把 `data/corpus` / `data/gold` 整仓搬进来 |
-| **运维内容** | `data/` | 语料、gold、releases、evidence/assets 投影、缓存 | 当作企业身份 SSOT（`data/seed` 已删除） |
+| **运维内容** | `data/` | 语料、gold、releases、evidence/assets 投影、缓存 | 当作企业身份 SSOT |
 | **运行时** | GraphDB + Milvus + OM | sync 后查询只认后端 | YAML fallback |
 
 路径约定（`src/biomed_ontology/foundation/paths.py`）：
@@ -132,7 +132,7 @@ ontology/
 | `targets.yaml` | 靶点种子 | 按 gene symbol 对 HGNC |
 | `ambiguity.yaml` | 歧义别名 + senses + context_cues | 命中必须消歧；禁止静默单选（D3） |
 
-文献面 `Normalizer` / KB tools（`normalize_entity`、`expand_concept`…）主要吃 catalog。身份权威仍是 `HMD:ENT:*`；金路径实体以 `entities/` 为准。详见 [企业身份与目录 SSOT](seed.md)。
+文献面经 `IdentityService.normalize` 吃 catalog。身份权威仍是 `HMD:ENT:*`；金路径实体以 `entities/` 为准。详见 [IdentityService](identity.md)、[企业身份与目录 SSOT](seed.md)。
 
 #### `extract/` — 抽取配置
 
@@ -197,7 +197,7 @@ hmd_types
 | `hmd_obs.yaml` | ToolIoRecord / DecisionRecord / Candidate / Signal / QualityMetric | Trace / IO / State / Metrics 四支柱 |
 | `hmd_tools.yaml` | Normalize/Expand/Search/Restore/Facts/Feedback Request·Response | **KB 面** 8 工具的 I/O 契约；生成 JSON Schema 与 MCP 描述 |
 
-说明：`hmd_tools.yaml` 覆盖的是文献/术语面 **8** 个 `TOOL_SPECS`。Foundation 面另有 **10** 个 `SEMANTIC_OPS`（见 §3.5，含 `lookup_bios_concept`）。双面合计 **18** 个具名操作；不要把「8」读成「全仓只有 8 个工具」。
+说明：`hmd_tools.yaml` 覆盖的是文献/术语面 **8** 个 `TOOL_SPECS`。Foundation 面另有 **10** 个 `SEMANTIC_OPS`（见 §3.5，含 `lookup_bios_concept` 与 `get_entity_context`）。双面合计 **18** 个具名操作；不要把「8」读成「全仓只有 8 个工具」。
 
 #### `schema/shapes/`
 
@@ -365,7 +365,7 @@ REST：`POST /v1/{tool}` · MCP：同名 tool
 | `restore_context` | 文档语义树（Citationware） | 解析产物 |
 | `submit_feedback` | 回写 → evolution miner（挂 `source_trace_id`） | ObservabilityHub |
 
-文献面归一化级联见 [归一化级联](normalize.md)——与 Foundation `EntityResolver` **不是同一条链**。
+文献面归一化级联见 [归一化级联](normalize.md)。与 Foundation ER 共用 `IdentityService`，算法不同、身份空间相同。
 
 #### B. Foundation Semantic Ops（10）— 企业世界模型面
 
@@ -382,7 +382,7 @@ REST：`POST /v1/{op}` · MCP：同名
 | `get_entity_evidence` | Milvus | 按 `enterprise_id` 过滤证据 |
 | `search_assets` | OpenMetadata Glossary | assets 投影 |
 | `get_entity_assets` | OpenMetadata | 按实体关联资产 |
-| `get_entity_context` | GraphDB + Milvus + OM + biomedical | 上表聚合；**禁止 YAML fallback** |
+| `get_entity_context` | GraphDB + Milvus + OM + biomedical | Context Pack；**禁止 YAML fallback** |
 
 诊断：`GET /v1/golden_path?candidate=HMPL-504` 与 CLI `hmd foundation golden`——**仅 REST/CLI**，不进 MCP 主工具表。
 
@@ -505,10 +505,10 @@ backends 字段会标明：`graphdb` / `milvus` / `openmetadata` / `graphdb_biom
 
 | 面 | 入口 | 主要数据 | 对外工具 |
 |---|---|---|---|
-| 文献 / 术语 | `Normalizer` | `ontology/catalog` + ambiguity | `normalize_entity`、`expand_concept`… |
-| 企业 / Foundation | `EntityResolver` | `entities` + `dictionary` + BERN2 + zingg | `resolve_entity`、`get_entity_context`… |
+| 文献 / 术语 | `IdentityService.normalize` | `ontology/catalog` + ambiguity | `normalize_entity`、`expand_concept`… |
+| 企业 / Foundation | `IdentityService.resolve_text` | `entities` + `dictionary` + BERN2 + zingg | `resolve_entity`、`get_entity_context`… |
 
-两者最终都锚到企业身份空间，但级联阶段、埋点字段与后端要求不同——不要用 catalog 假装 Foundation sync 已完成。
+两者由同一 `IdentityService` 持有，最终都锚到企业身份空间。不要用 catalog 假装 Foundation sync 已完成。详见 [IdentityService](identity.md)。
 
 ---
 
@@ -564,7 +564,7 @@ task zingg:run                               # stub-link + export matches
 
 # 服务面
 uv run hmd serve --mcp
-# GET /v1/ops 应列出 kb_tools(8) + foundation_ops(9)
+# GET /v1/ops 应列出 kb_tools(8) + foundation_ops(10)
 
 # 测试子集
 uv run pytest tests/test_ontology_validate.py tests/test_clique.py \
@@ -591,7 +591,7 @@ task docs
 | 命名图与许可 | [GraphStore 与许可命名图](rdf.md) |
 | 金路径验收 | [Golden Path](golden-path.md) |
 | LinkML 生成管线 | [LinkML 与生成物](../architecture/linkml.md) |
-| 17 工具能力群 | [Semantic Access](../tools/tools.md) |
+| 18 个具名操作 | [Semantic Access](../tools/tools.md) |
 | REST/MCP 路由 | [serve](../tools/serve.md) |
 | 信号与 KGCL | [演进闭环](../evolution/loop.md) |
 | 物理目录树 | [目录地图](../appendix/tree.md) |

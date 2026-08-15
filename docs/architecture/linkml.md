@@ -14,7 +14,7 @@ LinkML 是本仓库跨 Python 运行时、OpenAPI/MCP 契约、RDF/SHACL 互操�
 - JSON Schema（OpenAPI / MCP 工具契约）
 - OWL / SHACL（对外语义互操作与入图闸门）
 
-三套手写必然漂移。LinkML 一份 schema，生成多份制品；**业务约束写在 schema 描述里**（含设计决策 D1–D12 的叙述），比另起 ADR 目录更不容易和实现脱节。
+三套手写必然漂移。LinkML 一份 schema，生成多份制品；**业务约束写在 schema 描述里**（含设计决策 D1–D24 的叙述），比另起 ADR 目录更不容易和实现脱节。
 
 Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与 schema 对齐；契约变更仍以 YAML → `task gen` 为准。
 
@@ -25,7 +25,7 @@ Foundation 热路径另有 dataclass 适配层（`foundation/models.py`），与
 | 决策 | 理由 |
 |---|---|
 | LinkML 唯一 SSOT | Protégé / OWL 只读生成物，不回写 |
-| 不引入 Apache Jena | rdflib + pyshacl + GraphDB 承担 RDF 工程 |
+| 图引擎只认 GraphDB | rdflib + pyshacl 承担 RDF 工程与 SHACL |
 | 枚举只存在于 `_generated/` | 禁止业务模块再定义 `LicenseTierEnum` 等同名枚举 |
 | `TOOL_SPECS` 与 `hmd_tools.yaml` 一一对应 | MCP 契约与实现同步 |
 | 设计决策写进 Field description | 读生成代码即见 D10 等约束 |
@@ -134,4 +134,4 @@ uv run pytest tests/test_tools.py tests/test_service.py -q
 uv run pytest tests/test_generated_schema.py -q 2>/dev/null || true
 ```
 
-完整决策索引：[附录 · D1–D12](../appendix/decisions.md)。
+完整决策索引：[附录 · D1–D24](../appendix/decisions.md)。

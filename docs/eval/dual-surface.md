@@ -46,11 +46,12 @@
 
 ```text
 open_dual_surface()
+  ├── IdentityService.from_world()
   ├── ToolApi + HybridSearcher(Milvus)
   └── FoundationApi(world)
          ↓
 run_dual_eval(surface, entitlements=…)
-  ├── eval_identity(foundation)
+  ├── eval_identity(foundation)          # resolve → HMD:ENT:*
   ├── eval_normalization + eval_retrieval(tools, milvus_backend=…)
   └── eval_bridge(tools, foundation, entitlements)
 ```

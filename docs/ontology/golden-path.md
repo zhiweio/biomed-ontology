@@ -104,7 +104,7 @@ Claim
  └── confidence
 ```
 
-`get_entity_context` 聚合返回：`entity` / `targets` / `diseases` / `evidence` / `internal_assets`。
+`get_entity_context` 返回 Context Pack：既有 `entity` / `targets` / `diseases` / `evidence` / `internal_assets`，并带 `pack_version` / `identity` / `evidence_tree` / `license` / `missing[]`。详见 [Data-for-Agent](../architecture/data-for-agent.md)。
 
 实现：`foundation/api.py` 的 `get_entity_context`；存储：`foundation/store.py` + Milvus + `OpenMetadataClient`。
 

@@ -1,4 +1,4 @@
-# 设计决策 D1–D20
+# 设计决策 D1–D24
 
 散落在 `schema/*.yaml` 与代码模块边界处的决策索引。无独立 ADR 目录——以 schema 为 SSOT 时，
 决策写在约束旁边比写在另册更不容易腐烂。
@@ -22,6 +22,10 @@
 | D17 | BIOS_v3 常挂 `graph:biomedical`；UMLS 等可扩展 | `bios.py`、`biomedical_sources.py` | [Foundation](../architecture/foundation.md) |
 | D18 | OM 经 Trino 官方 connector 治理 Iceberg；不止 Glossary | `lake/om_governance.py` | [OpenMetadata](../architecture/openmetadata.md) |
 | D19 | 多格式 Document Router；Docling Main、PyMuPDF4LLM Fast、MinerU Hard | `parse/router.py` | [router](../parse/router.md) |
-| D20 | 版面统一走 `pymupdf4llm` 路径，不再暴露旧 `pymupdf` LayoutBackend | `parse/layout/` | [layout](../parse/layout.md) |
+| D20 | 版面后端只认 `pymupdf4llm`，配置写成 `pymupdf` 直接报错 | `parse/layout/` | [layout](../parse/layout.md) |
+| D21 | 双面身份共用 `IdentityService`，词典只装配一次 | `identity.py`、`runtime.py` | [IdentityService](../ontology/identity.md) |
+| D22 | IngestQA 拦入库，QualityGate 拦发版，两闸门不得混用 | `lake/ingest_qa.py`、`quality/` | [IngestQA](../parse/ingest-qa.md) |
+| D23 | Context Pack 版本化并声明 `missing[]`，禁止编造字段 | `foundation/context_pack.py` | [Data-for-Agent](../architecture/data-for-agent.md) |
+| D24 | uv workspace 七包声明依赖剖面，代码仍在 `biomed_ontology.*` | `packages/hmd-*` | [workspace](../architecture/workspace.md) |
 
 实现细节以源码与 schema 描述为准；本表供跳转。新增决策时：写进相关 schema 字段描述 + 本表一行 + 必要时加不变量条目。

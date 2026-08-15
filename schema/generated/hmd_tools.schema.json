@@ -565,7 +565,9 @@
                 "PATENT",
                 "REGULATORY_DOCUMENT",
                 "LABEL",
-                "INTERNAL_REPORT"
+                "INTERNAL_REPORT",
+                "INVESTIGATOR_BROCHURE",
+                "CLINICAL_STUDY_REPORT"
             ],
             "title": "DocTypeEnum",
             "type": "string"

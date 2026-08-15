@@ -26,15 +26,19 @@ __all__ = [
     "select_backend",
 ]
 
-BackendName = Literal["pymupdf4llm", "docling", "mineru"]
+BackendName = Literal["pymupdf4llm", "docling", "mineru", "text"]
+_KNOWN_BACKENDS: frozenset[str] = frozenset({"pymupdf4llm", "docling", "mineru", "text"})
 
 FALLBACK_TRIGGERS: frozenset[Capability] = frozenset(
     {"ocr", "formula", "table_structure", "reading_order"}
 )
 
 _OFFICE = {".docx", ".pptx", ".xlsx"}
+_LEGACY_OFFICE = {".doc", ".ppt"}
 _IMAGE = {".png", ".jpg", ".jpeg"}
 _PDF = {".pdf", ".xps", ".epub"}
+_HTML = {".html", ".htm"}
+_TEXT = {".txt", ".md"}
 
 
 class UnsupportedFormat(ValueError):
@@ -78,13 +82,19 @@ def select_backend(
     if name and name != "auto":
         if name == "pymupdf":
             raise ValueError("版面后端 'pymupdf' 已废弃，请改用 'pymupdf4llm'（或 'auto'）")
-        if name not in {"pymupdf4llm", "docling", "mineru"}:
+        if name not in _KNOWN_BACKENDS:
             raise ValueError(f"未知版面后端：{name!r}")
-        return RouteDecision(backend=name, reason="forced", confidence=1.0)  # type: ignore[arg-type]
+        return RouteDecision(backend=cast(BackendName, name), reason="forced", confidence=1.0)
 
     suf = path.suffix.casefold()
     if suf in _OFFICE:
         return RouteDecision(backend="docling", reason="office_main", confidence=0.95)
+    if suf in _LEGACY_OFFICE:
+        return RouteDecision(backend="mineru", reason="legacy_office", confidence=0.75)
+    if suf in _HTML:
+        return RouteDecision(backend="docling", reason="html_main", confidence=0.9)
+    if suf in _TEXT:
+        return RouteDecision(backend="text", reason="plain_text", confidence=1.0)
     if suf in _IMAGE:
         return RouteDecision(backend="mineru", reason="image_ocr", confidence=0.8)
     if suf not in _PDF:
@@ -194,6 +204,12 @@ def _fallback_chain(primary: BackendName, path: Path) -> list[BackendName]:
         if primary in chain:
             return [primary, *[b for b in chain if b != primary]]
         return chain
+    if suf in _LEGACY_OFFICE:
+        return ["mineru", "docling"] if primary == "mineru" else ["docling", "mineru"]
+    if suf in _HTML:
+        return ["docling"]
+    if suf in _TEXT:
+        return ["text"]
     if suf in _IMAGE:
         return ["mineru", "docling"] if primary == "mineru" else ["docling", "mineru"]
     order: list[BackendName] = ["pymupdf4llm", "docling", "mineru"]

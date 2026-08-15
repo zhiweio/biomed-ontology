@@ -1,5 +1,5 @@
 site_name: biomed-ontology 手册
-site_description: Enterprise Biomedical World Model / AI Data Foundation —— 企业生物医学世界模型与 Ontology Semantic Layer
+site_description: AI-Ready Scientific Data Foundation for Drug Discovery —— 面向创新药研发的 AI 原生科研数据基座
 site_url: https://zhiweio.github.io/biomed-ontology/
 repo_name: zhiweio/biomed-ontology
 repo_url: https://github.com/zhiweio/biomed-ontology
@@ -95,24 +95,28 @@ nav:
   - 首页: index.md
   - 快速开始: getting-started.md
   - 架构:
-      - 分层 L0–L8: architecture/layers.md
+      - 分层与产品栈: architecture/layers.md
+      - Data-for-Agent 契约: architecture/data-for-agent.md
       - Foundation 世界模型: architecture/foundation.md
       - 端到端数据流: architecture/pipeline.md
-      - Document Pipeline 双写: architecture/document-pipeline.md
+      - Document Lake: architecture/document-pipeline.md
+      - uv workspace: architecture/workspace.md
       - OpenMetadata × Trino: architecture/openmetadata.md
       - LinkML 与生成物: architecture/linkml.md
       - 设计不变量: invariants.md
-  - Ontology:
+  - 身份与本体:
+      - IdentityService: ontology/identity.md
       - Ontology 工程工具链: ontology/toolchain.md
       - 策展资产与运行时机制: ontology/curation-and-runtime.md
       - Golden Path: ontology/golden-path.md
       - 企业身份与目录 SSOT: ontology/seed.md
       - 归一化级联: ontology/normalize.md
-      - 事实抽取 TriModal: ontology/extract.md
+      - 事实抽取与融合: ontology/extract.md
       - 类型化链接与 search-around: ontology/links.md
       - GraphStore 与许可命名图: ontology/rdf.md
   - Document Lake:
       - Document Router: parse/router.md
+      - IngestQA: parse/ingest-qa.md
       - 版面后端与语义树: parse/layout.md
       - 资产路径与视觉融合: parse/assets.md
       - 切片与包装纸过滤: parse/chunks.md
@@ -143,4 +147,4 @@ nav:
       - 目录地图: appendix/tree.md
       - CLI 速查: appendix/cli.md
       - NOTICE / 出处: appendix/notice.md
-      - 设计决策 D1–D20: appendix/decisions.md
+      - 设计决策 D1–D24: appendix/decisions.md

@@ -1,7 +1,7 @@
 # REST / MCP 服务契约
 
 源码：`src/biomed_ontology/service/`（`app.py`、`deps.py`、`dispatch.py`、`mcp.py`）。  
-清单源：`TOOL_SPECS`（`tools/api.py`，8 个 KB 工具）+ `SEMANTIC_OPS`（`foundation/api.py`，10 个 Foundation ops）；运行时以 `GET /v1/ops` 为准。
+清单源：`TOOL_SPECS`（`tools/api.py`，8 个 KB 工具）+ `SEMANTIC_OPS`（`foundation/api.py`，10 个 Foundation ops）；MCP 合计 **18**。运行时以 `GET /v1/ops` 为准。
 
 ## 为什么存在
 
@@ -14,7 +14,7 @@
 | 取舍 | 选择 | 放弃 |
 |---|---|---|
 | 入口数量 | 单进程 `hmd serve` | 独立的 `foundation serve` |
-| MCP 工具数 | 17（= 8 KB + 9 Foundation） | 把 `golden_path` 塞进 MCP |
+| MCP 工具数 | 18（= 8 KB + 10 Foundation） | 把 `golden_path` 塞进 MCP |
 | 凭据 | 默认不信任 `X-HMD-Entitlements` | 客户端自报订阅源 |
 | KB 契约 | LinkML 请求类 + `dispatch` 校验 | 各路由手写 body 模型 |
 | Foundation 失败 | `BackendUnavailableError` 明确报错 | seed YAML 冒充三后端 |
@@ -67,7 +67,7 @@ MCP tool call
 
 | 头 | 含义 |
 |---|---|
-| `X-HMD-Client-Id` | 调用方身份（旧别名 `X-HMD-Agent-Id` 仍接受） |
+| `X-HMD-Client-Id` | 调用方身份 |
 | `X-HMD-Trace-Id` | 可选；未传则服务端生成 |
 | `X-HMD-Entitlements` | 采购凭据（逗号分隔源 ID）；**默认不信任** |
 
@@ -98,7 +98,7 @@ MCP tool call
 
 #### Foundation Semantic Ops
 
-后端不可达时明确报错，**无 YAML fallback**。主契约：`get_entity_context`。
+后端不可达时明确报错，**无 YAML fallback**。主契约：Context Pack（`get_entity_context`，见 [Data-for-Agent](../architecture/data-for-agent.md)）。
 
 | 路径 | 说明 | Body |
 |---|---|---|
@@ -110,7 +110,8 @@ MCP tool call
 | `POST /v1/search_assets` | 企业资产（OpenMetadata Glossary） | `{ "query"?, "entity_ids"? }` |
 | `POST /v1/get_entity_evidence` | 实体 → 证据（Milvus） | `{ "enterprise_id" }` |
 | `POST /v1/get_entity_assets` | 实体 → 资产（OpenMetadata） | `{ "enterprise_id" }` |
-| `POST /v1/get_entity_context` | 聚合：GraphDB + Milvus + OpenMetadata | `{ "enterprise_id" }` |
+| `POST /v1/lookup_bios_concept` | 公开 BIOS 概念卡（不 mint ENT） | `{ "query"?, "external_id"?, "bios_curie"? }` |
+| `POST /v1/get_entity_context` | Context Pack：GraphDB + Milvus + OpenMetadata | `{ "enterprise_id" }` |
 | `GET /v1/golden_path` | 金路径诊断（含文献腿）；**仅 REST/CLI，不进 MCP** | query：`candidate`（默认 `HMPL-504`） |
 
 示例：
@@ -128,7 +129,7 @@ curl -s -X POST http://127.0.0.1:8000/v1/get_entity_context \
 
 ### MCP tools
 
-挂载点：`/mcp`（FastMCP Streamable HTTP）。工具名与 REST 同名，**同一套** `TOOL_SPECS` + `SEMANTIC_OPS`（共 **18** 个）；`golden_path` 不暴露。
+挂载点：`/mcp`（FastMCP Streamable HTTP）。工具名与 REST 同名，**同一套** `TOOL_SPECS` + `SEMANTIC_OPS`（共 **18** 个：8 KB + 10 Foundation）；`golden_path` 不暴露。
 
 KB 工具参数为单个 `arguments` 对象（与 REST JSON body 同形），走同一 `dispatch`。  
 Foundation 工具按 op 展开具名参数（与 REST body 字段对齐）。MCP **不接受**客户端自称凭据（`parse_entitlements(None)`）。
@@ -166,7 +167,7 @@ Foundation 工具按 op 展开具名参数（与 REST body 字段对齐）。MCP
 `X-HMD-Entitlements` **默认不被信任**（`HMD_TRUST_ENTITLEMENT_HEADER=false`）。  
 生产环境由网关按已认证身份注入。
 
-调用方身份头：`X-HMD-Client-Id`（旧 `X-HMD-Agent-Id` 仍作别名接受）。
+调用方身份头：`X-HMD-Client-Id`。
 
 ### 契约导出
 
@@ -181,7 +182,7 @@ uv run hmd contract --out build/contract
 | 不变量 | 违反后果 |
 |---|---|
 | REST / MCP 同一 `ServiceState` | 反馈与观测分叉 |
-| MCP 工具数 = 17 | README / health 绊线失败 |
+| MCP 工具数 = 18 | README / health / `GET /v1/ops` 不一致 |
 | 文献面依赖 Milvus | 服务启动或 `open_dual_surface` 失败 |
 | MCP 无 entitlements 头 | 仅能看 TIER_1 及以下开放内容 |
 | `golden_path` 不进 MCP | 避免与生产工具混淆 |
@@ -204,4 +205,4 @@ curl -s http://127.0.0.1:8000/v1/ops | jq '.kb_tools | length, .foundation_ops |
 uv run hmd contract --out build/contract
 ```
 
-预期：`kb_tools` = 8，`foundation_ops` = 9；health 中 mcp 开关与 `--mcp` 一致。
+预期：`kb_tools` = 8，`foundation_ops` = 10；health 中 mcp 开关与 `--mcp` 一致。

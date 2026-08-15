@@ -1,8 +1,8 @@
 # 归一化级联
 
-源码：`src/biomed_ontology/normalize/`（入口 `Normalizer`）。
+源码：`src/biomed_ontology/identity.py`（`IdentityService`）、`src/biomed_ontology/normalize/`（入口 `Normalizer`）。
 
-L3 把自由文本变成**唯一内部概念 ID**（`HMD:ENT:*` 的 `BuiltConcept.concept_id`）。Foundation 面的实体解析走 `foundation/resolve.EntityResolver`（BERN2 + 词典 + Zingg），本文档聚焦文献/检索面的 `Normalizer` 级联。
+L3 把自由文本变成**唯一内部概念 ID**（`HMD:ENT:*`）。双面共用 `IdentityService`：文献面走目录 `Normalizer`，Foundation 面在同一目录上叠加 `EntityResolver`（BERN2 + 词典 + Zingg）。本文档聚焦目录级联。
 
 ---
 
@@ -99,7 +99,7 @@ Normalizer 的职责是「文本 → **唯一企业概念 ID**」。身份 SSOT 
 
 公开覆盖不靠扩大 Normalizer：无 `HMD:ENT:*` 时由检索侧 **PublicLexicalExpand**（BERN2→BIOS 名→BM25/DENSE）与 Foundation **`lookup_bios_concept`** 承接；向量级可经 `VectorIndex` Protocol 注入（默认仍为 n-gram）。
 
-事实抽取侧的 `_ground` 也只调用 Normalizer（见 [事实抽取](extract.md)）。Foundation 面短查询 / 金路径 ER 另走 `EntityResolver`（词典 + BERN2 + Zingg）——**不要混用两套入口当同一词典**。
+事实抽取侧的 `_ground` 也只调用 `IdentityService.normalize`（见 [事实抽取](extract.md)）。Foundation 面短查询 / 金路径 ER 走 `IdentityService.resolve_text`（同一目录 + 词典 + BERN2 + Zingg）。两套**算法**不同，**身份空间**相同——见 [IdentityService](identity.md)。
 
 ### 3.5 Scope 如何约束行为（D2）
 
@@ -144,11 +144,11 @@ Normalizer 的职责是「文本 → **唯一企业概念 ID**」。身份 SSOT 
 
 | 场景 | 组件 |
 |---|---|
-| 文献 chunk / 检索 query / `_ground` | `Normalizer` → `BuiltConcept`（catalog） |
-| 企业实体 / 代号 HMPL-504 | `EntityResolver` → `EnterpriseEntity`（dictionary + BERN2） |
-| `get_entity_context` | Foundation 读 GraphDB，不读 Normalizer 内存 |
+| 文献 chunk / 检索 query / `_ground` | `IdentityService.normalize` → `BuiltConcept`（catalog） |
+| 企业实体 / 代号 HMPL-504 | `IdentityService.resolve_text` → `EnterpriseEntity` |
+| `get_entity_context` | Foundation 读 GraphDB，返回 Context Pack |
 
-目录 `HMD:ENT:*` 与 Foundation 实体 ID 格式一致，但索引与 ER 倒排是两套结构。两端最终都锚到企业身份空间，但级联阶段与后端要求不同。
+目录 `HMD:ENT:*` 与 Foundation 实体 ID 格式一致。索引与 ER 倒排是两套结构，由同一个 `IdentityService` 持有。
 
 ---
 

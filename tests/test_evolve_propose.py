@@ -67,9 +67,7 @@ def test_approve_apply_verify_dictionary_sandbox(tmp_path: Path) -> None:
     result = run_enrich(from_paths=[FIXTURE], out_dir=out, skip_tools=True)
     props_path = result.proposals_path
 
-    path, approved = approve_proposals(
-        props_path, tier="L1", min_confidence=0.8, by="test@hmd"
-    )
+    path, approved = approve_proposals(props_path, tier="L1", min_confidence=0.8, by="test@hmd")
     assert approved
     assert all(a["status"] == "approved" for a in approved)
 

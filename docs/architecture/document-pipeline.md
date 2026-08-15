@@ -4,7 +4,7 @@
 
 源码：`src/biomed_ontology/lake/`（`steps.py`、`flows.py`）、`src/biomed_ontology/corpus/tree.py`。
 
-抽取与接地细则见 [事实抽取（TriModal）](../ontology/extract.md)；概念身份见 [目录 SSOT](../ontology/seed.md) / [Normalizer](../ontology/normalize.md)。
+抽取与接地细则见 [事实抽取（TriModal）](../ontology/extract.md)；概念身份见 [IdentityService](../ontology/identity.md) / [目录 SSOT](../ontology/seed.md)。入湖质检见 [IngestQA](../parse/ingest-qa.md)。
 
 ---
 
@@ -56,10 +56,13 @@ OpenMetadata 经 Trino 治理湖表元数据；文档 Asset 单独登记。关�
 Document (MinIO)  PDF / DOCX / PPTX / XLSX …
    │
    ▼
-Document Router → PyMuPDF4LLM | Docling | MinerU
+Document Router → PyMuPDF4LLM | Docling | MinerU | text
    │
    ▼
 Canonical Document → Semantic Tree → Tree Chunk Engine
+   │
+   ▼
+IngestQA（空树 / 降级 / 许可 / doc_id 幂等）
    │
    ├────────────────────────────┐
    ▼                            ▼
@@ -98,9 +101,10 @@ OpenMetadata ← Trino（官方 connector）← Iceberg REST Catalog
 ### 3.4 Knowledge 腿：TriModal → extracted Claim
 
 ```text
-annotate_bern2 → chunk.entity_ids（HMD:ENT:*）
-  → TriModalPipeline（LLM / 规则 / 表）
-  → _ground(Normalizer←catalog) 强制 S/O 为企业 CURIE
+annotate_bern2 → IdentityService → chunk.entity_ids（HMD:ENT:*）
+  → TriModalPipeline（分域 LLM / 规则 / 表）
+  → _ground(IdentityService.normalize) 强制 S/O 为企业 CURIE
+  → detect_conflicts + QualityGate.evaluate_claims
   → facts_to_claims（claim_status=extracted）
   → Iceberg knowledge_claims + GraphDB provenance_extracted
 ```

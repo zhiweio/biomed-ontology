@@ -4,7 +4,7 @@
 
 > **BIOS provides the biomedical world. Enterprise Ontology provides the company's world.**
 
-`hmd serve` 同时暴露 KB 侧 Ontology Semantic Layer（术语 / 层级 / 事实 / 检索 / Citationware）与 Foundation Semantic Ops（实体 / 关系 / 证据 / 资产 / `get_entity_context`）。别名与检索只是语义层中的两项，不是产品定义。
+`hmd serve` 同时暴露 KB 侧 Ontology Semantic Layer（术语 / 层级 / 事实 / 检索 / Citationware）与 Foundation Semantic Ops（实体 / 关系 / 证据 / 资产 / Context Pack）。身份经 `IdentityService` 统一装配。别名与检索只是语义层中的两项，不是产品定义。
 
 ---
 
@@ -89,8 +89,11 @@ Semantic Access (hmd serve)
 
 ### 3.2 Entity Resolution
 
+对外句柄是 `IdentityService.resolve_text`（`identity.py`）。有 `EntityResolver` 时走企业级联；否则回落目录 `normalize`。详见 [IdentityService](../ontology/identity.md)。
+
 ```text
-Text → BERN2 NER/NEN → External Standard IDs（候选）
+Text → IdentityService.resolve_text
+     → BERN2 NER/NEN → External Standard IDs（候选）
      → EntityResolver.resolve_mention / resolve_text
      → Enterprise Ontology ID + external_ids[] + confidence + method
 ```
@@ -149,7 +152,9 @@ graph/inference      ← 推导关系（可选物化）
 | `search_assets` | OpenMetadata Glossary | `foundation/catalog.py` |
 | `get_entity_evidence` | Milvus | `foundation/api.py` |
 | `get_entity_assets` | OpenMetadata | `foundation/catalog.py` |
-| `get_entity_context` | GraphDB + Milvus + OM 聚合 | `foundation/api.py` |
+| `get_entity_context` | GraphDB + Milvus + OM → Context Pack | `foundation/api.py` + `context_pack.py` |
+
+`get_entity_context` 是仓外推理的主契约：返回 `pack_version` / `identity` / `evidence_tree` / `license` / `missing[]`。详见 [Data-for-Agent](data-for-agent.md)。
 
 查询层**禁止 YAML fallback**；`BackendUnavailableError` 在三后端不可达时硬失败。
 
@@ -175,7 +180,8 @@ PubMed / Patents / Vendor / ELN / LIMS / Docs
 |---|---|
 | `schema/hmd_enterprise.yaml` | Enterprise Ontology SSOT |
 | `ontology/` | Ontology-as-Code 策展面 |
-| `src/biomed_ontology/foundation/` | ids / bern2 / resolve / world / api / sync / bios / evolve |
+| `src/biomed_ontology/identity.py` | IdentityService（目录 + ER） |
+| `src/biomed_ontology/foundation/` | ids / bern2 / resolve / world / api / context_pack / sync / bios / evolve |
 | `data/foundation/` | 运行投影样例、BIOS subset、Zingg |
 | `docker/docker-compose.foundation.yml` | 联调栈 |
 | `Taskfile.yml` | `foundation:*` / `milvus:*` / `gen` / `ontology:validate` |
@@ -202,13 +208,13 @@ uv run hmd foundation evolve-enrich --from data/releases/foundation_candidates/<
 uv run hmd serve --mcp
 ```
 
-### 3.8 P2：Data Loop（propose → approve → apply）
+### 3.8 Data Loop（propose → approve → apply）
 
 | 做 | 不做 |
 |---|---|
 | unmapped / 低置信 → `evolve-mine` → candidates JSON | 自动改 GraphDB ontology |
 | policy filter + enrich → `proposals.jsonl`；人工 approve 后 `evolve-apply --write` | 无人审校 apply；硬编码单次噪声串 |
-| 观测事件 → Redpanda → Iceberg `obs_tool_io` / `er_observations` | 自研 ObsShipper；OTel（P2 运维） |
+| 观测事件 → Redpanda → Iceberg `obs_tool_io` / `er_observations` | 自研 ObsShipper；热路径同步 Iceberg append |
 | `zingg-run` 物化/导出模糊 matches | 查询路径 Spark；BIOS 全量当 master |
 
 详情见 [演进闭环](../evolution/loop.md)。复用 `foundation/evolve.py`、`evolve_propose.py`、`evolve_apply.py`、`zingg_io.py`、`lake/obs_events.py`。
@@ -276,4 +282,4 @@ uv run pytest -m integration   # 需 task foundation:up
 
 合规：BIOS_v3 **CC-BY-NC-ND 4.0** — 见 [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md)、[组件闸门](../licensing/components.md)。
 
-开源栈边界：LinkML + rdflib + pyshacl + GraphDB + BERN2 + Milvus + OpenMetadata；**不引入 Jena**。自研 IP：R&D Domain Ontology、BIOS↔Enterprise 映射、Resolver 胶水、Semantic API、金路径数据与评测。
+开源栈边界：LinkML + rdflib + pyshacl + GraphDB + BERN2 + Milvus + OpenMetadata。图引擎只认 GraphDB。自研 IP：R&D Domain Ontology、BIOS↔Enterprise 映射、IdentityService、Semantic API、金路径数据与评测。

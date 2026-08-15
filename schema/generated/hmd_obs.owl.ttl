@@ -1867,6 +1867,11 @@ hmd:Candidate a owl:Class ;
     skos:definition "决策过程中的一个候选项。保留 score 与 channel 才能做通道级归因。" ;
     skos:inScheme hmd:obs .
 
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT> a owl:Class ;
+    rdfs:label "CLINICAL_STUDY_REPORT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "临床试验报告（CSR）；文档 Pipeline 入口" .
+
 <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> a owl:Class ;
     rdfs:label "CLINICAL_TRIAL_RECORD" ;
     rdfs:subClassOf hmd:DocTypeEnum ;
@@ -1881,6 +1886,11 @@ hmd:Candidate a owl:Class ;
     rdfs:label "INTERNAL_REPORT" ;
     rdfs:subClassOf hmd:DocTypeEnum ;
     skos:definition "企业内部报告，PoC 不涉及" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE> a owl:Class ;
+    rdfs:label "INVESTIGATOR_BROCHURE" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "研究者手册（IB）；临床开发文档，不是 CTMS 替换" .
 
 <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> a owl:Class ;
     rdfs:label "JOURNAL_ARTICLE" ;
@@ -3116,20 +3126,6 @@ hmd:source_version a owl:DatatypeProperty ;
     skos:definition "源快照版本。缺此字段无法做离线可重放构建" ;
     skos:inScheme hmd:concept .
 
-hmd:DocTypeEnum a owl:Class ;
-    rdfs:label "DocTypeEnum" ;
-    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> ) ;
-    skos:definition "文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。" ;
-    skos:inScheme hmd:types ;
-    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> .
-
 hmd:EntityTypeEnum a owl:Class ;
     rdfs:label "EntityTypeEnum" ;
     owl:unionOf ( <https://w3id.org/biolink/vocab/GeneOrGeneProduct> <https://w3id.org/biolink/vocab/ChemicalEntity> <https://w3id.org/biolink/vocab/Disease> <https://w3id.org/biolink/vocab/MolecularActivity> <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#MODALITY> <https://w3id.org/biolink/vocab/ClinicalTrial> <https://w3id.org/biolink/vocab/BiologicalEntity> <https://w3id.org/asliva/biomed-ontology/EntityTypeEnum#ADVERSE_EVENT> ) ;
@@ -3178,6 +3174,22 @@ hmd:LicenseTierEnum a owl:Class ;
         <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_1>,
         <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_2>,
         <https://w3id.org/asliva/biomed-ontology/LicenseTierEnum#TIER_3> .
+
+hmd:DocTypeEnum a owl:Class ;
+    rdfs:label "DocTypeEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT> ) ;
+    skos:definition "文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> .
 
 hmd:confidence a owl:DatatypeProperty ;
     rdfs:label "confidence" ;
@@ -3253,10 +3265,10 @@ hmd:license_tier a owl:ObjectProperty ;
 xsd:anyURI a rdfs:Datatype ;
     owl:equivalentClass [ a rdfs:Datatype ;
             owl:onDatatype xsd:string ;
-            owl:withRestrictions ( [ xsd:pattern "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$" ] ) ],
+            owl:withRestrictions ( [ xsd:pattern "^[A-Za-z][A-Za-z0-9._-]*:\\S+$" ] ) ],
         [ a rdfs:Datatype ;
             owl:onDatatype xsd:string ;
-            owl:withRestrictions ( [ xsd:pattern "^[A-Za-z][A-Za-z0-9._-]*:\\S+$" ] ) ] .
+            owl:withRestrictions ( [ xsd:pattern "^HMD:((TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}|ENT:(DC|PRG|TGT|IND|EXP|PUB|ASY|CMP|BMK):[A-Za-z0-9_-]+)$" ] ) ] .
 
 xsd:string a rdfs:Datatype ;
     owl:equivalentClass [ a rdfs:Datatype ;

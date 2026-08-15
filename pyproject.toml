@@ -1,12 +1,19 @@
 [project]
 name = "biomed-ontology"
 version = "0.1.0"
-description = "Enterprise Biomedical World Model / AI Data Foundation with Ontology Semantic Layer (Asliva PoC)"
+description = "AI-Ready Scientific Data Foundation for Drug Discovery (Asliva PoC)"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = { text = "Proprietary" }
 
 dependencies = [
+    "hmd-contracts",
+    "hmd-core",
+    "hmd-ingest",
+    "hmd-nlu",
+    "hmd-kg",
+    "hmd-index",
+    "hmd-access",
     # core
     "linkml>=1.8.0",
     "linkml-runtime>=1.8.0",
@@ -85,6 +92,37 @@ dev = [
 docs = [
     "mkdocs-material>=9.5.0",
 ]
+# 剖面声明：默认 dependencies 仍含全栈，便于现网 `uv sync`。
+# 瘦安装走 `uv sync --package hmd-nlu`（不拉 torch / docling / mineru）。
+layout = [
+    "pymupdf4llm>=0.0.17",
+    "docling>=2.0.0",
+    "mineru>=2.0.0",
+    "pillow>=10.4.0",
+]
+embed = [
+    "pymilvus[model]>=2.5.0",
+    "FlagEmbedding>=1.3.3",
+    "sentence-transformers>=3.0.0",
+]
+vision = [
+    "transformers>=4.57.0",
+    "qwen-vl-utils>=0.0.14",
+    "av>=15.0.0",
+    "torchvision>=0.20.0",
+    "open_clip_torch>=2.23.0",
+    "openai>=1.54.0",
+]
+lake = [
+    "minio>=7.2.0",
+    "pyiceberg[s3fs]>=0.7.0",
+    "pyarrow>=17.0.0",
+    "prefect>=3.0.0",
+    "trino>=0.330.0",
+]
+obs = [
+    "confluent-kafka>=2.3.0",
+]
 
 [project.scripts]
 hmd = "biomed_ontology.cli:app"
@@ -95,6 +133,18 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/biomed_ontology"]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+hmd-contracts = { workspace = true }
+hmd-core = { workspace = true }
+hmd-ingest = { workspace = true }
+hmd-nlu = { workspace = true }
+hmd-kg = { workspace = true }
+hmd-index = { workspace = true }
+hmd-access = { workspace = true }
 
 [tool.ruff]
 line-length = 100
@@ -114,6 +164,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # typer 的参数声明惯用法就是在默认值里调用 Option()。
 "src/biomed_ontology/cli.py" = ["B008"]
+"src/biomed_ontology/cli_foundation.py" = ["B008"]
+"src/biomed_ontology/cli_lake.py" = ["B008"]
 # FastAPI 同理：Body()/Header() 必须写在默认值里才能被框架识别。
 "src/biomed_ontology/service/app.py" = ["B008"]
 

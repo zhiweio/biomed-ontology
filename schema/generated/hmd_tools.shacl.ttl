@@ -362,7 +362,7 @@ hmd:Document a sh:NodeShape ;
             sh:nodeKind sh:IRI ;
             sh:order 2 ;
             sh:path hmd:external_id ],
-        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" ) ;
+        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" "INVESTIGATOR_BROCHURE" "CLINICAL_STUDY_REPORT" ) ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:order 4 ;
@@ -1178,6 +1178,11 @@ hmd:SearchRequest a sh:NodeShape ;
         [ sh:in ( "BM25" "DENSE" "GRAPH" "FUSED" ) ;
             sh:order 6 ;
             sh:path hmd:channels ],
+        [ sh:datatype xsd:string ;
+            sh:description "调用方注入的公开表面词（如 resolve.search_surfaces）；无 ENT 时用于 BM25/DENSE 改写，永不作为 GRAPH 种子。与 ExpandResponse 的结构化 ExpansionTermOut 不同，此处为纯字符串列表。" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 11 ;
+            sh:path hmd:expansion_terms ],
         [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
             sh:minInclusive 1 ;
@@ -1190,7 +1195,7 @@ hmd:SearchRequest a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 0 ;
             sh:path hmd:query ],
-        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" ) ;
+        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" "INVESTIGATOR_BROCHURE" "CLINICAL_STUDY_REPORT" ) ;
             sh:order 3 ;
             sh:path hmd:doc_types ],
         [ sh:datatype xsd:string ;
@@ -1213,45 +1218,51 @@ hmd:SearchRequest a sh:NodeShape ;
 hmd:SearchResponse a sh:NodeShape ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:integer ;
-            sh:description "因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。" ;
+    sh:property [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 11 ;
-            sh:path hmd:license_filtered_count ],
+            sh:order 10 ;
+            sh:path hmd:tool_version ],
         [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 3 ;
             sh:path hmd:total ],
+        [ sh:datatype xsd:integer ;
+            sh:description "因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 13 ;
+            sh:path hmd:license_filtered_count ],
         [ sh:class hmd:SearchHit ;
             sh:nodeKind sh:BlankNodeOrIRI ;
             sh:order 2 ;
             sh:path hmd:results ],
         [ sh:datatype xsd:string ;
             sh:nodeKind sh:Literal ;
-            sh:order 12 ;
+            sh:order 14 ;
             sh:path hmd:warnings ],
+        [ sh:datatype xsd:float ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 11 ;
+            sh:path hmd:elapsed_ms ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 7 ;
+            sh:order 9 ;
             sh:path hmd:tool_name ],
         [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 1 ;
             sh:path hmd:expansion_size ],
-        [ sh:datatype xsd:string ;
+        [ sh:description "本次返回体中出现的最高 tier。调用方据此判断可否外发。" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
             sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:tool_version ],
-        [ sh:datatype xsd:float ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:elapsed_ms ],
+            sh:minCount 1 ;
+            sh:order 12 ;
+            sh:path hmd:license_tier_max ],
         [ sh:class hmd:MatchedConcept ;
             sh:nodeKind sh:BlankNodeOrIRI ;
             sh:order 0 ;
@@ -1261,24 +1272,29 @@ hmd:SearchResponse a sh:NodeShape ;
             sh:nodeKind sh:BlankNodeOrIRI ;
             sh:order 4 ;
             sh:path hmd:evidence_tree ],
-        [ sh:description "本次返回体中出现的最高 tier。调用方据此判断可否外发。" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 10 ;
-            sh:path hmd:license_tier_max ],
+        [ sh:datatype xsd:string ;
+            sh:description "实际用于改写的表面词（enterprise / public_lexical / client_terms）。" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 6 ;
+            sh:path hmd:expansion_terms ],
         [ sh:datatype xsd:string ;
             sh:description "随 tool 返回体回传 agent，反馈接口以它为主键（设计决策 D6）。" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 5 ;
+            sh:order 7 ;
             sh:path hmd:trace_id ],
+        [ sh:datatype xsd:string ;
+            sh:description "检索改写来源：enterprise | public_lexical | client_terms | none。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 5 ;
+            sh:path hmd:expansion_source ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 6 ;
+            sh:order 8 ;
             sh:path hmd:ontology_release_id ;
             sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ;
     sh:targetClass hmd:SearchResponse .
@@ -1440,7 +1456,7 @@ hmd:Synonym a sh:NodeShape ;
 hmd:ToolEnvelope a sh:NodeShape ;
     rdfs:comment "所有 tool 返回体的公共头。做成抽象基类而非各自定义， 是为了让可观测埋点与许可闸门可以统一处理任意 tool 的输出。" ;
     sh:closed false ;
-    sh:ignoredProperties ( rdf:type skos:notation hmd:accepted hmd:breadcrumb hmd:concept_detail hmd:doc_id hmd:evidence_tree hmd:expansion_size hmd:expansion_terms hmd:facts hmd:full_text hmd:llm_invoked hmd:matched_concepts hmd:page_end hmd:page_start hmd:restored_chunk_ids hmd:results hmd:section_id hmd:section_path hmd:sibling_paths hmd:signal_id hmd:total hmd:truncated hmd:unmapped_spans ) ;
+    sh:ignoredProperties ( rdf:type skos:notation hmd:accepted hmd:breadcrumb hmd:concept_detail hmd:doc_id hmd:evidence_tree hmd:expansion_size hmd:expansion_source hmd:expansion_terms hmd:facts hmd:full_text hmd:llm_invoked hmd:matched_concepts hmd:page_end hmd:page_start hmd:restored_chunk_ids hmd:results hmd:section_id hmd:section_path hmd:sibling_paths hmd:signal_id hmd:total hmd:truncated hmd:unmapped_spans ) ;
     sh:property [ sh:datatype xsd:integer ;
             sh:description "因许可被过滤掉的条目数。持续为 0 说明过滤器可能没生效。" ;
             sh:maxCount 1 ;

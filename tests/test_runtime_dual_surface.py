@@ -21,6 +21,8 @@ def test_open_dual_surface_wires_both_apis(kb) -> None:
     assert surface.kb is not None
     assert surface.world.release_id
     assert surface.search_backend == "milvus"
+    assert surface.identity is not None
+    assert surface.identity.resolver is surface.world.resolver
 
 
 def test_toolapi_from_backends_equiv_from_kb(kb) -> None:

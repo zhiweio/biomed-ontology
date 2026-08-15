@@ -625,10 +625,20 @@ class FoundationApi:
         ) as obs:
             ent = self.get_entity(enterprise_id)
             if not ent.get("found"):
+                from biomed_ontology.foundation.context_pack import attach_pack_fields
+
                 obs["backends"] = {"entity": "graphdb"}
                 obs["why"] = {"found": False, "yaml_fallback": False}
                 obs["output"] = {"found": False}
-                return ent
+                return attach_pack_fields(
+                    ent,
+                    enterprise_id=enterprise_id,
+                    entity=None,
+                    evidence=None,
+                    assets=None,
+                    bios_bridges=None,
+                    found=False,
+                )
 
             rel = self.get_relationships(enterprise_id)
             relationships = rel["claims"]
@@ -757,22 +767,32 @@ class FoundationApi:
                 "assets": len(internal_assets),
                 "bios": len(bios_bridges),
             }
-            return {
-                "ontology_release_id": self.world.release_id,
-                "enterprise_id": enterprise_id,
-                "entity": entity,
-                "entity_kind": kind,
-                "targets": targets,
-                "diseases": diseases,
-                "drugs": drugs,
-                "evidence": citation_evidence,
-                "internal_assets": internal_assets,
-                "bios_bridges": bios_bridges,
-                "relationships": relationships,
-                "related_entities": related,
-                "assets": assets,
-                "backends": backends,
-            }
+            from biomed_ontology.foundation.context_pack import attach_pack_fields
+
+            return attach_pack_fields(
+                {
+                    "ontology_release_id": self.world.release_id,
+                    "enterprise_id": enterprise_id,
+                    "entity": entity,
+                    "entity_kind": kind,
+                    "targets": targets,
+                    "diseases": diseases,
+                    "drugs": drugs,
+                    "evidence": citation_evidence,
+                    "internal_assets": internal_assets,
+                    "bios_bridges": bios_bridges,
+                    "relationships": relationships,
+                    "related_entities": related,
+                    "assets": assets,
+                    "backends": backends,
+                },
+                enterprise_id=enterprise_id,
+                entity=entity,
+                evidence=citation_evidence,
+                assets=internal_assets,
+                bios_bridges=bios_bridges,
+                found=True,
+            )
 
     def dispatch(self, op: str, **kwargs: Any) -> dict[str, Any]:
         fn = getattr(self, op, None)

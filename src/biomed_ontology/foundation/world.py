@@ -197,8 +197,8 @@ def _load_list(path: Path, key: str) -> list[dict[str, Any]]:
 def _augment_dictionary_from_catalog(dictionary: EnterpriseDictionary) -> None:
     """把 ontology/catalog 别名并入 ER 词典（确定性 HMD:ENT:*）。"""
     try:
+        from biomed_ontology.ingest.catalog import catalog_files
         from biomed_ontology.ingest.seed import enterprise_id_for, load_seed_file
-        from biomed_ontology.pipeline import catalog_files
     except Exception:
         return
     type_map = {"SUBSTANCE": "chemical", "TARGET": "gene", "DISEASE": "disease"}

@@ -83,7 +83,7 @@
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `kafka_er_observations_topic` | `hmd.er.observations` | ER 缺口事件 topic |
 | `HMD_OBS_WAL_DIR` | `obs_wal_dir` | `data/obs_wal` | broker 不可达时 Jsonl WAL |
 
-联调：`task obs:up` → `task obs:register`（默认 bootstrap `127.0.0.1:19092`，Connect `:8083`）。详见 [`docker/obs/README.md`](../../docker/obs/README.md)。
+联调：`task obs:up` → `task obs:register`（默认 bootstrap `127.0.0.1:19092`，Connect `:8083`）。详见 [docker/obs](https://github.com/zhiweio/biomed-ontology/blob/main/docker/obs/README.md)。
 
 ## 不变量与失败模式
 

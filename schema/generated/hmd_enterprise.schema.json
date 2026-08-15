@@ -30,9 +30,24 @@
                 "associatedWith",
                 "mentions",
                 "supportedBy",
-                "sameAsExternal"
+                "sameAsExternal",
+                "inhibits",
+                "hasActivityIn",
+                "hasMechanism",
+                "inPathway",
+                "hasBiomarker",
+                "hasResult"
             ],
             "title": "ClaimPredicateEnum",
+            "type": "string"
+        },
+        "ClaimStatusEnum": {
+            "description": "",
+            "enum": [
+                "extracted",
+                "validated"
+            ],
+            "title": "ClaimStatusEnum",
             "type": "string"
         },
         "DocTypeEnum": {
@@ -45,7 +60,9 @@
                 "PATENT",
                 "REGULATORY_DOCUMENT",
                 "LABEL",
-                "INTERNAL_REPORT"
+                "INTERNAL_REPORT",
+                "INVESTIGATOR_BROCHURE",
+                "CLINICAL_STUDY_REPORT"
             ],
             "title": "DocTypeEnum",
             "type": "string"
@@ -524,10 +541,14 @@
         },
         "KnowledgeClaim": {
             "additionalProperties": false,
-            "description": "\u5e26\u51fa\u5904\u7684\u77e5\u8bc6\u65ad\u8a00\u3002Knowledge \u2260 Truth\uff1b Claim + Provenance + Evidence \u624d\u53ef\u88ab Agent \u6d88\u8d39\u3002",
+            "description": "\u5e26\u51fa\u5904\u7684\u77e5\u8bc6\u65ad\u8a00\u3002Knowledge \u2260 Truth\uff1b Claim + Provenance + Evidence \u624d\u53ef\u88ab Agent \u6d88\u8d39\u3002 claim_status=extracted \u4ec5\u4e3a\u5019\u9009\uff1bvalidated \u624d\u53ef\u7269\u5316\u4e3a World Model knowledge \u8fb9\u3002",
             "properties": {
                 "claim_id": {
                     "type": "string"
+                },
+                "claim_status": {
+                    "$ref": "#/$defs/ClaimStatusEnum",
+                    "description": "extracted=\u81ea\u52a8\u62bd\u53d6\u5019\u9009\uff1bvalidated=\u4f01\u4e1a\u8ba4\u53ef\u7684 World Model \u4e8b\u5b9e"
                 },
                 "confidence": {
                     "type": [
@@ -573,6 +594,13 @@
                 "predicate": {
                     "$ref": "#/$defs/ClaimPredicateEnum"
                 },
+                "source_count": {
+                    "description": "\u72ec\u7acb\u6765\u6e90/\u8bc1\u636e\u6761\u6570\uff08\u591a\u6e90\u4f50\u8bc1\uff09",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
                 "source_id": {
                     "type": [
                         "string",
@@ -597,7 +625,8 @@
             "required": [
                 "claim_id",
                 "subject_id",
-                "predicate"
+                "predicate",
+                "claim_status"
             ],
             "title": "KnowledgeClaim",
             "type": "object"

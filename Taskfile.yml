@@ -115,6 +115,11 @@ tasks:
       - task: lint
       - task: test
 
+  check:nlu:
+    desc: 瘦安装剖面——身份 / 目录 / workspace 包（不拉版面与视觉）
+    cmds:
+      - uv run pytest tests/test_identity.py tests/test_catalog_normalizer.py tests/test_alias.py tests/test_biomedical_sources.py tests/test_workspace_packages.py tests/test_metric_vocab.py tests/test_domain_re.py tests/test_ingest_qa.py tests/test_claim_fusion.py tests/test_context_pack.py tests/test_evidence_embedded.py -q
+
   docs:
     desc: mkdocs 严格构建
     cmds:

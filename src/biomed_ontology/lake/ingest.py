@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from biomed_ontology.lake.ingest_qa import run_ingest_qa
 from biomed_ontology.lake.steps import (
     IngestContext,
     annotate_bern2,
@@ -43,6 +44,7 @@ def ingest_document(
         corpus_yaml=corpus_yaml,
         file_path=None if corpus_yaml is not None else file_path,
     )
+    ctx.qa = run_ingest_qa(ctx)
     annotate_bern2(ctx, bern2_url=bern2_url)
     write_evidence(ctx)
     write_claims(ctx, bern2_url=bern2_url)

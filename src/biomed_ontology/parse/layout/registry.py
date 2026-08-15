@@ -39,6 +39,10 @@ def get_layout_backend(name: str | None = None, *, config: Settings | None = Non
             max_bytes=cfg.parse_max_bytes,
             render_chart_images=cfg.docling_render_chart_images,
         )
+    if backend == "text":
+        from biomed_ontology.parse.layout.text import TextBackend
+
+        return TextBackend(max_bytes=cfg.parse_max_bytes)
     if backend == "mineru":
         from biomed_ontology.parse.layout.mineru import MinerUBackend
 

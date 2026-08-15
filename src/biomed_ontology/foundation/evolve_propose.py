@@ -143,9 +143,7 @@ def load_candidates_files(
     paths: list[Path] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """Load one or more ``*.candidates.json``; merge candidates with source stamp."""
-    files: list[Path] = (
-        list(paths) if paths else sorted(CANDIDATES_DIR.glob("*.candidates.json"))
-    )
+    files: list[Path] = list(paths) if paths else sorted(CANDIDATES_DIR.glob("*.candidates.json"))
     if not files:
         raise FileNotFoundError(f"no candidates.json under {CANDIDATES_DIR}")
 
@@ -279,9 +277,7 @@ def filter_candidates(
                 "batch_skipped",
             }
             hard |= {
-                r
-                for r in reasons
-                if r.startswith("deny_pattern:") or r.startswith("drop_method:")
+                r for r in reasons if r.startswith("deny_pattern:") or r.startswith("drop_method:")
             }
             if any(r in hard or r.startswith("deny_") or r.startswith("drop_") for r in reasons):
                 row["risk_tier"] = "L0"
@@ -407,10 +403,7 @@ def _build_proposal(cand: dict[str, Any], evidence: dict[str, Any]) -> dict[str,
         elif evidence.get("zingg"):
             op = "fuzzy_link"
             write_surface = "zingg_matches"
-            kgcl = (
-                f"# fuzzy link '{mention}' -> {target} "
-                f"(zingg score={zingg.get('score')})"
-            )
+            kgcl = f"# fuzzy link '{mention}' -> {target} (zingg score={zingg.get('score')})"
         else:
             op = "create_synonym"
             write_surface = "dictionary"
@@ -483,13 +476,9 @@ def run_enrich(
     policy = load_filter_policy(policy_path)
     candidates, source_files = load_candidates_files(from_paths)
     gold_nulls = (
-        load_gold_null_keys(policy.gold_resolve_path)
-        if policy.dismiss_expect_null
-        else set()
+        load_gold_null_keys(policy.gold_resolve_path) if policy.dismiss_expect_null else set()
     )
-    keep, dismissed, soft = filter_candidates(
-        candidates, policy, gold_null_keys=gold_nulls
-    )
+    keep, dismissed, soft = filter_candidates(candidates, policy, gold_null_keys=gold_nulls)
 
     llm_cfg = dict(policy.llm or {})
     llm_cfg["enabled"] = bool(use_llm) and bool(llm_cfg.get("enabled", True))
@@ -536,9 +525,7 @@ def run_enrich(
                             {
                                 **cand,
                                 "risk_tier": "L0",
-                                "filter_reasons": [
-                                    f"already_mapped>={policy.skip_confidence}"
-                                ],
+                                "filter_reasons": [f"already_mapped>={policy.skip_confidence}"],
                             }
                         )
                         if bar is not None:

@@ -26,6 +26,7 @@ class DualSurface:
     kb: Any | None = None
     search_backend: str = "milvus"
     chunk_store: Any | None = None
+    identity: Any | None = None  # IdentityService
 
     @property
     def world(self) -> Any:
@@ -101,10 +102,13 @@ def open_dual_surface(
     """
     from biomed_ontology.foundation.api import FoundationApi
     from biomed_ontology.foundation.world import load_world_model
+    from biomed_ontology.identity import IdentityService
     from biomed_ontology.tools import ToolApi
 
     world = load_world_model(bern2_url=bern2_url)
+    identity = IdentityService.from_world(world)
     foundation = FoundationApi(world)
+    foundation.identity = identity
 
     kb = literature_kb
     if kb is None and load_literature:
@@ -144,6 +148,7 @@ def open_dual_surface(
         kb=kb,
         search_backend="milvus",
         chunk_store=store,
+        identity=identity,
     )
 
 

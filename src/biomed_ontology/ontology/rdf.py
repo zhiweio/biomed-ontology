@@ -18,12 +18,12 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import httpx
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
-from biomed_ontology.foundation.graphdb import GraphDbClient, ensure_repository
+from biomed_ontology.contracts.graph import GraphClient
 from biomed_ontology.licensing import named_graph_uri, tier_rank
 
 if TYPE_CHECKING:
@@ -125,11 +125,24 @@ class ShaclReport:
         return self.conforms
 
 
+def _default_graph_client() -> GraphClient:
+    from biomed_ontology.foundation.graphdb import GraphDbClient
+
+    return GraphDbClient.from_settings()
+
+
+def ensure_repository(client: GraphClient) -> None:
+    """GraphDB 仓库就绪。测试可 patch 本符号；实现仍在 foundation.graphdb。"""
+    from biomed_ontology.foundation import graphdb as gdb
+
+    gdb.ensure_repository(cast(gdb.GraphDbClient, client))
+
+
 @dataclass
 class GraphStore:
     """带许可命名图隔离的三元组库（GraphDB）。"""
 
-    client: GraphDbClient = field(default_factory=GraphDbClient.from_settings)
+    client: GraphClient = field(default_factory=_default_graph_client)
     _graph_tier: dict[str, LicenseTierEnum] = field(default_factory=dict, init=False, repr=False)
     _graph_source: dict[str, str] = field(default_factory=dict, init=False, repr=False)
     _ensured: bool = field(default=False, init=False, repr=False)

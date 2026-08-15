@@ -14,6 +14,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology.observability import MetricPoint
@@ -286,6 +287,47 @@ class QualityGate:
 
         for m in report.metrics:
             kb.hub.record_metric(m)
+        return GateDecision(passed=not blocking, blocking=blocking, report=report)
+
+    def evaluate_claims(
+        self,
+        claims: list[Any],
+        *,
+        release_id: str = "extracted",
+    ) -> GateDecision:
+        """入图前的 claim 级守门：无证据阻断；互斥数值告警。不自动 validated。"""
+        report = QualityReport(release_id=release_id)
+        blocking: list[str] = []
+        groups: dict[tuple[str, str, str], set[str]] = {}
+        for raw in claims:
+            claim = raw if isinstance(raw, dict) else getattr(raw, "__dict__", {})
+            cid = str(claim.get("claim_id") or "")
+            evidence = claim.get("evidence_ids") or claim.get("evidence") or []
+            if not evidence:
+                report.violations.append(
+                    Violation("fact_without_evidence", "ERROR", cid or "claim", "缺少证据")
+                )
+                blocking.append(f"[fact_without_evidence] {cid or 'claim'}: 缺少证据")
+            subject = str(claim.get("subject_id") or "")
+            pred = str(claim.get("predicate") or "")
+            metric = ""
+            for q in claim.get("qualifiers") or []:
+                if str(q).startswith("metric="):
+                    metric = str(q).split("=", 1)[1]
+            value = claim.get("object_value")
+            if subject and pred and value:
+                groups.setdefault((subject, pred, metric), set()).add(str(value))
+        for key, vals in groups.items():
+            if len(vals) > 1:
+                label = "|".join(key)
+                report.violations.append(
+                    Violation(
+                        "conflicting_values",
+                        "WARN",
+                        label,
+                        f"同一指标出现互斥数值：{sorted(vals)}",
+                    )
+                )
         return GateDecision(passed=not blocking, blocking=blocking, report=report)
 
     def _structural_metrics(self, kb: KnowledgeBase) -> list[MetricPoint]:

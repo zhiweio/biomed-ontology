@@ -2,18 +2,19 @@
 
 改代码前用这张清单自检。违反任一则：**宁可红灯或显式「未运行」，也不许绿报表撒谎**。
 
-完整决策背景见 [附录 · D1–D12](appendix/decisions.md)。
+完整决策背景见 [附录 · D1–D24](appendix/decisions.md)。
 
 ---
 
 ## 1. 为什么存在
 
-本仓库横跨检索评测、许可合规、双后端 World Model 与湖仓入湖。没有成文不变量时，「能跑」的 PoC 补丁会悄悄破坏：
+本仓库横跨检索评测、许可合规、双面 World Model 与湖仓入湖。没有成文不变量时，「能跑」的 PoC 补丁会悄悄破坏：
 
 - 评测可复现性（静默回落、fake 嵌入器冒充真模型）
 - 许可隔离（先检出再裁剪泄漏存在性）
-- 身份一致性（`HMD:ENT:*` vs 旧 `HMD:SUB` vs BIOS 主键）
+- 身份一致性（企业主键 `HMD:ENT:*`；BIOS / UMLS 只 xref）
 - Foundation 三后端契约（YAML fallback）
+- 入湖诚实性（空树 / 降级文档静默入库）
 
 不变量表是 PR 自检与 on-call 的**最低纪律**。
 
@@ -23,8 +24,9 @@
 
 | 原则 | 含义 |
 |---|---|
-| 失败要大声 | Milvus/精排/GraphDB 不可达 → 标未运行或硬失败 |
+| 失败要大声 | Milvus/精排/GraphDB/IngestQA 不可达 → 标未运行或硬失败 |
 | 单一装配路径 | `open_dual_surface()` 服务 demo/eval/serve |
+| 单一身份句柄 | `IdentityService`；词典只装配一次 |
 | 候选期许可 | `LicenseScope.permits` 在检索候选生成期 |
 | 身份分层 | Enterprise ID 主键；外部 ID 仅 xref |
 | 演进不自动 apply | `evolve-mine` 只产出 KGCL/JSON |
@@ -53,6 +55,8 @@
 |---|---|
 | Enterprise ID 主键 | `enterprise_id_for`、`HMD:ENT:*` |
 | 目录 SSOT | `ontology/catalog/`；`catalog_files()` |
+| 单一身份句柄 | `IdentityService` |
+| 文档不 mint ENT | lake `_ground` / unmapped |
 | 别名带 scope | `SynonymScopeEnum`；`normalize/matchers.py` |
 | 不确定不猜 | D3：`alternatives` top-k |
 | 链接双向建 | `GraphDbNeighborhood.adjacency_many` 合成反向 |
@@ -65,7 +69,9 @@
 | 不变量 | 实现锚点 |
 |---|---|
 | Milvus 必选 | 文献 + `foundation_evidence` |
+| 占位向量标 `embedded=false` | `lake/evidence_index.py` |
 | Semantic Ops 隐藏后端 | `FoundationApi`；无裸 SPARQL 工具 |
+| Context Pack 声明缺失 | `attach_pack_fields` → `missing[]` |
 | Knowledge ≠ Truth | claim + PROV + Evidence |
 | extracted ≠ validated | `sync._claims_turtle` 物化条件 |
 | 同 doc_id 幂等 | `lake/` 先删后写 |
@@ -75,14 +81,15 @@
 | BIOS 常挂 GraphDB | `graph/biomedical` |
 | OM ≠ 第二图谱 | Glossary 约束 |
 | BIOS 许可闸门 | `HMD_BIOS_LICENSE_ACK` |
-| 观测不挡请求路径 | `HMD_OBS_*` / Kafka produce 失败 → WAL 或静默；禁止热路径 sync Iceberg append |
+| 观测不挡请求路径 | `HMD_OBS_*` / Kafka produce 失败 → WAL 或静默 |
 | Zingg 不 mint / 不 auto-apply | matches 仅预计算；阈值 `HMD_ZINGG_MIN_SCORE` |
 | GraphDB Free ≠ 生产 | 运维文档纪律 |
 
-### 3.4 解析与资产
+### 3.4 解析与入湖
 
 | 不变量 | 实现锚点 |
 |---|---|
+| IngestQA 拦入库 | `lake/ingest_qa.py` |
 | 路径唯一拼接点 | `resolve_asset` / `asset_dir_name` |
 | 文件名不取自正文 | `safe_asset_name` |
 | 读不到像素要可见 | 视觉列失败可观测 |
@@ -96,6 +103,7 @@
 | Provenance / trace_id 一等公民 | D6；`ObservabilityHub` |
 | 还原共用 permits | Citationware 不旁路许可 |
 | 组件 pending 要闸门 | `assert_component_cleared` |
+| KB 8 + Foundation 10 | `TOOL_SPECS` / `SEMANTIC_OPS` |
 
 ---
 
@@ -107,8 +115,9 @@
 | 图通道不过滤 tier | 无权用户看到受限 chunk | 许可审计 |
 | 合并 expand + search-around | 竞品药名污染 BM25/图通道 | Q4 类 gold 掉分 |
 | sync CLEAR extracted | 湖侧 claim 消失 | 重跑 ingest 后 golden 失败 |
-| 用 `data/seed/` 当 SSOT | 身份与 Foundation 分裂 | `test_seed_build` / ER eval |
+| 把公开 ID 当企业主键 | 身份与 Foundation 分裂 | `test_seed_build` / ER eval |
 | 手改 `_generated/` | gen 后神秘回归 | CI `task gen` diff |
+| 空树入库 | restore_context 空章节 | `test_ingest_qa` |
 
 ---
 
@@ -124,8 +133,8 @@
 
 ```bash
 task check
-uv run pytest tests/test_readme.py tests/test_invariants.py -q 2>/dev/null || uv run pytest tests/ -q
+uv run pytest tests/test_readme.py tests/test_identity.py tests/test_ingest_qa.py tests/test_context_pack.py -q
 uv run hmd eval --entitlements MOCK_LICENSED --compact
 ```
 
-相关：[分层架构](architecture/layers.md)、[检索 hybrid](retrieval/hybrid.md)、[Foundation](architecture/foundation.md)。
+相关：[分层与产品栈](architecture/layers.md)、[检索 hybrid](retrieval/hybrid.md)、[Foundation](architecture/foundation.md)。

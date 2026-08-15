@@ -58,7 +58,7 @@ flowchart LR
 
 ### `restore_context`
 
-正文权威源是 **`ChunkStore`**（生产默认 Iceberg `evidence_chunks`；单测用 `MemoryChunkStore`），**不再**扫进程内 `kb.chunks`。`hmd index` 对 Tree Chunk **dual-write** Milvus + Iceberg，并以同一 `release_id` 强绑定。
+正文权威源是 **`ChunkStore`**（生产默认 Iceberg `evidence_chunks`；单测用 `MemoryChunkStore`），不扫进程内 `kb.chunks`。`hmd index` 对 Tree Chunk **dual-write** Milvus + Iceberg，并以同一 `release_id` 强绑定。
 
 参数：
 

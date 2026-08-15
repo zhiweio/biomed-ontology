@@ -2,21 +2,16 @@
 
 源码：`src/biomed_ontology/pipeline.py`。
 
-运行时双面入口是 `runtime.open_dual_surface()`（`ToolApi` 文献面 + `FoundationApi` World Model）。`build_literature_base()` 是文献 KB 的**权威装配函数**；`build_knowledge_base()` 为其兼容别名。CLI 的 `demo` / `eval` / `serve` 与 golden 经双面 harness，不再各自再写一套装配。
+运行时双面入口是 `runtime.open_dual_surface()`（`ToolApi` 文献面 + `FoundationApi` World Model + `IdentityService`）。
+`build_literature_base()` 是文献 KB 的权威装配函数。CLI 的 `demo` / `eval` / `serve` 与 golden 经双面 harness，共用同一条装配路径。
 
 ---
 
 ## 1. 为什么存在
 
-早期很容易写成：
+评测分数必须等于服务上会看到的分数。若 `hmd eval`、`hmd serve`、demo 各自装配一份概念库，任意一次目录改动都可能只进了一份。把装配收成单一函数，是为了让**可证伪性**成立。
 
-- `hmd eval` 自己读 seed、自己切片
-- `hmd serve` 再装配一份
-- demo 再写第三份「演示用」概念
-
-三份库长得像，但任意一次目录改动都可能只进了一份。把装配收成单一函数，不是为了少写几行，而是为了让**可证伪性**成立：同一份代码路径上的分数，才是服务上会看到的分数。
-
-文献面的身份权威在 `ontology/catalog/`（`HMD:ENT:*`），不经 `HMD:SUB` 铸造（见 [企业身份与目录 SSOT](../ontology/seed.md)）。
+文献面的身份权威在 `ontology/catalog/`（`HMD:ENT:*`），经 `IdentityService` 消费。生产主键只有企业 ID；ledger 铸造仅单测夹具（见 [企业身份与目录 SSOT](../ontology/seed.md)）。
 
 ---
 
@@ -40,14 +35,14 @@
 ```mermaid
 flowchart LR
   R[registry + catalog YAML] --> B[build_from_seed]
-  B --> N[Normalizer]
+  B --> I[IdentityService / Normalizer]
   B --> G[GraphStore concepts 可选]
   B --> L[GraphStore concept links 可选]
   C[corpus YAML + parsed/] --> CH[chunk_document]
-  N --> CH
+  I --> CH
   CH --> F[TriModalPipeline facts]
   F --> G2[GraphStore facts 可选]
-  N --> KB[KnowledgeBase]
+  I --> KB[KnowledgeBase]
   CH --> KB
   G --> KB
   G2 --> KB
@@ -61,7 +56,7 @@ flowchart LR
 | 2 | `catalog_files` | `ontology/catalog/*.yaml` | YAML 路径列表 |
 | 3 | `load_ambiguity_registry` | `ontology/catalog/ambiguity.yaml` | 歧义表 |
 | 4 | `build_from_seed` | catalog + `id_mode=enterprise` | `SeedBuildResult` |
-| 5 | `Normalizer(...)` | concepts + synonyms + ambiguity | L3 唯一入口 |
+| 5 | `Normalizer` / `IdentityService` | concepts + synonyms + ambiguity | L3 唯一入口 |
 | 6 | `graph.load_concepts` | `with_graph=True` 时 | `SEED_INTERNAL` 图 |
 | 7 | `graph.load_concept_links` | `with_graph=True` 时 | `SEED_LINKS` 图 |
 | 8 | `load_corpus` | `data/corpus/` + `parsed/` | `Document[]` |
@@ -70,6 +65,8 @@ flowchart LR
 | 11 | `graph.load_corpus` / `load_facts` | 按 `source_id` 分区 | 许可命名图 |
 
 `with_corpus=False` 时在步骤 7 之后返回——只测术语层时用。
+
+文档入湖（`hmd lake ingest-doc`）是另一条写路径：Router → IngestQA → Evidence ∥ Claims。见 [Document Lake](document-pipeline.md)。
 
 ### 3.2 关键常量
 
@@ -88,7 +85,7 @@ KnowledgeBase
 ├── release_id          # 所有答案必须可复现到这个版本
 ├── registry            # 源与许可
 ├── concepts / synonyms # build_from_seed 产物（BuiltConcept）
-├── normalizer          # L3 唯一入口
+├── normalizer          # L3 目录级联（IdentityService 的一半）
 ├── documents / chunks  # L4
 ├── labels              # 文档标引（TaxonomyClassifier）
 ├── facts               # TriModalPipeline 结构化事实
@@ -128,11 +125,12 @@ GRAPH 检索臂、`hmd eval` 含 ontology 通道、集成测试均依赖此函�
 |---|---|
 | CLI `hmd demo` / `eval` / `foundation golden` | `open_dual_surface()` |
 | `hmd serve` | `build_state()` → `open_dual_surface()` |
-| CLI `hmd kb` / `gate` / `index` | `build_literature_base()` 或 `build_knowledge_base()` |
+| CLI `hmd kb` / `gate` / `index` | `build_literature_base()` |
 | 测试 | fixture 可注入 KB；运行时路径测 `open_dual_surface` |
 
 ```text
 open_dual_surface()
+├── IdentityService.from_world()
 ├── build_literature_base(with_graph=False)   # 默认
 ├── _require_milvus_literature_backend()
 ├── build_literature_searcher(ensure_graph=True)
@@ -165,10 +163,9 @@ open_dual_surface()
 
 ```bash
 uv run hmd kb          # 看 stats + warnings
-uv run pytest tests/test_seed_build.py tests/test_eval_demo.py -q
-uv run pytest tests/test_pipeline.py -q 2>/dev/null || true
+uv run pytest tests/test_seed_build.py tests/test_eval_demo.py tests/test_identity.py -q
 ```
 
-读代码路径：`open_dual_surface` → `build_literature_base` → `build_from_seed` → `catalog_files`。
+读代码路径：`open_dual_surface` → `IdentityService.from_world` → `build_literature_base` → `build_from_seed` → `catalog_files`。
 
-相关：[分层架构](layers.md)、[Document Pipeline](document-pipeline.md)、[企业身份与目录 SSOT](../ontology/seed.md)、[GraphStore](../ontology/rdf.md)、[归一化](../ontology/normalize.md)、[事实抽取](../ontology/extract.md)。
+相关：[分层与产品栈](layers.md)、[Document Lake](document-pipeline.md)、[IdentityService](../ontology/identity.md)、[GraphStore](../ontology/rdf.md)、[归一化](../ontology/normalize.md)、[事实抽取](../ontology/extract.md)。

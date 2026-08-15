@@ -1391,6 +1391,9 @@ hmd:SearchRequest a owl:Class ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:date_to ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:expansion_terms ],
+        [ a owl:Restriction ;
             owl:allValuesFrom hmd:EntityTypeEnum ;
             owl:onProperty hmd:entity_types ],
         [ a owl:Restriction ;
@@ -1402,6 +1405,9 @@ hmd:SearchRequest a owl:Class ;
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:use_expansion ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:expansion_terms ],
         [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:modalities ],
@@ -2150,6 +2156,9 @@ hmd:SearchResponse a owl:Class ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:matched_concepts ],
         [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:expansion_source ],
+        [ a owl:Restriction ;
             owl:allValuesFrom hmd:EvidenceDoc ;
             owl:onProperty hmd:evidence_tree ],
         [ a owl:Restriction ;
@@ -2159,11 +2168,23 @@ hmd:SearchResponse a owl:Class ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:results ],
         [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:expansion_source ],
+        [ a owl:Restriction ;
+            owl:minCardinality 0 ;
+            owl:onProperty hmd:expansion_terms ],
+        [ a owl:Restriction ;
+            owl:maxCardinality 1 ;
+            owl:onProperty hmd:expansion_source ],
+        [ a owl:Restriction ;
             owl:minCardinality 0 ;
             owl:onProperty hmd:total ],
         [ a owl:Restriction ;
             owl:allValuesFrom hmd:MatchedConcept ;
             owl:onProperty hmd:matched_concepts ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom xsd:string ;
+            owl:onProperty hmd:expansion_terms ],
         [ a owl:Restriction ;
             owl:maxCardinality 1 ;
             owl:onProperty hmd:total ],
@@ -2503,6 +2524,11 @@ hmd:ConceptDetail a owl:Class ;
     skos:definition "get_concept 的详情块。包含 children 而非只有 parents： 调用方做层级扩展时需要向下看，只给父链会逼它再发一轮查询。" ;
     skos:inScheme hmd:tools .
 
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT> a owl:Class ;
+    rdfs:label "CLINICAL_STUDY_REPORT" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "临床试验报告（CSR）；文档 Pipeline 入口" .
+
 <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> a owl:Class ;
     rdfs:label "CLINICAL_TRIAL_RECORD" ;
     rdfs:subClassOf hmd:DocTypeEnum ;
@@ -2517,6 +2543,11 @@ hmd:ConceptDetail a owl:Class ;
     rdfs:label "INTERNAL_REPORT" ;
     rdfs:subClassOf hmd:DocTypeEnum ;
     skos:definition "企业内部报告，PoC 不涉及" .
+
+<https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE> a owl:Class ;
+    rdfs:label "INVESTIGATOR_BROCHURE" ;
+    rdfs:subClassOf hmd:DocTypeEnum ;
+    skos:definition "研究者手册（IB）；临床开发文档，不是 CTMS 替换" .
 
 <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> a owl:Class ;
     rdfs:label "JOURNAL_ARTICLE" ;
@@ -3690,11 +3721,6 @@ hmd:evidence_tree a owl:ObjectProperty ;
     skos:definition "文档 → 章节 → 碎片的聚合视图。扁平列表会让同一段落的多个碎片 看上去像多条独立证据，造成证据量的错觉。" ;
     skos:inScheme hmd:tools .
 
-hmd:expansion_terms a owl:ObjectProperty ;
-    rdfs:label "expansion_terms" ;
-    rdfs:range hmd:ExpansionTermOut ;
-    skos:inScheme hmd:tools .
-
 hmd:facts a owl:ObjectProperty ;
     rdfs:label "facts" ;
     rdfs:range hmd:Fact ;
@@ -4097,6 +4123,12 @@ hmd:error_message a owl:DatatypeProperty ;
     rdfs:label "error_message" ;
     rdfs:range xsd:string ;
     skos:inScheme hmd:obs .
+
+hmd:expansion_source a owl:DatatypeProperty ;
+    rdfs:label "expansion_source" ;
+    rdfs:range xsd:string ;
+    skos:definition "检索改写来源：enterprise | public_lexical | client_terms | none。" ;
+    skos:inScheme hmd:tools .
 
 hmd:expected_concept_id a owl:DatatypeProperty ;
     rdfs:label "expected_concept_id" ;
@@ -4695,6 +4727,11 @@ hmd:expansion_size a owl:DatatypeProperty ;
     rdfs:range xsd:integer ;
     skos:inScheme hmd:tools .
 
+hmd:expansion_terms a owl:ObjectProperty ;
+    rdfs:label "expansion_terms" ;
+    rdfs:range hmd:ExpansionTermOut ;
+    skos:inScheme hmd:tools .
+
 hmd:is_ambiguous a owl:DatatypeProperty ;
     rdfs:label "is_ambiguous" ;
     rdfs:range xsd:boolean ;
@@ -5007,20 +5044,6 @@ hmd:SignalTypeEnum a owl:Class ;
         <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#unmapped_span>,
         <https://w3id.org/asliva/biomed-ontology/SignalTypeEnum#zero_result_query> .
 
-hmd:DocTypeEnum a owl:Class ;
-    rdfs:label "DocTypeEnum" ;
-    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> ) ;
-    skos:definition "文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。" ;
-    skos:inScheme hmd:types ;
-    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT>,
-        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> .
-
 hmd:char_end a owl:DatatypeProperty ;
     rdfs:label "char_end" ;
     rdfs:range xsd:integer ;
@@ -5092,6 +5115,22 @@ hmd:ModalityChannelEnum a owl:Class ;
         <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#STRUCTURE>,
         <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TABLE>,
         <https://w3id.org/asliva/biomed-ontology/ModalityChannelEnum#TEXT> .
+
+hmd:DocTypeEnum a owl:Class ;
+    rdfs:label "DocTypeEnum" ;
+    owl:unionOf ( <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE> <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT> ) ;
+    skos:definition "文档类型，标引分类的第一个维度，也决定用哪套解析与抽取规则。" ;
+    skos:inScheme hmd:types ;
+    linkml:permissible_values <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_STUDY_REPORT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CLINICAL_TRIAL_RECORD>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#CONFERENCE_ABSTRACT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INTERNAL_REPORT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#INVESTIGATOR_BROCHURE>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#JOURNAL_ARTICLE>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#LABEL>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PATENT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#PREPRINT>,
+        <https://w3id.org/asliva/biomed-ontology/DocTypeEnum#REGULATORY_DOCUMENT> .
 
 hmd:EntityTypeEnum a owl:Class ;
     rdfs:label "EntityTypeEnum" ;
@@ -5198,10 +5237,10 @@ hmd:license_tier a owl:ObjectProperty ;
 xsd:anyURI a rdfs:Datatype ;
     owl:equivalentClass [ a rdfs:Datatype ;
             owl:onDatatype xsd:string ;
-            owl:withRestrictions ( [ xsd:pattern "^HMD:(TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}$" ] ) ],
+            owl:withRestrictions ( [ xsd:pattern "^[A-Za-z][A-Za-z0-9._-]*:\\S+$" ] ) ],
         [ a rdfs:Datatype ;
             owl:onDatatype xsd:string ;
-            owl:withRestrictions ( [ xsd:pattern "^[A-Za-z][A-Za-z0-9._-]*:\\S+$" ] ) ] .
+            owl:withRestrictions ( [ xsd:pattern "^HMD:((TGT|SUB|DIS|MOA|MOD|TRL|BMK|AE):\\d{7}|ENT:(DC|PRG|TGT|IND|EXP|PUB|ASY|CMP|BMK):[A-Za-z0-9_-]+)$" ] ) ] .
 
 xsd:string a rdfs:Datatype ;
     owl:equivalentClass [ a rdfs:Datatype ;

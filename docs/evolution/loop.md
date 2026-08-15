@@ -12,7 +12,7 @@ Foundation 侧挖掘：`hmd foundation evolve-mine`（见 [Foundation · Data Lo
 - 检索臂在 `hmd eval` 上回归；
 - World Model `resolve_entity` unmapped。
 
-没有闭环时，这些信号进入个人笔记或聊天记录，下个 release 不会系统性吸收。演进层主张：**缺口应由真实使用暴露**，miner 输入来自 P6 落下的 trace / decision / I/O / feedback，而非离线人工标注作唯一触发源。
+没有闭环时，这些信号进入个人笔记或聊天记录，下个 release 不会系统性吸收。演进层主张：**缺口应由真实使用暴露**，miner 输入来自 trace / decision / I/O / feedback，而非离线人工标注作唯一触发源。
 
 ## 设计取舍
 
@@ -76,7 +76,7 @@ flowchart LR
 - `ObservabilityHub` 提供 decision / I/O → 解释「为何产生信号」。
 - 每个 tool 响应带 `ontology_release_id` → 信号标记 `detected_in_release`。
 
-### Foundation Data Loop（一期硬边界）
+### Foundation Data Loop（硬边界）
 
 ```bash
 uv run hmd foundation evolve-mine "unknownzyme-xyz-999"   # 默认 include-lake
@@ -122,7 +122,7 @@ flowchart LR
   verify -->|new gaps| ice
 ```
 
-观测入湖见 [`docker/obs/README.md`](../../docker/obs/README.md)；Zingg 见 [`docker/zingg/README.md`](../../docker/zingg/README.md)。
+观测入湖见 [docker/obs](https://github.com/zhiweio/biomed-ontology/blob/main/docker/obs/README.md)；Zingg 见 [docker/zingg](https://github.com/zhiweio/biomed-ontology/blob/main/docker/zingg/README.md)。
 
 #### propose → approve → apply → eval
 
@@ -153,12 +153,12 @@ candidates
 | 受限 LLM | 语义噪声 / 碎片 / 测试话术变体 | 选 `op`/`target`；mint ENT；推翻硬 dismiss |
 | 模型 | 通用 Chat（`HMD_LLM_*`，DeepSeek/OpenAI/Qwen） | 不引入 BioBERT 等专垂模型作 Filter 依赖 |
 
-- Policy：[`evolve_filter.yaml`](../../ontology/policies/evolve_filter.yaml) 的 `llm:` 段 + 提示词 [`evolve_llm_filter_prompt.md`](../../ontology/policies/evolve_llm_filter_prompt.md)
+- Policy：[`evolve_filter.yaml`](https://github.com/zhiweio/biomed-ontology/blob/main/ontology/policies/evolve_filter.yaml) 的 `llm:` 段 + 提示词 [`evolve_llm_filter_prompt.md`](https://github.com/zhiweio/biomed-ontology/blob/main/ontology/policies/evolve_llm_filter_prompt.md)
 - CLI：默认 `--llm`；关：`--no-llm`（无 `HMD_LLM_API_KEY` → Null，行为等同仅规则）
 - 失败策略：`fail_mode: keep_rule_decision`（非法 JSON / 调用失败不丢真缺口）
 - Rich 摘要含 `llm_judged` / `llm_dismissed` / `llm_fallback`；`--json` 关闭进度条
 
-Filter **禁止**在代码里写死 `e2e-*` / `flush-check-*` 等业务串：一律进 policy（deny_patterns、overlap、gold `expect: null`、频次、LLM labels）。人读输出走 Rich + `tqdm.rich`（[`cli_ui.py`](../../src/biomed_ontology/cli_ui.py)）。
+Filter **禁止**在代码里写死 `e2e-*` / `flush-check-*` 等业务串：一律进 policy（deny_patterns、overlap、gold `expect: null`、频次、LLM labels）。人读输出走 Rich + `tqdm.rich`（`cli_ui.py`）。
 
 ### 配置（`Settings` / `.env`）
 

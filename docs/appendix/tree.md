@@ -1,6 +1,6 @@
 # 目录地图
 
-本页描述仓库**物理布局**与**逻辑分层**的对应关系，便于接手时快速定位代码与数据。设计层说明见 [分层架构](../architecture/layers.md)、[Foundation](../architecture/foundation.md)。策展资产与 sync / REST·MCP / BERN2·BIOS 接线见 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
+本页描述仓库**物理布局**与**逻辑分层**的对应关系。设计层说明见 [分层与产品栈](../architecture/layers.md)、[Foundation](../architecture/foundation.md)。策展接线见 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
 
 ## 为什么存在
 
@@ -11,10 +11,10 @@
 | 取舍 | 选择 | 放弃 |
 |---|---|---|
 | 契约 SSOT | `schema/` + `task gen` → `_generated/` + `schema/generated/` | 手写 Pydantic 与 LinkML 双份 |
-| 实例策展 | `ontology/`（entities / dictionary / claims / catalog / mappings…） | 已删除的 `data/seed/`；把 OWL 当运行时唯一真相 |
-| 运行时包 | `src/biomed_ontology/` 单包 | 多 repo 拆分（当前单体） |
+| 实例策展 | `ontology/`（entities / dictionary / claims / catalog / mappings…） | 把 OWL 当运行时唯一真相 |
+| 运行时包 | `src/biomed_ontology/` + `packages/hmd-*` workspace 剖面 | 多 repo 拆分 |
 | 评测数据 | `data/gold/` 与代码同仓 | 外链不可复现数据集 |
-| 任务入口 | `Taskfile.yml` | Makefile |
+| 任务入口 | `Taskfile.yml` | 散落 shell / 第二套任务文件 |
 
 ## 设计与实现
 
@@ -24,74 +24,79 @@ biomed-ontology/
 ├── Taskfile.yml              # 统一任务入口
 ├── NOTICE                    # 出处与许可义务（法务面）
 ├── mkdocs.yml                # 本手册导航
-├── docs/                     # 手册源码（设计文档）
-├── schema/                   # LinkML SSOT（根目录，不在 ontology/ 下）
-│   ├── hmd_*.yaml            # types / concept / enterprise / fact / …
-│   ├── shapes/               # projection.shacl.ttl（手写投影约束）
+├── packages/                 # uv workspace 依赖剖面（hmd-contracts … hmd-access）
+├── docs/                     # 手册源码
+├── schema/                   # LinkML SSOT
+│   ├── hmd_*.yaml
+│   ├── shapes/               # projection.shacl.ttl
 │   └── generated/            # OWL / JSON Schema / SHACL 生成物
-├── ontology/                 # Ontology-as-Code 策展面（Git 实例 SSOT）
+├── ontology/                 # Ontology-as-Code 策展面
 │   ├── entities/             # 企业实体 HMD:ENT:*
 │   ├── dictionary/           # ER Exact 词典
 │   ├── claims/               # KnowledgeClaim
 │   ├── mappings/             # BIOS / BERN2 / ChEBI / zingg
 │   ├── catalog/              # 文献 ENT 目录 + ambiguity
-│   ├── extract/              # 表格指标等抽取配置
-│   ├── owl/ + shapes/        # Protégé / SHACL 入口说明（非 SSOT）
-│   └── examples/golden_path/ # HMPL-504 + public_no_ent 金路径样例
+│   ├── extract/              # MetricVocab（table_metrics.yaml）
+│   └── examples/golden_path/
 ├── data/
-│   ├── foundation/           # 运行投影样例（evidence / assets / BIOS 子集；非身份 SSOT）
-│   ├── corpus/ + parsed/     # 语料 YAML（解析产物）
-│   ├── gold/                 # 评测 query、targets、extraction 金标
-│   ├── registry/             # 源与采购（tier / license）
-│   ├── assets/               # 渲染图块等静态资源
+│   ├── foundation/           # 运行投影样例（非身份 SSOT）
+│   ├── corpus/ + parsed/     # 语料 YAML
+│   ├── gold/                 # 评测 query、targets
+│   ├── registry/             # 源与采购
 │   └── cache/                # BIOS / 模型权重缓存
 ├── docker/
 │   ├── milvus-standalone.yml
 │   ├── docker-compose.foundation.yml
 │   ├── bern2/
 │   └── secrets/              # graphdb.license（gitignore）
-├── scripts/                  # dump_sections 等维护脚本
+├── scripts/
 └── src/biomed_ontology/
+    ├── identity.py           # IdentityService
     ├── pipeline.py           # KB 装配入口
-    ├── runtime.py            # open_dual_surface（ToolApi + FoundationApi）
-    ├── foundation/           # World Model + FoundationApi + sync / resolve / bios
+    ├── runtime.py            # open_dual_surface
+    ├── foundation/           # World Model + Context Pack + sync / resolve / bios
     ├── ingest/               # 种子 / catalog 构建
-    ├── ontology/             # links / rdf / ids / neighborhood / clique
+    ├── ontology/             # links / rdf / ids / neighborhood / metrics
     ├── normalize/ + alias/
     ├── parse/ + corpus/
     ├── search/ + embed/ + rerank/
-    ├── tools/ + service/     # ToolApi、hmd serve、MCP
-    ├── lake/                 # 文档湖 ingest / claim bridge
-    ├── licensing.py          # tier + COMPONENTS 闸门
+    ├── tools/ + service/
+    ├── lake/                 # ingest / IngestQA / Evidence Index / Iceberg
+    ├── licensing.py
     ├── observability/ + quality/ + evolution/
-    ├── eval/                 # dual eval、ARMS、targets、stats
+    ├── eval/
     └── _generated/           # task gen 产物（勿手改）
 ```
 
-### 逻辑分层 ↔ 目录（简表）
+### 逻辑分层 ↔ 目录
+
+与 [分层与产品栈](../architecture/layers.md) 的 L0–L8 对齐：
 
 | 层 | 主要目录 | 职责 |
 |---|---|---|
-| L0 契约 | `schema/`、`_generated/`、`schema/generated/` | LinkML、OpenAPI/MCP、OWL/SHACL |
-| L1 数据 | `ontology/catalog`、`data/corpus`、`data/registry` | ENT 目录、语料、源 tier |
-| L2 解析 / 抽取 | `parse/`、`corpus/`（含 tree + TriModal extract） | PDF → Evidence；候选 Fact → lake |
-| L3 本体策展 | `ontology/{entities,dictionary,claims,mappings,catalog}` | 企业身份、词典、断言、挂靠、文献目录 |
-| L4 检索 | `search/`、`embed/`、`rerank/` | HybridSearcher、Milvus |
-| L5 工具 | `tools/`、`service/` | Semantic Access、REST/MCP |
-| L6 Foundation | `foundation/` | ER、GraphDB、Evidence、OM、sync |
+| L0 Source | `data/registry/`、`registry/` | 源、tier、采购插槽 |
+| L1 术语 | `ontology/catalog/`、`ingest/` | ENT 目录、链接 |
+| L2 语义 | `schema/`、`_generated/` | LinkML、OWL/SHACL |
+| L3 身份 | `identity.py`、`normalize/`、`foundation/resolve.py` | IdentityService |
+| L4 语料 | `parse/`、`corpus/`、`lake/` | Router、IngestQA、TriModal |
+| L5 检索 | `search/`、`embed/`、`rerank/` | HybridSearcher、Milvus |
+| L6 访问 | `tools/`、`service/`、`foundation/api.py` | Semantic Access |
 | L7 观测 | `observability/` | 四支柱 |
-| L8 演进 | `evolution/`、`quality/` | 信号、KGCL |
-| L9 评测 | `eval/`、`data/gold/` | dual-surface、ARMS、targets |
+| L8 演进 | `evolution/`、`quality/` | 信号、KGCL、QualityGate |
+| 横切 | `foundation/`、`eval/`、`data/gold/` | World Model、评测 |
 
 ### 关键入口文件
 
 | 文件 | 作用 |
 |---|---|
-| `cli.py` | 所有 `hmd` 子命令 |
+| `cli.py` / `cli_foundation.py` / `cli_lake.py` | `hmd` 子命令 |
+| `identity.py` | `IdentityService` |
 | `runtime.py` | `open_dual_surface`、Milvus 文献后端硬要求 |
 | `service/deps.py` | `build_state` 单例 |
 | `tools/api.py` | `TOOL_SPECS`、`ToolApi` |
 | `foundation/api.py` | `SEMANTIC_OPS`、`FoundationApi` |
+| `foundation/context_pack.py` | Context Pack |
+| `lake/ingest_qa.py` | IngestQA |
 | `foundation/sync.py` | `sync_world_model` |
 | `foundation/resolve.py` | `EntityResolver` |
 | `eval/suite.py` | `run_dual_eval` |
@@ -102,7 +107,7 @@ biomed-ontology/
 |---|---|
 | 改 LinkML 后 `task gen` | `_generated` / `schema/generated` 与契约漂移 |
 | 不手改 `_generated/` | 下次 gen 覆盖或 CI 失败 |
-| 企业身份在 `ontology/`，不在已删的 `data/seed/` | 改错面、sync 读不到 |
+| 企业身份在 `ontology/`（catalog + entities） | 改错面、sync 读不到 |
 | gold 键对齐 `parsed/` section | eval dangling |
 | NOTICE 与 `COMPONENTS` 同步 | 义务不可执行 |
 | secrets 不入 git | `docker/secrets/` gitignore |

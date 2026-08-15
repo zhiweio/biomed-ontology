@@ -11,7 +11,9 @@ from biomed_ontology.lake.claim_bridge import evidence_id_for_chunk
 __all__ = ["delete_evidence_by_doc", "upsert_evidence_objects"]
 
 _COLLECTION = "foundation_evidence"
+# 占位维：本集合不冒充语义嵌入。真向量在 hmd index → hmd_chunks。
 _DIM = 32
+_EMBEDDED = False
 
 
 def _field(obj: Any, *names: str, default: Any = None) -> Any:
@@ -66,11 +68,11 @@ def upsert_evidence_objects(
     if doc_id:
         delete_evidence_by_doc(doc_id, uri=uri)
     rows: list[dict[str, Any]] = []
-    for i, ch in enumerate(chunks):
+    for ch in chunks:
         chunk_id = _field(ch, "chunk_id", "evidence_id")
         text = str(_field(ch, "text", "content", "quote", default="") or "")
         entity_ids = list(_field(ch, "entity_ids", "concept_ids", default=[]) or [])[:64]
-        vec = [((i + 1) * (j + 1) % 97) / 97.0 for j in range(_DIM)]
+        vec = [0.0] * _DIM
         rows.append(
             {
                 "evidence_id": evidence_id_for_chunk(str(chunk_id)),
@@ -85,6 +87,7 @@ def upsert_evidence_objects(
                 "collection": "literature",
                 "score": 1.0,
                 "dense": vec,
+                "embedded": _EMBEDDED,
             }
         )
     if not rows:

@@ -338,39 +338,45 @@ hmd:Experiment a sh:NodeShape ;
     sh:targetClass hmd:Experiment .
 
 hmd:KnowledgeClaim a sh:NodeShape ;
-    rdfs:comment "带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。" ;
+    rdfs:comment "带出处的知识断言。Knowledge ≠ Truth； Claim + Provenance + Evidence 才可被 Agent 消费。 claim_status=extracted 仅为候选；validated 才可物化为 World Model knowledge 边。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:in ( "targets" "investigates" "treats" "belongsTo" "testedIn" "hasAssay" "associatedWith" "mentions" "supportedBy" "sameAsExternal" ) ;
+    sh:property [ sh:datatype xsd:integer ;
+            sh:description "独立来源/证据条数（多源佐证）" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:source_count ],
+        [ sh:datatype xsd:string ;
+            sh:description "Evidence Index（Milvus）中的证据条目 ID（ev:… / pubmed:… 等）" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 11 ;
+            sh:path hmd:evidence_ids ],
+        [ sh:in ( "targets" "investigates" "treats" "belongsTo" "testedIn" "hasAssay" "associatedWith" "mentions" "supportedBy" "sameAsExternal" "inhibits" "hasActivityIn" "hasMechanism" "inPathway" "hasBiomarker" "hasResult" ) ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:order 2 ;
             sh:path hmd:predicate ],
+        [ sh:description "extracted=自动抽取候选；validated=企业认可的 World Model 事实" ;
+            sh:in ( "extracted" "validated" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 6 ;
+            sh:path hmd:claim_status ],
         [ sh:in ( "literature" "patent" "eln" "lims" "assay" "manual" "derived" ) ;
             sh:maxCount 1 ;
-            sh:order 7 ;
-            sh:path hmd:source_type ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 11 ;
-            sh:path hmd:created_at ],
-        [ sh:datatype xsd:string ;
-            sh:description "Evidence Index（Milvus）中的证据条目 ID（ev:… / pubmed:… 等）" ;
-            sh:nodeKind sh:Literal ;
             sh:order 9 ;
-            sh:path hmd:evidence_ids ],
+            sh:path hmd:source_type ],
         [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 1 ;
             sh:path hmd:subject_id ],
         [ sh:datatype xsd:string ;
-            sh:description "支撑 claim 的原文片段（可与 Evidence.quote 对齐）" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 10 ;
-            sh:path hmd:span ],
+            sh:path hmd:extracted_by ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -384,22 +390,28 @@ hmd:KnowledgeClaim a sh:NodeShape ;
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 0 ;
-            sh:path hmd:claim_id ],
+            sh:order 13 ;
+            sh:path hmd:created_at ],
+        [ sh:datatype xsd:string ;
+            sh:description "支撑 claim 的原文片段（可与 Evidence.quote 对齐）" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 12 ;
+            sh:path hmd:span ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 6 ;
-            sh:path hmd:source_id ],
+            sh:order 0 ;
+            sh:path hmd:claim_id ],
+        [ sh:maxCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 3 ;
+            sh:path hmd:object_id ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 8 ;
-            sh:path hmd:extracted_by ],
-        [ sh:maxCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 3 ;
-            sh:path hmd:object_id ] ;
+            sh:path hmd:source_id ] ;
     sh:targetClass hmd:KnowledgeClaim .
 
 hmd:Program a sh:NodeShape ;
