@@ -67,9 +67,17 @@ def collect_ops_snapshot() -> dict[str, Any]:
     )
     cheap = _latest_scorecard("cheap")
     release = _latest_scorecard("release")
+    from biomed_ontology.config import settings as _settings
+    from biomed_ontology.lake.connect_admin import connectors_healthy, list_status
+    from biomed_ontology.lake.obs_events import count_wal_lines
+
+    connect_status = list_status()
+    connect_ok = connectors_healthy(connect_status)
+    connect_error = connect_status.get("_error")
     return {
         "generated_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "policy_version": policy.get("version"),
+        "env": _settings.env,
         "world_model_fingerprint_age_h": _file_age_hours(WORLD_FP),
         "world_model_fingerprint_present": WORLD_FP.is_file(),
         "zingg_input_fingerprint_age_h": _file_age_hours(ZINGG_FP),
@@ -79,9 +87,29 @@ def collect_ops_snapshot() -> dict[str, Any]:
         "cheap_scorecard_age_h": _file_age_hours(cheap) if cheap else None,
         "release_scorecard": str(release) if release else None,
         "release_scorecard_age_h": _file_age_hours(release) if release else None,
-        "er_unmapped_backlog": None,
-        "note": "er_unmapped_backlog 需 Iceberg；缺测时不红此项",
+        "er_unmapped_backlog": _er_unmapped_backlog(),
+        "obs_wal_lines": count_wal_lines(),
+        "connect_ok": connect_ok,
+        "connect_error": connect_error,
+        "connect_connectors": {
+            name: (block.get("status") or block)
+            for name, block in connect_status.items()
+            if name != "_error" and isinstance(block, dict)
+        },
+        "note": "er_unmapped_backlog 需 Iceberg；缺测时为 null 不红此项",
     }
+
+
+def _er_unmapped_backlog() -> int | None:
+    try:
+        from biomed_ontology.foundation.zingg_io import scan_er_observations
+
+        rows, warns = scan_er_observations(min_occurrences=1)
+    except Exception:
+        return None
+    if any("failed" in w for w in warns):
+        return None
+    return sum(int(r.get("occurrences") or 0) for r in rows)
 
 
 def evaluate_slo(snapshot: dict[str, Any], policy: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -108,6 +136,20 @@ def evaluate_slo(snapshot: dict[str, Any], policy: dict[str, Any] | None = None)
     obs = pol.get("er_observations") or {}
     if backlog is not None and int(backlog) > int(obs.get("unmapped_backlog_max") or 500):
         red.append(f"er_observations backlog {backlog} over SLO")
+    bus = pol.get("obs_bus") or {}
+    wal_lines = snapshot.get("obs_wal_lines")
+    wal_max = int(bus.get("wal_backlog_max_lines") or 5000)
+    if wal_lines is not None and int(wal_lines) > wal_max:
+        red.append(f"obs_wal_lines {wal_lines} > {wal_max}")
+    from biomed_ontology.config import settings as _settings
+
+    env = str(snapshot.get("env") or _settings.env)
+    if (
+        env == "prod"
+        and bool(bus.get("connectors_required_in_prod", True))
+        and snapshot.get("connect_ok") is False
+    ):
+        red.append("obs connect not running")
     return {
         "ok": not red,
         "red": red,

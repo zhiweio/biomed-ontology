@@ -10,6 +10,12 @@ from pydantic import ValidationError
 from biomed_ontology.config import _REPO_ROOT, export_hf_hub_token, load_settings
 
 
+def test_obs_bus_defaults():
+    s = load_settings({"HMD_ACCEPT_UNCLEARED_COMPONENTS": "false"})
+    assert s.kafka_connect_url == "http://127.0.0.1:8083"
+    assert s.obs_wal_replay_max_lines == 10000
+
+
 def test_defaults_prefer_milvus_evidence_index():
     """Milvus 为必选 Evidence Index；layout/vision 仍保持零依赖默认。"""
     s = load_settings({})

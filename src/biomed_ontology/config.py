@@ -150,8 +150,10 @@ class Settings(BaseSettings):
     kafka_bootstrap_servers: str = "127.0.0.1:19092"
     kafka_obs_tool_io_topic: str = "hmd.obs.tool_io"
     kafka_er_observations_topic: str = "hmd.er.observations"
+    kafka_connect_url: str = "http://127.0.0.1:8083"
     # broker 不可达时的本地 WAL 目录（相对仓库 CWD）
     obs_wal_dir: Path = Path("data/obs_wal")
+    obs_wal_replay_max_lines: int = Field(default=10000, ge=1)
 
     # --- Zingg 预计算模糊 ER -------------------------------------------------
     zingg_min_score: float = Field(default=0.8, ge=0.0, le=1.0)
@@ -214,6 +216,7 @@ class Settings(BaseSettings):
         "openmetadata_url",
         "minio_endpoint",
         "iceberg_rest_uri",
+        "kafka_connect_url",
     )
     @classmethod
     def _strip_trailing_slash(cls, v: str) -> str:

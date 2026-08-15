@@ -99,6 +99,57 @@ def test_slo_gate_red_on_open_quarantine(tmp_path: Path, monkeypatch: pytest.Mon
     assert decision["rollback_lake"] is False
 
 
+def test_slo_gate_red_on_wal_and_prod_connect() -> None:
+    from biomed_ontology.pipelines.ops import evaluate_slo
+
+    wal = evaluate_slo(
+        {
+            "open_quarantine_n": 0,
+            "open_quarantine_oldest_age_h": 0,
+            "world_model_fingerprint_age_h": 1,
+            "release_scorecard_age_h": 1,
+            "er_unmapped_backlog": None,
+            "obs_wal_lines": 9000,
+            "connect_ok": True,
+            "env": "dev",
+        },
+        policy={"obs_bus": {"wal_backlog_max_lines": 5000, "connectors_required_in_prod": True}},
+    )
+    assert wal["ok"] is False
+    assert any("obs_wal_lines" in r for r in wal["red"])
+
+    prod = evaluate_slo(
+        {
+            "open_quarantine_n": 0,
+            "open_quarantine_oldest_age_h": 0,
+            "world_model_fingerprint_age_h": 1,
+            "release_scorecard_age_h": 1,
+            "er_unmapped_backlog": None,
+            "obs_wal_lines": 0,
+            "connect_ok": False,
+            "env": "prod",
+        },
+        policy={"obs_bus": {"wal_backlog_max_lines": 5000, "connectors_required_in_prod": True}},
+    )
+    assert prod["ok"] is False
+    assert any("connect" in r for r in prod["red"])
+
+    dev = evaluate_slo(
+        {
+            "open_quarantine_n": 0,
+            "open_quarantine_oldest_age_h": 0,
+            "world_model_fingerprint_age_h": 1,
+            "release_scorecard_age_h": 1,
+            "er_unmapped_backlog": None,
+            "obs_wal_lines": 0,
+            "connect_ok": False,
+            "env": "dev",
+        },
+        policy={"obs_bus": {"wal_backlog_max_lines": 5000, "connectors_required_in_prod": True}},
+    )
+    assert dev["ok"] is True
+
+
 def test_zingg_fingerprint_stable(tmp_path: Path) -> None:
     from biomed_ontology.foundation.zingg_io import compute_zingg_input_fingerprint
 

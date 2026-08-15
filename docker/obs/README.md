@@ -27,6 +27,22 @@ App 环境变量（`Settings` / `.env`，完整列表见仓库根 `.env.example`
 
 Producer 在 `emit_*` 结束与 `atexit` 时 `flush`，避免短 CLI 进程丢消息。
 
+broker 恢复后回放 WAL（只 produce 回原 topic，不直写 Iceberg）：
+
+```bash
+uv run hmd lake obs-replay --dry-run
+uv run hmd lake obs-replay
+# 或：task obs:replay
+```
+
+写文献 / 文档 Iceberg 时会 pause Sink，避免 SQLite catalog `SQLITE_BUSY`。值班看 connector：
+
+```bash
+uv run hmd lake connect-status
+```
+
+小文件 / snapshot：`hmd lake maintain`（先 pause Connect，再 expire，再 Trino `EXECUTE optimize`）。生产并行写入仍应 pause Sink；本期不把 iceberg-rest 换成 Postgres。
+
 ## 注册 Iceberg Sink connector
 
 ```bash
@@ -55,6 +71,23 @@ t = open_catalog().load_table(ER_OBSERVATIONS_TABLE)
 print("rows", t.scan().to_arrow().num_rows)
 '
 ```
+
+## 排查：ER Sink 空 commit / lag 不降
+
+联调（2026-08-15）见过：`hmd-er-observations` 任务 `RUNNING`，consumer group `connect-hmd-er-observations` 卡在某一 offset（当时 575），`TOTAL-LAG` 1–2，Connect 日志反复 `committed to 0 table(s)`。同机的 `hmd-obs-tool-io` 仍能正常 commit。重启 Connect 容器**不够**——消费者组位点还在，任务会接着空转。
+
+处理（会从 topic 头重放；Iceberg 是 append-only，历史行会重复，`er_unmapped_backlog` / `slo-gate` 会涨）：
+
+```bash
+curl -X DELETE http://127.0.0.1:8083/connectors/hmd-er-observations
+docker exec hmd-foundation-redpanda-1 rpk group delete connect-hmd-er-observations
+task obs:register
+# 等 commit（~15s × 积压批次数），再看：
+docker exec hmd-foundation-redpanda-1 rpk group describe connect-hmd-er-observations
+uv run hmd lake connect-status
+```
+
+`TOTAL-LAG` 回到 0 且表行数增加即追上。不要用 `hmd lake obs-replay` 去「补」卡住的消息——消息已在 Redpanda，缺的是 Sink 提交。catalog 争用（`SQLITE_BUSY` / Table UUID mismatch）仍按上文：先 pause Connect，再 `docker restart iceberg-rest`。
 
 ## 不在范围
 

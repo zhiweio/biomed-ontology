@@ -68,6 +68,57 @@ def lake_om_ingest() -> None:
         raise typer.Exit(1)
 
 
+@lake_app.command("obs-replay")
+def lake_obs_replay(
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    max_lines: int | None = typer.Option(None, "--max-lines"),
+) -> None:
+    """把 obs WAL produce 回 Redpanda；成功归档。不直写 Iceberg。"""
+    from biomed_ontology.lake.obs_events import replay_obs_wal
+
+    command_header("lake obs-replay", meta=[("dry_run", str(dry_run))])
+    result = replay_obs_wal(max_lines=max_lines, dry_run=dry_run)
+    console.print_json(data=result)
+
+
+@lake_app.command("maintain")
+def lake_maintain_cmd(
+    older_than_days: int | None = typer.Option(None, "--older-than-days"),
+    no_compact: bool = typer.Option(False, "--no-compact"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """pause Connect → expire snapshots → 可选 Trino optimize。"""
+    from biomed_ontology.lake.maintain import lake_maintain
+
+    command_header("lake maintain", meta=[("dry_run", str(dry_run))])
+    result = lake_maintain(
+        older_than_days=older_than_days,
+        compact=not no_compact,
+        dry_run=dry_run,
+    )
+    console.print_json(data=result)
+
+
+@lake_app.command("connect-status")
+def lake_connect_status() -> None:
+    """Iceberg Sink connector 状态（Connect REST）。"""
+    from biomed_ontology.lake.connect_admin import connectors_healthy, list_status
+
+    status = list_status()
+    payload = {
+        "ok": connectors_healthy(status),
+        "error": status.get("_error"),
+        "connectors": {
+            name: (block.get("status") or block)
+            for name, block in status.items()
+            if name != "_error" and isinstance(block, dict)
+        },
+    }
+    console.print_json(data=payload)
+    if payload.get("error"):
+        raise typer.Exit(2)
+
+
 @lake_app.command("ingest-doc")
 def lake_ingest_doc(
     source: str = typer.Option(..., "--source"),

@@ -146,7 +146,12 @@ tasks:
   lake:expire:
     desc: Iceberg snapshot expire（观测保留期；open quarantine 不删）
     cmds:
-      - uv run python -c "from biomed_ontology.lake.catalog import expire_lake_snapshots; print(expire_lake_snapshots())"
+      - uv run hmd lake maintain --no-compact
+
+  lake:maintain:
+    desc: pause Connect → expire snapshots → Trino optimize
+    cmds:
+      - uv run hmd lake maintain
 
   milvus:down:
     desc: 仅停止 Milvus 三服务（不拆 GraphDB/OM）
@@ -459,6 +464,11 @@ tasks:
     desc: 注册 Iceberg Sink connectors（Connect REST :8083）
     cmds:
       - bash docker/obs/scripts/register_connectors.sh
+
+  obs:replay:
+    desc: 把 obs WAL produce 回 Redpanda（成功归档）
+    cmds:
+      - uv run hmd lake obs-replay
 
   obs:down:
     cmds:

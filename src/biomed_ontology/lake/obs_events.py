@@ -20,11 +20,16 @@ from biomed_ontology.foundation.ids import normalize_alias_key
 
 __all__ = [
     "ObsEventProducer",
+    "count_wal_lines",
     "emit_er_observation",
     "emit_tool_io",
     "flush_obs_events",
     "get_obs_producer",
+    "list_wal_files",
     "observation_id_for",
+    "probe_kafka",
+    "replay_obs_wal",
+    "topic_from_wal_filename",
     "wal_dir",
 ]
 
@@ -98,12 +103,28 @@ class ObsEventProducer:
                 _LOG.warning("obs kafka produce failed topic=%s: %s", topic, exc)
         self._wal_append(topic, record)
 
+    def produce_kafka_only(self, topic: str, record: dict[str, Any]) -> None:
+        """回放路径：失败上抛，禁止再写 WAL。"""
+        if self._kafka is None:
+            raise RuntimeError(self._kafka_err or "obs kafka producer unavailable")
+        payload = json.dumps(record, ensure_ascii=False, default=str).encode("utf-8")
+        key = str(record.get("observation_id") or record.get("trace_id") or "").encode("utf-8")
+        self._kafka.produce(topic, value=payload, key=key or None)
+        self._kafka.poll(0)
+
     def flush(self, timeout: float = 5.0) -> None:
         if self._kafka is not None:
             with contextlib.suppress(Exception):
                 remaining = self._kafka.flush(timeout)
                 if remaining:
                     _LOG.warning("obs kafka flush: %s message(s) still in queue", remaining)
+
+    def flush_strict(self, timeout: float = 10.0) -> None:
+        if self._kafka is None:
+            raise RuntimeError(self._kafka_err or "obs kafka producer unavailable")
+        remaining = int(self._kafka.flush(timeout) or 0)
+        if remaining:
+            raise RuntimeError(f"obs kafka flush: {remaining} message(s) still in queue")
 
     def _wal_append(self, topic: str, record: dict[str, Any]) -> None:
         path = wal_dir(self.cfg) / f"{topic.replace('.', '_')}.jsonl"
@@ -234,3 +255,145 @@ def emit_er_observation(
     producer.produce(cfg.kafka_er_observations_topic, row)
     if flush:
         producer.flush()
+
+
+def topic_from_wal_filename(name: str) -> str:
+    """``hmd_obs_tool_io.jsonl`` → ``hmd.obs.tool_io``。"""
+    return Path(name).stem.replace("_", ".")
+
+
+def list_wal_files(cfg: Settings | None = None) -> list[Path]:
+    root = wal_dir(cfg)
+    if not root.is_dir():
+        return []
+    return sorted(p for p in root.glob("*.jsonl") if p.is_file() and "replayed" not in p.parts)
+
+
+def count_wal_lines(cfg: Settings | None = None) -> int:
+    total = 0
+    for path in list_wal_files(cfg):
+        total += sum(1 for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip())
+    return total
+
+
+def probe_kafka(cfg: Settings | None = None) -> None:
+    """broker 不可达则抛错，不删 WAL。"""
+    cfg = cfg or settings
+    servers = (cfg.kafka_bootstrap_servers or "").strip()
+    if not servers:
+        raise RuntimeError("obs wal replay: HMD_KAFKA_BOOTSTRAP_SERVERS empty")
+    from confluent_kafka.admin import AdminClient
+
+    admin = AdminClient(
+        {
+            "bootstrap.servers": servers,
+            "socket.connection.setup.timeout.ms": 3000,
+        }
+    )
+    admin.list_topics(timeout=5)
+
+
+def _archive_wal_lines(dest_dir: Path, filename: str, lines: list[str]) -> None:
+    if not lines:
+        return
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / filename
+    with dest.open("a", encoding="utf-8") as fh:
+        for ln in lines:
+            fh.write(ln + "\n")
+
+
+def _rewrite_wal(path: Path, lines: list[str]) -> None:
+    if lines:
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    elif path.exists():
+        path.unlink()
+
+
+def replay_obs_wal(
+    *,
+    max_lines: int | None = None,
+    dry_run: bool = False,
+    cfg: Settings | None = None,
+) -> dict[str, Any]:
+    """把 Jsonl WAL produce 回原 topic；成功归档，不直写 Iceberg。"""
+    cfg = cfg or settings
+    limit = int(max_lines if max_lines is not None else cfg.obs_wal_replay_max_lines)
+    files = list_wal_files(cfg)
+    planned: list[tuple[Path, list[str]]] = []
+    for path in files:
+        lines = [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        if lines:
+            planned.append((path, lines))
+    total_lines = sum(len(lines) for _, lines in planned)
+    if dry_run:
+        return {
+            "dry_run": True,
+            "files": len(planned),
+            "lines": min(total_lines, limit),
+            "total_lines": total_lines,
+            "produced_n": 0,
+            "archived_n": 0,
+        }
+
+    probe_kafka(cfg)
+    producer = ObsEventProducer(cfg)
+    if producer._kafka is None:
+        raise RuntimeError(producer._kafka_err or "obs wal replay: producer unavailable")
+
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    archived_dir = wal_dir(cfg) / "replayed" / stamp
+    budget = limit
+    produced_n = 0
+    archived_n = 0
+    files_done: list[str] = []
+
+    for path, lines in planned:
+        if budget <= 0:
+            break
+        take = lines[:budget]
+        rest = lines[budget:]
+        topic = topic_from_wal_filename(path.name)
+        done: list[str] = []
+        try:
+            for ln in take:
+                record = json.loads(ln)
+                if not isinstance(record, dict):
+                    raise RuntimeError(f"wal line is not an object: {path.name}")
+                producer.produce_kafka_only(topic, record)
+                done.append(ln)
+        except Exception as exc:
+            flushed = False
+            with contextlib.suppress(Exception):
+                producer.flush_strict()
+                flushed = True
+            if flushed:
+                _archive_wal_lines(archived_dir, path.name, done)
+                archived_n += len(done)
+                produced_n += len(done)
+                _rewrite_wal(path, take[len(done) :] + rest)
+            else:
+                _rewrite_wal(path, take + rest)
+            raise RuntimeError(f"obs wal replay failed file={path.name}: {exc}") from exc
+        try:
+            producer.flush_strict()
+        except Exception as exc:
+            _rewrite_wal(path, take + rest)
+            raise RuntimeError(f"obs wal replay failed file={path.name}: {exc}") from exc
+        _archive_wal_lines(archived_dir, path.name, done)
+        _rewrite_wal(path, rest)
+        produced_n += len(done)
+        archived_n += len(done)
+        budget -= len(done)
+        files_done.append(path.name)
+
+    return {
+        "dry_run": False,
+        "files": len(files_done),
+        "lines": produced_n,
+        "total_lines": total_lines,
+        "produced_n": produced_n,
+        "archived_n": archived_n,
+        "archived_dir": str(archived_dir) if archived_n else None,
+        "files_done": files_done,
+    }

@@ -191,13 +191,16 @@ def append_evidence_chunks(
     *,
     document_id: str | None = None,
 ) -> int:
-    return _replace_by_key(
-        EVIDENCE_CHUNKS_TABLE,
-        "document_id",
-        "document_id",
-        rows,
-        single_key=document_id,
-    )
+    from biomed_ontology.lake.connect_admin import paused_iceberg_sinks
+
+    with paused_iceberg_sinks():
+        return _replace_by_key(
+            EVIDENCE_CHUNKS_TABLE,
+            "document_id",
+            "document_id",
+            rows,
+            single_key=document_id,
+        )
 
 
 def append_knowledge_claims(
@@ -205,13 +208,16 @@ def append_knowledge_claims(
     *,
     document_id: str | None = None,
 ) -> int:
-    return _replace_by_key(
-        KNOWLEDGE_CLAIMS_TABLE,
-        "document_id",
-        "document_id",
-        rows,
-        single_key=document_id,
-    )
+    from biomed_ontology.lake.connect_admin import paused_iceberg_sinks
+
+    with paused_iceberg_sinks():
+        return _replace_by_key(
+            KNOWLEDGE_CLAIMS_TABLE,
+            "document_id",
+            "document_id",
+            rows,
+            single_key=document_id,
+        )
 
 
 def append_obs_tool_io(rows: Sequence[dict[str, Any]]) -> int:

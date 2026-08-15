@@ -70,8 +70,9 @@
 
 - 热路径：`ObservabilityHub.commit` → 本地 Jsonl（`JsonlStore`）+ **Kafka-API produce**（`lake/obs_events.py`）。
 - 入湖：Redpanda → Iceberg Kafka Connect Sink → `hmd.obs_tool_io` / `hmd.er_observations`（**禁止**请求路径同步 `table.append`）。
-- broker 未配或不可达：写 `HMD_OBS_WAL_DIR`（默认 `data/obs_wal/`）。
-- 运行面新鲜度：`ontology/policies/ops_slo.yaml` + `hmd pipeline ops-snapshot` / `slo-gate`。红 Failed，不回滚已入湖文档。不上 Monte Carlo / OTel SDK。
+- broker 未配或不可达：写 `HMD_OBS_WAL_DIR`（默认 `data/obs_wal/`）。恢复后 `hmd lake obs-replay` produce 回原 topic（成功归档到 `obs_wal/replayed/`），不直写 Iceberg。
+- 运行面新鲜度：`ontology/policies/ops_slo.yaml` + `hmd pipeline ops-snapshot` / `slo-gate`。快照含 `er_unmapped_backlog`、`obs_wal_lines`、Connect `RUNNING`。红 Failed，不回滚已入湖文档。不上 Monte Carlo / OTel SDK。
+- 湖维护：`hmd lake maintain`（pause Connect → expire snapshots → Trino optimize）。
 - ER 领域事件保持结构化 Kafka topic。
 
 ### 配置（`Settings` / `.env`，前缀 `HMD_`）
@@ -82,7 +83,9 @@
 | `HMD_KAFKA_BOOTSTRAP_SERVERS` | `kafka_bootstrap_servers` | `127.0.0.1:19092` | 默认 Redpanda；设空=仅 WAL |
 | `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `kafka_obs_tool_io_topic` | `hmd.obs.tool_io` | 工具 I/O topic |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `kafka_er_observations_topic` | `hmd.er.observations` | ER 缺口事件 topic |
+| `HMD_KAFKA_CONNECT_URL` | `kafka_connect_url` | `http://127.0.0.1:8083` | Connect REST（status / pause） |
 | `HMD_OBS_WAL_DIR` | `obs_wal_dir` | `data/obs_wal` | broker 不可达时 Jsonl WAL |
+| `HMD_OBS_WAL_REPLAY_MAX_LINES` | `obs_wal_replay_max_lines` | `10000` | 单次回放行数上限 |
 
 联调：`task obs:up` → `task obs:register`（默认 bootstrap `127.0.0.1:19092`，Connect `:8083`）。详见 [docker/obs](https://github.com/zhiweio/biomed-ontology/blob/main/docker/obs/README.md)。
 
@@ -105,13 +108,15 @@
 ## 如何验证
 
 ```bash
-uv run pytest tests/test_observability.py tests/test_obs_events.py -q
+uv run pytest tests/test_observability.py tests/test_obs_events.py tests/test_ops_p2.py -q
 uv run hmd demo --compact    # 查看 span 树
 uv run hmd signals --help    # 挖掘依赖 hub / feedback
 # 观测入湖（Redpanda + Iceberg Connect Sink）
 task obs:up
 task obs:register
 uv run hmd lake init         # 含 obs_tool_io / er_observations
+uv run hmd lake connect-status
+uv run hmd lake obs-replay --dry-run
 ```
 
 新鲜度 SLO 口径在 [`ops_slo.yaml`](https://github.com/zhiweio/biomed-ontology/blob/main/ontology/policies/ops_slo.yaml)；值班看 `hmd pipeline ops-snapshot` / `slo-gate`，红不回滚已入湖文档。不上 Monte Carlo / OTel SDK。

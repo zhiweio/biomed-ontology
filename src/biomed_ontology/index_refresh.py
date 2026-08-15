@@ -221,6 +221,7 @@ def _write_iceberg_dirty(
     documents: list[Document] | None,
     doc_meta: dict[str, tuple[str, str]],
 ) -> int:
+    from biomed_ontology.lake.connect_admin import paused_iceberg_sinks
     from biomed_ontology.lake.tables import append_evidence_chunks
 
     by_doc: dict[str, list[Chunk]] = {}
@@ -228,13 +229,14 @@ def _write_iceberg_dirty(
         by_doc.setdefault(d.chunk.doc_id, []).append(d.chunk)
     total = 0
     doc_by = {d.doc_id: d for d in (documents or [])}
-    for doc_id, chs in by_doc.items():
-        doc = doc_by.get(doc_id)
-        if doc is None:
-            source_id, tier_s = doc_meta.get(doc_id, ("", "TIER_0"))
-            doc = _synthetic_doc(doc_id, source_id, tier_s)
-        rows = chunks_to_evidence_rows(chs, documents=[doc], release_id=release_id)
-        total += append_evidence_chunks(rows, document_id=doc_id)
+    with paused_iceberg_sinks():
+        for doc_id, chs in by_doc.items():
+            doc = doc_by.get(doc_id)
+            if doc is None:
+                source_id, tier_s = doc_meta.get(doc_id, ("", "TIER_0"))
+                doc = _synthetic_doc(doc_id, source_id, tier_s)
+            rows = chunks_to_evidence_rows(chs, documents=[doc], release_id=release_id)
+            total += append_evidence_chunks(rows, document_id=doc_id)
     return total
 
 

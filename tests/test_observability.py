@@ -102,6 +102,31 @@ def test_hub_commit_indexes_by_trace():
     assert rec.tool_name == "normalize_entity"
 
 
+def test_hub_commit_logs_emit_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    hub = ObservabilityHub()
+    ctx = hub.start_trace(release_id="0.1.0")
+
+    def _boom(_payload):
+        raise RuntimeError("kafka down")
+
+    monkeypatch.setattr("biomed_ontology.lake.obs_events.emit_tool_io", _boom)
+    hub.commit(
+        ctx,
+        ToolIoRecord(
+            trace_id=ctx.trace_id,
+            tool_name="t",
+            ontology_release_id="0.1.0",
+            input_json="{}",
+            output_json="{}",
+            latency_ms=1.0,
+            status="OK",
+        ),
+    )
+    assert hub.emit_failures == 1
+    _spans, _decs, rec = hub.by_trace(ctx.trace_id)
+    assert rec is not None
+
+
 def test_latency_percentile_is_monotonic():
     hub = ObservabilityHub()
     for i in range(1, 101):

@@ -55,7 +55,8 @@
 | `hmd foundation zingg-run [--mode …]` | 物化/导出模糊 matches | [evolution](../evolution/loop.md) |
 | `hmd lake init` | 创建 Iceberg 表 | [pillars](../observability/pillars.md) |
 | `hmd lake ingest-doc` | 单文档入湖（经 IngestQA） | [IngestQA](../parse/ingest-qa.md) |
-| `task obs:up` / `task zingg:run` | Redpanda；本地 stub Zingg | 同上 |
+| `hmd lake obs-replay` / `connect-status` / `maintain` | WAL 回放；Connect 状态；expire+optimize | [pillars](../observability/pillars.md) |
+| `task obs:up` / `task obs:replay` / `task zingg:run` | Redpanda；WAL 回放；本地 stub Zingg | 同上 |
 | `task ontology:validate` | Ontology-as-Code + Golden Path 校验 | [toolchain](../ontology/toolchain.md) |
 
 ### 生产平面（`hmd pipeline`）

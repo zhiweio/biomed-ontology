@@ -18,6 +18,7 @@ State 是最容易被省掉、也是排障时最不可替代的一支：只记�
 from __future__ import annotations
 
 import json
+import logging
 import time
 import uuid
 from collections.abc import Iterator
@@ -32,6 +33,8 @@ from biomed_ontology._generated.hmd_concept import (
     MappingJustificationEnum,
 )
 from biomed_ontology._generated.hmd_fact import NormalizationStageEnum
+
+_LOG = logging.getLogger("hmd.obs")
 
 __all__ = [
     "Candidate",
@@ -272,6 +275,7 @@ class ObservabilityHub:
         self._io_store = JsonlStore(root / "obs_tool_io.jsonl") if root else None
         self._dec_store = JsonlStore(root / "obs_decision.jsonl") if root else None
         self._metric_store = JsonlStore(root / "obs_metric.jsonl") if root else None
+        self.emit_failures = 0
 
     def start_trace(
         self,
@@ -306,7 +310,8 @@ class ObservabilityHub:
 
             emit_tool_io(payload)
         except Exception:
-            pass
+            self.emit_failures += 1
+            _LOG.warning("obs emit_tool_io failed trace_id=%s", io.trace_id, exc_info=True)
 
     def record_metric(self, point: MetricPoint) -> None:
         self.metrics.append(point)
