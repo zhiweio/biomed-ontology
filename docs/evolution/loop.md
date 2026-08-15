@@ -28,12 +28,15 @@ Foundation 侧挖掘：`hmd foundation evolve-mine`（见 [Foundation · Data Lo
 ### 理想回路
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
 flowchart LR
-  S[Signal] --> C[Candidate change]
-  C --> K[KGCL 策展]
-  K --> R[Release]
-  R --> I[Impact / 回归守门]
+  S["Signal"] --> C["Candidate change"]
+  C --> K["KGCL 策展"]
+  K --> R["Release"]
+  R --> I["Impact / 回归守门"]
   I --> S
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  class S,C,K,R,I bpProcess
 ```
 
 | 阶段 | 含义 | 当前实现要点 |
@@ -54,25 +57,34 @@ flowchart LR
 - `>= 2` → P1；
 - 否则 P2。
 
-`MiningInput` 显式建模挖掘输入：`kb`、`hub`、`feedback`、`queries`、`clicks`；`from_runtime(kb, api)` 从 `ToolApi` 抽取。
+`MiningInput` 显式建模挖掘输入：`kb`、`hub`、`feedback`、`queries`、`clicks`。
+
+| 入口 | 用途 |
+|---|---|
+| `from_runtime(kb, api)` | 当前进程 hub（`hmd signals` 默认先跑 demo 再挖） |
+| `from_lake(kb, window_days=7)` | 扫 Iceberg `obs_tool_io` / `obs_decision`，填临时 hub |
+
+过夜挖 WHY 用 `hmd signals --from-lake`，不依赖长寿进程。`hub_from_obs_rows` 把湖行还原成 `ToolIoRecord` / `DecisionRecord`；消歧主语走 `decision_subject()`（mention，不是 `chosen` 概念 ID）。
 
 ### 八个 miner（概览）
 
 | Miner | 触发源 |
 |---|---|
-| unmapped span | 归一化未映射片段 |
-| low confidence | 置信度低于阈值 |
-| feedback | `submit_feedback` 记录 |
-| alias gap | 别名未命中 |
-| co-occurrence | 共现但未链接 |
-| … | 见 `evolution/__init__.py` |
+| `unmapped_span` | 归一化 `unmapped_spans` |
+| `low_confidence_normalization` | 命中置信度低于阈值 |
+| `ambiguous_unstable` | 同一 mention 落到不同概念，且出现过 LLM / ABSTAIN |
+| `zero_result_query` | 检索零结果 |
+| `expansion_miss` | 扩展未覆盖 |
+| `negative_feedback` | `submit_feedback` 纠正 |
+| `cooccurrence_anomaly` | 共现但未链接 |
+| `multi_source_conflict` | 多源冲突 |
 
 同一 `signal_type|payload` 必须落到同一 `signal_id`，否则 TRIAGED / DISMISSED 状态无法延续。
 
 ### 与 ToolApi / 观测的衔接
 
 - `submit_feedback` 以 `source_trace_id` 挂原调用 → miner 可回放候选。
-- `ObservabilityHub` 提供 decision / I/O → 解释「为何产生信号」。
+- `ObservabilityHub` 提供 decision / I/O → 解释「为何产生信号」。过夜读湖，不读进程内空 hub。
 - 每个 tool 响应带 `ontology_release_id` → 信号标记 `detected_in_release`。
 
 ### Foundation Data Loop（硬边界）
@@ -109,30 +121,39 @@ Claim 晋升是另一条人审面：`hmd foundation claim-review` 列出 extract
 | `resolve_entity` unmapped / 低置信 → `.candidates.json` | 自动改 GraphDB ontology |
 | policy 驱动 filter/rank → `*.proposals.jsonl` + 可执行 KGCL | Python 硬编码某次 e2e mention |
 | 人工 `evolve-approve` 后 `evolve-apply` 写 Git 策展面 | 无人审校 merge / LLM 直接 mint ENT |
-| runtime/lake 缺口 → Redpanda → Iceberg `hmd.er_observations` | 热路径同步 PyIceberg append |
+| runtime/lake 缺口 → Redpanda → Iceberg `obs_tool_io` / `obs_decision` / `obs_span` / `er_observations` | 热路径同步 PyIceberg append |
 | Zingg 离线 link → `zingg_matches.jsonl`（模糊回收已有 ENT） | Zingg mint ENT / 查询时跑 Spark |
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
 flowchart LR
-  usage[Runtime lake annotate]
-  rp[Redpanda]
-  ice[Iceberg er_observations]
-  zingg[Zingg batch]
-  matches[zingg_matches.jsonl]
-  mine[evolve-mine]
-  enrich[evolve-enrich]
-  gate[approve reject]
-  apply[evolve-apply Git SSOT]
-  verify[evolve-verify]
+  usage["Runtime / annotate"]
+  rp[("Redpanda")]
+  ice[("Iceberg obs_* / er_observations")]
+  why["hmd signals --from-lake"]
+  zingg["Zingg batch"]
+  matches[("zingg_matches.jsonl")]
+  mine["evolve-mine"]
+  enrich["evolve-enrich"]
+  gate{"approve / reject"}
+  apply["evolve-apply Git SSOT"]
+  verify["evolve-verify"]
 
   usage -->|Kafka API produce| rp
   rp -->|Connect Sink| ice
   ice --> zingg
   ice --> mine
+  ice --> why
   zingg --> matches
   matches -->|fuzzy hit| usage
   mine --> enrich --> gate --> apply --> verify
   verify -->|new gaps| ice
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  classDef bpData fill:#d9fbfb,stroke:#007d79,stroke-width:2px,color:#161616
+  classDef bpDecision fill:#fcf4d6,stroke:#f1c21b,stroke-width:2px,color:#161616
+  class usage,zingg,mine,enrich,apply,verify,why bpProcess
+  class rp,ice,matches bpData
+  class gate bpDecision
 ```
 
 观测入湖见 [docker/obs](https://github.com/zhiweio/biomed-ontology/blob/main/docker/obs/README.md)；Zingg 见 [docker/zingg](https://github.com/zhiweio/biomed-ontology/blob/main/docker/zingg/README.md)。
@@ -179,7 +200,11 @@ Filter **禁止**在代码里写死 `e2e-*` / `flush-check-*` 等业务串：一
 |---|---|---|
 | `HMD_OBS_EVENTS_ENABLED` | `true` | 关闭则不发观测事件 |
 | `HMD_KAFKA_BOOTSTRAP_SERVERS` | `127.0.0.1:19092` | 默认 Redpanda；设空=WAL only |
+| `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `hmd.obs.tool_io` | 工具 I/O topic |
+| `HMD_KAFKA_OBS_DECISION_TOPIC` | `hmd.obs.decision` | WHY 投影 topic |
+| `HMD_KAFKA_OBS_SPAN_TOPIC` | `hmd.obs.span` | Span topic |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | ER 缺口 topic |
+| `HMD_KAFKA_CONNECT_URL` | `http://127.0.0.1:8083` | Connect REST |
 | `HMD_OBS_WAL_DIR` | `data/obs_wal` | 本地 WAL |
 | `HMD_ZINGG_MIN_SCORE` | `0.8` | Resolver / export 生效阈值 |
 | `HMD_ZINGG_WINDOW_DAYS` | `30` | 物化扫描湖表窗口 |
@@ -243,7 +268,7 @@ LLM/规则生成内容以 `PENDING` 入库，未经审校不得进 tool 返回�
 
 失败模式：
 
-- **hub 不共享**：`mine_signals` 空跑。
+- **只用 `from_runtime` 过夜**：进程重启后 hub 空；应 `hmd signals --from-lake`。
 - **跳过 Impact**：发版后静默退化。
 - **把 evolve-mine / enrich 当生产修复**：只应产出候选/提案，approve 后才 apply。
 - **硬编码噪声过滤**：应改 `evolve_filter.yaml`，否则后续批次无法复用。
@@ -253,6 +278,7 @@ LLM/规则生成内容以 `PENDING` 入库，未经审校不得进 tool 返回�
 
 ```bash
 uv run hmd signals --help
+uv run hmd signals --from-lake --window-days 7
 uv run pytest tests/test_quality_evolution.py tests/test_evolve_propose.py tests/test_evolve_llm_filter.py tests/test_ops_p2.py -q
 uv run hmd foundation evolve-mine "test-alias" --json
 uv run hmd foundation evolve-enrich --from tests/fixtures/evolve/sample.candidates.json --skip-tools --no-llm

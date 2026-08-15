@@ -216,13 +216,32 @@ uv run hmd serve --mcp
 | unmapped / 低置信 → `evolve-mine` → candidates JSON | 自动改 GraphDB ontology |
 | policy filter + enrich → `proposals.jsonl`；人工 approve 后 `evolve-apply --write`（L1 别名 / L2 xref） | 无人审校 apply；L3 自动 create node；硬编码单次噪声串 |
 | `claim-review` → `claim-promote --write` 只写 `ontology/claims/` | Prefect `INSERT` knowledge 边 |
-| 观测事件 → Redpanda → Iceberg `obs_tool_io` / `er_observations` | 自研 ObsShipper；热路径同步 Iceberg append |
+| 观测事件 → Redpanda → Iceberg `obs_tool_io` / `obs_decision` / `obs_span` / `er_observations` | 自研 ObsShipper；热路径同步 Iceberg append |
 | `zingg-run` 物化/导出模糊 matches；输入指纹未变跳过 `train-link` | 查询路径 Spark；BIOS 全量当 master |
 | `source-load --source hgnc` 从 catalog/entities xref 装公开基因 | 改 `HMD:ENT:*`；无 ACK 装 UMLS |
 
 详情见 [演进闭环](../evolution/loop.md)。复用 `foundation/evolve.py`、`evolve_propose.py`、`evolve_apply.py`、`zingg_io.py`、`lake/obs_events.py`。
 
 ### 3.9 观测入湖与 Zingg 配置
+
+热路径 produce → Redpanda → Connect Sink。过夜 `hmd signals --from-lake` 读 `obs_tool_io` / `obs_decision`；Zingg 扫 `er_observations`。
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
+flowchart LR
+  hub["ObservabilityHub.commit"]
+  rp[("Redpanda")]
+  ice[("Iceberg 四张观测表")]
+  why["signals --from-lake"]
+  zingg["zingg-run"]
+  hub --> rp --> ice
+  ice --> why
+  ice --> zingg
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  classDef bpData fill:#d9fbfb,stroke:#007d79,stroke-width:2px,color:#161616
+  class hub,why,zingg bpProcess
+  class rp,ice bpData
+```
 
 均经 `biomed_ontology.config.Settings`（环境变量前缀 `HMD_`，见仓库根 `.env.example`）。
 
@@ -231,8 +250,12 @@ uv run hmd serve --mcp
 | `HMD_OBS_EVENTS_ENABLED` | `true` | 总开关 |
 | `HMD_KAFKA_BOOTSTRAP_SERVERS` | `127.0.0.1:19092` | 默认 Redpanda；设空=Jsonl WAL |
 | `HMD_KAFKA_OBS_TOOL_IO_TOPIC` | `hmd.obs.tool_io` | 工具遥测 topic |
+| `HMD_KAFKA_OBS_DECISION_TOPIC` | `hmd.obs.decision` | WHY 投影 topic |
+| `HMD_KAFKA_OBS_SPAN_TOPIC` | `hmd.obs.span` | Span topic |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | ER 缺口 topic |
+| `HMD_KAFKA_CONNECT_URL` | `http://127.0.0.1:8083` | Connect REST（status / pause） |
 | `HMD_OBS_WAL_DIR` | `data/obs_wal` | WAL 目录 |
+| `HMD_OBS_WAL_REPLAY_MAX_LINES` | `10000` | 单次回放行数上限 |
 | `HMD_ZINGG_MIN_SCORE` | `0.8` | matches 生效 / export 阈值 |
 | `HMD_ZINGG_WINDOW_DAYS` | `30` | 扫 `er_observations` 窗口 |
 | `HMD_ZINGG_MIN_OCCURRENCES` | `1` | 物化最低出现次数 |
@@ -242,10 +265,14 @@ uv run hmd serve --mcp
 | `HMD_ENV` | `dev` | `prod` 禁止 `identity_match_dev`；生产 + `zingg_skip_docker` 告警 |
 
 ```bash
-task obs:up       # Redpanda :19092（Settings 默认已指向）
+task obs:up          # Redpanda :19092 + Connect :8083
+task obs:register
 uv run hmd lake init
-task zingg:run    # 或 uv run hmd foundation zingg-run --mode stub-link
+uv run hmd signals --from-lake --window-days 7
+task zingg:run       # 或 uv run hmd foundation zingg-run --mode stub-link
 ```
+
+过夜 miner 读 `obs_tool_io` / `obs_decision`；ER 缺口仍走 `er_observations` → Zingg。总线与投影规则见 [pillars](../observability/pillars.md)。
 
 ---
 

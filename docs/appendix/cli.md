@@ -33,7 +33,7 @@
 | `hmd index` | 写入 Milvus（默认 multimodal-bio；盖 embedder 戳） | [milvus](../retrieval/milvus.md) |
 | `hmd serve [--mcp]` | 唯一 HTTP 入口：REST + MCP（默认 :8000） | [serve](../tools/serve.md) |
 | `hmd contract` | 导出 OpenAPI / MCP 描述符 | [linkml](../architecture/linkml.md) |
-| `hmd signals [--from-lake]` | 演进信号与 KGCL 挖掘；`--from-lake` 读 Iceberg obs_* | [evolution](../evolution/loop.md) |
+| `hmd signals [--from-lake] [--window-days]` | 演进信号与 KGCL 挖掘；`--from-lake` 扫 Iceberg `obs_tool_io` / `obs_decision` | [evolution](../evolution/loop.md) |
 | `hmd parse` | 单篇 PDF → 语料 YAML | [layout](../parse/layout.md) |
 | `hmd sources` | 注册表与采购插槽 | [tiers](../licensing/tiers.md) |
 
@@ -55,8 +55,8 @@
 | `hmd foundation zingg-run [--mode …]` | 物化/导出模糊 matches | [evolution](../evolution/loop.md) |
 | `hmd lake init` | 创建 Iceberg 表 | [pillars](../observability/pillars.md) |
 | `hmd lake ingest-doc` | 单文档入湖（经 IngestQA） | [IngestQA](../parse/ingest-qa.md) |
-| `hmd lake obs-replay` / `connect-status` / `maintain` | WAL 回放；Connect 状态；expire+optimize | [pillars](../observability/pillars.md) |
-| `task obs:up` / `task obs:replay` / `task zingg:run` | Redpanda；WAL 回放；本地 stub Zingg | 同上 |
+| `hmd lake obs-replay` / `connect-status` / `maintain` | WAL produce 回原 topic；四个 Sink 状态；pause→expire→Trino optimize | [pillars](../observability/pillars.md) |
+| `task obs:up` / `obs:register` / `obs:replay` / `task zingg:run` | Redpanda+Connect；注册 Sink；WAL 回放；本地 stub Zingg | 同上 |
 | `task ontology:validate` | Ontology-as-Code + Golden Path 校验 | [toolchain](../ontology/toolchain.md) |
 
 ### 生产平面（`hmd pipeline`）
@@ -74,7 +74,8 @@
 | `data-loop-mine` / `enrich` / `apply` | enrich 停在提案；apply 只消费 `approved` |
 | `eval --suite cheap\|release` | cheap = validate+identity+extraction |
 | `replay` | 按 `doc_id` / `reason` 回放 quarantine |
-| `ops-snapshot` / `slo-gate` | 新鲜度；红不回滚湖 |
+| `ops-snapshot` / `slo-gate` | 新鲜度（含 WAL / Connect / ER backlog）；红不回滚湖 |
+| `obs-wal-replay` / `lake-maintain` | WAL produce 回原 topic；pause→expire→Trino optimize（deployment 默认 `active: false`） |
 | `claim-promote` | 只写 YAML，不 INSERT knowledge 边 |
 
 HTTP / MCP **只走** `hmd serve --mcp`（含 `get_entity_context` 等 10 个 Foundation ops）。

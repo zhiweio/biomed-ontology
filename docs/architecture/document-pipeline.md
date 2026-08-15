@@ -132,6 +132,7 @@ CLI 是单步调试；生产失败域、并发与评测合同走 Prefect（D16�
 | `hmd pipeline eval` | `pipelines/ontology_eval.py` | 发布 | `cheap` = validate+identity+extraction；`release` 再加 literature/bridge/golden/context/QualityGate。T5 不可豁免 |
 | `hmd pipeline replay` | `pipelines/replay.py` | 入仓 | 按 `doc_id` / `reason` 回放 quarantine；IngestQA 不空转成功；空过滤 → Failed |
 | `hmd pipeline ops-snapshot` / `slo-gate` | `pipelines/ops.py` | 运维 | 新鲜度快照对照 `ops_slo.yaml`；红 Failed，**不**回滚已入湖文档 |
+| `hmd pipeline obs-wal-replay` / `lake-maintain` | `pipelines/obs.py` | 运维 | WAL produce 回原 topic；pause Connect → expire → Trino optimize |
 | `hmd pipeline claim-promote` | `pipelines/claims.py` | 闭环 | 只消费 `status=approved`；只写 `ontology/claims/`；不 `INSERT` knowledge 边 |
 | `hmd index` / `--incremental` / `--doc-id` | `cli.py` | 入仓 | 文献 index 单步 |
 | `task ontology:refresh-literature` | `Taskfile.yml` | 入仓 | validate + `--incremental` |
@@ -143,7 +144,7 @@ Work pool：`hmd-cpu`（入仓 / sync / Zingg / mine）与 `hmd-gpu`（embed / r
 
 GitOps：目录 PR 跑 `scripts/ontology_cheap_ci.py`（validate + identity + extraction + `MetricCode` ⊆ LinkML）。merge 到 `main` 且改了 `ontology/{catalog,entities,claims,dictionary}` 或 `zingg_matches` 时，`.github/workflows/catalog-publish.yml` 只触发 Prefect `catalog-publish`（`PREFECT_API_URL` 未设则 skip）。
 
-观测事件（可选）：`HMD_OBS_EVENTS_ENABLED` / `HMD_KAFKA_BOOTSTRAP_SERVERS`（见 [pillars](../observability/pillars.md)、`.env.example`）。annotate 未映射 mention 经同一管道入 `hmd.er_observations`。
+观测事件：`HMD_OBS_EVENTS_ENABLED` / `HMD_KAFKA_*`（见 [pillars](../observability/pillars.md)、`.env.example`）。`commit()` produce 到 `obs_tool_io` / `obs_decision` / `obs_span`；annotate 未映射 mention 入 `er_observations`。写文献 Iceberg 时 pause 四个 Sink。
 
 ### 3.6 GraphDB 写入与 sync 边界
 
@@ -157,11 +158,27 @@ GitOps：目录 PR 跑 `scripts/ontology_cheap_ci.py`（validate + identity + ex
 
 ### 3.7 幂等（同 `doc_id` 重跑）
 
+文档 sink 按 `doc_id` 先删后写；观测表由 Connect 追加，重跑不幂等。
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
+flowchart LR
+  doc["同 doc_id 重跑"]
+  ev[("documents / evidence_chunks / claims")]
+  obs[("obs_* / er_observations")]
+  doc -->|先删后写| ev
+  doc -->|Connect append-only| obs
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  classDef bpData fill:#d9fbfb,stroke:#007d79,stroke-width:2px,color:#161616
+  class doc bpProcess
+  class ev,obs bpData
+```
+
 | Sink | 策略 |
 |---|---|
 | MinIO | 同 object key overwrite |
 | Iceberg `documents` / `evidence_chunks` / `knowledge_claims` | 按 `doc_id` / `document_id` **先删后写** |
-| Iceberg `obs_tool_io` / `er_observations` | **append-only**（Kafka Connect）；annotate 未映射 mention → `er_observations` |
+| Iceberg `obs_tool_io` / `obs_decision` / `obs_span` / `er_observations` | **append-only**（Kafka Connect）；WHY 投影见 [pillars](../observability/pillars.md)；annotate 未映射 mention → `er_observations` |
 | Milvus `foundation_evidence` | 按 `doc_id` 删孤儿后 upsert（`evidence_id` 主键） |
 | GraphDB extracted | 按 `hmd:sourceId` 先删后写 |
 | OpenMetadata document asset | glossary term upsert by FQN |

@@ -1,16 +1,49 @@
 # Observability → Redpanda → Iceberg
 
-热路径只 **Kafka-API produce**（`ObsEventProducer`）；入湖由 **Iceberg Kafka Connect Sink** 批量提交（PoC 约 15s），禁止 App 同步 `table.append`。
+热路径只 **Kafka-API produce**（`ObsEventProducer`）。入湖由 **Iceberg Kafka Connect Sink** 批量提交（约 15s），禁止 App 同步 `table.append`。Prefect 只跑 WAL 回放与湖维护，不替代 Sink。
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
+flowchart LR
+  app["App emit_*"]
+  rp[("Redpanda")]
+  c1["hmd-obs-tool-io"]
+  c2["hmd-obs-decision"]
+  c3["hmd-obs-span"]
+  c4["hmd-er-observations"]
+  t1[("obs_tool_io")]
+  t2[("obs_decision")]
+  t3[("obs_span")]
+  t4[("er_observations")]
+  app --> rp
+  rp --> c1 --> t1
+  rp --> c2 --> t2
+  rp --> c3 --> t3
+  rp --> c4 --> t4
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  classDef bpData fill:#d9fbfb,stroke:#007d79,stroke-width:2px,color:#161616
+  class app,c1,c2,c3,c4 bpProcess
+  class rp,t1,t2,t3,t4 bpData
+```
+
+| topic | 表 | connector | control topic |
+|---|---|---|---|
+| `hmd.obs.tool_io` | `hmd.obs_tool_io` | `hmd-obs-tool-io` | `control-iceberg-tool-io` |
+| `hmd.obs.decision` | `hmd.obs_decision` | `hmd-obs-decision` | `control-iceberg-decision` |
+| `hmd.obs.span` | `hmd.obs_span` | `hmd-obs-span` | `control-iceberg-span` |
+| `hmd.er.observations` | `hmd.er_observations` | `hmd-er-observations` | `control-iceberg-er` |
+
+`iceberg.control.commit.interval-ms=15000`。Decision / Span 是 WHY 投影（`subject_text`、钉 chosen 的 candidates、state/attributes 白名单），见 [pillars](../../docs/observability/pillars.md)。
 
 ## 启动
 
 ```bash
 # 需已有 MinIO + iceberg-rest（foundation/lake）
-# iceberg-rest 用 SQLite + WAL（见 docker-compose.lake.yml CATALOG_URI）；
-# 若入仓报 SQLITE_BUSY / Table UUID mismatch：先 pause Connect，再 docker restart iceberg-rest。
+# iceberg-rest 用 SQLite + WAL（见 docker-compose.lake.yml CATALOG_URI）。
+# catalog 争用（SQLITE_BUSY / Table UUID mismatch）：先 pause Connect，再 docker restart iceberg-rest。
 task obs:up          # Redpanda :19092 + Connect :8083（自建镜像含 Iceberg 1.9.2 插件）
 task obs:register    # PUT connector configs
-uv run hmd lake init # 确保 obs_tool_io / obs_decision / obs_span / er_observations 存在
+uv run hmd lake init # 确保四张观测表存在
 ```
 
 Connect worker 镜像：`docker/obs/Dockerfile.connect`（`confluentinc/cp-kafka-connect` + [Confluent Hub Iceberg Sink 1.9.2](https://www.confluent.io/hub/iceberg/iceberg-kafka-connect)）。无现成 all-in-one 公共镜像。
@@ -25,11 +58,42 @@ App 环境变量（`Settings` / `.env`，完整列表见仓库根 `.env.example`
 | `HMD_KAFKA_OBS_DECISION_TOPIC` | `hmd.obs.decision` | → Iceberg `hmd.obs_decision` |
 | `HMD_KAFKA_OBS_SPAN_TOPIC` | `hmd.obs.span` | → Iceberg `hmd.obs_span` |
 | `HMD_KAFKA_ER_OBSERVATIONS_TOPIC` | `hmd.er.observations` | → Iceberg `hmd.er_observations` |
+| `HMD_KAFKA_CONNECT_URL` | `http://127.0.0.1:8083` | Connect REST（status / pause） |
 | `HMD_OBS_WAL_DIR` | `data/obs_wal` | broker 不可达时的 Jsonl WAL |
+| `HMD_OBS_WAL_REPLAY_MAX_LINES` | `10000` | 单次回放行数上限 |
 
 Producer 在 `emit_*` 结束与 `atexit` 时 `flush`，避免短 CLI 进程丢消息。
 
-broker 恢复后回放 WAL（只 produce 回原 topic，不直写 Iceberg）：
+## WAL 回放
+
+broker 不可达时 `emit_*` 写 `data/obs_wal/<topic>.jsonl`。回放只 produce 回原 topic，不直写 Iceberg。整文件 flush 成功才归档到 `replayed/<UTC-stamp>/`；中途失败则已成功行归档，剩余写回原文件。
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
+flowchart TB
+  emit["emit_*"]
+  ok{"broker 可达?"}
+  rp[("Redpanda")]
+  wal[("obs_wal/*.jsonl")]
+  probe["probe_kafka"]
+  prod["produce_kafka_only"]
+  flush{"flush 成功?"}
+  arch[("replayed/stamp/")]
+  rest[("原文件剩余行")]
+  emit --> ok
+  ok -->|是| rp
+  ok -->|否| wal
+  wal --> probe --> prod
+  prod --> flush
+  flush -->|是| arch
+  flush -->|否| rest
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  classDef bpData fill:#d9fbfb,stroke:#007d79,stroke-width:2px,color:#161616
+  classDef bpDecision fill:#fcf4d6,stroke:#f1c21b,stroke-width:2px,color:#161616
+  class emit,probe,prod bpProcess
+  class rp,wal,arch,rest bpData
+  class ok,flush bpDecision
+```
 
 ```bash
 uv run hmd lake obs-replay --dry-run
@@ -37,13 +101,33 @@ uv run hmd lake obs-replay
 # 或：task obs:replay
 ```
 
-写文献 / 文档 Iceberg 时会 pause Sink，避免 SQLite catalog `SQLITE_BUSY`。值班看 connector：
+Prefect deployment `obs-wal-replay`：cron `45 3 * * *` Asia/Shanghai，`active: false`。
+
+## 写湖时 pause Sink
+
+写文献 / 文档 Iceberg 时会 `paused_iceberg_sinks()`（可重入；Connect 未起不阻断），避免 SQLite catalog `SQLITE_BUSY`。catalog 仍是 SQLite；并行写湖必须 pause Sink。
 
 ```bash
 uv run hmd lake connect-status
 ```
 
-小文件 / snapshot：`hmd lake maintain`（先 pause Connect，再 expire，再 Trino `EXECUTE optimize`）。生产并行写入仍应 pause Sink；本期不把 iceberg-rest 换成 Postgres。
+小文件 / snapshot：`hmd lake maintain`（pause Connect → expire snapshots → Trino `EXECUTE optimize`）。optimize 覆盖 `obs_tool_io` / `obs_decision` / `obs_span` / `er_observations`；失败只 warning。
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
+flowchart LR
+  pause["pause 四个 Sink"]
+  exp["expire_snapshots"]
+  opt["Trino EXECUTE optimize"]
+  resume["resume Sink"]
+  pause --> exp --> opt --> resume
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  classDef bpSuccess fill:#defbe6,stroke:#198038,stroke-width:2px,color:#161616
+  class pause,exp,opt bpProcess
+  class resume bpSuccess
+```
+
+Prefect deployment `lake-maintain`：周 cron `0 5 * * 0` Asia/Shanghai，`active: false`。
 
 ## 注册 Iceberg Sink connector
 
@@ -53,9 +137,9 @@ task obs:register
 bash docker/obs/scripts/register_connectors.sh
 ```
 
-配置见 `docker/obs/connectors/*.json`（REST catalog + MinIO，与 `docker-compose.lake.yml` 一致）。小文件维护：用 Spark/Trino 周期 compaction（Connect 不做）。
+配置见 `docker/obs/connectors/*.json`（REST catalog + MinIO，与 `docker-compose.lake.yml` 一致）。compaction 走 `hmd lake maintain` 的 Trino optimize，Connect 不做。
 
-## 验收
+## 冒烟
 
 ```bash
 # produce
@@ -74,11 +158,36 @@ print("rows", t.scan().to_arrow().num_rows)
 '
 ```
 
-## 排查：ER Sink 空 commit / lag 不降
+Decision / Span 经 `ObservabilityHub.commit` 投影后同样走这条总线。扫湖挖 WHY：`uv run hmd signals --from-lake --window-days 7`。首次扫可能赶在 Connect commit 之前，再等一个间隔。
 
-联调（2026-08-15）见过：`hmd-er-observations` 任务 `RUNNING`，consumer group `connect-hmd-er-observations` 卡在某一 offset（当时 575），`TOTAL-LAG` 1–2，Connect 日志反复 `committed to 0 table(s)`。同机的 `hmd-obs-tool-io` 仍能正常 commit。重启 Connect 容器**不够**——消费者组位点还在，任务会接着空转。
+## 排查：Sink 空 commit / lag 不降
 
-处理（会从 topic 头重放；Iceberg 是 append-only，历史行会重复，`er_unmapped_backlog` / `slo-gate` 会涨）：
+任务显示 `RUNNING`、consumer group 卡在某一 offset、Connect 日志反复 `committed to 0 table(s)` 时，**重启 Connect 容器不够**——组位点还在，任务会接着空转。消息已在 Redpanda，不要用 `hmd lake obs-replay` 去「补」。
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#edf5ff','primaryTextColor':'#161616','primaryBorderColor':'#0f62fe','lineColor':'#697077','secondaryColor':'#d9fbfb','tertiaryColor':'#f2f4f8'}}}%%
+flowchart TB
+  lag{"lag 不降且 committed to 0 tables?"}
+  restart["重启 Connect"]
+  still{"仍空转?"}
+  del["DELETE connector"]
+  grp["rpk group delete"]
+  reg["task obs:register"]
+  wait["等 commit 间隔"]
+  ok["lag 0 且表行数增加"]
+  lag -->|是| restart --> still
+  still -->|是| del --> grp --> reg --> wait --> ok
+  still -->|否| ok
+  classDef bpProcess fill:#edf5ff,stroke:#0f62fe,stroke-width:2px,color:#161616
+  classDef bpDecision fill:#fcf4d6,stroke:#f1c21b,stroke-width:2px,color:#161616
+  classDef bpSuccess fill:#defbe6,stroke:#198038,stroke-width:2px,color:#161616
+  classDef bpError fill:#fff1f1,stroke:#da1e28,stroke-width:2px,color:#161616
+  class restart,del,grp,reg,wait bpProcess
+  class lag,still bpDecision
+  class ok bpSuccess
+```
+
+处理会从 topic 头重放。Iceberg 是 append-only，历史行会重复，`er_unmapped_backlog` / `slo-gate` 会涨：
 
 ```bash
 curl -X DELETE http://127.0.0.1:8083/connectors/hmd-er-observations
@@ -89,9 +198,10 @@ docker exec hmd-foundation-redpanda-1 rpk group describe connect-hmd-er-observat
 uv run hmd lake connect-status
 ```
 
-`TOTAL-LAG` 回到 0 且表行数增加即追上。不要用 `hmd lake obs-replay` 去「补」卡住的消息——消息已在 Redpanda，缺的是 Sink 提交。catalog 争用（`SQLITE_BUSY` / Table UUID mismatch）仍按上文：先 pause Connect，再 `docker restart iceberg-rest`。
+`TOTAL-LAG` 回到 0 且表行数增加即追上。catalog 争用仍按上文：先 pause Connect，再 `docker restart iceberg-rest`。
 
 ## 不在范围
 
 - OpenTelemetry SDK + Collector（新鲜度看 `ontology/policies/ops_slo.yaml` / `hmd pipeline slo-gate`）
 - 自研 ObsShipper / 热路径 PyIceberg append
+- MetricPoint topic
