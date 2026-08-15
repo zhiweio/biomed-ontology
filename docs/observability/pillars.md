@@ -198,7 +198,7 @@ uv run hmd signals --from-lake --window-days 7
 
 ### 值班与维护
 
-`ops_snapshot` 含 `er_unmapped_backlog`、`obs_wal_lines`、`connect_ok`（四个 connector 均 RUNNING）。`HMD_ENV=prod` 且 Connect 不健康 → `slo-gate` 红；`rollback_lake: false`。口径：[`ops_slo.yaml`](https://github.com/zhiweio/biomed-ontology/blob/main/ontology/policies/ops_slo.yaml)。
+`ops_snapshot` 含 `er_unmapped_backlog`（窗口内仍开放的唯一 `mention_key`：`observation_id` 去重 + 最新状态 + resolver overlay）、`er_unmapped_events` / `er_unmapped_raw_rows`（信息量，不进红线）、`obs_wal_lines`、`connect_ok`（四个 connector 均 RUNNING）。`HMD_ENV=prod` 且 Connect 不健康 → `slo-gate` 红；`rollback_lake: false`。超 `unmapped_backlog_max` 且 24h 内无 `evolve-mine` 产物 → 额外红 `mine stale`。口径：[`ops_slo.yaml`](https://github.com/zhiweio/biomed-ontology/blob/main/ontology/policies/ops_slo.yaml)。
 
 写文献 / 文档 Iceberg 时 `paused_iceberg_sinks()`（可重入；Connect 未起不阻断）。`hmd lake maintain`：pause → expire snapshots → Trino `EXECUTE optimize`（`obs_tool_io` / `obs_decision` / `obs_span` / `er_observations`；optimize 失败只 warning）。catalog 是 SQLite；并行写湖必须 pause Sink。
 

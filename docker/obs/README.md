@@ -187,7 +187,7 @@ flowchart TB
   class ok bpSuccess
 ```
 
-处理会从 topic 头重放。Iceberg 是 append-only，历史行会重复，`er_unmapped_backlog` / `slo-gate` 会涨：
+处理会从 topic 头重放。Iceberg 是 append-only，历史行会重复，`er_unmapped_raw_rows` 会涨；`er_unmapped_backlog` 按 `observation_id` 去重后的开放唯一 mention 计，重放本身不红 `slo-gate`：
 
 ```bash
 curl -X DELETE http://127.0.0.1:8083/connectors/hmd-er-observations

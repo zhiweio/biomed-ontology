@@ -47,13 +47,18 @@ class EvolveMineResult:
         return data
 
 
-def mentions_from_observation_sources(*, limit: int = 200) -> list[str]:
-    """从 Iceberg er_observations（或 obs WAL）拉取高频 unmapped mention。"""
+def mentions_from_observation_sources(
+    *, limit: int = 200, world: WorldModel | None = None
+) -> list[str]:
+    """从 Iceberg er_observations（或 obs WAL）拉取仍开放的高频 unmapped mention。"""
+    from biomed_ontology.foundation.er_backlog import open_er_mentions
+
     try:
         from biomed_ontology.foundation.zingg_io import scan_er_observations
 
         rows, _ = scan_er_observations(window_days=30, min_occurrences=1)
         if rows:
+            rows = open_er_mentions(rows, world=world)
             rows = sorted(rows, key=lambda r: int(r.get("occurrences") or 1), reverse=True)
             return [str(r["label"]) for r in rows[:limit] if r.get("label")]
     except Exception:
@@ -64,12 +69,10 @@ def mentions_from_observation_sources(*, limit: int = 200) -> list[str]:
     wal = wal_dir(settings) / "hmd_er_observations.jsonl"
     if not wal.exists():
         return []
-    from collections import Counter
-
+    from biomed_ontology.foundation.er_backlog import aggregate_er_records
     from biomed_ontology.foundation.ids import normalize_alias_key
 
-    counts: Counter[str] = Counter()
-    labels: dict[str, str] = {}
+    records: list[dict[str, Any]] = []
     for line in wal.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
@@ -77,10 +80,12 @@ def mentions_from_observation_sources(*, limit: int = 200) -> list[str]:
         mention = str(row.get("mention") or "").strip()
         if not mention:
             continue
-        key = str(row.get("mention_key") or normalize_alias_key(mention))
-        counts[key] += 1
-        labels.setdefault(key, mention)
-    return [labels[k] for k, _ in counts.most_common(limit)]
+        row.setdefault("mention_key", normalize_alias_key(mention))
+        records.append(row)
+    scanned = aggregate_er_records(records, window_days=30, min_occurrences=1)
+    rows = open_er_mentions(scanned.rows, world=world)
+    rows = sorted(rows, key=lambda r: int(r.get("occurrences") or 1), reverse=True)
+    return [str(r["label"]) for r in rows[:limit] if r.get("label")]
 
 
 def mine_unmapped_candidates(
@@ -106,7 +111,7 @@ def mine_unmapped_candidates(
     ]
     query_list = list(texts)
     if include_lake:
-        for m in mentions_from_observation_sources():
+        for m in mentions_from_observation_sources(world=wm):
             if m not in query_list:
                 query_list.append(m)
     for text in query_list:
@@ -160,6 +165,14 @@ def mine_unmapped_candidates(
         },
     }
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if skipped:
+        from biomed_ontology.foundation.er_backlog import emit_mapped_mentions
+
+        emit_mapped_mentions(
+            [str(s.get("mention") or "") for s in skipped],
+            source="evolve_mine",
+            tool_name="evolve-mine",
+        )
     return EvolveMineResult(
         signals=len(candidates),
         kgcl_path=kgcl_path,

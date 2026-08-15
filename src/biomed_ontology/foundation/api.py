@@ -263,10 +263,13 @@ class FoundationApi:
             )
         return self.graphdb
 
-    def resolve_entity(self, text: str, *, type_hint: str | None = None) -> dict[str, Any]:
+    def resolve_entity(
+        self, text: str, *, type_hint: str | None = None, emit: bool = True
+    ) -> dict[str, Any]:
         """ER 使用本地词典/Resolver（seed）；不读 YAML 作为 World Model 查询回落。
 
         无 ``canonical_entity`` 时 hydrate BIOS ``search_surfaces``（供 search_documents）。
+        ``emit=False`` 时不写 er_observations（扫 backlog overlay 必须关，避免正反馈）。
         """
         with observe_retrieval(
             "resolver.dictionary",
@@ -289,7 +292,8 @@ class FoundationApi:
             why["chosen"] = chosen
             why["candidate_count"] = len(hits)
             obs["output"] = {"resolved_count": len(hits), "chosen": chosen}
-            self._emit_resolve_observations(text, hits)
+            if emit:
+                self._emit_resolve_observations(text, hits)
             return {
                 "ontology_release_id": self.world.release_id,
                 "query": text,

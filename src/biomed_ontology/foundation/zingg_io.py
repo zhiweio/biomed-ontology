@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import Counter
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -201,79 +199,15 @@ def scan_er_observations(
     min_occurrences: int | None = None,
     cfg: Any | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
-    """从 Iceberg hmd.er_observations 聚合；失败返回 ([], warnings)。
+    """从 Iceberg hmd.er_observations 聚合开放 mention；失败返回 ([], warnings)。
 
-    窗口 / 频次默认取 ``Settings.zingg_window_days`` / ``zingg_min_occurrences``。
+    按 ``observation_id`` 去重，取每个 mention_key 最新状态；
+    ``mapped`` / ``dismissed`` 不返回。窗口 / 频次默认取 Settings。
     """
-    from biomed_ontology.config import settings as _settings
+    from biomed_ontology.foundation.er_backlog import scan_er_table
 
-    win = _settings.zingg_window_days if window_days is None else int(window_days)
-    min_occ = _settings.zingg_min_occurrences if min_occurrences is None else int(min_occurrences)
-    warnings: list[str] = []
-    try:
-        from biomed_ontology.lake.catalog import ER_OBSERVATIONS_TABLE, open_catalog
-    except Exception as exc:
-        return [], [f"lake import failed: {exc}"]
-
-    try:
-        cat = open_catalog(cfg)
-        table = cat.load_table(ER_OBSERVATIONS_TABLE)
-        arrow = table.scan().to_arrow()
-    except Exception as exc:
-        return [], [f"er_observations scan failed: {exc}"]
-
-    if arrow is None or arrow.num_rows == 0:
-        return [], ["er_observations empty"]
-
-    cutoff = None
-    if win > 0:
-        from datetime import timedelta
-
-        cutoff = (datetime.now(UTC) - timedelta(days=win)).strftime("%Y-%m-%d")
-
-    counts: Counter[str] = Counter()
-    labels: dict[str, str] = {}
-    sources: dict[str, Counter[str]] = {}
-    kinds: dict[str, Counter[str]] = {}
-
-    cols = arrow.to_pydict()
-    n = arrow.num_rows
-    for i in range(n):
-        status = str((cols.get("resolve_status") or [None])[i] or "")
-        if status not in {"unmapped", "low_confidence"}:
-            continue
-        event_date = str((cols.get("event_date") or [None])[i] or "")
-        if cutoff and event_date and event_date < cutoff:
-            continue
-        mention = str((cols.get("mention") or [None])[i] or "").strip()
-        if not mention:
-            continue
-        key = str((cols.get("mention_key") or [None])[i] or "") or normalize_alias_key(mention)
-        counts[key] += 1
-        labels.setdefault(key, mention)
-        src = str((cols.get("source") or [None])[i] or "runtime_resolve")
-        sources.setdefault(key, Counter())[src] += 1
-        kh = (cols.get("kind_hint") or [None])[i]
-        if kh:
-            kinds.setdefault(key, Counter())[str(kh)] += 1
-
-    rows: list[dict[str, Any]] = []
-    for key, occ in counts.items():
-        if occ < min_occ:
-            continue
-        primary = sources.get(key, Counter()).most_common(1)
-        kind = kinds.get(key, Counter()).most_common(1)
-        rid = hashlib.sha1(f"lake|{key}".encode()).hexdigest()[:16]
-        rows.append(
-            {
-                "id": rid,
-                "label": labels[key],
-                "kind": kind[0][0] if kind else "",
-                "source": primary[0][0] if primary else "mixed",
-                "occurrences": occ,
-            }
-        )
-    return rows, warnings
+    result = scan_er_table(window_days=window_days, min_occurrences=min_occurrences, cfg=cfg)
+    return result.rows, result.warnings
 
 
 def materialize(
@@ -594,6 +528,14 @@ def export_matches(
     dest.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
     amb_body = "\n".join(json.dumps(a, ensure_ascii=False) for a in ambiguous)
     ambiguous_path.write_text(amb_body + ("\n" if ambiguous else ""), encoding="utf-8")
+    if best:
+        from biomed_ontology.foundation.er_backlog import emit_mapped_mentions
+
+        emit_mapped_mentions(
+            [str(v.get("mention") or "") for v in best.values()],
+            source="zingg_export",
+            tool_name="zingg-export",
+        )
     return {
         "written": len(best),
         "ambiguous": len(ambiguous),

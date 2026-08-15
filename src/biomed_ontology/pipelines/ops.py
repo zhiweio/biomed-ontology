@@ -20,6 +20,7 @@ SLO_PATH = REPO_ROOT / "ontology" / "policies" / "ops_slo.yaml"
 EVAL_DIR = REPO_ROOT / "data" / "releases" / "eval"
 WORLD_FP = REPO_ROOT / "data" / "cache" / "world_model_fingerprint.txt"
 ZINGG_FP = REPO_ROOT / "data" / "cache" / "zingg_input_fingerprint.txt"
+CANDIDATES_DIR = REPO_ROOT / "data" / "releases" / "foundation_candidates"
 
 
 def load_slo_policy(path: Path | None = None) -> dict[str, Any]:
@@ -54,6 +55,32 @@ def _latest_scorecard(suite: str) -> Path | None:
     return matches[-1] if matches else None
 
 
+def _latest_mine_age_hours() -> float | None:
+    if not CANDIDATES_DIR.is_dir():
+        return None
+    matches = sorted(CANDIDATES_DIR.glob("*.candidates.json"))
+    if not matches:
+        return None
+    return _file_age_hours(matches[-1])
+
+
+def _er_backlog_fields(policy: dict[str, Any]) -> dict[str, Any]:
+    obs = policy.get("er_observations") or {}
+    min_occ = int(obs.get("slo_min_occurrences") or 1)
+    try:
+        from biomed_ontology.foundation.er_backlog import collect_er_backlog
+
+        er = collect_er_backlog(min_occurrences=min_occ)
+    except Exception:
+        er = {"backlog": None, "events": None, "raw_rows": None}
+    return {
+        "er_unmapped_backlog": er.get("backlog"),
+        "er_unmapped_events": er.get("events"),
+        "er_unmapped_raw_rows": er.get("raw_rows"),
+        "er_mine_age_h": _latest_mine_age_hours(),
+    }
+
+
 def collect_ops_snapshot() -> dict[str, Any]:
     policy = load_slo_policy()
     open_rows = load_open()
@@ -74,6 +101,7 @@ def collect_ops_snapshot() -> dict[str, Any]:
     connect_status = list_status()
     connect_ok = connectors_healthy(connect_status)
     connect_error = connect_status.get("_error")
+    er = _er_backlog_fields(policy)
     return {
         "generated_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "policy_version": policy.get("version"),
@@ -87,7 +115,10 @@ def collect_ops_snapshot() -> dict[str, Any]:
         "cheap_scorecard_age_h": _file_age_hours(cheap) if cheap else None,
         "release_scorecard": str(release) if release else None,
         "release_scorecard_age_h": _file_age_hours(release) if release else None,
-        "er_unmapped_backlog": _er_unmapped_backlog(),
+        "er_unmapped_backlog": er["er_unmapped_backlog"],
+        "er_unmapped_events": er["er_unmapped_events"],
+        "er_unmapped_raw_rows": er["er_unmapped_raw_rows"],
+        "er_mine_age_h": er["er_mine_age_h"],
         "obs_wal_lines": count_wal_lines(),
         "connect_ok": connect_ok,
         "connect_error": connect_error,
@@ -96,20 +127,8 @@ def collect_ops_snapshot() -> dict[str, Any]:
             for name, block in connect_status.items()
             if name != "_error" and isinstance(block, dict)
         },
-        "note": "er_unmapped_backlog 需 Iceberg；缺测时为 null 不红此项",
+        "note": "er_unmapped_backlog = 开放唯一 mention_key；缺测时为 null 不红此项",
     }
-
-
-def _er_unmapped_backlog() -> int | None:
-    try:
-        from biomed_ontology.foundation.zingg_io import scan_er_observations
-
-        rows, warns = scan_er_observations(min_occurrences=1)
-    except Exception:
-        return None
-    if any("failed" in w for w in warns):
-        return None
-    return sum(int(r.get("occurrences") or 0) for r in rows)
 
 
 def evaluate_slo(snapshot: dict[str, Any], policy: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -134,8 +153,16 @@ def evaluate_slo(snapshot: dict[str, Any], policy: dict[str, Any] | None = None)
         red.append(f"release scorecard age {rel_age}h over SLO")
     backlog = snapshot.get("er_unmapped_backlog")
     obs = pol.get("er_observations") or {}
-    if backlog is not None and int(backlog) > int(obs.get("unmapped_backlog_max") or 500):
+    max_backlog = int(obs.get("unmapped_backlog_max") or 500)
+    if backlog is not None and int(backlog) > max_backlog:
         red.append(f"er_observations backlog {backlog} over SLO")
+        if obs.get("require_nightly_mine_if_over", True):
+            mine_age = snapshot.get("er_mine_age_h")
+            if mine_age is None:
+                mine_age = _latest_mine_age_hours()
+            max_mine = float(obs.get("mine_max_age_hours") or 24)
+            if mine_age is None or float(mine_age) > max_mine:
+                red.append("er_observations over SLO and mine stale")
     bus = pol.get("obs_bus") or {}
     wal_lines = snapshot.get("obs_wal_lines")
     wal_max = int(bus.get("wal_backlog_max_lines") or 5000)

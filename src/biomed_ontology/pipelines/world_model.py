@@ -107,11 +107,22 @@ def catalog_publish(
     embedder_name: str = "multimodal-bio",
     rematerialize_zingg: bool = False,
 ) -> dict[str, Any]:
-    """fingerprint 未变则 no-op；变了先 sync 再 literature incremental。"""
+    """fingerprint 未变则 no-op；变了先 sync 再 literature incremental。
+
+    无论是否 no-op，都对已映射 mention 回填 ``mapped`` 事件，让湖账本与词典对齐。
+    """
+    from biomed_ontology.foundation.er_backlog import close_mapped_er_observations
+
+    er_close = close_mapped_er_observations()
     fp = compute_world_model_fingerprint()
     prev = _load_fingerprint()
     if prev == fp:
-        return {"skipped": True, "reason": "world model fingerprint unchanged", "fingerprint": fp}
+        return {
+            "skipped": True,
+            "reason": "world model fingerprint unchanged",
+            "fingerprint": fp,
+            "er_close": er_close,
+        }
 
     sync = world_model_sync()
     from biomed_ontology.pipelines.literature import task_catalog_incremental
@@ -129,4 +140,5 @@ def catalog_publish(
         "identity_match": zingg,
         "fingerprint": fp,
         "catalog_dir": str(ONTOLOGY_ROOT / "catalog"),
+        "er_close": er_close,
     }

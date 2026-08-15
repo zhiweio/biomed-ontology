@@ -365,9 +365,14 @@ def test_catalog_publish_noop_when_fingerprint_unchanged() -> None:
         ),
         patch("biomed_ontology.pipelines.world_model._load_fingerprint", return_value="same"),
         patch("biomed_ontology.pipelines.world_model.world_model_sync") as sync,
+        patch(
+            "biomed_ontology.foundation.er_backlog.close_mapped_er_observations",
+            return_value={"closed": 0, "remaining": 0},
+        ),
     ):
         out = catalog_publish()
     assert out["skipped"] is True
+    assert "er_close" in out
     sync.assert_not_called()
 
 

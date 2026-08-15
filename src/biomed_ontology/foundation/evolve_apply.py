@@ -498,6 +498,17 @@ def apply_approved(
                 row["status"] = "applied"
                 row["applied_at"] = now
         save_proposals(p, rows)
+        from biomed_ontology.foundation.er_backlog import emit_mapped_mentions
+
+        emit_mapped_mentions(
+            [
+                str(w.get("mention") or "")
+                for w in written
+                if str(w.get("action") or "").startswith("append")
+            ],
+            source="evolve_apply",
+            tool_name="data-loop-apply",
+        )
 
     return EvolveApplyResult(
         dry_run=dry_run,
