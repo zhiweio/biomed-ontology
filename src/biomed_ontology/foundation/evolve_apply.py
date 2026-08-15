@@ -395,6 +395,7 @@ def verify_proposals(
     targets = [r for r in rows if r.get("status") in want and r.get("target_enterprise_id")]
     wm = world or load_world_model()
     if dictionary_path is not None:
+        assert wm.resolver is not None
         wm.resolver.bern2.dictionary = load_enterprise_dictionary(dictionary_path)
         wm.resolver.bern2.dictionary.__post_init__()
     api = FoundationApi(wm)

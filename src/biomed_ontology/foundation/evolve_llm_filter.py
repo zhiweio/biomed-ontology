@@ -170,8 +170,11 @@ def validate_item(
     disposition = str(raw.get("disposition") or "").strip().lower()
     if disposition not in DISPOSITIONS:
         return None
+    raw_conf = raw.get("confidence")
+    if raw_conf is None:
+        return None
     try:
-        conf = float(raw.get("confidence"))
+        conf = float(raw_conf)
     except (TypeError, ValueError):
         return None
     if conf < 0 or conf > 1:

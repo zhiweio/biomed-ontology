@@ -414,7 +414,7 @@ def write_training_samples(
             break
 
     # 3) 受控 typo 正例（从规范标签派生）
-    for eid, rows in list(by_eid.items())[:12]:
+    for _eid, rows in list(by_eid.items())[:12]:
         base = rows[0]
         for v in _variant_labels(str(base["label"]))[:2]:
             _add_pos_pair(

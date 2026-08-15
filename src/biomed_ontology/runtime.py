@@ -107,8 +107,7 @@ def open_dual_surface(
 
     world = load_world_model(bern2_url=bern2_url)
     identity = IdentityService.from_world(world)
-    foundation = FoundationApi(world)
-    foundation.identity = identity
+    foundation = FoundationApi(world, identity=identity)
 
     kb = literature_kb
     if kb is None and load_literature:

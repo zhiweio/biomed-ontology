@@ -121,7 +121,7 @@ def _fact():
 @pytest.fixture
 def store():
     client = _RecordingClient()
-    gs = GraphStore(client=client)  # ty: ignore[invalid-argument-type]
+    gs = GraphStore(client=client)
     with patch("biomed_ontology.ontology.rdf.ensure_repository"):
         yield gs, client
 

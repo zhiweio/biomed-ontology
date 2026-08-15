@@ -98,13 +98,14 @@ def test_approve_apply_verify_dictionary_sandbox(tmp_path: Path) -> None:
             return original_load(dict_path)
         return original_load(path)
 
-    bern2_mod.load_enterprise_dictionary = _load_sandbox  # type: ignore[assignment]
-    world_mod.load_enterprise_dictionary = _load_sandbox  # type: ignore[attr-defined]
+    bern2_mod.load_enterprise_dictionary = _load_sandbox  # ty: ignore[invalid-assignment]
+    world_mod.load_enterprise_dictionary = _load_sandbox  # ty: ignore[invalid-assignment]
     try:
         wm = load_world_model()
         # inject sandbox dict entries into resolver dictionary
         from biomed_ontology.foundation.bern2 import load_enterprise_dictionary
 
+        assert wm.resolver is not None
         wm.resolver.bern2.dictionary = load_enterprise_dictionary(dict_path)
         wm.resolver.bern2.dictionary.__post_init__()
         ver = verify_proposals(path, world=wm, statuses={"approved", "applied"})

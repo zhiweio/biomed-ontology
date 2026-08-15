@@ -28,6 +28,7 @@ from biomed_ontology.foundation.store import (
     fetch_related_ids,
 )
 from biomed_ontology.foundation.world import WorldModel
+from biomed_ontology.identity import IdentityService
 
 __all__ = ["SEMANTIC_OPS", "FoundationApi"]
 
@@ -175,10 +176,12 @@ class FoundationApi:
         *,
         graphdb: GraphDbClient | None = None,
         openmetadata: OpenMetadataClient | None = None,
+        identity: IdentityService | None = None,
     ) -> None:
         self.world = world
         self.graphdb = graphdb or GraphDbClient.from_settings()
         self.openmetadata = openmetadata or OpenMetadataClient.from_settings()
+        self.identity = identity
 
     def _require_graphdb(self) -> GraphDbClient:
         if not self.graphdb.health():
