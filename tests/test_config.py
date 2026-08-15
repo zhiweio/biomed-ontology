@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 from pydantic import ValidationError
 
-from biomed_ontology.config import load_settings
+from biomed_ontology.config import _REPO_ROOT, export_hf_hub_token, load_settings
 
 
 def test_defaults_prefer_milvus_evidence_index():
@@ -106,13 +108,16 @@ def test_secrets_are_not_in_repr():
             "HMD_MINERU_API_KEY": "sk-secret",
             "HMD_VISION_API_KEY": "sk-also",
             "HMD_MILVUS_TOKEN": "tok-milvus",
+            "HMD_HF_TOKEN": "hf_secret",
         }
     )
     blob = f"{s!r} {s} {s.model_dump()}"
     assert "sk-secret" not in blob
     assert "sk-also" not in blob
     assert "tok-milvus" not in blob
+    assert "hf_secret" not in blob
     assert s.mineru_api_key.get_secret_value() == "sk-secret"
+    assert s.hf_token.get_secret_value() == "hf_secret"
 
 
 @pytest.mark.parametrize(
@@ -154,6 +159,26 @@ def test_unknown_hmd_variables_are_ignored_not_fatal():
     """拼错的变量名不该拖垮进程；但它也不会生效 —— 这正是 warnings() 存在的理由。"""
     s = load_settings({"HMD_NO_SUCH_KNOB": "x"})
     assert s.layout_backend == "auto"
+
+
+def test_model_cache_dir_default_is_repo_absolute():
+    """相对默认值必须落到仓库根，否则 Prefect worker cwd 一偏就找不到权重。"""
+    s = load_settings({})
+    assert s.model_cache_dir.is_absolute()
+    assert s.model_cache_dir == (_REPO_ROOT / "data/cache/models").resolve()
+
+
+def test_hf_token_exports_when_hub_env_empty(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGING_FACE_HUB_TOKEN", raising=False)
+    export_hf_hub_token(load_settings({"HMD_HF_TOKEN": "hf_test_token"}))
+    assert os.environ["HF_TOKEN"] == "hf_test_token"
+
+
+def test_hf_token_does_not_clobber_existing_env(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("HF_TOKEN", "already")
+    export_hf_hub_token(load_settings({"HMD_HF_TOKEN": "hf_other"}))
+    assert os.environ["HF_TOKEN"] == "already"
 
 
 def test_foundation_openmetadata_settings():

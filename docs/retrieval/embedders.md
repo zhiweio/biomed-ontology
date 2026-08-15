@@ -85,6 +85,15 @@ payload = {**row, **bundle}
 
 `_MIRRORS` 登记 HF → ModelScope / Gitee；`modelscope: None` 表示该站无 PyTorch 权重（SapBERT）。
 
+`resolve_model` 把 `HMD_MODEL_CACHE_DIR`（相对路径相对**仓库根**，不是 cwd）解析为绝对路径，并识别手工 / ModelScope / HF hub 三种落盘布局。命中本地后 `from_pretrained(..., local_files_only=True)`，不再打 Hub。
+
+Prefect `hmd-gpu` worker 从仓库根启动，或显式导出：
+
+```bash
+export HMD_MODEL_CACHE_DIR=/abs/path/to/data/cache/models
+export HMD_HF_TOKEN=hf_...   # 或 HF_TOKEN；只加快首次下载并去掉未认证 WARNING
+```
+
 `load_biomedclip` 单独处理：
 
 - 本地 `open_clip_config.json` 为 marker  

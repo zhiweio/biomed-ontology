@@ -93,8 +93,8 @@ class BgeReranker:
         self._torch = torch
         self._batch_size = batch_size
         self._max_length = max_length
-        self._tok: Any = AutoTokenizer.from_pretrained(path)
-        model = AutoModelForSequenceClassification.from_pretrained(path)
+        self._tok: Any = AutoTokenizer.from_pretrained(path, local_files_only=True)
+        model = AutoModelForSequenceClassification.from_pretrained(path, local_files_only=True)
         # fp16 在 CPU 上不但不快，部分算子还会直接报错。
         if use_fp16 and self.device != "cpu":
             model = model.half()

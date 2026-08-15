@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -28,9 +29,13 @@ __all__ = [
     "SearchBackendName",
     "Settings",
     "VisionProviderName",
+    "export_hf_hub_token",
     "load_settings",
     "settings",
 ]
+
+# src/biomed_ontology/config.py → 仓库根。相对 model_cache_dir 锚在这里，不跟 cwd。
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 LayoutBackendName = Literal["auto", "pymupdf4llm", "docling", "mineru", "text"]
 MinerUTransportName = Literal["local", "http"]
@@ -184,8 +189,11 @@ class Settings(BaseSettings):
     # 内网往往连不上 huggingface.co（TLS 直接被重置）。取不到时自动回落 Gitee
     # 镜像（gitee.com/hf-models），仓库名映射见 embed._MIRRORS。
     # 手工放进 model_cache_dir/models/<仓库名> 的权重优先于任何下载。
+    # 相对路径相对仓库根（不是 cwd）：Prefect process worker 的 cwd 经常不是仓库。
     model_hub: ModelHubName = "hf"
     model_cache_dir: Path = Path("data/cache/models")
+    # 传给 huggingface_hub / 同步为 HF_TOKEN，供 transformers、FlagEmbedding 使用。
+    hf_token: SecretStr = SecretStr("")
 
     # --- 服务层安全 -------------------------------------------------------
     trust_entitlement_header: bool = False
@@ -210,6 +218,14 @@ class Settings(BaseSettings):
     @classmethod
     def _strip_trailing_slash(cls, v: str) -> str:
         return v.rstrip("/")
+
+    @field_validator("model_cache_dir", mode="after")
+    @classmethod
+    def _anchor_model_cache_dir(cls, v: Path) -> Path:
+        path = Path(v)
+        if not path.is_absolute():
+            path = _REPO_ROOT / path
+        return path.resolve()
 
     @property
     def mineru_is_cloud(self) -> bool:
@@ -280,13 +296,28 @@ class _ExplicitSettings(Settings):
         return (init_settings,)
 
 
+def export_hf_hub_token(cfg: Settings | None = None) -> None:
+    """把 HMD_HF_TOKEN 写进 HF_TOKEN，供 transformers / FlagEmbedding 读取。
+
+    已有 HF_TOKEN / HUGGING_FACE_HUB_TOKEN 时不覆盖。空 token 不写。
+    """
+    token = (cfg or settings).hf_token.get_secret_value().strip()
+    if not token:
+        return
+    if os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN"):
+        return
+    os.environ["HF_TOKEN"] = token
+
+
 def load_settings(env: dict[str, str] | None = None) -> Settings:
     """`env=None` 读进程环境与 `.env`；传 dict 则**只**用该 dict。
 
     测试必须走后者：否则开发机上一个 `.env` 就能让断言在 CI 与本地给出不同结果。
     """
     if env is None:
-        return Settings()
+        loaded = Settings()
+        export_hf_hub_token(loaded)
+        return loaded
     fields = Settings.model_fields
     kwargs = {
         key: value

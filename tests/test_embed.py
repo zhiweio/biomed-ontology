@@ -100,7 +100,47 @@ def test_locally_placed_weights_win_over_any_download(monkeypatch, tmp_path):
         config, "settings", config.Settings(model_hub="hf", model_cache_dir=tmp_path)
     )
 
-    assert embed.resolve_model("cambridgeltl/SapBERT-from-PubMedBERT-fulltext") == str(target)
+    assert embed.resolve_model("cambridgeltl/SapBERT-from-PubMedBERT-fulltext") == str(
+        target.resolve()
+    )
+
+
+def test_hf_hub_cache_layout_is_recognized_without_download(monkeypatch, tmp_path):
+    """snapshot_download(cache_dir=X) 落在 X/models--org--name/snapshots/<rev>。
+
+    只认 models/<名> 的话，HF 下过的权重下一轮还是会再打 Hub。
+    """
+    from pathlib import Path
+
+    from biomed_ontology import config, embed
+
+    snap = tmp_path / "models--BAAI--bge-m3" / "snapshots" / "abc123"
+    snap.mkdir(parents=True)
+    (snap / "config.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        config, "settings", config.Settings(model_hub="hf", model_cache_dir=tmp_path)
+    )
+
+    assert Path(embed.resolve_model("BAAI/bge-m3")).resolve() == snap.resolve()
+
+
+def test_relative_model_cache_dir_does_not_follow_cwd(monkeypatch, tmp_path):
+    """Prefect process worker 的 cwd 经常不是仓库。相对缓存必须锚在仓库根。"""
+    from pathlib import Path
+
+    from biomed_ontology import config, embed
+
+    monkeypatch.setattr(config, "_REPO_ROOT", tmp_path)
+    rel = Path("cache/models")
+    target = tmp_path / rel / "models" / "bge-m3"
+    target.mkdir(parents=True)
+    (target / "config.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(config, "settings", config.Settings(model_hub="hf", model_cache_dir=rel))
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    assert Path(embed.resolve_model("BAAI/bge-m3")).resolve() == target.resolve()
 
 
 def test_unregistered_model_fails_loudly_on_a_mirror(monkeypatch, tmp_path):

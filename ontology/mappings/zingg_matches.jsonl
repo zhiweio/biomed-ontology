@@ -1,3 +1,99 @@
-{"mention": "savolitinb", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.91, "source": "zingg", "model_id": "stub", "z_cluster": null}
-{"mention": "savo litinib", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.88, "source": "zingg", "model_id": "stub", "z_cluster": null}
-{"mention": "cMET", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.86, "source": "zingg", "model_id": "stub", "z_cluster": null}
+{"mention": "non-small cell lung cancex", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9937814735912763, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:14"}
+{"mention": "NSCLx", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9943904361492765, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:18"}
+{"mention": "NSCLCC", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9600766858494547, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:18"}
+{"mention": "non-small cell lung cancerr", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9879422262594177, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:14"}
+{"mention": "non-small-cell lung cancerr", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9879422262594177, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:20"}
+{"mention": "non-small-cell lung cancex", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9937814735912763, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:20"}
+{"mention": "non small cell lung cancer", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9815571569577669, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:20"}
+{"mention": "volitinibb", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9895776038188161, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:22"}
+{"mention": "savolitinib lot DEMO-0011", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9875780801077156, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:54"}
+{"mention": "savo litinib", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9999444636488615, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:22"}
+{"mention": "Savolitinib NSCLC demonstration abstracx", "enterprise_id": "HMD:ENT:PUB:pmid_demo_savo", "score": 0.9932253434262582, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:62"}
+{"mention": "volitinix", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9951240350368309, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:32"}
+{"mention": "savolitinb", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9983616034039047, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:22"}
+{"mention": "SavolitinibNSCLCdemonstrationabstract", "enterprise_id": "HMD:ENT:PUB:pmid_demo_savo", "score": 0.9978807713070014, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:62"}
+{"mention": "savolotdemo", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9993072057694575, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:60"}
+{"mention": "savo-lot-demx", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9947697229196029, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:60"}
+{"mention": "Savolitinib NSCLC demonstration abstractt", "enterprise_id": "HMD:ENT:PUB:pmid_demo_savo", "score": 0.9893933182459792, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:62"}
+{"mention": "voletinib", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9597746045196038, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:16"}
+{"mention": "赛沃替尼批次DEMO-001", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.997562583653388, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:56"}
+{"mention": "赛沃替尼批次 DEMO 001", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9977805205560387, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:56"}
+{"mention": "savolitinib lot DEMO 001", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9967384781569267, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:54"}
+{"mention": "Savoletinib NSCLC demonstration abstract", "enterprise_id": "HMD:ENT:PUB:pmid_demo_savo", "score": 0.9661977175522297, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:62"}
+{"mention": "savolitinix", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9949639148084658, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:22"}
+{"mention": "savolitiniblotDEMO-001", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9981510895834792, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:54"}
+{"mention": "savolitinib lot DEMO001", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9962227062751661, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:54"}
+{"mention": "savoletinib lot DEMO-001", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9597746045196038, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:16"}
+{"mention": "savolitinibb", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9810461535058687, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:22"}
+{"mention": "赛沃替尼批次 DEMO001", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.997562583653388, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:56"}
+{"mention": "savoletinib", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9597746045196038, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:16"}
+{"mention": "savolitinib lot DEMO-00x", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9938950333179055, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:54"}
+{"mention": "savo lot demo", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9985867566051724, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:60"}
+{"mention": "savo-lot-demoo", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9830836115214182, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:60"}
+{"mention": "MET IC50 biochemical assay ASY 001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.995876074712904, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:46"}
+{"mention": "MET programm", "enterprise_id": "HMD:ENT:PRG:met_nsclc", "score": 0.9956962530246429, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:0"}
+{"mention": "MET IC50 biochemical assay ASY-0011", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9889315642005773, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:46"}
+{"mention": "MET proto oncogene", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9974062131079379, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:12"}
+{"mention": "MET IC50 biochemical assay ASY001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9952762106156849, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:46"}
+{"mention": "MET IC50 生化检测 ASY001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9966047179224992, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:48"}
+{"mention": "MET prograx", "enterprise_id": "HMD:ENT:PRG:met_nsclc", "score": 0.9949639148084658, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:4"}
+{"mention": "MET proto-oncogenx", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9943152537417268, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:12"}
+{"mention": "METIC50biochemicalassayASY-001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9989013849228323, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:46"}
+{"mention": "MET IC50 biochemical assay ASY-00x", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9934226179783603, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:46"}
+{"mention": "MET IC50 beochemical assay ASY-001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9855942175430867, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:46"}
+{"mention": "METNSCLCProgram", "enterprise_id": "HMD:ENT:PRG:met_nsclc", "score": 0.9989013849228323, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:0"}
+{"mention": "MET proto-oncogenee", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9859155283500953, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:12"}
+{"mention": "MET NSCLC Programm", "enterprise_id": "HMD:ENT:PRG:met_nsclc", "score": 0.9855041227837542, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:0"}
+{"mention": "MET protooncogene", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9970482204882152, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:12"}
+{"mention": "MET非小细胞肺癌项目", "enterprise_id": "HMD:ENT:PRG:met_nsclc", "score": 0.9981510895834792, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:2"}
+{"mention": "METIC50生化检测ASY-001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9992118522305705, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:48"}
+{"mention": "MET IC50 生化检测 ASY 001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9970574099017503, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:48"}
+{"mention": "METprogram", "enterprise_id": "HMD:ENT:PRG:met_nsclc", "score": 0.9983616034039047, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:4"}
+{"mention": "MET NSCLC Prograx", "enterprise_id": "HMD:ENT:PRG:met_nsclc", "score": 0.9943987129381893, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:0"}
+{"mention": "METproto-oncogene", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9970482204882152, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:12"}
+{"mention": "EXP-2025-01x", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9948678876164171, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:44"}
+{"mention": "EXP-2025-012 MET enhibition assay", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9739789457744664, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:40"}
+{"mention": "EXP-2025-0122", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9821680072679377, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:44"}
+{"mention": "EXP2025012", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9993957787053065, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:44"}
+{"mention": "EXP-2025-012 MET inhibition assax", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9934606168123407, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:40"}
+{"mention": "EXP-2025-012MET抑制实验", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9984687664623441, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:42"}
+{"mention": "EXP-2025-012 MET inhibition assayy", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9888366552984517, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:40"}
+{"mention": "EXP2025012 MET inhibition assay", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9972960818214333, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:40"}
+{"mention": "EXP 2025 012 MET 抑制实验", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9761017238808902, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:44"}
+{"mention": "EXP-2025-012METinhibitionassay", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9983616034039047, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:40"}
+{"mention": "EXP 2025 012", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9985323717968487, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:44"}
+{"mention": "EXP 2025 012 MET inhibition assay", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9516634767829586, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:40"}
+{"mention": "EXP2025012 MET 抑制实验", "enterprise_id": "HMD:ENT:EXP:2025_012", "score": 0.9984687664623441, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:42"}
+{"mention": "CMP-SAVO-DEMx", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9947697229196029, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:58"}
+{"mention": "CMPSAVODEMO", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9993072057694575, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:58"}
+{"mention": "c-MEx", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9943904361492765, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:8"}
+{"mention": "c MET", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9981953649608328, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:8"}
+{"mention": "CMP SAVO DEMO", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9985867566051724, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:58"}
+{"mention": "c-METT", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9600766858494547, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:8"}
+{"mention": "cMET", "enterprise_id": "HMD:ENT:TGT:MET", "score": 0.9995417817297089, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:8"}
+{"mention": "CMP-SAVO-DEMOO", "enterprise_id": "HMD:ENT:CMP:savo_lot_demo", "score": 0.9830836115214182, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:58"}
+{"mention": "lems:ASY-001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9832047661463975, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:52"}
+{"mention": "lims:ASY-00x", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9948678876164171, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:52"}
+{"mention": "lims:ASY001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9981510895834792, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:52"}
+{"mention": "lims:ASY-0011", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9821680072679377, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:52"}
+{"mention": "lims:ASY 001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9981637324328814, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:52"}
+{"mention": "non-small-celllungcancer", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9987765011437272, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:14"}
+{"mention": "nonsmallcell lung cancer", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9979471077770378, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:20"}
+{"mention": "nonsmall cell lung cancer", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9959972893957713, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:14"}
+{"mention": "non-smallcelllungcancer", "enterprise_id": "HMD:ENT:IND:nsclc", "score": 0.9988655981082076, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:20"}
+{"mention": "ORPATHYx", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9951604305057609, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:34"}
+{"mention": "ORPATHYSS", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9754592355867719, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:34"}
+{"mention": "ASY001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9992118522305705, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:50"}
+{"mention": "AZD-60944", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9997524698473323, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:28"}
+{"mention": "AZD6094", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9990076524170656, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:30"}
+{"mention": "AZD-609x", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9973052357167463, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:28"}
+{"mention": "ASY-0011", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.972179416949735, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:50"}
+{"mention": "ASY-00x", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9951253622408683, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:50"}
+{"mention": "AZD60944", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.999230952159141, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:30"}
+{"mention": "AZD 6094", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9999133127261769, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:28"}
+{"mention": "AZD609x", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9978526830540614, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:30"}
+{"mention": "HMPL-5044", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9754592355867719, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:26"}
+{"mention": "HMPL504", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9990076524170656, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:26"}
+{"mention": "HMPL-50x", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9951604305057609, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:26"}
+{"mention": "HMPL 504", "enterprise_id": "HMD:ENT:DC:savolitinib", "score": 0.9985767160405505, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:26"}
+{"mention": "ASY 001", "enterprise_id": "HMD:ENT:ASY:met_ic50", "score": 0.9986045976733223, "source": "zingg", "model_id": "1", "z_cluster": "1786791314089:50"}

@@ -232,6 +232,13 @@ data/releases/eval/
 data/releases/ops/
 data/releases/quarantine/
 data/releases/claims/
+# Data Loop 日常 stamp；只保留已入库的 candidates fixture
+data/releases/foundation_candidates/*
+!data/releases/foundation_candidates/20260808T072955Z.candidates.json
+!data/releases/foundation_candidates/20260808T072955Z.kgcl
+!data/releases/foundation_candidates/20260810T062525Z.candidates.json
+!data/releases/foundation_candidates/20260810T062525Z.kgcl
+data/releases/foundation_proposals/
 data/obs_wal/
 data/zingg/input/
 data/zingg/reports/

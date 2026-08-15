@@ -15,7 +15,7 @@ from typing import Any
 
 import httpx
 
-from biomed_ontology.config import Settings, settings
+from biomed_ontology.config import Settings, export_hf_hub_token, settings
 from biomed_ontology.foundation.graphdb import GraphDbClient, ensure_repository
 from biomed_ontology.foundation.graphs import BIOS_NS, GRAPH_BIOMEDICAL, HMD_NS
 
@@ -159,11 +159,14 @@ def download_bios_full(cache_dir: Path | None = None) -> Path:
         raise RuntimeError(
             "需要 huggingface_hub：请 uv sync（默认依赖已含 huggingface_hub）"
         ) from exc
+    export_hf_hub_token(settings)
+    token = settings.hf_token.get_secret_value().strip() or None
     snapshot_download(  # ty: ignore[no-matching-overload]
         repo_id=BIOS_HF_REPO,
         repo_type="dataset",
         local_dir=str(dest),
         local_dir_use_symlinks=False,
+        token=token,
     )
     return dest
 

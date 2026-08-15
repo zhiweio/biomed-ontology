@@ -25,7 +25,10 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import re
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
@@ -101,19 +104,55 @@ def _local_dir(model_id: str) -> Path:
     return settings.model_cache_dir / "models" / model_id.rsplit("/", 1)[-1]
 
 
+def _hf_hub_repo_dir(model_id: str) -> Path:
+    """``snapshot_download(cache_dir=X)`` 落在 ``X/models--org--name``。"""
+    from biomed_ontology.config import settings
+
+    org, _, name = model_id.rpartition("/")
+    slug = f"models--{org.replace('/', '--')}--{name}" if org else f"models--{name}"
+    return settings.model_cache_dir / slug
+
+
+def _snapshot_dirs(base: Path) -> list[Path]:
+    snap = base / "snapshots"
+    if not snap.is_dir():
+        return []
+    return sorted(p for p in snap.glob("*") if p.is_dir())
+
+
 def _local_candidates(model_id: str) -> list[Path]:
     """本机上可能已经躺着这份权重的几个位置。
 
     除了我们自己约定的 `models/<仓库名>`，还要认 ModelScope 下载器留下的
-    `models/<组织>--<仓库名>[/snapshots/<版本>]`。不认的后果是：明明权重就在盘上，
+    `models/<组织>--<仓库名>[/snapshots/<版本>]`，以及 huggingface_hub 的
+    `models--<组织>--<仓库名>/snapshots/<rev>`。不认的后果是：明明权重就在盘上，
     每次加载还是要联网确认一遍 —— 内网机器上这等于加载不了。
     """
     root = _local_dir(model_id).parent
     org, _, name = model_id.rpartition("/")
     hyphened = root / f"{org.replace('/', '--')}--{name}" if org else root / name
-    out = [_local_dir(model_id), hyphened]
-    out.extend(sorted(p for p in (hyphened / "snapshots").glob("*") if p.is_dir()))
+    hf_root = _hf_hub_repo_dir(model_id)
+    out = [_local_dir(model_id), hyphened, hf_root]
+    out.extend(_snapshot_dirs(hyphened))
+    out.extend(_snapshot_dirs(hf_root))
     return out
+
+
+@contextmanager
+def _hf_local_files_only() -> Iterator[None]:
+    """``resolve_model`` 已给出本地目录后，禁止下游再打 Hub。"""
+    keys = ("HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE")
+    old = {k: os.environ.get(k) for k in keys}
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    try:
+        yield
+    finally:
+        for key, value in old.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
 
 
 def best_device() -> str:
@@ -177,7 +216,11 @@ def _from_gitee(model_id: str) -> str:
         # 仓库名取自上面的固定表，不是外部输入；且不经 shell。
         subprocess.run(["git", "clone", "--depth", "1", url, str(staged)], check=True)
         staged.rename(target)
-    return str(target)
+    return str(target.resolve())
+
+
+def _as_local_path(path: str | Path) -> str:
+    return str(Path(path).resolve())
 
 
 def resolve_model(model_id: str, *, marker: str = "config.json") -> str:
@@ -185,27 +228,34 @@ def resolve_model(model_id: str, *, marker: str = "config.json") -> str:
 
     顺序：本地已有 → 选定 hub → Gitee 兜底。``marker`` 判定目录是否完整
     （默认 ``config.json``；BiomedCLIP 等需换 marker）。兜底须打印实际源；
-    未登记镜像直接报错。
+    未登记镜像直接报错。返回绝对路径，避免 Prefect worker cwd 偏了之后
+    FlagEmbedding 的 ``exists()`` 误判、再打一遍 Hub。
     """
-    from biomed_ontology.config import settings
+    from biomed_ontology.config import export_hf_hub_token, settings
 
     for candidate in _local_candidates(model_id):
         if (candidate / marker).is_file():
-            return str(candidate)
+            return _as_local_path(candidate)
 
     if settings.model_hub == "gitee":
         return _from_gitee(model_id)
 
+    export_hf_hub_token(settings)
+    token = settings.hf_token.get_secret_value().strip() or None
     try:
         if settings.model_hub == "modelscope":
             from modelscope import snapshot_download as ms_download
 
-            return ms_download(
-                _mirror_repo(model_id, "modelscope"), cache_dir=str(settings.model_cache_dir)
+            return _as_local_path(
+                ms_download(
+                    _mirror_repo(model_id, "modelscope"), cache_dir=str(settings.model_cache_dir)
+                )
             )
         from huggingface_hub import snapshot_download as hf_download
 
-        return hf_download(model_id, cache_dir=str(settings.model_cache_dir))
+        return _as_local_path(
+            hf_download(model_id, cache_dir=str(settings.model_cache_dir), token=token)
+        )
     except ValueError:
         raise
     except Exception as exc:
@@ -318,9 +368,11 @@ class GeneralEmbedder:
         from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
         self.device = device or best_device()
-        self._fn = BGEM3EmbeddingFunction(
-            model_name=resolve_model(model_id), use_fp16=use_fp16, device=self.device
-        )
+        path = resolve_model(model_id)
+        with _hf_local_files_only():
+            self._fn = BGEM3EmbeddingFunction(
+                model_name=path, use_fp16=use_fp16, device=self.device
+            )
         self.dims = {"dense_general": int(self._fn.dim["dense"])}
 
     def encode(
@@ -365,8 +417,8 @@ class BiomedEmbedder:
         self.device = device or best_device()
         self._torch = torch
         self._batch_size = batch_size
-        self._tok: Any = AutoTokenizer.from_pretrained(path)
-        self._model = AutoModel.from_pretrained(path).to(self.device).eval()
+        self._tok: Any = AutoTokenizer.from_pretrained(path, local_files_only=True)
+        self._model = AutoModel.from_pretrained(path, local_files_only=True).to(self.device).eval()
         self.dims = {"dense_biomed": int(self._model.config.hidden_size)}
 
     def encode(
@@ -465,7 +517,8 @@ def _load_qwen3_vl(path: Path, *, dtype: object) -> Any:
         raise ImportError(f"无法加载 {script}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.Qwen3VLEmbedder(model_name_or_path=str(path), torch_dtype=dtype)
+    with _hf_local_files_only():
+        return module.Qwen3VLEmbedder(model_name_or_path=str(path), torch_dtype=dtype)
 
 
 def load_biomedclip(
@@ -519,14 +572,15 @@ def load_biomedclip(
     if not weights.is_file():
         raise FileNotFoundError(f"{weights} 不存在：BiomedCLIP 权重不完整，请重新下载。")
 
-    model, _, preprocess = create_model_and_transforms(
-        model_name=key,
-        pretrained=str(weights),
-        **{f"image_{k}": v for k, v in config["preprocess_cfg"].items()},
-    )
+    with _hf_local_files_only():
+        model, _, preprocess = create_model_and_transforms(
+            model_name=key,
+            pretrained=str(weights),
+            **{f"image_{k}": v for k, v in config["preprocess_cfg"].items()},
+        )
+        tokenizer = AutoTokenizer.from_pretrained(str(path), local_files_only=True)
     dev = device or best_device()
     model = model.to(dev).eval()
-    tokenizer = AutoTokenizer.from_pretrained(str(path))
     return model, preprocess, tokenizer, dev
 
 
