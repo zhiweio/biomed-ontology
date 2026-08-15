@@ -19,35 +19,31 @@ skos:Concept a sh:NodeShape ;
         [ sh:nodeKind sh:IRI ;
             sh:order 8 ;
             sh:path hmd:parents ],
-        [ sh:description "废弃概念的候选替代（非唯一，需人工判断）" ;
-            sh:nodeKind sh:IRI ;
-            sh:order 13 ;
-            sh:path <http://www.geneontology.org/formats/oboInOwl#consider> ],
-        [ sh:description "Biolink Model 类别，用于与外部图谱对齐" ;
-            sh:nodeKind sh:IRI ;
-            sh:order 2 ;
-            sh:path hmd:category ],
         [ sh:datatype xsd:string ;
             sh:nodeKind sh:Literal ;
             sh:order 7 ;
             sh:path hmd:keywords_zh ],
-        [ sh:description "等价团其余成员，含外采数据的 vendor ID" ;
+        [ sh:description "Biolink Model 类别，用于与外部图谱对齐" ;
             sh:nodeKind sh:IRI ;
-            sh:order 7 ;
-            sh:path skos:exactMatch ],
-        [ sh:description "药物作用的靶点。与 parents 一样是概念之间的边，但它是**跨实体类型**的： parents 只在同类内部走（疾病→上位疾病），has_target 从 SUBSTANCE 跳到 TARGET。 检索期的 search-around 靠的就是这类跨类型跳转 —— 「VEGFR2 抑制剂」这种查询要从靶点反向找到药，层级扩展一步也走不到。" ;
+            sh:order 2 ;
+            sh:path hmd:category ],
+        [ sh:description "废弃概念的候选替代（非唯一，需人工判断）" ;
             sh:nodeKind sh:IRI ;
-            sh:order 9 ;
-            sh:path hmd:has_target ],
+            sh:order 13 ;
+            sh:path <http://www.geneontology.org/formats/oboInOwl#consider> ],
+        [ sh:in ( <https://w3id.org/biolink/vocab/GeneOrGeneProduct> <https://w3id.org/biolink/vocab/ChemicalEntity> <https://w3id.org/biolink/vocab/Disease> <https://w3id.org/biolink/vocab/MolecularActivity> "MODALITY" <https://w3id.org/biolink/vocab/ClinicalTrial> <https://w3id.org/biolink/vocab/BiologicalEntity> "ADVERSE_EVENT" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 1 ;
+            sh:path hmd:entity_type ],
         [ sh:description "药物的适应症。同为跨类型边（SUBSTANCE → DISEASE）。 与事实层同名谓词的区别在证据强度：这里是种子里的人工断言， 事实层那条是从正文抽出来、带 reifier 与出处的。两者落在不同命名图。" ;
             sh:nodeKind sh:IRI ;
             sh:order 10 ;
             sh:path hmd:treats ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path hmd:parent_label ],
+        [ sh:description "等价团其余成员，含外采数据的 vendor ID" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 7 ;
+            sh:path skos:exactMatch ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -58,16 +54,15 @@ skos:Concept a sh:NodeShape ;
             sh:nodeKind sh:IRI ;
             sh:order 0 ;
             sh:path skos:notation ],
-        [ sh:in ( <https://w3id.org/biolink/vocab/GeneOrGeneProduct> <https://w3id.org/biolink/vocab/ChemicalEntity> <https://w3id.org/biolink/vocab/Disease> <https://w3id.org/biolink/vocab/MolecularActivity> "MODALITY" <https://w3id.org/biolink/vocab/ClinicalTrial> <https://w3id.org/biolink/vocab/BiologicalEntity> "ADVERSE_EVENT" ) ;
+        [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 1 ;
-            sh:path hmd:entity_type ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:order 14 ;
-            sh:path hmd:license_tier ],
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:label_zh ],
+        [ sh:description "药物作用的靶点。与 parents 一样是概念之间的边，但它是**跨实体类型**的： parents 只在同类内部走（疾病→上位疾病），has_target 从 SUBSTANCE 跳到 TARGET。 检索期的 search-around 靠的就是这类跨类型跳转 —— 「VEGFR2 抑制剂」这种查询要从靶点反向找到药，层级扩展一步也走不到。" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 9 ;
+            sh:path hmd:has_target ],
         [ sh:description "废弃概念的唯一继任者" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:IRI ;
@@ -81,15 +76,26 @@ skos:Concept a sh:NodeShape ;
             sh:path skos:prefLabel ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
-            sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 2 ;
-            sh:path hmd:label_en ],
+            sh:order 5 ;
+            sh:path skos:definition ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 5 ;
-            sh:path skos:definition ],
+            sh:path hmd:parent_label ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 2 ;
+            sh:path hmd:label_en ],
+        [ sh:description "标引维度。多维正交而非单一树，一篇文档在每个维度上独立打标。" ;
+            sh:in ( "DOC_TYPE" "RD_STAGE" "EVIDENCE_TYPE" "TECH_TOPIC" "PATENT_DIM" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 1 ;
+            sh:path hmd:dimension ],
         [ sh:description "等价团的代表 ID，选取规则见 ontology/clique.py。 仅作展示与回溯用途，不是主键。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:IRI ;
@@ -105,25 +111,8 @@ skos:Concept a sh:NodeShape ;
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:label_zh ],
-        [ sh:description "标引维度。多维正交而非单一树，一篇文档在每个维度上独立打标。" ;
-            sh:in ( "DOC_TYPE" "RD_STAGE" "EVIDENCE_TYPE" "TECH_TOPIC" "PATENT_DIM" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 1 ;
-            sh:path hmd:dimension ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
             sh:order 15 ;
             sh:path hmd:created_in_release ;
-            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 16 ;
-            sh:path hmd:modified_in_release ;
             sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
         [ sh:datatype xsd:string ;
             sh:description "规则命中关键词。规则先行、模型兜底，规则命中的部分天然可解释。" ;
@@ -133,23 +122,43 @@ skos:Concept a sh:NodeShape ;
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:taxonomy_version ;
+            sh:order 16 ;
+            sh:path hmd:modified_in_release ;
             sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ],
+        [ sh:defaultValue "TIER_0" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
+            sh:order 14 ;
+            sh:path hmd:license_tier ],
         [ sh:datatype xsd:string ;
             sh:description "英文首选标签" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 3 ;
-            sh:path skos:prefLabel ] ;
+            sh:path skos:prefLabel ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:taxonomy_version ;
+            sh:pattern "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" ] ;
     sh:targetClass skos:Concept .
 
 hmd:Chunk a sh:NodeShape ;
     rdfs:comment "文档切片，检索与抽取的基本单位。 保留 section 与 bbox 是硬要求：provenance 要能把研究员的视线引到原文那一段。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:integer ;
+    sh:property [ sh:datatype xsd:string ;
+            sh:nodeKind sh:Literal ;
+            sh:order 17 ;
+            sh:path hmd:asset_keywords ],
+        [ sh:datatype xsd:integer ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 6 ;
+            sh:path hmd:char_start ],
+        [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 7 ;
@@ -159,55 +168,69 @@ hmd:Chunk a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 8 ;
             sh:path hmd:page ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 10 ;
+            sh:path hmd:text ],
+        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
+            sh:maxCount 1 ;
+            sh:order 11 ;
+            sh:path hmd:modality ],
         [ sh:datatype xsd:integer ;
             sh:description "同层内的阅读顺序。还原完整章节时按它重组，不依赖字典序。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 5 ;
             sh:path hmd:sort_order ],
-        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
-            sh:maxCount 1 ;
-            sh:order 11 ;
-            sh:path hmd:modality ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 2 ;
             sh:path hmd:section ],
         [ sh:datatype xsd:string ;
-            sh:description "表格 HTML / 图像 PNG 的仓库相对路径。 绝不由文档内容拼接得出（路径穿越），一律由 doc_id + 内容哈希生成。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 15 ;
-            sh:path hmd:asset_path ],
-        [ sh:datatype xsd:integer ;
+            sh:order 3 ;
+            sh:path hmd:section_id ;
+            sh:pattern "^SEC:[A-Za-z0-9._:-]+$" ],
+        [ sh:description "含本体子树扩展的概念集合，用于召回。 与 concept_ids 分开存是为了让\"查 NSCLC 召回肺腺癌\"不污染精确匹配。" ;
+            sh:nodeKind sh:IRI ;
+            sh:order 13 ;
+            sh:path hmd:concept_ids_expanded ],
+        [ sh:datatype xsd:float ;
+            sh:description "[x0, y0, x1, y1]，页面坐标。表格/图像抽取的溯源靠它定位。" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:bbox ],
+        [ sh:datatype xsd:string ;
+            sh:description "层级路径，如 \"Results / Efficacy / ORR\"。检索结果的面包屑与还原主键。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 6 ;
-            sh:path hmd:char_start ],
+            sh:order 4 ;
+            sh:path hmd:section_path ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 0 ;
             sh:path hmd:chunk_id ;
             sh:pattern "^CHK:[A-Za-z0-9._:-]+$" ],
-        [ sh:datatype xsd:string ;
-            sh:nodeKind sh:Literal ;
-            sh:order 17 ;
-            sh:path hmd:asset_keywords ],
-        [ sh:datatype xsd:float ;
-            sh:description "[x0, y0, x1, y1]，页面坐标。表格/图像抽取的溯源靠它定位。" ;
-            sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:bbox ],
-        [ sh:description "含本体子树扩展的概念集合，用于召回。 与 concept_ids 分开存是为了让\"查 NSCLC 召回肺腺癌\"不污染精确匹配。" ;
-            sh:nodeKind sh:IRI ;
-            sh:order 13 ;
-            sh:path hmd:concept_ids_expanded ],
         [ sh:description "直接归一化命中的概念，用于精确过滤。" ;
             sh:nodeKind sh:IRI ;
             sh:order 12 ;
             sh:path hmd:concept_ids ],
+        [ sh:datatype xsd:string ;
+            sh:description "产出该切片时缺失的能力（如 formula / bbox / ocr）。 一路透传到 agent：与其让下游以为拿到了完整信息，不如显式声明这次少了什么。" ;
+            sh:nodeKind sh:Literal ;
+            sh:order 18 ;
+            sh:path hmd:degraded ],
+        [ sh:datatype xsd:string ;
+            sh:description "视觉模型对表格/图像的文本摘要，使视觉内容可被文本查询命中。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 16 ;
+            sh:path hmd:asset_summary ],
         [ sh:datatype xsd:string ;
             sh:description "指向内容等价的属主切片。同一段正文可能同时归属多个叶节点（如跨章节的表格说明）， 去重后只保留一份，其余以此引用属主，避免同一证据在结果里重复占位。" ;
             sh:maxCount 1 ;
@@ -219,45 +242,26 @@ hmd:Chunk a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 10 ;
-            sh:path hmd:text ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:section_id ;
-            sh:pattern "^SEC:[A-Za-z0-9._:-]+$" ],
-        [ sh:datatype xsd:string ;
-            sh:description "视觉模型对表格/图像的文本摘要，使视觉内容可被文本查询命中。" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 16 ;
-            sh:path hmd:asset_summary ],
-        [ sh:datatype xsd:string ;
-            sh:description "产出该切片时缺失的能力（如 formula / bbox / ocr）。 一路透传到 agent：与其让下游以为拿到了完整信息，不如显式声明这次少了什么。" ;
-            sh:nodeKind sh:Literal ;
-            sh:order 18 ;
-            sh:path hmd:degraded ],
-        [ sh:datatype xsd:string ;
-            sh:description "层级路径，如 \"Results / Efficacy / ORR\"。检索结果的面包屑与还原主键。" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 4 ;
-            sh:path hmd:section_path ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
             sh:order 1 ;
             sh:path hmd:doc_id ;
-            sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ;
+            sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ],
+        [ sh:datatype xsd:string ;
+            sh:description "表格 HTML / 图像 PNG 的仓库相对路径。 绝不由文档内容拼接得出（路径穿越），一律由 doc_id + 内容哈希生成。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 15 ;
+            sh:path hmd:asset_path ] ;
     sh:targetClass hmd:Chunk .
 
 hmd:Clique a sh:NodeShape ;
     rdfs:comment "等价团：一组通过 exact_match 互相连通的外部 ID 集合，对应唯一一个内部概念。 建团用连通分量算法，冲突（同团内出现两个来自同一权威源的不同 ID）进人工队列。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:maxCount 1 ;
+    sh:property [ sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
+            sh:maxCount 1 ;
+            sh:order 4 ;
+            sh:path hmd:built_by_justification ],
+        [ sh:maxCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 2 ;
             sh:path hmd:primary_xref ],
@@ -270,10 +274,6 @@ hmd:Clique a sh:NodeShape ;
             sh:nodeKind sh:IRI ;
             sh:order 1 ;
             sh:path hmd:members ],
-        [ sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
-            sh:maxCount 1 ;
-            sh:order 4 ;
-            sh:path hmd:built_by_justification ],
         [ sh:datatype xsd:string ;
             sh:description "建团冲突说明，非空即需人工介入" ;
             sh:nodeKind sh:Literal ;
@@ -289,16 +289,6 @@ hmd:Document a sh:NodeShape ;
             sh:nodeKind sh:IRI ;
             sh:order 2 ;
             sh:path hmd:external_id ],
-        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" "INVESTIGATOR_BROCHURE" "CLINICAL_STUDY_REPORT" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 4 ;
-            sh:path hmd:doc_type ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:order 7 ;
-            sh:path hmd:license_tier ],
         [ sh:datatype xsd:dateTime ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -308,11 +298,21 @@ hmd:Document a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:order 6 ;
             sh:path hmd:language ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:title ],
         [ sh:datatype xsd:date ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 5 ;
             sh:path hmd:published_on ],
+        [ sh:in ( "JOURNAL_ARTICLE" "PREPRINT" "CONFERENCE_ABSTRACT" "CLINICAL_TRIAL_RECORD" "PATENT" "REGULATORY_DOCUMENT" "LABEL" "INTERNAL_REPORT" "INVESTIGATOR_BROCHURE" "CLINICAL_STUDY_REPORT" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 4 ;
+            sh:path hmd:doc_type ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -320,15 +320,15 @@ hmd:Document a sh:NodeShape ;
             sh:path hmd:doc_id ;
             sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ],
         [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:title ],
-        [ sh:datatype xsd:string ;
             sh:description "标引分类打的多标签，取值来自 taxonomy。" ;
             sh:nodeKind sh:Literal ;
             sh:order 9 ;
             sh:path hmd:labels ],
+        [ sh:defaultValue "TIER_0" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
+            sh:order 7 ;
+            sh:path hmd:license_tier ],
         [ sh:datatype xsd:string ;
             sh:description "必须是 registry 中已注册的源，否则许可元数据缺失。" ;
             sh:maxCount 1 ;
@@ -342,43 +342,43 @@ hmd:DocumentLabel a sh:NodeShape ;
     rdfs:comment "一篇文档上的一条标引结果，带置信度与依据。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:datatype xsd:string ;
-            sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path hmd:matched_keywords ],
+    sh:property [ sh:description "决策依据。术语映射、标引、归一化共用同一套词表（设计决策 D7）。" ;
+            sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
+            sh:maxCount 1 ;
+            sh:order 4 ;
+            sh:path hmd:justification ],
         [ sh:description "标引维度。多维正交而非单一树，一篇文档在每个维度上独立打标。" ;
             sh:in ( "DOC_TYPE" "RD_STAGE" "EVIDENCE_TYPE" "TECH_TOPIC" "PATENT_DIM" ) ;
             sh:maxCount 1 ;
             sh:order 2 ;
             sh:path hmd:dimension ],
-        [ sh:datatype xsd:float ;
-            sh:maxCount 1 ;
+        [ sh:datatype xsd:string ;
             sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:confidence ],
+            sh:order 5 ;
+            sh:path hmd:matched_keywords ],
+        [ sh:defaultValue "PENDING" ;
+            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
+            sh:maxCount 1 ;
+            sh:order 6 ;
+            sh:path hmd:review_status ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 0 ;
             sh:path hmd:doc_id ;
             sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ],
+        [ sh:datatype xsd:float ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:confidence ],
         [ sh:datatype xsd:string ;
             sh:description "形如 HMDT:EVIDENCE_TYPE:phase_3_rct，维度段可读，便于人工审校。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 1 ;
             sh:path hmd:label_id ;
-            sh:pattern "^HMDT:[A-Z_]+:[a-z0-9_]+$" ],
-        [ sh:description "决策依据。术语映射、标引、归一化共用同一套词表（设计决策 D7）。" ;
-            sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
-            sh:maxCount 1 ;
-            sh:order 4 ;
-            sh:path hmd:justification ],
-        [ sh:defaultValue "PENDING" ;
-            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
-            sh:maxCount 1 ;
-            sh:order 6 ;
-            sh:path hmd:review_status ] ;
+            sh:pattern "^HMDT:[A-Z_]+:[a-z0-9_]+$" ] ;
     sh:targetClass hmd:DocumentLabel .
 
 hmd:DocumentSection a sh:NodeShape ;
@@ -390,11 +390,27 @@ hmd:DocumentSection a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:order 10 ;
             sh:path hmd:heading_source ],
+        [ sh:datatype xsd:integer ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:start_page ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 2 ;
             sh:path hmd:parent_section_id ;
+            sh:pattern "^SEC:[A-Za-z0-9._:-]+$" ],
+        [ sh:datatype xsd:integer ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:end_page ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 0 ;
+            sh:path hmd:section_id ;
             sh:pattern "^SEC:[A-Za-z0-9._:-]+$" ],
         [ sh:datatype xsd:integer ;
             sh:description "同层内的阅读顺序。还原完整章节时按它重组，不依赖字典序。" ;
@@ -407,22 +423,6 @@ hmd:DocumentSection a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 4 ;
             sh:path hmd:section_title ],
-        [ sh:datatype xsd:integer ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 7 ;
-            sh:path hmd:start_page ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 0 ;
-            sh:path hmd:section_id ;
-            sh:pattern "^SEC:[A-Za-z0-9._:-]+$" ],
-        [ sh:datatype xsd:integer ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:end_page ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -462,30 +462,21 @@ hmd:Fact a sh:NodeShape ;
     rdfs:comment "一条结构化事实三元组，带语句级溯源。 RDF 落地形态是 RDF-star：<< :s :p :o >> prov:wasDerivedFrom :chunk 。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
+    sh:property [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
-            sh:order 14 ;
-            sh:path hmd:modality ],
+            sh:nodeKind sh:Literal ;
+            sh:order 15 ;
+            sh:path hmd:subject_label ],
         [ sh:in ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch <https://w3id.org/biolink/vocab/subclass_of> <https://w3id.org/biolink/vocab/affects> <https://w3id.org/biolink/vocab/treats> <https://w3id.org/biolink/vocab/has_target> <https://w3id.org/biolink/vocab/biomarker_for> <https://w3id.org/biolink/vocab/has_adverse_event> <https://w3id.org/biolink/vocab/studied_to_treat> ) ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:order 2 ;
             sh:path hmd:predicate ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
-            sh:maxCount 1 ;
-            sh:order 12 ;
-            sh:path hmd:license_tier ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 15 ;
-            sh:path hmd:subject_label ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 10 ;
-            sh:path hmd:extractor_version ],
+            sh:order 9 ;
+            sh:path hmd:extractor_id ],
         [ sh:defaultValue "PENDING" ;
             sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
             sh:maxCount 1 ;
@@ -494,56 +485,65 @@ hmd:Fact a sh:NodeShape ;
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:extractor_id ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path hmd:object_unit ],
-        [ sh:datatype xsd:string ;
-            sh:description "限定条件，如 line_of_therapy=3L、population=MET_ex14。" ;
-            sh:nodeKind sh:Literal ;
-            sh:order 6 ;
-            sh:path hmd:qualifiers ],
-        [ sh:datatype xsd:float ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:confidence ],
+            sh:order 10 ;
+            sh:path hmd:extractor_version ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 16 ;
             sh:path hmd:object_label ],
-        [ sh:class hmd:Evidence ;
-            sh:description "无证据的事实一律不入库。这是\"事实带 provenance 100%\"验收项的执行点。" ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:BlankNodeOrIRI ;
-            sh:order 7 ;
-            sh:path hmd:evidence ],
         [ sh:maxCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 3 ;
             sh:path hmd:object_id ],
-        [ sh:description "事实的主语必须已归一化到内部 CURIE，外部 ID 一律先挂靠（设计决策 D9）。" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 1 ;
-            sh:path hmd:subject_id ],
         [ sh:datatype xsd:string ;
-            sh:description "数值型客体（IC50、ORR、PFS），与 object_id 二选一。" ;
-            sh:maxCount 1 ;
+            sh:description "限定条件，如 line_of_therapy=3L、population=MET_ex14。" ;
             sh:nodeKind sh:Literal ;
-            sh:order 4 ;
-            sh:path hmd:object_value ],
+            sh:order 6 ;
+            sh:path hmd:qualifiers ],
+        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
+            sh:maxCount 1 ;
+            sh:order 14 ;
+            sh:path hmd:modality ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 0 ;
             sh:path hmd:fact_id ;
             sh:pattern "^HMDF:\\d{9}$" ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 5 ;
+            sh:path hmd:object_unit ],
+        [ sh:datatype xsd:float ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:confidence ],
+        [ sh:class hmd:Evidence ;
+            sh:description "无证据的事实一律不入库。这是\"事实带 provenance 100%\"验收项的执行点。" ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNodeOrIRI ;
+            sh:order 7 ;
+            sh:path hmd:evidence ],
+        [ sh:defaultValue "TIER_0" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
+            sh:order 12 ;
+            sh:path hmd:license_tier ],
+        [ sh:datatype xsd:string ;
+            sh:description "数值型客体（IC50、ORR、PFS），与 object_id 二选一。" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 4 ;
+            sh:path hmd:object_value ],
+        [ sh:description "事实的主语必须已归一化到内部 CURIE，外部 ID 一律先挂靠（设计决策 D9）。" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 1 ;
+            sh:path hmd:subject_id ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -594,16 +594,20 @@ hmd:Provenance a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 4 ;
             sh:path hmd:char_end ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+        [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
-            sh:order 10 ;
-            sh:path hmd:license_tier ],
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:char_start ],
         [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 5 ;
             sh:path hmd:page ],
+        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
+            sh:maxCount 1 ;
+            sh:order 7 ;
+            sh:path hmd:modality ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -613,21 +617,22 @@ hmd:Provenance a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:order 9 ;
             sh:path hmd:retrieval_channel ],
-        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
-            sh:maxCount 1 ;
-            sh:order 7 ;
-            sh:path hmd:modality ],
         [ sh:datatype xsd:float ;
             sh:description "[x0, y0, x1, y1]，页面坐标。表格/图像抽取的溯源靠它定位。" ;
             sh:nodeKind sh:Literal ;
             sh:order 6 ;
             sh:path hmd:bbox ],
-        [ sh:datatype xsd:integer ;
-            sh:description "rerank 前的名次。保留它才能判断 rerank 是帮忙还是帮倒忙。" ;
+        [ sh:defaultValue "TIER_0" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
+            sh:order 10 ;
+            sh:path hmd:license_tier ],
+        [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:rank_before_rerank ],
+            sh:order 0 ;
+            sh:path hmd:doc_id ;
+            sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -635,82 +640,48 @@ hmd:Provenance a sh:NodeShape ;
             sh:path hmd:chunk_id ;
             sh:pattern "^CHK:[A-Za-z0-9._:-]+$" ],
         [ sh:datatype xsd:integer ;
+            sh:description "rerank 前的名次。保留它才能判断 rerank 是帮忙还是帮倒忙。" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:char_start ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 0 ;
-            sh:path hmd:doc_id ;
-            sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ;
+            sh:order 8 ;
+            sh:path hmd:rank_before_rerank ] ;
     sh:targetClass hmd:Provenance .
 
 hmd:Synonym a sh:NodeShape ;
     rdfs:comment "别名条目。scope 必填 —— 检索扩展行为完全由 scope 驱动（D2）。 is_ambiguous 为真时，该别名不得直接单选，必须走上下文消歧（D3）。" ;
     sh:closed true ;
     sh:ignoredProperties ( rdf:type ) ;
-    sh:property [ sh:in ( "INN" "BRAND" "INTERNAL_CODE" "PARTNER_CODE" "RESEARCH_CODE" "ABBREV" "SYMBOL" "CHEMICAL_NAME" "TRANSLATION" "MISSPELLING" "LEGACY" ) ;
+    sh:property [ sh:in ( "en" "zh" "la" ) ;
             sh:maxCount 1 ;
-            sh:order 6 ;
-            sh:path hmd:alias_type ],
+            sh:minCount 1 ;
+            sh:order 4 ;
+            sh:path hmd:lang ],
         [ sh:datatype xsd:boolean ;
             sh:description "该别名映射到多个概念，禁止直接单选" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 10 ;
             sh:path hmd:is_ambiguous ],
-        [ sh:defaultValue "PENDING" ;
-            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
+        [ sh:in ( "INN" "BRAND" "INTERNAL_CODE" "PARTNER_CODE" "RESEARCH_CODE" "ABBREV" "SYMBOL" "CHEMICAL_NAME" "TRANSLATION" "MISSPELLING" "LEGACY" ) ;
             sh:maxCount 1 ;
-            sh:order 11 ;
-            sh:path hmd:review_status ],
+            sh:order 6 ;
+            sh:path hmd:alias_type ],
         [ sh:datatype xsd:date ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 13 ;
             sh:path hmd:valid_from ],
-        [ sh:defaultValue "TIER_0" ;
-            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+        [ sh:defaultValue "PENDING" ;
+            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
             sh:maxCount 1 ;
-            sh:order 12 ;
-            sh:path hmd:license_tier ],
-        [ sh:in ( "en" "zh" "la" ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 4 ;
-            sh:path hmd:lang ],
-        [ sh:datatype xsd:string ;
-            sh:description "数据源标识，必须在 source registry 中注册" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 7 ;
-            sh:path hmd:source ],
-        [ sh:datatype xsd:string ;
-            sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:source_version ],
+            sh:order 11 ;
+            sh:path hmd:review_status ],
         [ sh:description "内部概念 CURIE" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
             sh:order 1 ;
             sh:path skos:notation ],
-        [ sh:datatype xsd:date ;
-            sh:description "为空表示当前有效" ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 14 ;
-            sh:path hmd:valid_to ],
-        [ sh:in ( <http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym> <http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym> <http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym> ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 5 ;
-            sh:path hmd:scope ],
         [ sh:datatype xsd:string ;
             sh:description "原始写法，保留大小写、连字符与空白" ;
             sh:maxCount 1 ;
@@ -718,6 +689,42 @@ hmd:Synonym a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 2 ;
             sh:path hmd:alias_raw ],
+        [ sh:datatype xsd:string ;
+            sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:source_version ],
+        [ sh:datatype xsd:string ;
+            sh:description "归一化形式：小写、去连字符与空白、希腊字母转写、全角转半角。 词典精确匹配走这一列，alias_raw 只用于展示与溯源。" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:alias_norm ],
+        [ sh:in ( <http://www.geneontology.org/formats/oboInOwl#hasExactSynonym> <http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym> <http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym> <http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym> ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 5 ;
+            sh:path hmd:scope ],
+        [ sh:datatype xsd:date ;
+            sh:description "为空表示当前有效" ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 14 ;
+            sh:path hmd:valid_to ],
+        [ sh:datatype xsd:string ;
+            sh:description "数据源标识，必须在 source registry 中注册" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 7 ;
+            sh:path hmd:source ],
+        [ sh:defaultValue "TIER_0" ;
+            sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
+            sh:maxCount 1 ;
+            sh:order 12 ;
+            sh:path hmd:license_tier ],
         [ sh:datatype xsd:string ;
             sh:description "别名条目的稳定 ID。可观测埋点回传的就是这个 ID —— 归因排障时要能从一条错误结论定位到具体哪一行别名（Demo 场景 4）。" ;
             sh:maxCount 1 ;
@@ -731,14 +738,7 @@ hmd:Synonym a sh:NodeShape ;
             sh:minInclusive 0e+00 ;
             sh:nodeKind sh:Literal ;
             sh:order 9 ;
-            sh:path hmd:confidence ],
-        [ sh:datatype xsd:string ;
-            sh:description "归一化形式：小写、去连字符与空白、希腊字母转写、全角转半角。 词典精确匹配走这一列，alias_raw 只用于展示与溯源。" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:alias_norm ] ;
+            sh:path hmd:confidence ] ;
     sh:targetClass hmd:Synonym .
 
 <https://w3id.org/sssom/Mapping> a sh:NodeShape ;
@@ -748,11 +748,6 @@ hmd:Synonym a sh:NodeShape ;
     sh:property [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 7 ;
-            sh:path hmd:mapping_tool ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
             sh:order 2 ;
             sh:path hmd:subject_label ],
         [ sh:datatype xsd:date ;
@@ -760,24 +755,32 @@ hmd:Synonym a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 10 ;
             sh:path hmd:mapping_date ],
-        [ sh:datatype xsd:string ;
-            sh:description "数据源标识，必须在 source registry 中注册" ;
+        [ sh:defaultValue "PENDING" ;
+            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
             sh:maxCount 1 ;
-            sh:minCount 1 ;
+            sh:order 14 ;
+            sh:path hmd:review_status ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 11 ;
-            sh:path hmd:source ],
+            sh:order 7 ;
+            sh:path hmd:mapping_tool ],
+        [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:order 4 ;
+            sh:path hmd:object_id ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 5 ;
+            sh:path hmd:object_label ],
         [ sh:datatype xsd:string ;
             sh:description "源快照版本。缺此字段无法做离线可重放构建" ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 12 ;
             sh:path hmd:source_version ],
-        [ sh:datatype xsd:float ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 8 ;
-            sh:path hmd:confidence ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -789,36 +792,33 @@ hmd:Synonym a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 9 ;
             sh:path hmd:author_id ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 5 ;
-            sh:path hmd:object_label ],
-        [ sh:defaultValue "PENDING" ;
-            sh:in ( "PENDING" "APPROVED" "REJECTED" "AUTO_TRUSTED" ) ;
-            sh:maxCount 1 ;
-            sh:order 14 ;
-            sh:path hmd:review_status ],
-        [ sh:in ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch <https://w3id.org/biolink/vocab/subclass_of> <https://w3id.org/biolink/vocab/affects> <https://w3id.org/biolink/vocab/treats> <https://w3id.org/biolink/vocab/has_target> <https://w3id.org/biolink/vocab/biomarker_for> <https://w3id.org/biolink/vocab/has_adverse_event> <https://w3id.org/biolink/vocab/studied_to_treat> ) ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:order 3 ;
-            sh:path hmd:predicate_id ],
         [ sh:in ( <https://w3id.org/semapv/vocab/LexicalMatching> <https://w3id.org/semapv/vocab/CompositeMatching> <https://w3id.org/semapv/vocab/ManualMappingCuration> <https://w3id.org/semapv/vocab/MappingChaining> <https://w3id.org/semapv/vocab/UnspecifiedMatching> <https://w3id.org/semapv/vocab/SemanticSimilarityThresholdMatching> "OntologyDescendantExpansion" "LLMDisambiguation" ) ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:order 6 ;
             sh:path hmd:mapping_justification ],
+        [ sh:datatype xsd:float ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 8 ;
+            sh:path hmd:confidence ],
+        [ sh:in ( skos:exactMatch skos:closeMatch skos:broadMatch skos:narrowMatch <https://w3id.org/biolink/vocab/subclass_of> <https://w3id.org/biolink/vocab/affects> <https://w3id.org/biolink/vocab/treats> <https://w3id.org/biolink/vocab/has_target> <https://w3id.org/biolink/vocab/biomarker_for> <https://w3id.org/biolink/vocab/has_adverse_event> <https://w3id.org/biolink/vocab/studied_to_treat> ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:order 3 ;
+            sh:path hmd:predicate_id ],
+        [ sh:datatype xsd:string ;
+            sh:description "数据源标识，必须在 source registry 中注册" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 11 ;
+            sh:path hmd:source ],
         [ sh:defaultValue "TIER_0" ;
             sh:in ( "TIER_0" "TIER_1" "TIER_2" "TIER_3" ) ;
             sh:maxCount 1 ;
             sh:order 13 ;
             sh:path hmd:license_tier ],
-        [ sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:IRI ;
-            sh:order 4 ;
-            sh:path hmd:object_id ],
         [ sh:description "内部 HMD CURIE 或外部 CURIE（建团阶段两端都可能是外部 ID）" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
@@ -836,15 +836,21 @@ hmd:Evidence a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 4 ;
             sh:path hmd:char_end ],
-        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
+        [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
-            sh:order 7 ;
-            sh:path hmd:modality ],
+            sh:nodeKind sh:Literal ;
+            sh:order 3 ;
+            sh:path hmd:char_start ],
         [ sh:datatype xsd:integer ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 5 ;
             sh:path hmd:page ],
+        [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:order 9 ;
+            sh:path hmd:title ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
@@ -855,16 +861,17 @@ hmd:Evidence a sh:NodeShape ;
             sh:nodeKind sh:Literal ;
             sh:order 6 ;
             sh:path hmd:bbox ],
-        [ sh:datatype xsd:integer ;
+        [ sh:in ( "TEXT" "TABLE" "IMAGE" "STRUCTURE" "METADATA" ) ;
             sh:maxCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 3 ;
-            sh:path hmd:char_start ],
+            sh:order 7 ;
+            sh:path hmd:modality ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
+            sh:minCount 1 ;
             sh:nodeKind sh:Literal ;
-            sh:order 9 ;
-            sh:path hmd:title ],
+            sh:order 1 ;
+            sh:path hmd:doc_id ;
+            sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ],
         [ sh:datatype xsd:string ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
@@ -877,13 +884,6 @@ hmd:Evidence a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:nodeKind sh:Literal ;
             sh:order 8 ;
-            sh:path hmd:quote ],
-        [ sh:datatype xsd:string ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:Literal ;
-            sh:order 1 ;
-            sh:path hmd:doc_id ;
-            sh:pattern "^DOC:[A-Za-z0-9._:-]+$" ] ;
+            sh:path hmd:quote ] ;
     sh:targetClass hmd:Evidence .
 

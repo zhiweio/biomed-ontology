@@ -127,6 +127,32 @@ class EntityTypeEnum(str, Enum):
     """
 
 
+class MetricCode(str, Enum):
+    """
+    受控指标口径。策展 SSOT 是 ontology/extract/table_metrics.yaml； 本枚举是 LinkML 合同。口径变更走 ontology release，禁止 prompt 私货。
+    """
+    ORR = "ORR"
+    """
+    Objective response rate
+    """
+    PFS = "PFS"
+    """
+    Progression-free survival
+    """
+    OS = "OS"
+    """
+    Overall survival
+    """
+    DCR = "DCR"
+    """
+    Disease control rate
+    """
+    IC50 = "IC50"
+    """
+    Half-maximal inhibitory concentration
+    """
+
+
 class SynonymScopeEnum(str, Enum):
     """
     别名范围，直接决定检索行为（设计决策 D2）。 把 related 当作等价会摧毁精确率，因此 scope 是必填字段而非可选标注。

@@ -74,7 +74,7 @@ def world_model_sync() -> dict[str, Any]:
             pipeline="hmd.world_model_sync",
             from_fqn="ontology.catalog",
             to_fqn="openmetadata.glossary.HMDEnterpriseAssets",
-            extra={"graph_uri": "http://asliva.com/graph/ontology", "fingerprint": fp},
+            extra={"graph_uri": "http://asliva.example/graph/ontology", "fingerprint": fp},
         )
     except Exception as exc:
         lineage = {"ok": False, "error": str(exc)}

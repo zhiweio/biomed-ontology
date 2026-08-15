@@ -879,6 +879,18 @@
             "title": "MappingJustificationEnum",
             "type": "string"
         },
+        "MetricCode": {
+            "description": "\u53d7\u63a7\u6307\u6807\u53e3\u5f84\u3002\u7b56\u5c55 SSOT \u662f ontology/extract/table_metrics.yaml\uff1b \u672c\u679a\u4e3e\u662f LinkML \u5408\u540c\u3002\u53e3\u5f84\u53d8\u66f4\u8d70 ontology release\uff0c\u7981\u6b62 prompt \u79c1\u8d27\u3002",
+            "enum": [
+                "ORR",
+                "PFS",
+                "OS",
+                "DCR",
+                "IC50"
+            ],
+            "title": "MetricCode",
+            "type": "string"
+        },
         "ModalityChannelEnum": {
             "description": "\u62bd\u53d6\u901a\u9053\u3002\u4e09\u6a21\u6001\u5404\u81ea\u7684\u9519\u8bef\u6a21\u5f0f\u4e0d\u540c\uff0c\u6df7\u5728\u4e00\u8d77\u5c31\u65e0\u6cd5\u5206\u6a21\u6001\u8bc4\u4f30\u51c6\u786e\u7387\uff0c \u4e5f\u65e0\u6cd5\u5b9a\u4f4d\u662f\u89e3\u6790\u5931\u8d25\u8fd8\u662f\u62bd\u53d6\u5931\u8d25\u3002",
             "enum": [

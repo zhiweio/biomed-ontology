@@ -31,19 +31,19 @@ SOURCE_REGISTRY: dict[str, BiomedicalSource] = {
         source_id="bios_v3",
         description="BIOS_v3 public biomedical KG — normal mount into GraphDB",
         license="CC-BY-NC-ND-4.0",
-        graph_uri="http://asliva.com/graph/biomedical",
+        graph_uri="http://asliva.example/graph/biomedical",
     ),
     "umls_subset": BiomedicalSource(
         source_id="umls_subset",
         description="UMLS subset by SAB — CUI as xref only, never enterprise PK",
         license="UMLS Metathesaurus License (per-SAB categories)",
-        graph_uri="http://asliva.com/graph/biomedical",
+        graph_uri="http://asliva.example/graph/biomedical",
     ),
     "hgnc": BiomedicalSource(
         source_id="hgnc",
         description="HGNC gene nomenclature — graph/biomedical + Target exact_match_xrefs",
         license="CC0",
-        graph_uri="http://asliva.com/graph/biomedical",
+        graph_uri="http://asliva.example/graph/biomedical",
     ),
 }
 
@@ -87,7 +87,7 @@ def _load_hgnc(*, license_ack: str = "", **kwargs: object) -> dict:
                         {
                             "enterprise_id": eid,
                             "xref": str(xref),
-                            "graph": "http://asliva.com/graph/biomedical",
+                            "graph": "http://asliva.example/graph/biomedical",
                         }
                     )
     catalog = ONTOLOGY_ROOT / "catalog" / "targets.yaml"

@@ -38,7 +38,7 @@ entities:
     enterprise_id: HMD:ENT:DC:savolitinib
     preferred_label_en: savolitinib
     preferred_label_zh: 赛沃替尼
-    definition: Selective MET tyrosine kinase inhibitor (Asliva / AstraZeneca)
+    definition: Selective MET tyrosine kinase inhibitor (Asliva)
     exact_match_xrefs:
       - CHEBI:DEMO_SAVO
       - DrugBank:DEMO_SAVO
