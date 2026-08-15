@@ -107,7 +107,14 @@ def task_facet_golden() -> dict[str, Any]:
     from biomed_ontology.foundation.golden_eval import eval_golden_paths
 
     summary = eval_golden_paths()
-    if not summary.get("ok"):
+    passed = int(summary.get("passed") or 0)
+    total = int(summary.get("total") or 0)
+    ok = (
+        bool(summary.get("ok"))
+        if "ok" in summary
+        else (not summary.get("failed") and passed == total)
+    )
+    if not ok:
         raise RuntimeError(f"golden-eval failed: {summary}")
     return {"ok": True, "facet": "golden", "summary": summary}
 

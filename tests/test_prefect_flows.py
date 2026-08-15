@@ -260,6 +260,19 @@ def test_cli_zingg_may_fallback_to_stub() -> None:
         stub.assert_called_once()
 
 
+def test_task_facet_golden_all_passed_is_ok() -> None:
+    from biomed_ontology.pipelines.ontology_eval import task_facet_golden
+
+    summary = {"total": 6, "passed": 6, "failed": [], "paths": []}
+    with patch(
+        "biomed_ontology.foundation.golden_eval.eval_golden_paths",
+        return_value=summary,
+    ):
+        out = task_facet_golden.fn()
+    assert out["ok"] is True
+    assert out["summary"]["passed"] == 6
+
+
 def test_ontology_eval_facet_failure_fails_flow(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

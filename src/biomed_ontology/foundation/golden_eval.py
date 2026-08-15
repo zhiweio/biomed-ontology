@@ -95,6 +95,7 @@ def eval_golden_paths(
             for r in rows
         ],
     }
+    summary["ok"] = not summary["failed"] and summary["passed"] == summary["total"]
     log.info(
         "metrics",
         pillar="metrics",
