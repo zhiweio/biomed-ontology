@@ -228,6 +228,7 @@ __marimo__/
 data/raw/*.pdf
 data/assets/
 data/cache/
+data/releases/eval/
 data/obs_wal/
 data/zingg/input/
 data/zingg/reports/

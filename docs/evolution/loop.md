@@ -91,6 +91,18 @@ uv run hmd foundation zingg-run --mode stub-link --observations bootstrap
 
 Task 捷径：`task evolve:run` → `task evolve:apply-approved` → `task evolve:verify`；合成 e2e：`task evolve:e2e`。
 
+生产编排（Prefect，D16）把同一闭环拆成三个独立 deployment，人审不占 Worker：
+
+```bash
+uv run hmd pipeline data-loop-mine
+uv run hmd pipeline data-loop-enrich --no-llm   # 停在 pending_approval，不 apply
+# 人工：hmd foundation evolve-approve …
+uv run hmd pipeline data-loop-apply             # 默认 dry-run
+uv run hmd pipeline data-loop-apply --write     # 只消费 approved；不 git commit
+```
+
+`data_loop_enrich` 不得调用 apply。无 `approved` 提案时 `data_loop_apply` 为 Failed，不是空成功。write 之后才 `catalog_publish` + cheap eval。
+
 | 做 | 不做 |
 |---|---|
 | `resolve_entity` unmapped / 低置信 → `.candidates.json` | 自动改 GraphDB ontology |

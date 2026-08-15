@@ -44,7 +44,7 @@ OpenMetadata 经 Trino 治理湖表元数据；文档 Asset 单独登记。关�
 | `extracted` ≠ `validated` | 抽取垃圾不进 knowledge 边 | 自动物化所有三元组 |
 | 同 `doc_id` 幂等先删后写 | 重跑不翻倍 | append-only 湖表 |
 | Tree Chunk | 保留 section_path 供 Citationware | 固定长度盲切 |
-| Prefect 可选 | 复杂编排 vs 纯函数 CLI | 只有 GUI 编排 |
+| Prefect 编排生产平面 | CLI 单步调试；Prefect 管失败域 / 并发 / 合同 | 只有 GUI 编排；把 sync 挂在每篇 PDF 后 |
 
 ---
 
@@ -117,17 +117,25 @@ annotate_bern2 → IdentityService → chunk.entity_ids（HMD:ENT:*）
 
 ### 3.5 编排入口
 
-| 入口 | 模块 | 用途 |
-|---|---|---|
-| `hmd index` | `cli.py` | Tree Chunk → Milvus + Iceberg（全量） |
-| `hmd index --incremental` | `cli.py` / `index_refresh.py` | catalog retag 脏写（validate 后） |
-| `hmd index --doc-id` | `cli.py` / `index_refresh.py` | 单文档增量 |
-| `task ontology:refresh-literature` | `Taskfile.yml` | validate + `--incremental` |
-| `hmd lake ingest-doc` | `lake/steps.py` | 纯函数单文档 |
-| `hmd lake ingest-flow` | `lake/flows.py` | Prefect 编排 |
-| `hmd lake ingest-batch` | `lake/flows.py` | 批量 |
+CLI 是单步调试；生产失败域、并发与评测合同走 Prefect（D16）。`hmd pipeline …` 在无 Server 时也可 `flow()` 本地跑。
 
-硬依赖：`HMD_BERN2_URL`；不可达则失败。ingest **禁止**自动把 claim 标为 `validated`。
+| 入口 | 模块 | 平面 | 用途 |
+|---|---|---|---|
+| `hmd lake ingest-doc` | `lake/steps.py` | 入仓 | 纯函数单文档（调试） |
+| `hmd lake ingest-flow` / `ingest-batch` | `lake/flows.py` | 入仓 | Prefect 单篇 / 批量；一篇一个失败域 |
+| `hmd pipeline literature-refresh` | `pipelines/literature.py` | 入仓 | 脏 PDF → IngestQA → 单篇 index |
+| `hmd pipeline sync` | `pipelines/world_model.py` | 发布 | 一次 replace 种子图；**不清** extracted |
+| `hmd pipeline catalog-publish` | `pipelines/world_model.py` | 发布 | fingerprint 未变则 no-op；变了先 sync |
+| `hmd pipeline identity-match` | `pipelines/identity_match.py` | 身份 | 生产禁 stub；`--dev` 才允许 |
+| `hmd pipeline data-loop-*` | `pipelines/data_loop.py` | 闭环 | enrich 停在提案；apply 只消费 `approved` |
+| `hmd pipeline eval` | `pipelines/ontology_eval.py` | 发布 | `cheap` / `release` 评测合同 |
+| `hmd index` / `--incremental` / `--doc-id` | `cli.py` | 入仓 | 文献 index 单步 |
+| `task ontology:refresh-literature` | `Taskfile.yml` | 入仓 | validate + `--incremental` |
+| `task prefect:up` / `prefect:worker` | `docker/docker-compose.prefect.yml` | 控制面 | Server `:4200` + 宿主机 worker |
+
+Work pool：`hmd-cpu`（入仓 / sync / Zingg / mine）与 `hmd-gpu`（embed / release eval）。`graphdb-replace` 与 `zingg` deployment 限并发 1。BIOS 冷启动不进日常 cron。
+
+硬依赖：`HMD_BERN2_URL`；不可达则失败。ingest **禁止**自动把 claim 标为 `validated`。Iceberg 失败与 Milvus 同等 Failed；OM lineage 可记入 `errors` 不阻断。
 
 观测事件（可选）：`HMD_OBS_EVENTS_ENABLED` / `HMD_KAFKA_BOOTSTRAP_SERVERS`（见 [pillars](../observability/pillars.md)、`.env.example`）。annotate 未映射 mention 经同一管道入 `hmd.er_observations`。
 

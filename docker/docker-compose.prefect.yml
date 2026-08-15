@@ -1,0 +1,38 @@
+# Prefect 3 Server + Postgres（与 Foundation compose 并列，不替代 OM Airflow）
+#   task prefect:up
+#   PREFECT_API_URL=http://127.0.0.1:4200/api task prefect:worker
+# Worker 跑在宿主机，以便挂 docker.sock 跑 Zingg、用本机 MPS/GPU embed。
+name: hmd-prefect
+
+services:
+  prefect-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: prefect
+      POSTGRES_DB: prefect
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - prefect-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prefect"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  prefect-server:
+    image: prefecthq/prefect:3-python3.12
+    depends_on:
+      prefect-postgres:
+        condition: service_healthy
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect@prefect-postgres:5432/prefect
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+      PREFECT_UI_API_URL: http://127.0.0.1:4200/api
+    command: prefect server start --host 0.0.0.0 --port 4200
+    ports:
+      - "127.0.0.1:4200:4200"
+
+volumes:
+  prefect-pg:

@@ -170,13 +170,17 @@ def lake_ingest_batch(
             bern2_url=bern2_url,
             on_item=_on_item,
         )
-    errors = sum(1 for r in result if r.get("error") or r.get("errors"))
+    failed_n = int(result.get("failed_n") or 0)
+    quarantined_n = int(result.get("quarantined_n") or 0)
     metrics_table(
         "ingest-batch",
         [
-            ("docs", str(len(result))),
-            ("errors", str(errors)),
+            ("ok", str(result.get("ok_n") or 0)),
+            ("failed", str(failed_n)),
+            ("quarantined", str(quarantined_n)),
         ],
         console=_err_console,
     )
     console.print_json(data=result)
+    if failed_n or quarantined_n:
+        raise typer.Exit(1)

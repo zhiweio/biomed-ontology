@@ -8,6 +8,7 @@ vars:
   SCHEMAS: hmd_concept hmd_fact hmd_taxonomy hmd_obs hmd_tools hmd_enterprise
   # 单一项目 hmd-foundation；Milvus 片段见 docker/milvus-standalone.yml（被 include）
   FOUNDATION_COMPOSE: docker/docker-compose.foundation.yml
+  PREFECT_COMPOSE: docker/docker-compose.prefect.yml
   MILVUS_SERVICES: etcd minio standalone
 
 env:
@@ -171,6 +172,48 @@ tasks:
       - docker compose -f {{.FOUNDATION_COMPOSE}} up -d
       - task: foundation:smoke
       - task: foundation:init
+
+  prefect:up:
+    desc: 启动自托管 Prefect Server + Postgres（UI http://127.0.0.1:4200）
+    cmds:
+      - docker compose -f {{.PREFECT_COMPOSE}} up -d
+      - |
+        echo "PREFECT_API_URL=http://127.0.0.1:4200/api"
+        echo "然后：task prefect:work-pools && task prefect:deploy && task prefect:worker"
+
+  prefect:down:
+    desc: 停止 Prefect Server（保留 Postgres volume）
+    cmds:
+      - docker compose -f {{.PREFECT_COMPOSE}} down
+
+  prefect:work-pools:
+    desc: 创建 hmd-cpu / hmd-gpu process work pool（已存在则跳过）
+    cmds:
+      - |
+        export PREFECT_API_URL="${PREFECT_API_URL:-http://127.0.0.1:4200/api}"
+        uv run prefect work-pool inspect hmd-cpu >/dev/null 2>&1 || uv run prefect work-pool create hmd-cpu --type process
+        uv run prefect work-pool inspect hmd-gpu >/dev/null 2>&1 || uv run prefect work-pool create hmd-gpu --type process
+
+  prefect:deploy:
+    desc: 按 prefect.yaml 注册 deployments（需 Server 已起）
+    cmds:
+      - |
+        export PREFECT_API_URL="${PREFECT_API_URL:-http://127.0.0.1:4200/api}"
+        uv run prefect deploy --all --prefect-file prefect.yaml
+
+  prefect:worker:
+    desc: 宿主机 process worker（hmd-cpu；Zingg 需本机 docker.sock）
+    cmds:
+      - |
+        export PREFECT_API_URL="${PREFECT_API_URL:-http://127.0.0.1:4200/api}"
+        uv run prefect worker start --pool hmd-cpu
+
+  prefect:worker:gpu:
+    desc: 宿主机 process worker（hmd-gpu；embed / release eval）
+    cmds:
+      - |
+        export PREFECT_API_URL="${PREFECT_API_URL:-http://127.0.0.1:4200/api}"
+        uv run prefect worker start --pool hmd-gpu
 
   foundation:bern2:fetch:
     desc: 克隆 BERN2 源码并从 Google Drive 下载 ~70GB resources（gdown 断点续传）
@@ -499,6 +542,21 @@ tasks:
     desc: Ontology-as-Code 校验（目录 / 映射 / Golden Path / 种子一致性）
     cmds:
       - uv run python scripts/ontology_validate.py
+
+  pipeline:literature-refresh:
+    desc: 文献增量（Prefect flow 本地跑；不启 Server）
+    cmds:
+      - uv run hmd pipeline literature-refresh
+
+  pipeline:sync:
+    desc: world_model_sync（一次 clear+replace 种子图）
+    cmds:
+      - uv run hmd pipeline sync
+
+  pipeline:eval:
+    desc: 评测合同（SUITE=cheap|release）
+    cmds:
+      - uv run hmd pipeline eval --suite "${SUITE:-cheap}"
 
   ontology:refresh-literature:
     desc: validate 后文献面增量 index（catalog retag；不改 validate 语义）

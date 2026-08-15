@@ -14,15 +14,18 @@ from biomed_ontology.foundation.ids import normalize_alias_key
 from biomed_ontology.foundation.paths import REPO_ROOT, ZINGG_MATCHES_PATH
 
 __all__ = [
+    "ZINGG_COMPOSE",
     "ZinggMaterializeResult",
     "export_matches",
     "link_stub_from_materialized",
     "materialize",
+    "run_zingg_docker",
     "scan_er_observations",
     "write_training_samples",
 ]
 
 ZINGG_DIR = REPO_ROOT / "data" / "zingg"
+ZINGG_COMPOSE = REPO_ROOT / "docker" / "zingg" / "docker-compose.yml"
 INPUT_DIR = ZINGG_DIR / "input"
 REPORTS_DIR = ZINGG_DIR / "reports"
 BOOTSTRAP_PAIRS = ZINGG_DIR / "bootstrap_pairs.jsonl"
@@ -580,3 +583,32 @@ def link_stub_from_materialized(
     out.write_text(body + ("\n" if rows else ""), encoding="utf-8")
     _ = inp  # reserved for future spark handoff
     return out
+
+
+def run_zingg_docker(*, compose: Path | None = None, phase: str = "train-link") -> None:
+    """跑官方 ``zingg/zingg`` train-link。失败要大声，禁止降级 stub。"""
+    import os
+    import subprocess
+
+    path = Path(compose or ZINGG_COMPOSE)
+    if not path.is_file():
+        raise FileNotFoundError(f"zingg compose missing: {path}")
+    env = os.environ.copy()
+    env["ZINGG_PHASE"] = phase
+    proc = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            str(path),
+            "--profile",
+            "zingg",
+            "run",
+            "--rm",
+            "zingg-link",
+        ],
+        check=False,
+        env=env,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"zingg-link failed rc={proc.returncode} (production must not stub)")

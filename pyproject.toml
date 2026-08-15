@@ -166,6 +166,7 @@ ignore = [
 "src/biomed_ontology/cli.py" = ["B008"]
 "src/biomed_ontology/cli_foundation.py" = ["B008"]
 "src/biomed_ontology/cli_lake.py" = ["B008"]
+"src/biomed_ontology/cli_pipeline.py" = ["B008"]
 # FastAPI 同理：Body()/Header() 必须写在默认值里才能被框架识别。
 "src/biomed_ontology/service/app.py" = ["B008"]
 

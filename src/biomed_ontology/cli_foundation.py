@@ -607,36 +607,14 @@ def foundation_zingg_run(
             return
 
     if mode_l in {"full", "stub-link"}:
-        if mode_l == "full" and not no_docker:
-            compose = Path("docker/zingg/docker-compose.yml")
-            if compose.exists():
-                import subprocess
+        from biomed_ontology.pipelines.identity_match import run_zingg_link_for_cli
 
-                console.print("running docker/zingg link (zingg/zingg --phase train-link)…")
-                proc = subprocess.run(
-                    [
-                        "docker",
-                        "compose",
-                        "-f",
-                        str(compose),
-                        "--profile",
-                        "zingg",
-                        "run",
-                        "--rm",
-                        "zingg-link",
-                    ],
-                    check=False,
-                )
-                if proc.returncode != 0:
-                    console.print(
-                        "[yellow]docker zingg-link failed; falling back to stub-link[/yellow]"
-                    )
-                    link_stub_from_materialized()
-            else:
-                console.print("[yellow]no docker/zingg compose; stub-link[/yellow]")
-                link_stub_from_materialized()
-        else:
+        if mode_l == "stub-link" or no_docker:
             link_stub_from_materialized()
+        else:
+            mode_used = run_zingg_link_for_cli(skip_docker=False)
+            if mode_used != "docker":
+                console.print(f"[yellow]zingg-link used {mode_used} (CLI fallback only)[/yellow]")
 
     raw_path = raw or (ZINGG_DIR / "raw_matches.jsonl")
     if mode_l in {"full", "export-only", "stub-link"}:

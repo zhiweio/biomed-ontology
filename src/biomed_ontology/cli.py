@@ -14,6 +14,7 @@ from rich.table import Table
 from biomed_ontology._generated.hmd_concept import LicenseTierEnum
 from biomed_ontology.cli_foundation import foundation_app
 from biomed_ontology.cli_lake import lake_app
+from biomed_ontology.cli_pipeline import pipeline_app
 from biomed_ontology.cli_ui import (
     command_header,
     console,
@@ -35,6 +36,7 @@ app.add_typer(sources_app, name="sources")
 app.add_typer(build_app, name="build")
 app.add_typer(foundation_app, name="foundation")
 app.add_typer(lake_app, name="lake")
+app.add_typer(pipeline_app, name="pipeline")
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CATALOG_DIR = REPO_ROOT / "ontology" / "catalog"

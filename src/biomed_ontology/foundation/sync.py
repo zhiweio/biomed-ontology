@@ -5,7 +5,7 @@ Semantic Ops 运行时从三后端读取；YAML 不得作为生产读路径。
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any
 
 from biomed_ontology.config import Settings, settings
@@ -33,6 +33,9 @@ class SyncResult:
     milvus_ok: bool
     om_ok: bool
     details: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 
 def sync_world_model(

@@ -1,0 +1,120 @@
+# Prefect 3 deployments。先手动能跑；夜间 cron 只挂增量 / 合同，不挂 apply / BIOS。
+name: biomed-ontology
+prefect-version: ">=3.0.0"
+
+build: null
+push: null
+
+pull:
+  - prefect.deployments.steps.set_working_directory:
+      directory: .
+
+deployments:
+  - name: document-ingest
+    entrypoint: biomed_ontology.lake.flows:document_ingest
+    work_pool:
+      name: hmd-cpu
+    tags: [ingest, bern2]
+
+  - name: document-batch-ingest
+    entrypoint: biomed_ontology.lake.flows:document_batch_ingest
+    work_pool:
+      name: hmd-cpu
+    tags: [ingest, bern2]
+
+  - name: literature-refresh
+    entrypoint: biomed_ontology.pipelines.literature:literature_refresh
+    work_pool:
+      name: hmd-cpu
+    tags: [literature]
+    schedules:
+      - cron: "0 2 * * *"
+        timezone: Asia/Shanghai
+        active: false
+
+  - name: literature-reindex-full
+    entrypoint: biomed_ontology.pipelines.literature:literature_reindex_full
+    work_pool:
+      name: hmd-gpu
+    tags: [literature, embed]
+
+  - name: world-model-sync
+    entrypoint: biomed_ontology.pipelines.world_model:world_model_sync
+    work_pool:
+      name: hmd-cpu
+    tags: [graphdb-replace]
+    concurrency_limit: 1
+
+  - name: bios-bootstrap
+    entrypoint: biomed_ontology.pipelines.world_model:bios_bootstrap
+    work_pool:
+      name: hmd-cpu
+    tags: [graphdb-replace]
+    concurrency_limit: 1
+
+  - name: catalog-publish
+    entrypoint: biomed_ontology.pipelines.world_model:catalog_publish
+    work_pool:
+      name: hmd-cpu
+    tags: [graphdb-replace]
+
+  - name: identity-match
+    entrypoint: biomed_ontology.pipelines.identity_match:identity_match
+    work_pool:
+      name: hmd-cpu
+    tags: [zingg]
+    concurrency_limit: 1
+    schedules:
+      - cron: "30 2 * * *"
+        timezone: Asia/Shanghai
+        active: false
+
+  - name: identity-match-dev
+    entrypoint: biomed_ontology.pipelines.identity_match:identity_match_dev
+    work_pool:
+      name: hmd-cpu
+    tags: [zingg, dev]
+
+  - name: data-loop-mine
+    entrypoint: biomed_ontology.pipelines.data_loop:data_loop_mine
+    work_pool:
+      name: hmd-cpu
+    tags: [data-loop]
+    schedules:
+      - cron: "0 3 * * *"
+        timezone: Asia/Shanghai
+        active: false
+
+  - name: data-loop-enrich
+    entrypoint: biomed_ontology.pipelines.data_loop:data_loop_enrich
+    work_pool:
+      name: hmd-cpu
+    tags: [data-loop, llm]
+
+  - name: data-loop-apply
+    entrypoint: biomed_ontology.pipelines.data_loop:data_loop_apply
+    work_pool:
+      name: hmd-cpu
+    tags: [data-loop]
+    parameters:
+      write: false
+
+  - name: ontology-eval-cheap
+    entrypoint: biomed_ontology.pipelines.ontology_eval:ontology_eval
+    work_pool:
+      name: hmd-cpu
+    tags: [eval]
+    parameters:
+      suite: cheap
+
+  - name: ontology-eval-release
+    entrypoint: biomed_ontology.pipelines.ontology_eval:ontology_eval
+    work_pool:
+      name: hmd-gpu
+    tags: [eval, embed]
+    parameters:
+      suite: release
+    schedules:
+      - cron: "0 4 * * *"
+        timezone: Asia/Shanghai
+        active: false

@@ -229,7 +229,7 @@ def write_evidence(ctx: IngestContext) -> IngestContext:
     try:
         append_evidence_chunks(rows, document_id=ctx.doc_id)
     except Exception as exc:
-        ctx.errors.append(f"iceberg.evidence_chunks: {exc}")
+        raise RuntimeError(f"iceberg.evidence_chunks: {exc}") from exc
     try:
         ctx.evidence_n = upsert_evidence_objects(ctx.chunks, doc_id=ctx.doc_id)
     except Exception as exc:
@@ -295,7 +295,7 @@ def write_claims(ctx: IngestContext, *, bern2_url: str | None = None) -> IngestC
     try:
         append_knowledge_claims(claim_rows, document_id=ctx.doc_id)
     except Exception as exc:
-        ctx.errors.append(f"iceberg.knowledge_claims: {exc}")
+        raise RuntimeError(f"iceberg.knowledge_claims: {exc}") from exc
 
     try:
         from biomed_ontology.foundation.graphdb import GraphDbClient
