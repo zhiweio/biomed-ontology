@@ -29,7 +29,7 @@
 | 单一身份句柄 | `IdentityService`；词典只装配一次 |
 | 候选期许可 | `LicenseScope.permits` 在检索候选生成期 |
 | 身份分层 | Enterprise ID 主键；外部 ID 仅 xref |
-| 演进不自动 apply | `evolve-mine` 只产出 KGCL/JSON |
+| 演进不自动 apply | `evolve-mine` 只出候选；`evolve-apply` 只消费 approved，写 Git 不写生产图 |
 
 ---
 
@@ -62,7 +62,9 @@
 | 链接双向建 | `GraphDbNeighborhood.adjacency_many` 合成反向 |
 | 跨类型最多一跳 | `walk_neighbors` 的 `crossed` 状态 |
 | 别名扩展 ≠ search-around | `Normalizer.expand` vs `neighborhood.neighbors` |
-| Evolution 不自动改本体 | `foundation/evolve.py` |
+| Evolution 不自动改本体 | `foundation/evolve.py`；L3 apply 跳过 |
+| PR cheap 门 | `scripts/ontology_cheap_ci.py`（validate + identity + extraction + MetricCode） |
+| `HMD_ENV=prod` | 禁止 `identity_match_dev` / `--dev` |
 
 ### 3.3 Foundation / Evidence
 
@@ -71,7 +73,7 @@
 | Milvus 必选 | 文献 + `foundation_evidence` |
 | 占位向量标 `embedded=false` | `lake/evidence_index.py` |
 | Semantic Ops 隐藏后端 | `FoundationApi`；无裸 SPARQL 工具 |
-| Context Pack 声明缺失 | `attach_pack_fields` → `missing[]` |
+| Context Pack 声明缺失 | `attach_pack_fields` → `missing[]`；`context_eval` 核对空槽 |
 | Knowledge ≠ Truth | claim + PROV + Evidence |
 | extracted ≠ validated | `sync._claims_turtle` 物化条件 |
 | 同 doc_id 幂等 | `lake/` 先删后写 |

@@ -71,7 +71,8 @@
 - 热路径：`ObservabilityHub.commit` → 本地 Jsonl（`JsonlStore`）+ **Kafka-API produce**（`lake/obs_events.py`）。
 - 入湖：Redpanda → Iceberg Kafka Connect Sink → `hmd.obs_tool_io` / `hmd.er_observations`（**禁止**请求路径同步 `table.append`）。
 - broker 未配或不可达：写 `HMD_OBS_WAL_DIR`（默认 `data/obs_wal/`）。
-- OTel SDK + Collector：**不在本迭代**（P2 运维可观测）；ER 领域事件保持结构化 topic。
+- 运行面新鲜度：`ontology/policies/ops_slo.yaml` + `hmd pipeline ops-snapshot` / `slo-gate`。红 Failed，不回滚已入湖文档。不上 Monte Carlo / OTel SDK。
+- ER 领域事件保持结构化 Kafka topic。
 
 ### 配置（`Settings` / `.env`，前缀 `HMD_`）
 
@@ -113,6 +114,6 @@ task obs:register
 uv run hmd lake init         # 含 obs_tool_io / er_observations
 ```
 
-新鲜度 SLO 口径在 [`ontology/policies/ops_slo.yaml`](../../ontology/policies/ops_slo.yaml)；值班看 `hmd pipeline ops-snapshot` / `slo_gate`，红不回滚已入湖文档。不上 Monte Carlo / OTel SDK。
+新鲜度 SLO 口径在 [`ops_slo.yaml`](https://github.com/zhiweio/biomed-ontology/blob/main/ontology/policies/ops_slo.yaml)；值班看 `hmd pipeline ops-snapshot` / `slo-gate`，红不回滚已入湖文档。不上 Monte Carlo / OTel SDK。
 
 演进闭环见 [loop](../evolution/loop.md)；Zingg 模糊回收见 [Foundation](../architecture/foundation.md)。

@@ -5,7 +5,7 @@
 
 用企业内部实体 ID（`HMD:ENT:*`）锚定候选药、靶点、项目，挂上关系、可引用证据与
 ELN/LIMS 资产，经 `hmd serve`（MCP/REST）把 **Data-for-Agent 契约**交给仓外 Agent。
-公共生物医学知识（BIOS / 未来 UMLS 子集）只进 `graph/biomedical` 与 xref，
+公共生物医学知识（BIOS / HGNC；UMLS 子集需许可 ACK）只进 `graph/biomedical` 与 xref，
 **不是企业主键**。图谱是六层栈里的一层，不是产品本身。
 
 > BIOS provides the biomedical world. Enterprise Ontology provides the company's world.
@@ -38,7 +38,7 @@ ELN/LIMS 资产，经 `hmd serve`（MCP/REST）把 **Data-for-Agent 契约**交�
 | 企业资产 | OpenMetadata：ELN/LIMS「数据在哪」 |
 | 聚合上下文 | Context Pack：`pack_version` + `identity` + `missing[]` |
 | 许可与合规 | Tier / entitlement；组件闸门；BIOS ACK |
-| 可观测与演进 | Trace 四支柱；feedback → KGCL 候选（不自动改本体） |
+| 可观测与演进 | Trace 四支柱；feedback → KGCL；approve 后 apply 写 Git，不自动改生产图 |
 | Schema 治理 | LinkML SSOT → OWL / SHACL / Pydantic |
 
 **完整手册**（机制、不变量、读数方法）：见 [`docs/`](docs/index.md)。
@@ -77,11 +77,13 @@ uv run hmd foundation resolve "赛沃替尼"             # Rich：命中 + 反�
 uv run hmd foundation resolve "HMPL-504" --json      # 机器可读（含 aliases）
 uv run hmd foundation golden --candidate HMPL-504   # Drug→Target→Disease→Evidence→ELN/LIMS
 uv run hmd foundation sync                           # YAML → GraphDB + Milvus + OM（幂等，三后端必达）
-uv run hmd foundation evolve-mine                    # 候选/跳过；不自动改本体
+uv run hmd foundation evolve-mine                    # 候选；不自动改本体
 uv run hmd foundation zingg-run --mode stub-link     # 模糊 matches 本地联调（HMD_ZINGG_*）
 uv run hmd foundation golden-eval                    # 多路径 WM 评估
 uv run hmd serve --mcp                               # 唯一 Semantic API + MCP
 task ontology:validate                               # Ontology-as-Code + Golden Path
+uv run python scripts/ontology_cheap_ci.py           # PR 静态门：validate + identity + extraction + MetricCode
+uv run hmd pipeline eval --suite cheap               # 生产评测合同（无 Server 也可本地跑）
 task foundation:golden-eval                          # GraphDB(+BIOS)/Milvus/OM，禁止 YAML
 # 可选观测总线（默认 HMD_KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:19092）：task obs:up
 ```
@@ -165,7 +167,7 @@ L4 语料治理      Router → 语义树 → IngestQA → 三模态抽取 → �
 L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列检索 + Evidence Index
 L6 Semantic Access  唯一 REST/MCP：KB 工具 + Foundation Semantic Ops（`hmd serve`）
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
-L8 演进闭环      Signal → Candidate → Curation(KGCL) → Release；evolve-mine 不自动改本体
+L8 演进闭环      Signal → enrich → approve → apply(Git L1/L2 + KGCL) → Release；不自动写生产图
 ```
 
 **LinkML 是唯一事实来源**（`task gen` → `_generated/`）。机制见 [LinkML 与生成物](docs/architecture/linkml.md)。
@@ -425,7 +427,8 @@ uv run hmd serve --mcp --port 8000
 | `packages/` | uv workspace 依赖剖面（`hmd-contracts` … `hmd-access`） |
 | `Taskfile.yml` | 统一任务入口 |
 | `src/biomed_ontology/identity.py` | IdentityService：目录归一化 + ER |
-| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic Ops / Context Pack |
+| `src/biomed_ontology/foundation/` | World Model：resolve / sync / bios / Semantic Ops / Context Pack / evolve |
+| `src/biomed_ontology/pipelines/` | Prefect 生产平面（`hmd pipeline`） |
 | `src/biomed_ontology/lake/` | 入湖 steps / IngestQA / Evidence Index / Iceberg |
 | `src/biomed_ontology/registry/` | 数据源注册表 + 许可分层 |
 | `src/biomed_ontology/ontology/` | 等价团、ID 分配、发版、RDF |

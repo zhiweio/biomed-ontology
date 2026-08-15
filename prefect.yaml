@@ -7,6 +7,7 @@ push: null
 
 pull:
   - prefect.deployments.steps.set_working_directory:
+      # process worker 默认 cwd 不是仓库；相对路径由 steps.resolve_repo_path 兜底
       directory: .
 
 deployments:

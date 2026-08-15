@@ -51,6 +51,7 @@ uv run hmd eval --entitlements MOCK_LICENSED   # Rich：归一化+检索+targets
 uv run hmd eval --entitlements MOCK_LICENSED --compact
 uv run hmd serve --port 8000
 task check           # ruff + ty + 全量测试
+uv run python scripts/ontology_cheap_ci.py   # PR 静态门
 ```
 
 **调用链（文献面）：**
@@ -94,6 +95,8 @@ hmd foundation *
 ```
 
 金路径：`DrugCandidate → Target → Disease → Evidence → ELN Asset`（+ 文献检索腿）。详见 [Golden Path](ontology/golden-path.md)。
+
+生产平面（无 Server 也可本地 `flow()`）：`uv run hmd pipeline eval --suite cheap`；目录 merge 后由 Action 触发 `catalog-publish`，不在 GitHub Actions 里 `sync_world_model`。`HMD_ENV=prod` 禁止 `identity-match --dev`。详见 [Document Pipeline](architecture/document-pipeline.md)。
 
 ### 3.3 关键目录
 
@@ -141,6 +144,8 @@ uv run hmd foundation golden --candidate HMPL-504 --json
 
 # 全量守门
 task check
+uv run python scripts/ontology_cheap_ci.py
+uv run hmd pipeline eval --suite cheap
 ```
 
 **建议阅读顺序（第一周）：**

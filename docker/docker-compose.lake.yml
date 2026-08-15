@@ -5,6 +5,9 @@ services:
     ports:
       - "127.0.0.1:8181:8181"
     environment:
+      # 镜像默认 `jdbc:sqlite:file:/tmp/iceberg_rest_mode=memory` 实际是文件库，
+      # Connect 每 15s commit 会 SQLITE_BUSY，入仓/建表一起失败。
+      CATALOG_URI: jdbc:sqlite:file:/tmp/iceberg_rest.db?journal_mode=WAL&busy_timeout=60000
       CATALOG_WAREHOUSE: s3://hmd-lake/
       CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
       CATALOG_S3_ENDPOINT: http://minio:9000

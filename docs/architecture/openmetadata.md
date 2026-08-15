@@ -86,7 +86,7 @@ lake ingest-doc
     → Trino 可见 → OM ingestion 采集血缘
 ```
 
-ingest 补充的 lineage 边描述「文档 → 证据索引 / 抽取图」，不替代 GraphDB 关系边。
+ingest 补充的 lineage 边描述「文档 → 证据索引 / 抽取图」，不替代 GraphDB 关系边。`world_model_sync` / `data_loop_apply` 经 `runtime_lineage_meta` 写入 `prefect_run_id`、deployment、`ontology_release_id`。ELN/LIMS FQN 已在 `data/foundation/assets.yaml` 登记，不全量同步实验仓。
 
 ### 3.5 配置
 

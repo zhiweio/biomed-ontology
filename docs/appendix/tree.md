@@ -37,6 +37,7 @@ biomed-ontology/
 │   ├── mappings/             # BIOS / BERN2 / ChEBI / zingg
 │   ├── catalog/              # 文献 ENT 目录 + ambiguity
 │   ├── extract/              # MetricVocab（table_metrics.yaml）
+│   ├── policies/             # evolve_filter.yaml / ops_slo.yaml
 │   └── examples/golden_path/
 ├── data/
 │   ├── foundation/           # 运行投影样例（非身份 SSOT）
@@ -54,7 +55,8 @@ biomed-ontology/
     ├── identity.py           # IdentityService
     ├── pipeline.py           # KB 装配入口
     ├── runtime.py            # open_dual_surface
-    ├── foundation/           # World Model + Context Pack + sync / resolve / bios
+    ├── foundation/           # World Model + Context Pack + sync / resolve / bios / evolve
+    ├── pipelines/            # Prefect 生产平面（CLI `hmd pipeline`）
     ├── ingest/               # 种子 / catalog 构建
     ├── ontology/             # links / rdf / ids / neighborhood / metrics
     ├── normalize/ + alias/
@@ -82,14 +84,14 @@ biomed-ontology/
 | L5 检索 | `search/`、`embed/`、`rerank/` | HybridSearcher、Milvus |
 | L6 访问 | `tools/`、`service/`、`foundation/api.py` | Semantic Access |
 | L7 观测 | `observability/` | 四支柱 |
-| L8 演进 | `evolution/`、`quality/` | 信号、KGCL、QualityGate |
+| L8 演进 | `evolution/`、`quality/`、`pipelines/` | 信号、KGCL、apply、评测合同 |
 | 横切 | `foundation/`、`eval/`、`data/gold/` | World Model、评测 |
 
 ### 关键入口文件
 
 | 文件 | 作用 |
 |---|---|
-| `cli.py` / `cli_foundation.py` / `cli_lake.py` | `hmd` 子命令 |
+| `cli.py` / `cli_foundation.py` / `cli_lake.py` / `cli_pipeline.py` | `hmd` 子命令 |
 | `identity.py` | `IdentityService` |
 | `runtime.py` | `open_dual_surface`、Milvus 文献后端硬要求 |
 | `service/deps.py` | `build_state` 单例 |

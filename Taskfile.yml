@@ -524,7 +524,7 @@ tasks:
       - uv run hmd foundation evolve-enrich
 
   evolve:apply-approved:
-    desc: 对已 approve 提案 dry-run apply（加 WRITE=1 才真正写 dictionary/zingg）
+    desc: 对已 approve 提案 dry-run apply（加 WRITE=1 才写 dictionary/zingg/xref/catalog/sssom）
     cmds:
       - |
         if [ "${WRITE:-}" = "1" ]; then
@@ -562,6 +562,11 @@ tasks:
     desc: 评测合同（SUITE=cheap|release）
     cmds:
       - uv run hmd pipeline eval --suite "${SUITE:-cheap}"
+
+  pipeline:e2e:
+    desc: 本地跑通全部 Prefect 平面（flow()；apply/claim-promote 用临时 approved 干跑）
+    cmds:
+      - uv run python scripts/pipeline_e2e.py
 
   ontology:refresh-literature:
     desc: validate 后文献面增量 index（catalog retag；不改 validate 语义）

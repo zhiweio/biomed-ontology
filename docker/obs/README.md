@@ -6,6 +6,8 @@
 
 ```bash
 # 需已有 MinIO + iceberg-rest（foundation/lake）
+# iceberg-rest 用 SQLite + WAL（见 docker-compose.lake.yml CATALOG_URI）；
+# 若入仓报 SQLITE_BUSY / Table UUID mismatch：先 pause Connect，再 docker restart iceberg-rest。
 task obs:up          # Redpanda :19092 + Connect :8083（自建镜像含 Iceberg 1.9.2 插件）
 task obs:register    # PUT connector configs
 uv run hmd lake init # 确保 hmd.obs_tool_io / hmd.er_observations 存在
@@ -56,5 +58,5 @@ print("rows", t.scan().to_arrow().num_rows)
 
 ## 不在范围
 
-- OpenTelemetry SDK + Collector（P2）
+- OpenTelemetry SDK + Collector（新鲜度看 `ontology/policies/ops_slo.yaml` / `hmd pipeline slo-gate`）
 - 自研 ObsShipper / 热路径 PyIceberg append

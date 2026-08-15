@@ -19,14 +19,81 @@ pipeline_app = typer.Typer(
 def pipeline_literature_refresh(
     source_id: str = typer.Option("PUBMED", "--source"),
     embedder: str = typer.Option("multimodal-bio", "--embedder"),
+    raw_dir: Path | None = typer.Option(None, "--raw-dir"),
+    out_dir: Path | None = typer.Option(None, "--out-dir"),
 ) -> None:
     from biomed_ontology.pipelines.literature import literature_refresh
 
     command_header("pipeline literature-refresh")
-    result = literature_refresh(source_id=source_id, embedder_name=embedder)
+    result = literature_refresh(
+        source_id=source_id,
+        embedder_name=embedder,
+        raw_dir=str(raw_dir) if raw_dir else None,
+        out_dir=str(out_dir) if out_dir else None,
+    )
     console.print_json(data=result)
     if result.get("failed") or result.get("quarantined"):
         raise typer.Exit(1)
+
+
+@pipeline_app.command("literature-reindex")
+def pipeline_literature_reindex(
+    embedder: str = typer.Option("multimodal-bio", "--embedder"),
+) -> None:
+    from biomed_ontology.pipelines.literature import literature_reindex_full
+
+    command_header("pipeline literature-reindex")
+    console.print_json(data=literature_reindex_full(embedder_name=embedder))
+
+
+@pipeline_app.command("ingest")
+def pipeline_ingest(
+    source: str = typer.Option(..., "--source"),
+    doc_id: str = typer.Option(..., "--doc-id"),
+    file: Path | None = typer.Option(None, "--file"),
+    corpus_yaml: Path | None = typer.Option(None, "--corpus-yaml"),
+    bern2_url: str | None = typer.Option(None, "--bern2-url"),
+    no_asset: bool = typer.Option(False, "--no-asset"),
+) -> None:
+    from biomed_ontology.lake.flows import document_ingest
+
+    command_header("pipeline ingest", meta=[("source", source), ("doc_id", doc_id)])
+    result = document_ingest(
+        source_id=source,
+        doc_id=doc_id,
+        file_path=str(file) if file else None,
+        corpus_yaml=str(corpus_yaml) if corpus_yaml else None,
+        bern2_url=bern2_url,
+        register_asset=not no_asset,
+    )
+    console.print_json(data=result)
+    if result.get("errors"):
+        raise typer.Exit(2)
+
+
+@pipeline_app.command("ingest-batch")
+def pipeline_ingest_batch(
+    manifest: Path = typer.Option(..., "--manifest", exists=True),
+    bern2_url: str | None = typer.Option(None, "--bern2-url"),
+) -> None:
+    from biomed_ontology.lake.flows import document_batch_ingest
+
+    command_header("pipeline ingest-batch", meta=[("manifest", str(manifest))])
+    result = document_batch_ingest(manifest=str(manifest), bern2_url=bern2_url)
+    console.print_json(data=result)
+    if result.get("failed") or result.get("quarantined"):
+        raise typer.Exit(1)
+
+
+@pipeline_app.command("bios-bootstrap")
+def pipeline_bios_bootstrap(
+    subset: bool = typer.Option(False, "--subset", help="只灌 BIOS 子集，不拉全量"),
+    force: bool = typer.Option(False, "--force"),
+) -> None:
+    from biomed_ontology.pipelines.world_model import bios_bootstrap
+
+    command_header("pipeline bios-bootstrap", meta=[("subset", str(subset))])
+    console.print_json(data=bios_bootstrap(force=force, full=not subset))
 
 
 @pipeline_app.command("sync")

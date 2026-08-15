@@ -19,9 +19,8 @@ Foundation 侧挖掘：`hmd foundation evolve-mine`（见 [Foundation · Data Lo
 | 取舍 | 选择 | 放弃 |
 |---|---|---|
 | 信号 ID | 类型 + 载荷哈希（`HMDS:…`） | 自增 ID（重复挖掘淹没队列） |
-| 策展形态 | KGCL changeset（`ChangeSet` / `KgclOp`） | 直接改生产 GraphDB |
-| PoC 范围 | 采集 + 候选 + KGCL 脚手架 | 完整生产策展工作台 |
-| Foundation evolve | mine → enrich → 人工 approve → apply 写 Git | 无人审校自动写生产 GraphDB |
+| 策展形态 | 合法 KGCL 句（L1/L2 可回放；禁止 `# TODO curate`） | 直接改生产 GraphDB |
+| Foundation evolve | mine → enrich → 人工 approve → apply 写 Git（L1/L2） | 无人审校自动写生产图；L3 自动 create node |
 | 质量闸门 | LLM/规则内容 `PENDING`，审校前不进 tool 返回 | 提案绕过审校变「已发布事实」 |
 
 ## 设计与实现
@@ -41,9 +40,9 @@ flowchart LR
 |---|---|---|
 | Signal | 可机器采集的事件 | `Signal` + 8 个 `SignalMiner` |
 | Candidate | 提议的概念/链接/别名变更 | `generate_candidates` |
-| Curation | KGCL 描述变更 | `build_changeset` |
-| Release | 新 `ontology_release_id`，KB 重建 | `plan_release` |
-| Impact | 重跑 eval / 质量守门 | `hmd eval`、targets |
+| Curation | 合法 KGCL（L1/L2 可回放） | `compile_proposal_kgcl` / `build_changeset` |
+| Release | 新 `ontology_release_id`，KB 重建 | `plan_release` / `catalog-publish` |
+| Impact | 重跑 eval / 质量守门 | `hmd eval`、`hmd pipeline eval`、targets |
 
 ### 信号模型
 
@@ -84,7 +83,7 @@ uv run hmd foundation evolve-enrich --from data/releases/foundation_candidates/<
 uv run hmd foundation evolve-review --pending
 uv run hmd foundation evolve-approve --tier L1 --min-confidence 0.9 --by curator@hmd
 uv run hmd foundation evolve-apply            # dry-run
-uv run hmd foundation evolve-apply --write    # 写 dictionary / zingg_matches
+uv run hmd foundation evolve-apply --write    # L1 dictionary/zingg；L2 xref/catalog/sssom；写 .kgcl 副本
 uv run hmd foundation evolve-verify
 uv run hmd foundation zingg-run --mode stub-link --observations bootstrap
 ```
@@ -146,10 +145,10 @@ flowchart LR
 | Filter / Enrich | `evolve-enrich --from … --policy ontology/policies/evolve_filter.yaml` | `data/releases/foundation_proposals/<stamp>.{proposals.jsonl,kgcl}` |
 | Review | `evolve-review --pending` | Rich 表（tier / conf / op / target） |
 | Gate | `evolve-approve` / `evolve-reject` | 仅改提案 `status` |
-| Apply | `evolve-apply`（默认 dry-run；`--write` 落库） | `ontology/dictionary/` 或 `zingg_matches.jsonl` |
+| Apply | `evolve-apply`（默认 dry-run；`--write` 落库） | L1：`ontology/dictionary/` 或 `zingg_matches.jsonl`；L2：`entities` xref / catalog / SSSOM；旁路 `.kgcl` 副本。L3 / `create_node` 跳过 |
 | Verify | `evolve-verify` | 再 resolve；失败 exit 1 |
 
-风险分层：`L0` 策略 dismiss；`L1` 别名挂已有 `HMD:ENT:*`（可批量 approve）；`L2` xref/catalog；`L3` create node 仅草稿，apply 跳过。
+风险分层：`L0` 策略 dismiss；`L1` 文本别名挂已有 `HMD:ENT:*`（`create exact synonym`）；`L2` 公开 CURIE（`HGNC:` / `CHEBI:` / `MONDO:` / `UMLS:` / `NCBIGene:` / `DOID:` / `DrugBank:`）且已有 ENT → `add_xref`，写 `entities_xref` / `catalog` / `sssom`；`L3` `create node` 仅草稿，apply 跳过。L2 **不**改 `enterprise_id` 或 kind，**不** mint ENT。
 
 #### Stage B 双层 Filter（规则 + 受限通用 LLM）
 
@@ -189,6 +188,7 @@ Filter **禁止**在代码里写死 `e2e-*` / `flush-check-*` 等业务串：一
 | `HMD_ZINGG_SKIP_DOCKER` | `false` | `zingg-run --mode full` 跳过 Spark 容器 |
 | `HMD_EVOLVE_INCLUDE_LAKE` | `true` | `evolve-mine` 默认合并湖/WAL；关：`false` / `--no-include-lake` |
 | `HMD_LLM_PROVIDER` / `HMD_LLM_API_KEY` | deepseek / 空 | evolve-enrich 默认开 LLM 裁决；无 key → 跳过 |
+| `HMD_ENV` | `dev` | `prod` 禁止 `identity_match_dev` / `hmd pipeline identity-match --dev` |
 
 CLI 覆盖：`zingg-run --observations …`；`evolve-mine --no-include-lake`；`evolve-enrich --policy … --no-llm`。
 
@@ -200,21 +200,22 @@ candidates / proposals **不是**生产图。默认路径是机器提案 + 人�
 candidates.json
   → evolve-enrich → proposals.jsonl
   → evolve-approve
-  → evolve-apply --write → ontology/dictionary|mappings
-  → task ontology:validate
+  → evolve-apply --write → ontology/dictionary|mappings|entities xref|catalog
+  → 旁路写 proposals.kgcl（可回放副本；SSOT 仍是 proposals.jsonl）
+  → task ontology:validate / scripts/ontology_cheap_ci.py
   → evolve-verify / hmd foundation resolve
-  → entities/claims：uv run hmd foundation sync（若改了 entities）
-  → hmd eval / golden-eval 回归
+  → entities/claims：`hmd pipeline catalog-publish`（merge 后 Action 只 POST Prefect，不在 Actions 里 sync）
+  → hmd eval / `hmd pipeline eval --suite cheap` 回归
 ```
 
 | 候选类型（常见） | 写回位置 |
 |---|---|
 | 文献面概念 / 别名（检索·归一化） | `ontology/catalog/`（+ `ambiguity.yaml`） |
 | 建议别名 / mention（金路径 ER） | `ontology/dictionary/` 或实体 `aliases` |
-| suggested exactMatch | `ontology/entities/` 的 `exact_match_xrefs`（及 mappings 审阅表） |
-| 新企业实体 | `ontology/entities/`（必要时同步补 catalog） |
+| 公开 CURIE exactMatch（L2） | `ontology/entities/` 的 `exact_match_xrefs`、catalog xref、SSSOM |
+| 新企业实体（L3） | 人工补 `ontology/entities/`（apply 跳过） |
 | 关系断言 | `ontology/claims/`（`validated` 才进 knowledge） |
-| 湖侧 extracted Claim 晋升 | 审校后写入 `ontology/claims/` 为 validated；见 [事实抽取](../ontology/extract.md) |
+| 湖侧 extracted Claim 晋升 | `claim-review` → `claim-promote --write` 只写 YAML；见 [事实抽取](../ontology/extract.md) |
 
 完整 edit→后端矩阵见 [策展资产与运行时机制](../ontology/curation-and-runtime.md)。
 
@@ -222,13 +223,14 @@ candidates.json
 
 LLM/规则生成内容以 `PENDING` 入库，未经审校不得进 tool 返回体（D5）。演进提案同样不应绕过审校状态直接变「已发布事实」。
 
-### PoC 边界
+### 当前边界
 
-当前实现提供信号采集与 KGCL 相关脚手架，**不是**完整的生产策展工作台。接手时优先保证：
+闭环已接到 Git 策展面与 Prefect 平面，但不是无人值守的策展工作台：
 
-1. 反馈带 `trace_id` 可回放；
-2. 发版号进每个 tool 响应；
-3. 回归用同一套 `hmd eval` + [targets](../eval/targets.md)，而不是另写「发版脚本数字」。
+1. L1/L2 必须先 `evolve-approve`；`evolve-apply --write` 只改 Git YAML/JSONL，并写可回放 KGCL 副本。
+2. L3 `create_node` 只出草稿，apply 跳过；新 `HMD:ENT:*` 仍靠人工补 `ontology/entities/`。
+3. Prefect `data_loop_apply` / `claim_promote` 不 `git commit`、不 `INSERT` knowledge 边。
+4. 回归用同一套 `hmd eval` / `hmd pipeline eval` + [targets](../eval/targets.md)。
 
 ## 不变量与失败模式
 
@@ -251,11 +253,12 @@ LLM/规则生成内容以 `PENDING` 入库，未经审校不得进 tool 返回�
 
 ```bash
 uv run hmd signals --help
-uv run pytest tests/test_quality_evolution.py tests/test_evolve_propose.py tests/test_evolve_llm_filter.py -q
+uv run pytest tests/test_quality_evolution.py tests/test_evolve_propose.py tests/test_evolve_llm_filter.py tests/test_ops_p2.py -q
 uv run hmd foundation evolve-mine "test-alias" --json
 uv run hmd foundation evolve-enrich --from tests/fixtures/evolve/sample.candidates.json --skip-tools --no-llm
 uv run hmd foundation evolve-enrich --from tests/fixtures/evolve/sample.candidates.json --skip-tools --llm
 task evolve:e2e
+uv run python scripts/ontology_cheap_ci.py
 ```
 
 评测回归见 [dual-surface](../eval/dual-surface.md)；观测见 [pillars](../observability/pillars.md)。

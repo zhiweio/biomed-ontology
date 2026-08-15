@@ -92,17 +92,22 @@ LinkML SSOT 仍在 `schema/`；生成物在 `src/biomed_ontology/_generated/`。
 ### 3.3 PR / 运行时流程
 
 ```text
-Git → PR → task ontology:validate
+Git → PR → scripts/ontology_cheap_ci.py
+         （check_tree / mappings / claims
+           + eval_extraction + eval_identity
+           + MetricCode ⊆ LinkML）
          →（可选 Protégé 审阅生成 OWL）
          → merge
-         → hmd foundation sync
+         → Actions：prefect deployment run catalog-publish
+              （PREFECT_API_URL 未设则 skip；不在 Actions 里 sync_world_model）
+         → Worker：fingerprint 变则 world_model_sync
               ├── GraphDB   (ontology / knowledge / provenance)
-              ├── Milvus    (foundation_evidence)
-              └── OpenMetadata (Glossary HMDEnterpriseAssets)
+              ├── Milvus    (foundation_evidence；检索走 hmd_chunks 再 join)
+              └── OpenMetadata (Glossary HMDEnterpriseAssets；lineage 带 run id)
          → Semantic Ops / golden 只读三后端
 ```
 
-`ontology:validate` 检查：目录结构、映射对齐、Golden Path 实体可达。
+`ontology:validate` 检查：目录结构、映射对齐、Golden Path 实体可达。cheap CI 在此之上再跑身份门禁、抽取金标与指标词表对齐。
 
 ### 3.4 三层 ID（toolchain 视角）
 
@@ -127,8 +132,9 @@ Graph / Milvus / API 主键仍是 **Enterprise ID**。详见 [Foundation](../arc
 ```bash
 task gen                      # LinkML → pydantic / JSON Schema / SHACL / OWL
 task ontology:validate        # 目录 + 映射 + Golden Path
+uv run python scripts/ontology_cheap_ci.py   # PR 静态门（含 identity / extraction / MetricCode）
 task ontology:sync-artifacts  # 可选：复制 OWL/SHACL
-uv run hmd foundation sync    # 策展 YAML → 三后端
+uv run hmd pipeline catalog-publish          # fingerprint 变则 sync；Worker 执行
 ```
 
 | 模块 | 路径 |
@@ -164,9 +170,10 @@ uv run hmd foundation sync    # 策展 YAML → 三后端
 ```bash
 task gen
 task ontology:validate
+uv run python scripts/ontology_cheap_ci.py
 uv run hmd foundation sync
 uv run hmd foundation golden-eval --compact
-uv run pytest tests/test_clique.py tests/test_ontology_validate.py -q 2>/dev/null || true
+uv run pytest tests/test_clique.py tests/test_ops_p2.py -q
 ```
 
 相关：[Golden Path](golden-path.md)、[企业身份与目录 SSOT](seed.md)、[RDF](rdf.md)。

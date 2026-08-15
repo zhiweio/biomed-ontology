@@ -82,8 +82,9 @@ Gold 覆盖 en/zh、文本/图像意图。`ArmResult` 提供：
 | `data/gold/normalization.yaml` | KB Normalizer；未策展词（如 `aspirin`、`CHEBI:DEMO_ASPIRIN`）须 `expect: null` |
 | `data/gold/bridge.yaml` | 跨面同 ENT；`public_path` 为无 ENT 诊断切片（门禁见 public_bios） |
 | `data/gold/public_bios.yaml` | 无 ENT 默认路径：lookup surfaces · resolve surfaces · PublicLexicalExpand |
+| `data/gold/extraction.yaml` | 句 → 期望三元组；含 CSR `in_clinical_trial_for`、LABEL 无 MedDRA 期望 `[]`、IB ORR（`rules: false`） |
 
-PoC BIOS 子集（含无企业挂靠的 aspirin / BTK）：`data/foundation/bios_subset.jsonl`。
+BIOS 子集（含无企业挂靠的 aspirin / BTK）：`data/foundation/bios_subset.jsonl`。`resolve.yaml` 另含基因别名 `HGFR` / `MET proto-oncogene` → `HMD:ENT:TGT:MET`（非 gate）。`eval_extraction` 读 `case.doc_type`，不再一律当 `JOURNAL_ARTICLE`。
 
 ## 如何维护 gold
 
@@ -92,6 +93,7 @@ PoC BIOS 子集（含无企业挂靠的 aspirin / BTK）：`data/foundation/bios
 3. 扩样本后重读小样本时代的「巨大提升」结论（常缩一个数量级）；
 4. 改解析导致 section 改名 → gold 必须同步，否则整次评测红灯（这是特性，不是阻碍）；
 5. 改公开无 ENT 路径时同步 `public_bios.yaml` 与 `hmd eval --suite public_bios`。
+6. 改抽取谓词 / 临床 doc_type 时同步 `extraction.yaml`；`rules: false` 的用例不进 cheap 规则评测。
 
 ## 不变量与失败模式
 

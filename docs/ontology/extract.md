@@ -73,7 +73,7 @@ flowchart LR
 |---|---|---|
 | TEXT | `LlmTextRelationExtractor`（`text-llm-v1`，主） | MentionPair + 分域 prompt（文献 / CSR / IB / 说明书 / 专利）+ 基因与 AE |
 | TEXT | `RuleTextRelationExtractor`（旁路） | 中英正则；LLM 不可用或 `HMD_EXTRACT_RULE_BOOST` 时开启 |
-| TABLE | `TableExtractor` | 表头映射受控词表 `MetricVocab`（`ontology/metrics.py` ← `table_metrics.yaml`） |
+| TABLE | `TableExtractor` | 表头映射受控词表 `MetricVocab`（`ontology/metrics.py` ← `table_metrics.yaml`；代码 ⊆ LinkML `MetricCode`：ORR/PFS/OS/DCR/IC50） |
 | IMAGE | `ImageExtractor` | vision 结构化字段；缺省时解析 vision_summary 或调用 vision |
 
 装配：`default_extractors()`；入口：`TriModalPipeline.run(docs, chunks, normalizer=…)`。
@@ -149,14 +149,15 @@ LLM 路径会先查候选对里的 `id_by_surface`；命中则**跳过** `_groun
 
 ```text
 extracted Claim（湖 / provenance_extracted）
-  → 人工确认「企业认可这条关系」
-  → 写入 ontology/claims/（claim_status=validated）
-  → task ontology:validate
-  → hmd foundation sync
+  → hmd foundation claim-review
+  → claim-promote --claim-id … --by curator [--write]
+  → 只写 ontology/claims/（claim_status=validated）
+  → task ontology:validate / cheap CI
+  → hmd pipeline catalog-publish → world_model_sync
   → graph/knowledge 整图替换投影
 ```
 
-PoC **没有**「一键 validate 湖里全部 claim」的无人审校通道；knowledge 边只认策展 YAML 里的 validated。
+没有「一键 validate 湖里全部 claim」的无人审校通道。Prefect `claim_promote` 只消费 `status=approved`，不 `INSERT` knowledge 边。`write_claims` 后 `evaluate_claims`：缺 `evidence_ids` 进 `quarantine/claims.jsonl`，不自动 validated，不整批失败。无 MedDRA 不 mint `HMD:ENT:AE:*`，LABEL 金标期望空三元组。
 
 #### B. 概念缺口（unmapped / 新别名）→ catalog / entities
 
@@ -188,7 +189,7 @@ task ontology:validate
   → 换 embedder / schema / release：hmd index --recreate（全量）
 ```
 
-硬边界：`evolve-mine` 只出候选；`evolve-apply --write` 必须先人工 approve，且不直接改生产 GraphDB。
+硬边界：`evolve-mine` 只出候选；`evolve-apply --write` 必须先人工 approve，只改 Git（L1/L2），不直接改生产 GraphDB。L3 跳过。
 
 catalog 贡献示例（示意）：
 
@@ -240,12 +241,11 @@ catalog 贡献示例（示意）：
 ## 5. 如何验证
 
 ```bash
-uv run pytest tests/ -k extract -q
-# 单文档入湖（需 BERN2 / 湖基建）
+uv run pytest tests/test_claim_fusion.py tests/test_metric_vocab.py tests/test_ops_p2.py -q
 export HMD_BERN2_URL=http://localhost:8888
 uv run hmd lake ingest-doc --help
-# 金标关系抽（若配置了 extraction suite）
-uv run hmd eval --suite extraction --compact 2>/dev/null || true
+uv run hmd eval --suite extraction --compact
+uv run hmd pipeline eval --suite cheap
 ```
 
 相关：[Document Pipeline](../architecture/document-pipeline.md)、[Normalizer](normalize.md)、[seed / catalog](seed.md)、[策展](curation-and-runtime.md)、[演进](../evolution/loop.md)。

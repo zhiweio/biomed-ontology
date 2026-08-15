@@ -52,7 +52,9 @@
 | `license` | 候选期过滤策略声明 |
 | `missing[]` | 缺实体 / 证据 / 资产 / BIOS 桥时列出，不编造 |
 
-实体未找到时仍返回 Pack：`found=false`，`missing` 含 `"entity"`。
+实体未找到时仍返回 Pack：`found=false`，`missing` 含 `"entity"`。`attach_pack_fields` 对 `assets` / `bios_bridges` 做 `setdefault`，以便 `eval_context_pack` 核对空槽。`hmd pipeline eval --suite release`（或 `--suite context`）跑此分面。
+
+`search_evidence` 先查 Milvus `hmd_chunks`，再按 `chunk_id` join `foundation_evidence`（占位向量保持 `embedded=false`）。
 
 ### 3.2 推荐调用顺序
 
@@ -80,7 +82,7 @@ resolve_entity / lookup_bios_concept
 ## 5. 如何验证
 
 ```bash
-uv run pytest tests/test_context_pack.py tests/test_foundation_world_model.py -q
+uv run pytest tests/test_context_pack.py tests/test_foundation_world_model.py tests/test_ops_p2.py -q
 uv run hmd serve --mcp
 # POST /v1/get_entity_context  {"enterprise_id":"HMD:ENT:DC:savolitinib"}
 ```

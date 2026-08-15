@@ -12,6 +12,7 @@ import yaml
 from biomed_ontology.config import settings
 from biomed_ontology.corpus import Document, load_corpus
 from biomed_ontology.corpus.tree import build_document_tree, tree_to_chunks
+from biomed_ontology.foundation.paths import REPO_ROOT
 from biomed_ontology.lake.claim_bridge import facts_to_claims
 from biomed_ontology.lake.evidence_index import upsert_evidence_objects
 from biomed_ontology.lake.minio_store import DocumentObjectStore
@@ -28,6 +29,7 @@ __all__ = [
     "put_document",
     "register_om_document",
     "require_bern2",
+    "resolve_repo_path",
     "write_claims",
     "write_evidence",
 ]
@@ -52,6 +54,16 @@ class IngestContext:
     parse_degraded: list[str] = field(default_factory=list)
     qa: Any | None = None
     claim_quarantine: list[str] = field(default_factory=list)
+
+
+def resolve_repo_path(value: str | Path | None) -> Path | None:
+    """相对路径按仓库根解析。Prefect process worker cwd 不是 repo。"""
+    if value is None or str(value).strip() == "":
+        return None
+    path = Path(value)
+    if not path.is_absolute():
+        path = REPO_ROOT / path
+    return path
 
 
 def require_bern2(bern2_url: str | None = None) -> str:
@@ -119,7 +131,7 @@ def parse_and_tree(
     if document is not None:
         doc = document
     elif corpus_yaml is not None:
-        docs = load_corpus(corpus_yaml)
+        docs = load_corpus(resolve_repo_path(corpus_yaml) or corpus_yaml)
         doc = next((d for d in docs if d.doc_id == ctx.doc_id), None)
         if doc is None:
             if len(docs) == 1:
@@ -131,7 +143,7 @@ def parse_and_tree(
         from biomed_ontology.parse import parse_document
 
         parsed = parse_document(
-            file_path,
+            resolve_repo_path(file_path) or file_path,
             doc_id=ctx.doc_id,
             source_id=ctx.source_id,
             layout=layout,
@@ -355,5 +367,6 @@ def register_om_document(ctx: IngestContext) -> IngestContext:
 
 
 def load_batch_manifest(path: Path) -> list[dict[str, Any]]:
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    dest = resolve_repo_path(path) or path
+    raw = yaml.safe_load(dest.read_text(encoding="utf-8")) or {}
     return list(raw.get("documents") or raw.get("items") or [])

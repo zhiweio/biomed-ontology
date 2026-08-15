@@ -27,7 +27,7 @@
 | 查询真相 | sync 后的 GraphDB + Milvus + OM | YAML fallback 冒充 World Model |
 | 公共知识 | BIOS_v3 进独立命名图，经 `skos:exactMatch` 挂靠 | BIOS URI 作企业主键 |
 | NER/NEN | BERN2 出 mention + 候选外部 ID | BERN2 直出 `HMD:ENT:*` |
-| 演进 | Signal → KGCL 候选 → **人工**写回 `ontology/*` | `evolve-apply` 自动改生产图 |
+| 演进 | mine → enrich → 人工 approve → apply 写 Git（L1/L2）；L3 草稿 | 无人审校改生产 GraphDB；文档 mint ENT |
 | 对外契约 | 具名 Semantic Ops / KB tools | 裸 SPARQL / 原始向量 API 作主契约 |
 
 一句话：
@@ -318,17 +318,19 @@ uv run hmd foundation bios-load   # → graph/biomedical
 ```text
 线上使用（unmapped / 低置信 / submit_feedback / eval 回归）
   → Signal（hmd signals / ObservabilityHub）
-  → hmd foundation evolve-mine → .kgcl + candidates JSON
-  → 人工审校，写回 ontology/entities|dictionary|claims|mappings|catalog
-  → task ontology:validate
+  → hmd foundation evolve-mine → candidates JSON + 合法 KGCL
+  → evolve-enrich → proposals.jsonl
+  → evolve-approve（L1/L2）
+  → evolve-apply --write → dictionary / zingg / xref / catalog / sssom + .kgcl 副本
+  → scripts/ontology_cheap_ci.py
   → catalog → `hmd index --incremental`（或 `task ontology:refresh-literature`）
-  → entities/claims → hmd foundation sync
-  → 新 ontology_release_id → hmd eval 回归
+  → entities/claims → `hmd pipeline catalog-publish`（Worker sync）
+  → 新 ontology_release_id → hmd eval / `hmd pipeline eval --suite cheap`
 ```
 
-湖侧 TriModal 产出的是 `extracted` Claim（进 `provenance_extracted`），**不是** catalog 新概念；概念缺口与别名写回 `catalog/` / `entities/`，关系晋升写回 `claims/`（validated）。详见 [事实抽取](extract.md)。catalog 变更后勿默认全量 `hmd index`——优先 `--incremental`（Iceberg 装载 + retag 脏写）。
+湖侧 TriModal 产出的是 `extracted` Claim（进 `provenance_extracted`），**不是** catalog 新概念。关系晋升走 `claim-review` / `claim-promote`，只写 `ontology/claims/`。L3 `create_node` apply 跳过。详见 [信号 → KGCL → 发版](../evolution/loop.md)。catalog 变更后勿默认全量 `hmd index`——优先 `--incremental`（Iceberg 装载 + retag 脏写）。
 
-PoC **硬边界**：产出候选，**不**自动改 GraphDB ontology，**无**无人审校的 `evolve-apply`。详见 [信号 → KGCL → 发版](../evolution/loop.md)。
+硬边界：apply 只改 Git，**不**自动改生产 GraphDB；**无**无人审校的 apply。`HMD_ENV=prod` 禁止 `identity_match_dev`。
 
 联调最短路径：
 
@@ -567,9 +569,10 @@ uv run hmd serve --mcp
 # GET /v1/ops 应列出 kb_tools(8) + foundation_ops(10)
 
 # 测试子集
-uv run pytest tests/test_ontology_validate.py tests/test_clique.py \
+uv run pytest tests/test_clique.py tests/test_ops_p2.py \
   tests/test_foundation_world_model.py tests/test_tools.py \
   tests/test_service.py tests/test_claim_status_sync.py -q
+uv run python scripts/ontology_cheap_ci.py
 ```
 
 手册构建（断链）：

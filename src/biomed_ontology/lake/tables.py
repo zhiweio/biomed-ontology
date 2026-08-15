@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
-from typing import Any
+from time import sleep
+from typing import Any, TypeVar
 
 from biomed_ontology.lake.catalog import (
     DOCUMENTS_TABLE,
@@ -46,6 +47,38 @@ def _filter_exists(table: Any, filt: Any, filter_column: str) -> bool:
     return bool(arrow is not None and arrow.num_rows > 0)
 
 
+_T = TypeVar("_T")
+
+
+def _catalog_lock_error(exc: BaseException) -> bool:
+    text = f"{type(exc).__name__} {exc}".lower()
+    return any(
+        token in text
+        for token in (
+            "sqlite_busy",
+            "database is locked",
+            "commitstateunknown",
+            "uncheckedsqlexception",
+            "table uuid does not match",
+        )
+    )
+
+
+def _with_catalog_retry(op: Callable[[], _T], *, attempts: int = 5) -> _T:
+    """SQLite JDBC catalog 在 Connect/并发 commit 下会 SQLITE_BUSY；重载表再试。"""
+    last: BaseException | None = None
+    for attempt in range(attempts):
+        try:
+            return op()
+        except Exception as exc:
+            last = exc
+            if not _catalog_lock_error(exc) or attempt + 1 >= attempts:
+                raise
+            sleep(1.5 * (attempt + 1))
+    assert last is not None
+    raise last
+
+
 def replace_rows(
     table_name: str,
     filter_column: str,
@@ -66,22 +99,26 @@ def replace_rows(
     """
     from pyiceberg.expressions import EqualTo
 
-    cat = catalog or open_catalog()
-    tbl = table if table is not None else cat.load_table(table_name)
-    filt = EqualTo(term=filter_column, value=filter_value)
-    exists = _filter_exists(tbl, filt, filter_column)
+    def _write() -> int:
+        cat = catalog or open_catalog()
+        # 每次 load_table：CommitStateUnknown 后句柄 UUID 会过期
+        tbl = cat.load_table(table_name)
+        filt = EqualTo(term=filter_column, value=filter_value)
+        exists = _filter_exists(tbl, filt, filter_column)
 
-    if not rows:
+        if not rows:
+            if exists:
+                tbl.delete(filt)
+            return 0
+
+        arrow = _rows_to_arrow(tbl, rows)
         if exists:
-            tbl.delete(filt)
-        return 0
+            tbl.overwrite(arrow, overwrite_filter=filt)
+        else:
+            tbl.append(arrow)
+        return len(rows)
 
-    arrow = _rows_to_arrow(tbl, rows)
-    if exists:
-        tbl.overwrite(arrow, overwrite_filter=filt)
-    else:
-        tbl.append(arrow)
-    return len(rows)
+    return _with_catalog_retry(_write)
 
 
 def _append(table_name: str, rows: Sequence[dict[str, Any]]) -> int:
@@ -89,10 +126,12 @@ def _append(table_name: str, rows: Sequence[dict[str, Any]]) -> int:
     if not rows:
         return 0
 
-    cat = open_catalog()
-    table = cat.load_table(table_name)
-    table.append(_rows_to_arrow(table, rows))
-    return len(rows)
+    def _write() -> int:
+        table = open_catalog().load_table(table_name)
+        table.append(_rows_to_arrow(table, rows))
+        return len(rows)
+
+    return _with_catalog_retry(_write)
 
 
 def _replace_by_key(

@@ -107,6 +107,7 @@ annotate_bern2 → IdentityService → chunk.entity_ids（HMD:ENT:*）
   → detect_conflicts + QualityGate.evaluate_claims
   → facts_to_claims（claim_status=extracted）
   → Iceberg knowledge_claims + GraphDB provenance_extracted
+  → write_claims 后再跑 evaluate_claims：缺 evidence_ids 进 `quarantine/claims.jsonl`，不自动 validated，不整批失败
 ```
 
 - **Fact**：带 evidence quote 的结构化三元组候选（`ExtractedFact` → `KnowledgeClaim`）。
@@ -125,18 +126,22 @@ CLI 是单步调试；生产失败域、并发与评测合同走 Prefect（D16�
 | `hmd lake ingest-flow` / `ingest-batch` | `lake/flows.py` | 入仓 | Prefect 单篇 / 批量；一篇一个失败域 |
 | `hmd pipeline literature-refresh` | `pipelines/literature.py` | 入仓 | 脏 PDF → IngestQA → 单篇 index |
 | `hmd pipeline sync` | `pipelines/world_model.py` | 发布 | 一次 replace 种子图；**不清** extracted |
-| `hmd pipeline catalog-publish` | `pipelines/world_model.py` | 发布 | fingerprint 未变则 no-op；变了先 sync |
-| `hmd pipeline identity-match` | `pipelines/identity_match.py` | 身份 | 生产禁 stub；`--dev` 才允许 |
+| `hmd pipeline catalog-publish` | `pipelines/world_model.py` | 发布 | fingerprint 未变则 no-op；变了先 sync。merge 后 Action 只 `POST` 本 deployment，不在 Actions 里 `sync_world_model` |
+| `hmd pipeline identity-match` | `pipelines/identity_match.py` | 身份 | 生产禁 stub；输入指纹未变则跳过 `train-link`。`--dev` 仅 `HMD_ENV≠prod` |
 | `hmd pipeline data-loop-*` | `pipelines/data_loop.py` | 闭环 | enrich 停在提案；apply 只消费 `approved` |
-| `hmd pipeline eval` | `pipelines/ontology_eval.py` | 发布 | `cheap` / `release` 评测合同 |
-| `hmd pipeline replay` | `pipelines/replay.py` | 入仓 | 按 `doc_id` / `reason` 回放 quarantine；IngestQA 不空转成功 |
+| `hmd pipeline eval` | `pipelines/ontology_eval.py` | 发布 | `cheap` = validate+identity+extraction；`release` 再加 literature/bridge/golden/context/QualityGate。T5 不可豁免 |
+| `hmd pipeline replay` | `pipelines/replay.py` | 入仓 | 按 `doc_id` / `reason` 回放 quarantine；IngestQA 不空转成功；空过滤 → Failed |
+| `hmd pipeline ops-snapshot` / `slo-gate` | `pipelines/ops.py` | 运维 | 新鲜度快照对照 `ops_slo.yaml`；红 Failed，**不**回滚已入湖文档 |
+| `hmd pipeline claim-promote` | `pipelines/claims.py` | 闭环 | 只消费 `status=approved`；只写 `ontology/claims/`；不 `INSERT` knowledge 边 |
 | `hmd index` / `--incremental` / `--doc-id` | `cli.py` | 入仓 | 文献 index 单步 |
 | `task ontology:refresh-literature` | `Taskfile.yml` | 入仓 | validate + `--incremental` |
 | `task prefect:up` / `prefect:worker` | `docker/docker-compose.prefect.yml` | 控制面 | Server `:4200` + 宿主机 worker |
 
 Work pool：`hmd-cpu`（入仓 / sync / Zingg / mine）与 `hmd-gpu`（embed / release eval）。`graphdb-replace` 与 `zingg` deployment 限并发 1。BIOS 冷启动不进日常 cron。
 
-硬依赖：`HMD_BERN2_URL`；不可达则失败。ingest **禁止**自动把 claim 标为 `validated`。Iceberg 失败与 Milvus 同等 Failed；OM lineage 可记入 `errors` 不阻断。
+硬依赖：`HMD_BERN2_URL`；不可达则失败。ingest **禁止**自动把 claim 标为 `validated`。Iceberg 失败与 Milvus 同等 Failed；OM lineage 可记入 `errors` 不阻断。入仓失败写入 `data/releases/quarantine/open.jsonl`（`HMD_QUARANTINE_DIR` 可覆盖）；文献 refresh 带 retry。`world_model_sync` / `data_loop_apply` 的 OM lineage 带 `prefect_run_id`、deployment、`ontology_release_id`。
+
+GitOps：目录 PR 跑 `scripts/ontology_cheap_ci.py`（validate + identity + extraction + `MetricCode` ⊆ LinkML）。merge 到 `main` 且改了 `ontology/{catalog,entities,claims,dictionary}` 或 `zingg_matches` 时，`.github/workflows/catalog-publish.yml` 只触发 Prefect `catalog-publish`（`PREFECT_API_URL` 未设则 skip）。
 
 观测事件（可选）：`HMD_OBS_EVENTS_ENABLED` / `HMD_KAFKA_BOOTSTRAP_SERVERS`（见 [pillars](../observability/pillars.md)、`.env.example`）。annotate 未映射 mention 经同一管道入 `hmd.er_observations`。
 
@@ -192,7 +197,9 @@ uv run hmd lake ensure && uv run hmd lake init
 uv run hmd lake trino-smoke
 export HMD_BERN2_URL=http://localhost:8888
 uv run hmd lake ingest-doc --help
-uv run pytest tests/ -k lake -q 2>/dev/null || true
+uv run hmd pipeline --help
+uv run hmd pipeline eval --suite cheap
+uv run pytest tests/test_prefect_flows.py tests/test_ops_p2.py tests/test_ingest_qa.py -q
 ```
 
 相关：[事实抽取](../ontology/extract.md)、[OpenMetadata × Trino](openmetadata.md)、[Foundation](foundation.md)、[解析路由](../parse/router.md)、[不变量](../invariants.md)。

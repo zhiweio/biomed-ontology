@@ -47,11 +47,25 @@ def test_pipeline_cli_registered() -> None:
     assert result.exit_code == 0
     out = result.stdout
     assert "literature-refresh" in out
+    assert "literature-reindex" in out
     assert "identity-match" in out
     assert "data-loop-enrich" in out
     assert "eval" in out
     assert "replay" in out
     assert "ops-snapshot" in out
+    assert "ingest" in out
+    assert "bios-bootstrap" in out
+
+
+def test_resolve_repo_path_joins_relative_to_repo() -> None:
+    from biomed_ontology.foundation.paths import REPO_ROOT
+    from biomed_ontology.lake.steps import resolve_repo_path
+
+    assert resolve_repo_path("data/corpus/pipeline.yaml") == REPO_ROOT / "data/corpus/pipeline.yaml"
+    assert resolve_repo_path(REPO_ROOT / "data/corpus/pipeline.yaml") == (
+        REPO_ROOT / "data/corpus/pipeline.yaml"
+    )
+    assert resolve_repo_path(None) is None
 
 
 def test_batch_one_doc_failure_does_not_count_as_ok(tmp_path: Path) -> None:

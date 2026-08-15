@@ -11,7 +11,7 @@
 - 文献检索里本体通道值多少（可消融、可显著性）？
 - KB 归一化与 WM resolve 是否指向同一 ENT？许可还原是否泄漏？
 
-因此 `hmd eval` 编排 **Identity · Literature · Bridge** 三套件；可选 **public_bios**（无 ENT / 公开 CURIE）与 **extraction**；World Model 三后端联调则独占 `hmd foundation golden-eval`，避免把「栈通不通」与「文献科学」混在一张表里。
+因此 `hmd eval` 编排 **Identity · Literature · Bridge** 三套件；可选 **public_bios**（无 ENT / 公开 CURIE）与 **extraction**。生产合同走 `hmd pipeline eval`：`cheap` = validate+identity+extraction；`release` 再加 literature/bridge/golden/context/QualityGate。World Model 三后端联调仍独占 `hmd foundation golden-eval`。
 
 ## 设计取舍
 
@@ -83,6 +83,18 @@ run_dual_eval(surface, entitlements=…)
 - 不进 `DualEvalReport.ok`；跑：`uv run hmd eval --suite public_bios --no-retrieval`
 - Demo：`W3`；金路径示例：`ontology/examples/golden_path/public_no_ent/`
 
+#### 5. extraction（EXTRA / cheap 合同）
+
+- 数据：`data/gold/extraction.yaml`（文献 + CSR / IB / LABEL）
+- 调用：`eval_extraction`；读 `case.doc_type`；`rules: false` 跳过规则评测
+- 无 MedDRA：LABEL AE 期望空三元组，不 mint `HMD:ENT:AE:*`
+- PR / cheap：`scripts/ontology_cheap_ci.py` 与 `hmd pipeline eval --suite cheap`
+
+#### 6. context（release 分面）
+
+- `foundation/context_eval.py`：`missing[]` 必须与空槽一致，禁止编造字段
+- `hmd pipeline eval --suite release` 或 `--suite context`
+
 ### `DualEvalReport.ok` 逻辑
 
 | 子报告 | 通过条件 |
@@ -97,6 +109,8 @@ run_dual_eval(surface, entitlements=…)
 uv run hmd eval --entitlements MOCK_LICENSED
 uv run hmd eval --suite identity,bridge --no-retrieval
 uv run hmd eval --json
+uv run hmd eval --suite extraction --compact
+uv run hmd pipeline eval --suite cheap
 uv run hmd foundation golden-eval   # WM 三后端联调（不并入 eval）
 ```
 

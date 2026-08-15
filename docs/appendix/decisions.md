@@ -19,7 +19,7 @@
 | D14 | ingest 默认 `claim_status=extracted`；validated 才进 knowledge | `hmd_enterprise.yaml` | [Document Pipeline](../architecture/document-pipeline.md) |
 | D15 | 双写硬依赖 BERN2；Tree Chunk 为正式 Evidence Object | `corpus/tree.py`、`lake/steps.py` | [chunks](../parse/chunks.md) |
 | D16 | Prefect 编排四条平面（入仓 / 身份 / 知识闭环 / 发布）；业务只在 steps；work pool `hmd-cpu` / `hmd-gpu` | `lake/flows.py`、`pipelines/`、`prefect.yaml` | [Document Pipeline](../architecture/document-pipeline.md)、[演进](../evolution/loop.md) |
-| D17 | BIOS_v3 常挂 `graph:biomedical`；UMLS 等可扩展 | `bios.py`、`biomedical_sources.py` | [Foundation](../architecture/foundation.md) |
+| D17 | BIOS_v3 常挂 `graph:biomedical`；HGNC 已注册（不改 ENT）；UMLS 子集需许可 ACK | `bios.py`、`biomedical_sources.py` | [Foundation](../architecture/foundation.md) |
 | D18 | OM 经 Trino 官方 connector 治理 Iceberg；不止 Glossary | `lake/om_governance.py` | [OpenMetadata](../architecture/openmetadata.md) |
 | D19 | 多格式 Document Router；Docling Main、PyMuPDF4LLM Fast、MinerU Hard | `parse/router.py` | [router](../parse/router.md) |
 | D20 | 版面后端只认 `pymupdf4llm`，配置写成 `pymupdf` 直接报错 | `parse/layout/` | [layout](../parse/layout.md) |

@@ -16,6 +16,7 @@ from biomed_ontology.lake.steps import (
     parse_and_tree,
     put_document,
     register_om_document,
+    resolve_repo_path,
     write_claims,
     write_evidence,
 )
@@ -86,12 +87,12 @@ def task_annotate_bern2(ctx: IngestContext, bern2_url: str | None) -> IngestCont
     return annotate_bern2(ctx, bern2_url=bern2_url)
 
 
-@task
+@task(retries=3, retry_delay_seconds=5)
 def task_write_evidence(ctx: IngestContext) -> IngestContext:
     return write_evidence(ctx)
 
 
-@task
+@task(retries=3, retry_delay_seconds=5)
 def task_write_claims(ctx: IngestContext, bern2_url: str | None) -> IngestContext:
     return write_claims(ctx, bern2_url=bern2_url)
 
@@ -126,10 +127,9 @@ def document_ingest(
     ctx = task_parse_and_tree(ctx, corpus_yaml, file_path)
     ctx = task_ingest_qa(ctx)
     ctx = task_annotate_bern2(ctx, bern2_url)
-    ev = task_write_evidence.submit(ctx)
-    cl = task_write_claims.submit(ctx, bern2_url)
-    ev_ctx = ev.result()
-    cl_ctx = cl.result()
+    # 串行写湖：tabulario REST 默认 SQLite catalog，并行 commit 会 SQLITE_BUSY
+    ev_ctx = task_write_evidence(ctx)
+    cl_ctx = task_write_claims(ctx, bern2_url)
     ctx.evidence_n = ev_ctx.evidence_n
     ctx.claim_n = cl_ctx.claim_n
     ctx.skipped_claims = cl_ctx.skipped_claims
@@ -176,11 +176,15 @@ def document_batch_ingest(
     for i, item in enumerate(items, start=1):
         doc_id = str(item.get("doc_id") or "")
         try:
+            file_path = item.get("file")
+            corpus_yaml = item.get("corpus_yaml")
+            resolved_file = resolve_repo_path(file_path)
+            resolved_corpus = resolve_repo_path(corpus_yaml)
             result = document_ingest(
                 source_id=str(item["source_id"]),
                 doc_id=doc_id,
-                file_path=item.get("file"),
-                corpus_yaml=item.get("corpus_yaml"),
+                file_path=str(resolved_file) if resolved_file else file_path,
+                corpus_yaml=str(resolved_corpus) if resolved_corpus else corpus_yaml,
                 bern2_url=bern2_url,
                 register_asset=bool(item.get("register_asset", True)),
             )

@@ -60,7 +60,7 @@
 **FAIR**：Findable（稳定 CURIE / Evidence ID）· Accessible（许可在候选期过滤）·
 Interoperable（LinkML/RDF/SSSOM，外部标准只 xref）· Reusable（PROV + `ontology_release_id`）。
 
-**Scientific Data Loop**：研究系统 → 语义基座 → AI 消费 → 科学家审校 → 知识回写 Git → sync。
+**Scientific Data Loop**：研究系统 → 语义基座 → AI 消费 → 科学家审校 → 知识回写 Git → `catalog-publish` / sync。
 闭环产品是企业科学知识层变厚，不是模型权重更新。
 
 ## 本地预览手册

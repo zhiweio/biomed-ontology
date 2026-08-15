@@ -84,7 +84,7 @@ Semantic Access (hmd serve)
 | Layer | 核心问题 | 固定图 / 集合 |
 |---|---|---|
 | GraphDB | What is related to what? | `graph/ontology`、`graph/knowledge`、`graph/provenance`、`graph/biomedical` |
-| Milvus | Where is the evidence? | `foundation_evidence` |
+| Milvus | Where is the evidence? | `hmd_chunks` + `foundation_evidence`（`chunk_id` join） |
 | OpenMetadata | Where is the enterprise data? | Glossary `HMDEnterpriseAssets` |
 
 ### 3.2 Entity Resolution
@@ -148,7 +148,7 @@ graph/inference      ← 推导关系（可选物化）
 | `get_entity` | GraphDB `graph/ontology` | `foundation/store.py` |
 | `get_relationships` | GraphDB knowledge + provenance | `foundation/store.py` |
 | `find_related_entities` | GraphDB | `foundation/store.py` |
-| `search_evidence` | Milvus `foundation_evidence` | `foundation/api.py` |
+| `search_evidence` | Milvus `hmd_chunks` 再按 `chunk_id` join `foundation_evidence`（占位向量 `embedded=false`） | `foundation/api.py` + `lake/evidence_join.py` |
 | `search_assets` | OpenMetadata Glossary | `foundation/catalog.py` |
 | `get_entity_evidence` | Milvus | `foundation/api.py` |
 | `get_entity_assets` | OpenMetadata | `foundation/catalog.py` |
@@ -181,7 +181,8 @@ PubMed / Patents / Vendor / ELN / LIMS / Docs
 | `schema/hmd_enterprise.yaml` | Enterprise Ontology SSOT |
 | `ontology/` | Ontology-as-Code 策展面 |
 | `src/biomed_ontology/identity.py` | IdentityService（目录 + ER） |
-| `src/biomed_ontology/foundation/` | ids / bern2 / resolve / world / api / context_pack / sync / bios / evolve |
+| `src/biomed_ontology/foundation/` | ids / bern2 / resolve / world / api / context_pack / context_eval / sync / bios / evolve / evolve_kgcl / claim_promote |
+| `src/biomed_ontology/pipelines/` | Prefect 生产平面（入仓 / 身份 / 闭环 / 发布 / replay / ops / claims） |
 | `data/foundation/` | 运行投影样例、BIOS subset、Zingg |
 | `docker/docker-compose.foundation.yml` | 联调栈 |
 | `Taskfile.yml` | `foundation:*` / `milvus:*` / `gen` / `ontology:validate` |
@@ -213,9 +214,11 @@ uv run hmd serve --mcp
 | 做 | 不做 |
 |---|---|
 | unmapped / 低置信 → `evolve-mine` → candidates JSON | 自动改 GraphDB ontology |
-| policy filter + enrich → `proposals.jsonl`；人工 approve 后 `evolve-apply --write` | 无人审校 apply；硬编码单次噪声串 |
+| policy filter + enrich → `proposals.jsonl`；人工 approve 后 `evolve-apply --write`（L1 别名 / L2 xref） | 无人审校 apply；L3 自动 create node；硬编码单次噪声串 |
+| `claim-review` → `claim-promote --write` 只写 `ontology/claims/` | Prefect `INSERT` knowledge 边 |
 | 观测事件 → Redpanda → Iceberg `obs_tool_io` / `er_observations` | 自研 ObsShipper；热路径同步 Iceberg append |
-| `zingg-run` 物化/导出模糊 matches | 查询路径 Spark；BIOS 全量当 master |
+| `zingg-run` 物化/导出模糊 matches；输入指纹未变跳过 `train-link` | 查询路径 Spark；BIOS 全量当 master |
+| `source-load --source hgnc` 从 catalog/entities xref 装公开基因 | 改 `HMD:ENT:*`；无 ACK 装 UMLS |
 
 详情见 [演进闭环](../evolution/loop.md)。复用 `foundation/evolve.py`、`evolve_propose.py`、`evolve_apply.py`、`zingg_io.py`、`lake/obs_events.py`。
 
@@ -236,6 +239,7 @@ uv run hmd serve --mcp
 | `HMD_ZINGG_OBSERVATIONS` | `all` | 物化 observation 源 |
 | `HMD_ZINGG_SKIP_DOCKER` | `false` | 跳过 `docker/zingg` |
 | `HMD_EVOLVE_INCLUDE_LAKE` | `true` | evolve-mine 默认合并湖信号 |
+| `HMD_ENV` | `dev` | `prod` 禁止 `identity_match_dev`；生产 + `zingg_skip_docker` 告警 |
 
 ```bash
 task obs:up       # Redpanda :19092（Settings 默认已指向）
@@ -274,7 +278,9 @@ uv run hmd foundation sync
 uv run hmd foundation resolve "HMPL-504"
 uv run hmd foundation golden --candidate HMPL-504
 uv run hmd foundation golden-eval --compact
-uv run pytest tests/test_foundation_world_model.py -q
+uv run hmd foundation source-load --source hgnc
+uv run python scripts/ontology_cheap_ci.py
+uv run pytest tests/test_foundation_world_model.py tests/test_ops_p2.py tests/test_biomedical_sources.py -q
 uv run pytest -m integration   # 需 task foundation:up
 ```
 

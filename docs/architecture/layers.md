@@ -32,7 +32,7 @@ L1–L5 不是「检索管道的前几步」，而是语义层本体能力本身
 | Ontology Services | LinkML + IdentityService + BiomedicalSource |
 | AI Context APIs | `hmd serve` MCP/REST |
 
-现网范围：Drug / Target / Disease，以及文献 / CSR / IB / 说明书 / 专利的分域抽取。
+当前范围：Drug / Target / Disease，以及文献 / CSR / IB / 说明书 / 专利的分域抽取；HGNC 作公开基因 xref；CMP 仅 xref 演示种子。无 MedDRA 不进 AE knowledge。
 不做全基因组或影像 foundation model。
 
 ---
@@ -64,7 +64,7 @@ L4 语料治理      Router → 语义树 → IngestQA → 三模态抽取 → �
 L5 检索/证据     BM25 ⊕ dense ⊕ 图通道 → 带权 RRF；Milvus = 五列 + Evidence Index
 L6 Semantic Access  单一 hmd serve：KB 工具（ToolApi）+ Foundation Semantic Ops
 L7 可观测        Trace(WHERE) / IO(WHAT) / State(WHY) / Metrics(WHEN)
-L8 演进闭环      Signal → enrich/proposals → approve → apply(Git) → Release；不自动写生产图
+L8 演进闭环      Signal → enrich → approve → apply(Git L1/L2 + KGCL) / claim-promote → Release；不自动写生产图
 ```
 
 ```mermaid
@@ -107,7 +107,7 @@ flowchart TB
 | L5 | `search/`、`embed/`、`rerank/` | 混合检索 + Evidence Index | `search/__init__.py` |
 | L6 | `tools/`、`service/`、`foundation/api.py` | ToolApi + Foundation Ops | `runtime.py`、`tools/api.py` |
 | L7 | `observability/`、`quality/` | 四支柱与发版守门 | `observability/__init__.py` |
-| L8 | `evolution/`、`foundation/evolve.py` | 信号到 KGCL | `foundation/evolve.py` |
+| L8 | `evolution/`、`foundation/evolve*.py`、`pipelines/data_loop.py` | 信号 → approve → Git apply | `foundation/evolve.py`、[loop](../evolution/loop.md) |
 
 工作区剖面见 [uv workspace](workspace.md)。
 

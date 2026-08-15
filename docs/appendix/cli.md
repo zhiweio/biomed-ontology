@@ -49,12 +49,32 @@
 | `hmd foundation bios-load` | BIOS 全量（默认）/ `--subset` | [NOTICE_BIOS](https://github.com/zhiweio/biomed-ontology/blob/main/data/foundation/NOTICE_BIOS.md) |
 | `hmd foundation evolve-mine [--json] [--compact] [--include-lake/--no-include-lake]` | unmapped/低置信 → KGCL 候选（**不改**本体） | [evolution](../evolution/loop.md) |
 | `hmd foundation evolve-enrich [--from …] [--llm/--no-llm]` | filter + 默认 LLM 裁决 + 提案；无 API key 自动跳过 LLM | 同上 |
-| `hmd foundation evolve-review` / `approve` / `reject` / `apply` / `verify` | 提案队列 → 人工闸门 → Git 策展面 dry-run/write → 再 resolve | 同上 |
+| `hmd foundation evolve-review` / `approve` / `reject` / `apply` / `verify` | 提案队列 → 人工闸门 → Git 策展面 dry-run/write（L1/L2）→ 再 resolve | 同上 |
+| `hmd foundation claim-review` / `claim-promote` | 列出 extracted；人审后只写 `ontology/claims/` | [extract](../ontology/extract.md) |
+| `hmd foundation source-load --source hgnc` | 从 catalog/entities xref 装 HGNC；不改 `HMD:ENT:*`。`umls_subset` 无 ACK 拒、有 ACK 仍未实现 | [Foundation](../architecture/foundation.md) |
 | `hmd foundation zingg-run [--mode …]` | 物化/导出模糊 matches | [evolution](../evolution/loop.md) |
 | `hmd lake init` | 创建 Iceberg 表 | [pillars](../observability/pillars.md) |
 | `hmd lake ingest-doc` | 单文档入湖（经 IngestQA） | [IngestQA](../parse/ingest-qa.md) |
 | `task obs:up` / `task zingg:run` | Redpanda；本地 stub Zingg | 同上 |
 | `task ontology:validate` | Ontology-as-Code + Golden Path 校验 | [toolchain](../ontology/toolchain.md) |
+
+### 生产平面（`hmd pipeline`）
+
+无 Prefect Server 时也可 `flow()` 本地跑。平面隔离见 [Document Pipeline](../architecture/document-pipeline.md)。
+
+| 命令 | 作用 |
+|---|---|
+| `literature-refresh` | 脏 PDF → IngestQA → 单篇 index；失败进 quarantine |
+| `literature-reindex` | 文献面全量 recreate（低频；日常用 refresh） |
+| `ingest` / `ingest-batch` | 单篇 / 清单入仓；IngestQA 不过不写 sink |
+| `bios-bootstrap` | BIOS 冷启动；`--subset` 不拉全量 |
+| `sync` / `catalog-publish` | 一次 replace 种子图；fingerprint 未变 no-op |
+| `identity-match` | 生产禁 stub；`--dev` 仅 `HMD_ENV≠prod` |
+| `data-loop-mine` / `enrich` / `apply` | enrich 停在提案；apply 只消费 `approved` |
+| `eval --suite cheap\|release` | cheap = validate+identity+extraction |
+| `replay` | 按 `doc_id` / `reason` 回放 quarantine |
+| `ops-snapshot` / `slo-gate` | 新鲜度；红不回滚湖 |
+| `claim-promote` | 只写 YAML，不 INSERT knowledge 边 |
 
 HTTP / MCP **只走** `hmd serve --mcp`（含 `get_entity_context` 等 10 个 Foundation ops）。
 
@@ -89,6 +109,8 @@ HTTP / MCP **只走** `hmd serve --mcp`（含 `get_entity_context` 等 10 个 Fo
 | `task foundation:smoke` | 健康检查 |
 | `task foundation:init` | BIOS load + foundation sync |
 | `task foundation:up:bern2` | 额外启动 BERN2 profile |
+| `task evolve:e2e` | 合成 fixture：enrich→approve→apply(sandbox) |
+| `task lake:expire` | Iceberg 快照保留（obs 90d / scorecard 180d） |
 
 手册预览：`task docs:serve` → http://127.0.0.1:8000（MkDocs，与服务端口冲突时注意只开一个）。
 
